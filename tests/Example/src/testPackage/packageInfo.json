@@ -1,0 +1,5 @@
+{
+    "Package Name": "testPackage",
+    "Authors": ["Benjamin Austin Jr"],
+    "Package Main": "Main.BCL"
+}
