@@ -38,10 +38,17 @@ char: ui8
 string: ui8[n]
 //usage 1
 char x = 'd';
-string y = "eez nuts";
+string y = "hi";
 //usage 2
 ui8 x = 'd';
-ui8[8] y = "eez nuts"
+ui8[8] y = "hi"
+```
+
+
+**Boolean Type*
+```rust
+//usuage
+bool x = false;
 ```
 
 **Arrays**

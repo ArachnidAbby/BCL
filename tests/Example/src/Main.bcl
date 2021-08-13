@@ -1,0 +1,15 @@
+import UiLib;
+func jimbo::pog(string name) : void{ //jimbo is a namespace in this example
+  println("%s is pog".format(name);
+}
+
+class Entity {
+  private name;
+  public Entity(string name){
+    this.name=name;
+  }
+
+int x = 89;
+float y =78.2;
+println(x);
+jimbo::pog("bobby");

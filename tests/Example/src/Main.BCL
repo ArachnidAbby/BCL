@@ -1,4 +1,0 @@
-import Twitter //external package
-import testPackage //an internal package
-
-println("Hello World")
