@@ -1,0 +1,3 @@
+println(4 + 4);
+println(2 - 9);
+println(2 - 2);

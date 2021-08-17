@@ -1,0 +1,70 @@
+import sly
+
+
+class Lexer(sly.Lexer):
+    # def __init__(self):
+    #     self.lexer = LexerGenerator()
+    tokens = { ID,NUMBER, PRINT, OPEN_PAREN, CLOSE_PAREN, IF, ELSE,
+               SUM, SUB,SEMI_COLON}
+
+    SUM    = r'\+'
+    SUB   = r'-'
+    OPEN_PAREN = r'\('
+    CLOSE_PAREN = r'\)'
+    SEMI_COLON = r'\;'
+
+    #ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
+
+    ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    ID['if'] = IF
+    ID['else'] = ELSE
+    ID['println'] = PRINT
+    ID['print'] = PRINT
+
+    # String containing ignored characters (between tokens)
+    ignore = ' \t'
+
+    # Other ignored patterns
+    ignore_comment = r'\#.*'
+    ignore_newline = r'\n+'
+
+    def _add_tokens(self):
+        # Print
+        self.lexer.add('PRINT', r'println')
+        self.lexer.add('PRINT', r'print')
+        # Parenthesis
+        self.lexer.add('OPEN_PAREN', r'\(')
+        self.lexer.add('CLOSE_PAREN', r'\)')
+        # Semi Colon
+        self.lexer.add('SEMI_COLON', r'\;')
+        # Operators
+        self.lexer.add('SUM', r'\+')
+        self.lexer.add('SUB', r'\-')
+        self.lexer.add('EQUALS', r'\=')
+        # Number
+        self.lexer.add('NUMBER', r'\d+')
+        # String
+        self.lexer.add('STRING',r'\"(.*?)\"')
+        # Ignore spaces
+        self.lexer.ignore('\s+')
+        # Keyword
+        self.lexer.add("KEYWORD",'[a-zA-Z0-9]+')
+
+    @_(r'\d+')
+    def NUMBER(self, t):
+        t.value = int(t.value)
+        return t
+
+    @_(r'\n+')
+    def ignore_newline(self, t):
+        self.lineno += t.value.count('\n')
+
+    def error(self, t):
+        print('Line %d: Bad character %r' % (self.lineno, t.value[0]))
+        self.index += 1
+
+
+
+    def get_lexer(self):
+        self._add_tokens()
+        return self.lexer.build()
