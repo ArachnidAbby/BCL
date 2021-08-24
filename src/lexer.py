@@ -24,6 +24,7 @@ class Lexer():
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
         self.lexer.ignore('\s+')
+        self.lexer.ignore('//.*')
 
     def get_lexer(self):
         self._add_tokens()

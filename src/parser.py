@@ -1,5 +1,5 @@
 from rply import ParserGenerator
-from ast import Number, Sum, Sub, Print, Program, Println, Parenth
+from ast import Number, Sum, Sub, Print, Program, Println, Parenth,String_utf8
 import Errors
 
 
@@ -8,7 +8,7 @@ class Parser():
         self.pg = ParserGenerator(
             # A list of all token names accepted by the parser.
             ['NUMBER', 'OPEN_PAREN', 'CLOSE_PAREN',
-             'SEMI_COLON', 'SUM', 'SUB','KEYWORD','COMMA']
+             'SEMI_COLON', 'SUM', 'SUB','KEYWORD','COMMA','STRING']
         )
         self.module = module
         self.builder = builder
@@ -62,9 +62,13 @@ class Parser():
             return p[0]
 
         @self.pg.production('expression : NUMBER')
+        @self.pg.production('expression : STRING')
         def number(p):
             #print(p)
-            return Number(self.builder, self.module, p[0].value)
+            if p[0].gettokentype() == 'NUMBER':
+                return Number(self.builder, self.module, p[0].value)
+            else:
+                return String_utf8(self.builder, self.module, p[0].value)
 
         @self.pg.error
         def error_handle(token):
