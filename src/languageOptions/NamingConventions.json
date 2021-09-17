@@ -1,0 +1,8 @@
+{
+    "variables": {
+        "casing": "snakeCase_lower",
+    },
+    "functions": {
+        "casing": "CamalCase_Upper"
+    }
+}

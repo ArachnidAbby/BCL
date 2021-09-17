@@ -1,5 +1,6 @@
 from llvmlite import ir
 import Errors
+import codecs
 
 class Number():
     def __init__(self, builder, module, value):
@@ -22,6 +23,8 @@ class String_utf8():
 
     def eval(self):
         fmt = self.value[1:-1]
+        fmt = codecs.escape_decode(fmt.encode())[0].decode()
+        print(codecs.escape_decode(fmt.encode()))
         c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
                             bytearray(fmt.encode("utf8")))
         self.global_fmt_int_n = ir.GlobalVariable(self.module, c_fmt.type, name="StringConst_"+str(String_utf8.ID))
@@ -106,7 +109,7 @@ class Parenth():
     def eval(self):
         output = []
         for x in self.stuff:
-            print(x)
+            #print(x)
             output.append(x.eval())
         return output
     
