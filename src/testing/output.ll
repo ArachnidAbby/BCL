@@ -12,8 +12,7 @@ entry:
   %".6" = sub i32 2, 9
   %".7" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 %".6")
   %".8" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 2)
-  %".9" = bitcast [14 x i8]* @"StringConst_0" to i8*
-  %".10" = call i32 (i8*, ...) @"printf"(i8* %".3", i8* %".9")
+  %".9" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 2)
   ret void
 }
 
@@ -23,4 +22,3 @@ declare i32 @"printf"(i8* %".1", ...)
 @"fstr_int" = internal constant [4 x i8] c"%i \00"
 @"fstr_string_n" = internal constant [5 x i8] c"%s \0a\00"
 @"fstr_string" = internal constant [4 x i8] c"%s \00"
-@"StringConst_0" = internal constant [14 x i8] c"\01b[32m poggers"

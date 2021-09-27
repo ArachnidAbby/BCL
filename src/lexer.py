@@ -20,7 +20,7 @@ class Lexer():
         # Number
         self.lexer.add('NUMBER', r'\d+')
         # Keywords and strings
-        self.lexer.add('STRING',r'\".*\"')
+        self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
         self.lexer.ignore('\s+')
