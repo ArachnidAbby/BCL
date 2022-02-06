@@ -19,7 +19,7 @@
         "grammars": [{
             "language": "bcl",
             "scopeName": "source.bcl",
-            "path": "./syntaxes/bcl.tmLanguage"
+            "path": "./syntaxes/bcl.YAML-tmLanguage"
         }],
         "snippets": [
             {

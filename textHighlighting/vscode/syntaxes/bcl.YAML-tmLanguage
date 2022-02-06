@@ -1,0 +1,95 @@
+fileTypes:
+    - bcl
+    - BCL
+name: bcl
+patterns:
+    -
+        include: '#main'
+scopeName: source.bcl
+uuid: ""
+repository:
+    main:
+        patterns:
+            -
+                match: '(//.*)'
+                name: comment.line.double-slash.bcl
+            -
+                match: ((\bclass\b)|(\bfunc\b)|(\bstruct\b)|(\bthis\b)|(\bimport\b)|(\bfor\b))
+                name: support.function.bcl
+            -
+                match: '(((public)|(private))(?:(?=(\\?))\2.)*?)'
+                name: storage.modifier.bcl
+            -
+                match: ((\bbyte\b)|(\bshort\b)|(\bint\b)|(\blong\b)|(\bhalf\b)|(\bfloat\b)|(\bdouble\b)|(\bhuge\b)|(\bstring\b)|(\bchar\b))
+                name: storage.type.bcl
+            -
+                match: ((\bprintln\b)|(\bprint\b))
+                name: keyword.other.bcl
+            -
+                match: ((\b=\b)|(\b==\b)|(\b->\b)|(\b>\b)|>|(\b>=\b)|(\b<=\b))
+                name: keyword.operator.bcl
+            -
+                match: '(([\x{0022}\x{0027}])(?:(?=(\\?))\2.)*?\1)'
+                name: keyword.operator.bcl
+            -
+                include: '#numeric'
+            -
+                match: '(\b[a-z][a-z0-9]*)'
+                name: keyword.bcl
+            -
+                begin: '(\{)'
+                beginCaptures:
+                    '1': {name: punctuation.definition.comment.bcl}
+                patterns:
+                    - {include: '#main__1'}
+                end: '(\})'
+                endCaptures:
+                    '1': {name: punctuation.definition.comment.bcl}
+            -
+                match: '((\:\:)|;|)'
+                name: punctuation.definition.comment.bcl
+            -
+                begin: (\()
+                beginCaptures:
+                    '1': {name: punctuation.definition.comment.bcl}
+                patterns:
+                    - {include: '#main__2'}
+                end: (\))
+                endCaptures:
+                    '1': {name: punctuation.definition.comment.bcl}
+            -
+                include: '#multi_line_comment'
+            -
+                match: '(//.*)'
+                name: comment.line.double-slash.bcl
+            -
+                match: '([^\s])'
+                name: invalid.bcl
+    main__1:
+        patterns:
+            -
+                include: '#main'
+    main__2:
+        patterns:
+            -
+                include: '#numeric'
+            -
+                match: '(,)'
+                name: punctuation.definition.comment.bcl
+    multi_line_comment:
+        patterns:
+            -
+                begin: '(/\*)'
+                beginCaptures:
+                    '1': {name: comment.line.double-slash.bcl}
+                contentName: comment.line.double-slash.bcl
+                end: '(\*/)'
+                endCaptures:
+                    '1': {name: comment.line.double-slash.bcl}
+    multi_line_comment__1:
+        patterns: []
+    numeric:
+        patterns:
+            -
+                match: (\b\d+)
+                name: constant.numeric.bcl

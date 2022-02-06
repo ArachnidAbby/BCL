@@ -2,7 +2,7 @@
 
 Error_Red = '\u001b[31m'
 Reset = '\u001b[0m'
-
+seperator="\u001b[38;5;174m"
 
 #classes
 
@@ -14,11 +14,11 @@ class Error:
     
     def raise_error(self):
         try: 
-            raise Exception(f"""{Error_Red}
-An Error has Occured on line: {self.lineNum}
-Error Details:
-    {self.ErrorText}
-{Reset}""")
+            raise Exception(f"""{seperator}{"}"}----- {Error_Red}
+| An Error has Occured on line: {self.lineNum}
+| Error Details:
+|    {self.ErrorText}
+\-------------------------------------------------{Reset}""")
         except Exception as e:
             print(e)
 
@@ -33,4 +33,8 @@ Error Details:
     
     def Invalid_Arguement_Count(lineNum,args, expected):
         error = Error(lineNum, f"There are an invalid Number of arguements. {args} arguement(s) passed. {expected} arguement(s) expected").raise_error()
+        quit()
+    
+    def Unclosed_Parenth(lineNum):
+        error = Error(lineNum, f"Unclosed parenthese on line {lineNum}").raise_error()
         quit()

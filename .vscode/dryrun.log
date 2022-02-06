@@ -1,6 +1,0 @@
-make all --dry-run --keep-going --print-directory
-make: Entering directory '/media/taustin/1TB hardrive/Users/Whirl/Documents/programs and projects/2021/compiledProgrammingLanguage'
-make: Leaving directory '/media/taustin/1TB hardrive/Users/Whirl/Documents/programs and projects/2021/compiledProgrammingLanguage'
- 
-make: *** No rule to make target 'all'.
- 

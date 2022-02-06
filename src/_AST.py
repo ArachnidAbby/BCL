@@ -1,3 +1,4 @@
+from typing_extensions import get_args
 from llvmlite import ir
 import Errors
 import codecs
@@ -49,13 +50,21 @@ class BinaryOp():
 
 class Sum(BinaryOp):
     def eval(self):
-        i = self.builder.add(self.left.eval(), self.right.eval())
+        
+        r,l = self.right.eval(), self.left.eval()
+        #print(l, r)
+        if type(r)==list: r = r[0]
+        if type(l)==list: l = l[0]
+        i = self.builder.add(l, r)
         return i
 
 
 class Sub(BinaryOp):
     def eval(self):
-        i = self.builder.sub(self.left.eval(), self.right.eval())
+        r,l = self.right.eval(), self.left.eval()
+        if type(r)==list: r = r[0]
+        if type(l)==list: l = l[0]
+        i = self.builder.sub(l, r)
         return i
 
 
@@ -101,6 +110,28 @@ class Println(StandardFunction):
             self.builder.call(self.printf, [self.program.fmt_int_n,value])
         else:
             self.builder.call(self.printf, [self.program.fmt_string_n,value])
+
+class VariableDeclaration():
+    def __init__(self,name, program, printf, lineno):
+        self.builder = program.builder
+        self.module = program.module
+        self.printf = printf
+        self.program = program
+        self.lineno = lineno
+        self.name=name
+    def eval(self):
+        g=self.builder.alloca(ir.IntType(32), name=self.name)
+        self.builder.store(ir.Constant(ir.IntType(32), int(999)), g)
+        p = self.builder.load(g)
+
+        self.builder.call(self.printf, [self.program.fmt_int_n,p])
+
+        self.builder.store(ir.Constant(ir.IntType(32), int(444)), g)
+        p = self.builder.load(g)
+
+        self.builder.call(self.printf, [self.program.fmt_int_n,p])
+        
+        return g
 
 class Parenth():
     def __init__(self,*args):
