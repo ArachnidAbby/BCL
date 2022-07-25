@@ -7,6 +7,3 @@ env/
 
 ## sphinx-docs
 docs/build/
-
-# VSCode
-.vscode/
