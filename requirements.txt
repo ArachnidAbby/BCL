@@ -1,3 +1,7 @@
-llvmlite
-codecs
+# documentation
+sphinx
+sphinx-rtd-theme
+
+# project
 rply
+llvmlite

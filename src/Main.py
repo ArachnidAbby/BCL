@@ -1,61 +1,65 @@
-import time
+import sys, os
 
-start = time.perf_counter()
+def make_project(args):
+    if not os.path.isdir(args[1]): os.mkdir(args[1])
+    os.mkdir(f"{args[1]}/src")
+    os.mkdir(f"{args[1]}/lib")
+    with open(f"{args[1]}/project.toml",'w+') as f:
+        f.write(f'''[info]
+name = "{args[1].split("/")[-1]}"
+author = "{os.getlogin()}"
+version = "1.0"
 
-from lexer import Lexer
-import parser,_AST
-from codegen import CodeGen
-import json
+[compile]
 
-fname = "src/testing/input.bcl"
-with open(fname) as f:
-    text_input = f.read()
+GC = true
+include = [] # include paths, ex: {args[1].split("/")[-1]}/resources/
+''')
+    with open(f"{args[1]}/src/Main.bcl",'w+') as f:
+        f.write('''define main() {
+    println("Hello World!");
+}
+''')
+    with open(f"{args[1]}/.gitignore",'w+') as f:
+        f.write('''# BCL ignored files
+lib/
 
-with open('src/languageOptions/Colors.json') as f:
-    colors = json.loads(f.read())
+# other files
+''')
 
-print(f'{colors["ok"]}/-------------------------------------------------{colors["reset"]}')
-print(f'{colors["ok"]}| imports finished in {time.perf_counter() - start} seconds{colors["reset"]}')
-start=time.perf_counter()
+if __name__ == "__main__":
+    args = sys.argv
+    if args[0]=="src/Main.py": args=args[1::]
 
-lexer = Lexer().get_lexer()
-tokens = lexer.lex(text_input)
-output = []
-for x in tokens:
-    output.append({"name":x.name,"value":x.value,"source_pos":x.source_pos})
+    if len(args)==0:
+        print("Valid sub-commands: build, run, make, publish")
 
-print(f'{colors["info-warn"]}|',len(output), f'tokens{colors["reset"]}')
-print(f'{colors["ok"]}| lexing finished in {time.perf_counter() - start} seconds{colors["reset"]}')
-start=time.perf_counter()
-#print(output)
+    elif args[0] == "make": make_project(args)
 
-codegen = CodeGen()
+    else:
+        example = '''
+define main {
+    x=9+2;
+    x=x+2;
+}
+'''
+        from Lexer import Lexer
+        import Parser
+        import Codegen
+        lexer = Lexer().get_lexer()
+        tokens = lexer.lex(example)
+        codegen = Codegen.CodeGen()
 
-module = codegen.module
-builder = codegen.builder
-printf = codegen.printf
-
-# try:
-pg = parser.parser(output, builder,module,printf)
-# x = pg.parse()
-parsed = pg.parse()
-g = _AST.VariableDeclaration("test", pg.program, pg.printf,-1)
-parsed.append({"value":g})
-for x in parsed:
-    x["value"].eval()
-print(f'{colors["ok"]}| parsing finished in {time.perf_counter() - start} seconds{colors["reset"]}')
-start=time.perf_counter()
-# except Exception as e:
-#     print(e)
-
-codegen.create_ir()
-codegen.save_ir("src/testing/output.ll")
-
-end = time.perf_counter()
-print(f'{colors["ok"]}| compiled in {end - start} seconds{colors["reset"]}')
-print(f'{colors["ok"]}\\-------------------------------------------------{colors["reset"]}')
-# p = parser.parser(output,builder,module)
-# program = "42"
-# print(output)
-# print()
-# print(p.parse())
+        module = codegen.module
+        # builder = codegen.builder
+        printf = codegen.printf
+        output = []
+        for x in tokens:
+            output.append({"name":x.name,"value":x.value,"source_pos":x.source_pos})
+        pg = Parser.parser(output, module, printf)
+        # x = pg.parse()
+        parsed = pg.parse()
+        print(parsed)
+        for x in parsed:
+            x["value"].eval(module)
+        print(module, type(module))

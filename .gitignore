@@ -1,6 +1,12 @@
-#ignore rando files
+# Python
 
 *.o
 *.pyc
+__pycache__/
+env/
 
-obsidian/.obsidian/
+## sphinx-docs
+docs/build/
+
+# VSCode
+.vscode/
