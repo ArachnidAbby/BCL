@@ -1,0 +1,9 @@
+# Python
+
+*.o
+*.pyc
+__pycache__/
+env/
+
+## sphinx-docs
+docs/build/

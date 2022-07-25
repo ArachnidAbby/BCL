@@ -1,0 +1,13 @@
+define main() {
+    x: int = 000;
+    y = false;
+    if x == 0 and not x!=0 { // example of 'not' & 'and' operators
+        println("poggers"); // comment after other things
+    } elif x>0 {
+        println("cringe!");
+    } else {
+        println("Negative numbers aren't real. Fake news.");
+    }
+    println("Hello World!");
+    // poggers 
+}

@@ -1,0 +1,30 @@
+{
+    "name": "bcl-langauage",
+    "version": "1.0.0",
+    "publisher": "Benjamin A.",
+    "description": "syntax highlighting for BCL",
+    "repository": "https://github.com/spidertyler2005/BCL",
+    "engines": {
+        "vscode":"^1.50.1"
+    },
+    "contributes": {
+        "languages": [
+            {
+                "id": "bcl",
+                "extensions": [
+                    ".bcl"
+                ]
+            }
+        ],
+        "grammars": [
+            {
+                "language": "bcl",
+                "scopeName": "source.bcl",
+                "path": "./syntaxes/bcl.tmGrammar.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "esbuild": "^0.14.29"
+    }
+}

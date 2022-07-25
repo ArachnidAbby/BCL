@@ -1,0 +1,7 @@
+# documentation
+sphinx
+sphinx-rtd-theme
+
+# project
+rply
+llvmlite

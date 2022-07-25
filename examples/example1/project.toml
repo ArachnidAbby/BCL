@@ -1,0 +1,9 @@
+[info]
+name = "example1"
+author = "taustin"
+version = "1.0"
+
+[compile]
+
+GC = true
+include = [] # include paths, ex: example1/resources/
