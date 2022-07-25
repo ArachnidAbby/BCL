@@ -1,7 +1,12 @@
 from typing import List, Tuple
+
 from llvmlite import ir
 
+
 class AST_NODE:
+    '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
+    __slots__ = ['name', 'type', 'children', 'position', 'token']
+
     def __init__(self, position: Tuple[int,int], token: str, children: None|List = None, *args):
         self.type = ""
         self.name = ""
@@ -18,6 +23,7 @@ class AST_NODE:
     def eval(self):
         pass
 
+    # todo: rewrite and make this useful    
     def show_er(self, source: List[str]) -> str:
         '''Show an error, 
             source: file's source seperated by lines.
@@ -27,6 +33,9 @@ class AST_NODE:
 
 
 class Block(AST_NODE):
+    '''Provides a Block node that contains other `AST_NODE` objects'''
+    __slots__ = ['variables', 'builder']
+
     def init(self):
         self.name = "Block"
         self.type = "Block"

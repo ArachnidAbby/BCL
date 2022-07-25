@@ -1,8 +1,13 @@
 from llvmlite import ir
+
 from .Nodes import AST_NODE
 
+
 class VariableAssign(AST_NODE):
-    def init(self, name, value):
+    '''Handles Variable Assignment and Variable Instantiation.'''
+    __slots__ = ["value"]
+
+    def init(self, name: str, value):
         self.name = name
         self.type = "variableAssign"
 
@@ -18,7 +23,10 @@ class VariableAssign(AST_NODE):
         func.builder.store(self.value.eval(func), ptr)
 
 class VariableRef(AST_NODE):
-    def init(self, name):
+    '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
+    __slots__ = []
+
+    def init(self, name: str):
         self.name = name
         self.type = "variableRef"
     

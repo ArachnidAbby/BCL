@@ -1,5 +1,4 @@
-from llvmlite import ir, binding
-
+from llvmlite import binding, ir
 
 # This was coppied from a tutorial.
 # todo: understand this code and rewrite it myself in my own style.
@@ -50,7 +49,7 @@ class CodeGen():
         The compiled module object is returned.
         """
         # Create a LLVM module object from the IR
-        self.builder.ret_void()
+        #self.builder.ret_void()
         llvm_ir = str(self.module)
         mod = self.binding.parse_assembly(llvm_ir)
         mod.verify()

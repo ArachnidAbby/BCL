@@ -3,6 +3,9 @@ from llvmlite import ir
 from .Nodes import AST_NODE, Block
 
 class FunctionDef(AST_NODE):
+    '''Defines a function in the IR'''
+    __slots__ = ['builder', 'block', 'function_ir']
+    
     def init(self, name: str, block: Block):
         self.name = name
         self.type = "Function"
@@ -17,5 +20,5 @@ class FunctionDef(AST_NODE):
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
 
-        for instr in self.block.children:
+        for instr in self.block.children:  # type: ignore
             instr.eval(self)

@@ -2,12 +2,11 @@ from rply import LexerGenerator
 
 
 class Lexer():
+    '''Lexer created using the `rply.LexerGenerator`'''
     def __init__(self):
         self.lexer = LexerGenerator()
 
     def _add_tokens(self):
-        # # Print
-        # self.lexer.add('PRINT', r'println')
         # Parenthesis
         self.lexer.add('OPEN_PAREN', r'\(')
         self.lexer.add('CLOSE_PAREN', r'\)')
@@ -27,8 +26,8 @@ class Lexer():
         self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
-        self.lexer.ignore('\s+')
-        self.lexer.ignore('//.*')
+        self.lexer.ignore(r'\s+')
+        self.lexer.ignore(r'//.*')
 
     def get_lexer(self):
         self._add_tokens()
