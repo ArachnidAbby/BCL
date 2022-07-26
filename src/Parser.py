@@ -146,7 +146,7 @@ class parser(parser_backend):
                 self.insert(3,"func_def", func)
                 self.consume(amount=3, index=0)
         
-        # todo: add function calling
+        # todo: add function calling. Make sure this inserts an `expr` node
     
     def parse_vars(self):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
@@ -156,18 +156,15 @@ class parser(parser_backend):
             # validate value
             var_name = self.peek(0)["value"]
             value = self.peek(2)["value"]
-            var = Ast.VariableAssign((-1,-1), '', None, var_name, value)
-            if self.current_block!=None:
-                self.current_block.variables[var_name] = None
-            else:
-                raise Exception("No Block for Variable Assignment to take place in")
+            var = Ast.VariableAssign((-1,-1), '', None, var_name, value, self.current_block)
             self.insert(3,"var_def", var)
             self.consume(amount=3, index=0)
         
         # * Variable References
         elif not self.check(1,"SET_VALUE"):
             if self.check(0,"KEYWORD") and self.current_block!=None and(self.peek(0)["value"] in self.current_block.variables.keys()):
-                var = Ast.VariableRef((-1,-1), '', None, self.peek(0)["value"])
+                print(self.current_block)
+                var = Ast.VariableRef((-1,-1), '', None, self.peek(0)["value"], self.current_block)
                 self.insert(1,"expr", var)
                 self.consume(amount=1, index=0)
 
@@ -199,15 +196,19 @@ class parser(parser_backend):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check(0,'expr'):
+        if self.check(0,'expr') and self.check(2,"expr"):
             if self.check(1,"SUM"):
-                if self.check(2,"expr"):
-                    self.insert(3,"expr",Ast.Sum((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                    self.consume(amount=3,index=0)
+                self.insert(3,"expr",Ast.Sum((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
             elif self.check(1,"SUB"):
-                if self.check(2,"expr"):
-                    self.insert(3,"expr",Ast.Sub((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                    self.consume(amount=3,index=0)
+                self.insert(3,"expr",Ast.Sub((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
+            elif self.check(1,"MUL"):
+                self.insert(3,"expr",Ast.Mul((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
+            elif self.check(1,"DIV"):
+                self.insert(3,"expr",Ast.Div((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
     
     # * code to be reimplemented later, from the ground up. This stays as a guide for future me.
     # def parse_parenth(self):

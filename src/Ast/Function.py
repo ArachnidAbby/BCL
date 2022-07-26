@@ -9,6 +9,7 @@ class FunctionDef(AST_NODE):
     def init(self, name: str, block: Block):
         self.name = name
         self.type = "Function"
+        self.ret_type = "void"
 
         self.builder = None
         self.block = block

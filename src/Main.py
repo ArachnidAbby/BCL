@@ -67,8 +67,8 @@ if __name__ == "__main__":
     else:
         example = '''
 define main {
-    x=9+2;
-    x=x+2;
+    x=9+2-3;
+    x=x+8/12-6*2;
 }
 '''
         compile(example)

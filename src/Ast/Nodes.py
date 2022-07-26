@@ -5,14 +5,16 @@ from llvmlite import ir
 
 class AST_NODE:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
-    __slots__ = ['name', 'type', 'children', 'position', 'token']
+    __slots__ = ['name', 'type', 'children', 'position', 'token', "ret_type", "is_operator"]
 
     def __init__(self, position: Tuple[int,int], token: str, children: None|List = None, *args):
         self.type = ""
         self.name = ""
+        self.ret_type = ""
         self.position = position        # (line#, col#)
         self.token = token  # source code of this NODE.
         self.children = [] if children==None else children
+        self.is_operator = False
 
 
         self.init(*args)
@@ -20,7 +22,7 @@ class AST_NODE:
     def init(self):
         pass
 
-    def eval(self):
+    def eval(self, func):
         pass
 
     # todo: rewrite and make this useful    
@@ -39,8 +41,9 @@ class Block(AST_NODE):
     def init(self):
         self.name = "Block"
         self.type = "Block"
+        self.ret_type = "void"
 
-        self.variables = dict() # {name: ptr, ...}
+        self.variables = dict() # {name: (ptr, type_str), ...}
         self.builder = None
     
     def append_child(self, child: AST_NODE):
