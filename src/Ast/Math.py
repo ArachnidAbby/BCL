@@ -16,7 +16,7 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
     
 
     # * shunt thru the AST
-    input_list = [node.children[1], node, node.children[0]] # node: R,M,L
+    input_list = [node.children[0], node, node.children[1]] # node: R,M,L
     for item in input_list:
         if not item.is_operator:
             output_queue.append(item)
@@ -37,10 +37,13 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
     while (not has_parent) and len(op_stack)>0:
         output_queue.append(op_stack.pop()[0])
 
+    print(output_queue)
+
     # * Create new Expression AST from output Queue
     while (not has_parent) and len(output_queue) > 1:
         stack = deque()
         for c,x in enumerate(output_queue):
+            print(stack, x,sep = "\n")
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()
                 if x == "sum":
@@ -120,7 +123,7 @@ class Sub(AST_NODE):
     
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval_math(func)
+            return shunt(self).eval(func)
         else:
             return self.eval_math(func)
 
@@ -152,7 +155,7 @@ class Mul(AST_NODE):
 
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval_math(func)
+            return shunt(self).eval(func)
         else:
             return self.eval_math(func)
 
@@ -183,6 +186,6 @@ class Div(AST_NODE):
 
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval_math(func)
+            return shunt(self).eval(func)
         else:
             return self.eval_math(func)
