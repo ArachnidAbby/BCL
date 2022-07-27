@@ -1,7 +1,7 @@
 import os
 import sys
 from typing import List
-
+from Ast import Function
 
 def make_project(args: List[str]):
     '''setup project files'''
@@ -32,25 +32,31 @@ lib/
 ''')
 
 
-def compile(source_code: str):
+def compile(source_code: str, output_loc: str):
     '''compile source code'''
     import Codegen
     import Parser
     from Lexer import Lexer
+    import Ast.Standard_Functions
     lexer = Lexer().get_lexer()
     tokens = lexer.lex(example)
     codegen = Codegen.CodeGen()
 
     module = codegen.module
+    Ast.Standard_Functions.declare_printf(module)
     # printf = codegen.printf
     output = []
     for x in tokens:
-        output.append({"name":x.name,"value":x.value,"source_pos":x.source_pos})
+        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno]})
     pg = Parser.parser(output, module)
     parsed = pg.parse()
+
+    Function.process_func_call()
     for x in parsed:
-        x["value"].eval(module)
+        x["value"].eval()
+
     print(module, type(module))
+    codegen.save_ir(output_loc)
 
 
 
@@ -69,6 +75,12 @@ if __name__ == "__main__":
 define main {
     x=9+2-3;
     x=x+8/12-6*2;
+    (89+(2-3))*2;
+    test();
+}
+
+define test {
+    x=3+4;
 }
 '''
-        compile(example)
+        compile(example, "test.ll")

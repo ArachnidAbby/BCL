@@ -1,6 +1,16 @@
+from llvmlite import ir
 
-# todo: add to this file
+from . import Function
 
+
+printf = None
+
+def declare_printf(module):
+    global printf
+    voidptr_ty = ir.IntType(8).as_pointer()
+    printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
+    printf = ir.Function(module, printf_ty, name="printf")
+    Function.functions["__printf"] = printf
 
 # from llvmlite import ir
 # import Errors
@@ -32,18 +42,3 @@
 
 #         # Call Print Function
 #         self.builder.call(self.printf, [fmt_arg, value])
-
-# class Println(StandardFunction):
-#     def eval(self):
-#         self.argNum = 1
-#         super().eval()
-#         #print(self.value)
-#         value = self.args.eval()[0]
-
-#         # Declare argument list
-#         voidptr_ty = ir.IntType(8).as_pointer()
-#         if self.args.stuff[0].type=="number":
-#             #fmt_arg = self.builder.bitcast(self.program.global_fmt_int_n, voidptr_ty)
-#             self.builder.call(self.printf, [self.program.fmt_int_n,value])
-#         else:
-#             self.builder.call(self.printf, [self.program.fmt_string_n,value])

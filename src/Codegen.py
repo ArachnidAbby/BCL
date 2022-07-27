@@ -11,7 +11,7 @@ class CodeGen():
         self.binding.initialize_native_asmprinter()
         self._config_llvm()
         self._create_execution_engine()
-        self._declare_print_function()
+        # self._declare_print_function()
 
     def _config_llvm(self):
         # Config LLVM

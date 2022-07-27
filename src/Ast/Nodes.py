@@ -48,3 +48,26 @@ class Block(AST_NODE):
     
     def append_child(self, child: AST_NODE):
         self.children.append(child)
+
+class ParenthBlock(AST_NODE):
+    '''Provides a node for parenthesis as an expression or tuple'''
+    __slots__ = []
+
+    def init(self):
+        self.name = "Parenth"
+        self.type = "Parenth"
+        
+        # * tuples return `void` but an expr returns the same data as its child
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+        # print(len(self.children)==1)
+    
+    def append_child(self, child: AST_NODE):
+        self.children.append(child)
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+    
+    def eval(self, func):
+        for c, child in enumerate(self.children):
+            self.children[c] = child.eval(func)
+        
+        if len(self.children)==1:
+            return self.children[0]
