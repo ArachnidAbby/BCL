@@ -74,9 +74,12 @@ if __name__ == "__main__":
         example = '''
 define main {
     x=9+2-3;
-    x=x+8/12-6*2;
+    y = 8;
+    x=x+y/12-6*2;
     (89+(2-3))*2;
     test();
+    print_int x;
+    print_int y;
 }
 
 define test {

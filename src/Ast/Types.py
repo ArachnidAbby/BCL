@@ -23,6 +23,9 @@ class Integer_32(AST_NODE):
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
+    
+    def __repr__(self):
+        return f"<AST_I32_Literal: {self.value}>"
 
 class Float_64(AST_NODE):
     '''The standard Float_64 type implementation that also acts as all other `expr` nodes do.'''
@@ -46,9 +49,37 @@ class Float_64(AST_NODE):
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
 
+# class String_Literal(AST_NODE):
+#     __slots__ = ["value", "ir_type"]
+
+#     def init(self, value, module):
+#         self.name = "Str"
+#         self.type = "Literal"
+#         self.ret_type = "str"
+
+#         fmt = "%i \n\0"
+#         self.ir_type = ir.Constant(ir.ArrayType(ir.IntType(8), len(value)),
+#                             bytearray(fmt.encode("utf8")))
+#         self.value = ir.GlobalVariable(module, self.ir_type.type)
+#         self.value.linkage = 'internal'
+#         self.value.global_constant = True
+#         self.value.initializer = self.ir_type
+    
+#     @staticmethod
+#     def convert_from(typ: str, previous):
+#         if typ!= 'f64': previous.sitofp(Float_64.ir_type)
+        
+#         return previous
+
+
+#     def eval(self, func) -> ir.Constant:
+        
+#         return ir.Constant(self.ir_type, self.value)
+
 types = {
     "i32": Integer_32,
     'f64': Float_64
+    # 'string': String_Literal
 }
 
 def list_type_conversion(objs: List[AST_NODE]):
@@ -64,7 +95,7 @@ def list_type_conversion(objs: List[AST_NODE]):
 
 def type_conversion(self: AST_NODE,  other: AST_NODE):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority_raw = ['i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
+    conversion_priority_raw = ['unknown','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
     largest_priority = max(

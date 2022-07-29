@@ -6,7 +6,8 @@ functions = {}
 func_calls = []
 
 def process_func_call():
-    print(functions, func_calls)
+    # print(functions)
+    # print(func_calls)
     for func in func_calls:
         name = func.name
         func.ret_type = functions[name][1]
@@ -63,6 +64,8 @@ class FunctionCall(AST_NODE):
     def eval(self, func):
         function = functions[self.name][0]
         x = self.paren.eval(func)
-        args = self.paren.children if x==None else x
+        args = self.paren.children if x==None else [x]
+        
+        # print(functions[self.name], args)
         
         return func.builder.call(function, args)
