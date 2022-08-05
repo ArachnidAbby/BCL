@@ -24,6 +24,7 @@ class Lexer():
         self.lexer.add('SET_VALUE', r'\=')
         # Number
         self.lexer.add('NUMBER', r'\d+')
+        self.lexer.add('NUMBER_F', r'\d+((\.\d+f)|(\.\d+)|f)')
         # Keywords and strings
         self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')
         self.lexer.add('KEYWORD', r'(\w+)')

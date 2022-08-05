@@ -59,6 +59,25 @@ class parser_backend():
             return False
         return x["name"]==wanting
 
+    def check_group(self, start_index: int, wanting: str) -> bool:
+        '''check a group  of tokens in the format 'token1 token2 token3|token3alt ...' '''
+        tokens = wanting.split(' ')
+        output = []
+
+        for c,x in enumerate(tokens):
+            if x == '_': # skip tokens/allow any
+                continue
+            elif '|' in x: # `or` operation
+                output.append(any([self.check(c+start_index,y) for y in x.split('|')]))
+            elif x.startswith('!'): # `not` operation
+                print(x[1:])
+                output.append(not self.check(c+start_index,x[1:]))
+            else:
+                output.append(self.check(c+start_index,x))
+
+        return all(output)
+
+
 class parser(parser_backend):
     def __init__(self, *args, **kwargs):
         self.current_block = None
@@ -151,7 +170,7 @@ class parser(parser_backend):
                 self.consume(amount=3, index=0)
         
         # todo: add function calling. Make sure this inserts an `expr` node
-        elif self.check(0,"KEYWORD") and (self.check(1, "expr") or self.check(1, "paren")):
+        elif self.check_group(0,"KEYWORD expr|paren"):
             # if self.peek(0)["value"] in Ast.Function.functions.keys():
             func_name = self.peek(0)["value"]
             args = self.peek(1)["value"]
@@ -163,7 +182,7 @@ class parser(parser_backend):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
 
         # * Variable Assignment
-        if self.check(0,"KEYWORD") and self.check(1,"SET_VALUE") and self.check(2,"expr") and self.check(3,"SEMI_COLON"):
+        if self.check_group(0,"KEYWORD SET_VALUE expr SEMI_COLON"):
             # validate value
             var_name = self.peek(0)["value"]
             value = self.peek(2)["value"]
@@ -172,8 +191,8 @@ class parser(parser_backend):
             self.consume(amount=3, index=0)
         
         # * Variable References
-        elif not self.check(1,"SET_VALUE"):
-            if self.check(0,"KEYWORD") and self.current_block!=None and(self.peek(0)["value"] in self.current_block.variables.keys()):
+        elif self.current_block!=None and self.check_group(-1,"!SET_VALUE KEYWORD"):
+            if self.peek(0)["value"] in self.current_block.variables.keys():
                 var = Ast.VariableRef((-1,-1), '', None, self.peek(0)["value"], self.current_block)
                 self.insert(1,"expr", var)
                 self.consume(amount=1, index=0)
@@ -190,15 +209,13 @@ class parser(parser_backend):
             self.consume(amount=1,index=0)
 
         # * allow leading `+` or `-`.
-        elif not self.check(-1,'expr'):
+        elif self.check_group(-1,'!expr SUB|SUM NUMBER'):
             if self.check(0,"SUB"):
-                if self.check(1,"NUMBER"):
-                    self.insert(2, "expr", create_num(1,-1))
-                    self.consume(amount=2,index=0)
+                self.insert(2, "expr", create_num(1,-1))
+                self.consume(amount=2,index=0)
             elif self.check(0,"SUM"):
-                if self.check(1,"NUMBER"):
-                    self.insert(2, "expr", create_num(1,1))
-                    self.consume(amount=2,index=0)
+                self.insert(2, "expr", create_num(1,1))
+                self.consume(amount=2,index=0)
     
     def parse_math(self):
         '''Parse mathematical expressions'''
@@ -206,7 +223,7 @@ class parser(parser_backend):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check(0,'expr') and self.check(2,"expr"):
+        if self.check_group(0,'expr _ expr'):
             if self.check(1,"SUM"):
                 self.insert(3,"expr",Ast.Sum((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
                 self.consume(amount=3,index=0)
