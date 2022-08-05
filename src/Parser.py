@@ -70,7 +70,7 @@ class parser_backend():
             elif '|' in x: # `or` operation
                 output.append(any([self.check(c+start_index,y) for y in x.split('|')]))
             elif x.startswith('!'): # `not` operation
-                print(x[1:])
+                # print(x[1:])
                 output.append(not self.check(c+start_index,x[1:]))
             else:
                 output.append(self.check(c+start_index,x))

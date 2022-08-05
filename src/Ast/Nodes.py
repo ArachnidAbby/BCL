@@ -10,7 +10,7 @@ class AST_NODE:
     def __init__(self, position: Tuple[int,int], token: str, children: None|List = None, *args):
         self.type = ""
         self.name = ""
-        self.ret_type = ""
+        self.ret_type = "pre-eval ret type"
         self.position = position        # (line#, col#)
         self.token = token  # source code of this NODE.
         self.children = [] if children==None else children
@@ -20,6 +20,10 @@ class AST_NODE:
         self.init(*args)
     
     def init(self):
+        pass
+
+    def pre_eval(self):
+        '''pre evaluation step that will likely be to determine ret_type of nodes that don't have a definite return type'''
         pass
 
     def eval(self, func):
@@ -46,6 +50,10 @@ class Block(AST_NODE):
         self.variables = dict() # {name: (ptr, type_str), ...}
         self.builder = None
     
+    def pre_eval(self):
+        for x in self.children:
+            x.pre_eval()
+
     def append_child(self, child: AST_NODE):
         self.children.append(child)
 
@@ -58,9 +66,15 @@ class ParenthBlock(AST_NODE):
         self.type = "Parenth"
         
         # * tuples return `void` but an expr returns the same data as its child
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+        
         # print(len(self.children)==1)
     
+    def pre_eval(self):
+        for x in self.children:
+            x.pre_eval()
+        
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+
     def append_child(self, child: AST_NODE):
         self.children.append(child)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"

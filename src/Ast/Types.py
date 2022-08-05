@@ -39,6 +39,8 @@ class Float_64(AST_NODE):
         self.type = "Literal"
         self.ret_type = "f64"
     
+    # def pre_eval(self)
+    
     @staticmethod
     def convert_from(typ: str, previous):
         if typ!= 'f64': previous.sitofp(Float_64.ir_type)

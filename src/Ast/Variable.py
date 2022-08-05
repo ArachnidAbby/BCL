@@ -16,8 +16,13 @@ class VariableAssign(AST_NODE):
             block.variables[self.name] = (None, self.value.ret_type)
         else:
             raise Exception("No Block for Variable Assignment to take place in")
+        
+    def pre_eval(self):
+        self.value.pre_eval()
     
     def eval(self, func):
+        self.value.pre_eval()
+        
         if func.block.variables[self.name][0]==None:
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
             func.block.variables[self.name] = (ptr, self.value.ret_type)
@@ -28,13 +33,15 @@ class VariableAssign(AST_NODE):
 
 class VariableRef(AST_NODE):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = []
+    __slots__ = ['block']
 
     def init(self, name: str, block):
         self.name = name
         self.type = "variableRef"
-        print(block)
-        self.ret_type = block.variables[self.name][1] # get variable type {name: (ptr, type)}
+        self.block = block
+    
+    def pre_eval(self):
+        self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type)}
     
     def eval(self, func):
         ptr = func.block.variables[self.name][0] # get variable ptr

@@ -67,13 +67,18 @@ class Sum(AST_NODE):
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
 
     def init(self, shunted = False):
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
         self.shunted = shunted
 
-        self.ir_type = Types.types[self.ret_type].ir_type
         self.is_operator = True
         self.op_type = "sum"
         self.operator_precendence = 1
+    
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
@@ -89,8 +94,9 @@ class Sum(AST_NODE):
     
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval_math(func)
+            return shunt(self).eval(func)
         else:
+            self.pre_eval()
             return self.eval_math(func)
 
 class Sub(AST_NODE):
@@ -98,13 +104,18 @@ class Sub(AST_NODE):
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
         self.shunted = shunted
 
-        self.ir_type = Types.types[self.ret_type].ir_type
         self.is_operator = True
         self.op_type = "sub"
         self.operator_precendence = 1
+    
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
@@ -122,6 +133,7 @@ class Sub(AST_NODE):
         if not self.shunted:
             return shunt(self).eval(func)
         else:
+            self.pre_eval()
             return self.eval_math(func)
 
 
@@ -130,13 +142,17 @@ class Mul(AST_NODE):
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-
         self.shunted = shunted
-        self.ir_type = Types.types[self.ret_type].ir_type
         self.is_operator = True
         self.op_type = "mul"
         self.operator_precendence = 2
+    
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
@@ -154,6 +170,7 @@ class Mul(AST_NODE):
         if not self.shunted:
             return shunt(self).eval(func)
         else:
+            self.pre_eval()
             return self.eval_math(func)
 
 class Div(AST_NODE):
@@ -161,13 +178,17 @@ class Div(AST_NODE):
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-
         self.shunted = shunted
-        self.ir_type = Types.types[self.ret_type].ir_type
         self.is_operator = True
         self.op_type = "div"
         self.operator_precendence = 2
+
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
@@ -185,4 +206,5 @@ class Div(AST_NODE):
         if not self.shunted:
             return shunt(self).eval(func)
         else:
+            self.pre_eval()
             return self.eval_math(func)
