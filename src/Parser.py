@@ -70,8 +70,9 @@ class parser_backend():
             elif '|' in x: # `or` operation
                 output.append(any([self.check(c+start_index,y) for y in x.split('|')]))
             elif x.startswith('!'): # `not` operation
-                # print(x[1:])
                 output.append(not self.check(c+start_index,x[1:]))
+            elif x.startswith('$'): # `match value` operation
+                output.append(self.peek(c+start_index)["value"]==x[1:])
             else:
                 output.append(self.check(c+start_index,x))
 
@@ -81,6 +82,11 @@ class parser_backend():
 class parser(parser_backend):
     def __init__(self, *args, **kwargs):
         self.current_block = None
+        # self.forbidden_var_names = [
+        #     'define',
+        #     'i32',
+        #     ''
+        # ]
         # self.functions = dict
 
         super().__init__(*args, **kwargs)
@@ -109,6 +115,7 @@ class parser(parser_backend):
             self.parse_numbers()
             self.parse_math()
             self.parse_functions()
+            self.parse_special()
             self.parse_vars()
             self.parse_parenth() # * to be reimplemented in the next commits
             
@@ -127,6 +134,10 @@ class parser(parser_backend):
 
         # * main implementation
         output = Ast.Block((-1,-1),"")
+        if self.check(-1,"func_def_portion"):
+            self.peek(-1)["value"].block = output
+            for x in self.peek(-1)["value"].args.keys():
+                output.variables[x] = self.peek(-1)["value"].args[x]
 
         self._cursor+=1 # skip over '{'
         cursor_origin = self._cursor
@@ -160,16 +171,20 @@ class parser(parser_backend):
         '''Everything involving functions. Calling, definitions, etc.'''
 
         # * Function Definitions
-        if self.check(0,"KEYWORD") and self.peek(0)["value"]=="define":
-            if self.check(1,"KEYWORD") and self.check(2,"Block"):
-                func_name = self.peek(1)["value"]
-                block = self.peek(2)["value"]
-                func = Ast.FunctionDef((-1,-1), '', None, func_name, block, self.module)
-                # self.functions[func_name] = func
-                self.insert(3,"func_def", func)
-                self.consume(amount=3, index=0)
+        # if self.check(0,"KEYWORD") :
+        if self.check_group(0,"KEYWORD KEYWORD expr|paren") and self.peek(0)["value"]=="define":
+            func_name = self.peek(1)["value"]
+            block = self.peek(2)["value"]
+            func = Ast.FunctionDef((-1,-1), '', None, func_name, self.peek(2)["value"], block, self.module)
+            # self.functions[func_name] = func
+            self.insert(3,"func_def_portion", func)
+            self.consume(amount=3, index=0)
         
-        # todo: add function calling. Make sure this inserts an `expr` node
+        if self.check_group(0,"func_def_portion Block"):
+            self.insert(2,"func_def", self.peek(0)["value"])
+            self.consume(amount=2, index=0)
+        
+        # * Function Calls
         elif self.check_group(0,"KEYWORD expr|paren"):
             # if self.peek(0)["value"] in Ast.Function.functions.keys():
             func_name = self.peek(0)["value"]
@@ -177,6 +192,15 @@ class parser(parser_backend):
             func = Ast.FunctionCall(self.peek(0)["source_pos"], func_name, None, func_name, args)
             self.insert(2,"expr", func)
             self.consume(amount=2, index=0)
+    
+    def parse_special(self):
+        '''check special rules'''
+
+        # * KV pairs
+        if self.check_group(0, '_ COLON _'):
+            kv = Ast.Nodes.KeyValuePair((-1,-1), '', None, self.peek(0)["value"], self.peek(2)["value"])
+            self.insert(3,"kv_pair", kv)
+            self.consume(amount=3, index=0)
     
     def parse_vars(self):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''

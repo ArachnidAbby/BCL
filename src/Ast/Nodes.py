@@ -65,15 +65,20 @@ class ParenthBlock(AST_NODE):
         self.name = "Parenth"
         self.type = "Parenth"
         
-        # * tuples return `void` but an expr returns the same data as its child
-        
-        # print(len(self.children)==1)
-    
     def pre_eval(self):
         for x in self.children:
             x.pre_eval()
         
+        # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+
+    def is_key_value_pairs(self):
+        '''check if all children are `KV_pair`s, this is useful for func definitions'''
+        for x in self.children:
+            if not isinstance(x, KeyValuePair):
+                return False
+        return True        
+
 
     def append_child(self, child: AST_NODE):
         self.children.append(child)
@@ -85,3 +90,15 @@ class ParenthBlock(AST_NODE):
         
         if len(self.children)==1:
             return self.children[0]
+
+class KeyValuePair(AST_NODE):
+    '''For now, it does nothing special'''
+    __slots__ = ['key', 'value']
+
+    def init(self, k, v):
+        self.name = "kv_pair"
+        self.type = "kv_pair"
+        self.ret_type = "KV_Pair"
+
+        self.key =  k
+        self.value = v

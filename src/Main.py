@@ -51,8 +51,8 @@ def compile(source_code: str, output_loc: str):
     pg = Parser.parser(output, module)
     parsed = pg.parse()
 
-    Function.process_func_call()
     for x in parsed:
+        print(x)
         x["value"].eval()
 
     print(module, type(module))
@@ -72,18 +72,19 @@ if __name__ == "__main__":
 
     else:
         example = '''
-define main {
+define main() {
     x=9+2-3;
     y = 8;
     x=x+y/12-6*2;
     (89+(2-3))*2;
-    test();
+    test(2);
     print_int x;
     print_int y;
 }
 
-define test {
+define test(testingus: i32) {
     x=3+4;
+    print_int testingus
 }
 '''
         compile(example, "test.ll")

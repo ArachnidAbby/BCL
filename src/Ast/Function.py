@@ -1,6 +1,8 @@
 from llvmlite import ir
 
-from .Nodes import AST_NODE, Block
+from .Nodes import AST_NODE, Block, ParenthBlock
+from .Types import types
+import Errors
 
 functions = {}
 func_calls = []
@@ -14,9 +16,9 @@ def process_func_call():
 
 class FunctionDef(AST_NODE):
     '''Defines a function in the IR'''
-    __slots__ = ['builder', 'block', 'function_ir']
+    __slots__ = ['builder', 'block', 'function_ir', 'args']
     
-    def init(self, name: str, block: Block, module):
+    def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
         self.type = "Function"
         self.ret_type = "void"
@@ -24,7 +26,14 @@ class FunctionDef(AST_NODE):
         self.builder = None
         self.block = block
 
-        fnty = ir.FunctionType(ir.VoidType(), [], False)
+        if not args.is_key_value_pairs():
+            Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs")
+        
+        self.args = {x.key: [None, types[x.value].ir_type, True] for x in args.children}
+        print(self.args)
+        print([types[x.value].ir_type for x in args.children])
+
+        fnty = ir.FunctionType(ir.VoidType(), tuple([types[x.value].ir_type for x in args.children]), False)
 
         self.function_ir = ir.Function(module, fnty, name=self.name)
         
@@ -40,6 +49,11 @@ class FunctionDef(AST_NODE):
 
         global functions
         functions[self.name] = [self.function_ir, self.ret_type]
+
+        args = self.function_ir.args
+        print(args)
+        for c,x in enumerate(self.args.keys()):
+            self.block.variables[x][0] = args[c]
 
         self.block.pre_eval()
 
@@ -72,6 +86,7 @@ class FunctionCall(AST_NODE):
         self.paren.pre_eval()
 
         x = self.paren.eval(func)
+        print(x)
         args = self.paren.children if x==None else [x]
         
         # print(functions[self.name], args)

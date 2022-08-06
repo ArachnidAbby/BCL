@@ -13,7 +13,7 @@ class VariableAssign(AST_NODE):
         self.value = value
 
         if block!=None:
-            block.variables[self.name] = (None, self.value.ret_type)
+            block.variables[self.name] = (None, self.value.ret_type, False)
         else:
             raise Exception("No Block for Variable Assignment to take place in")
         
@@ -25,7 +25,7 @@ class VariableAssign(AST_NODE):
         
         if func.block.variables[self.name][0]==None:
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
-            func.block.variables[self.name] = (ptr, self.value.ret_type)
+            func.block.variables[self.name] = (ptr, self.value.ret_type, False)
         else:
             ptr = func.block.variables[self.name][0]
 
@@ -45,4 +45,6 @@ class VariableRef(AST_NODE):
     
     def eval(self, func):
         ptr = func.block.variables[self.name][0] # get variable ptr
-        return func.builder.load(ptr)
+        print(func.block.variables[self.name])
+        if not func.block.variables[self.name][2]: return func.builder.load(ptr) # var[2] is whether or not this is a static var
+        else: return ptr
