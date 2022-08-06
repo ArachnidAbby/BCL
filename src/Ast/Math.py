@@ -43,14 +43,9 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
         for c,x in enumerate(output_queue):
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()
-                if x == "sum":
-                    p = Sum((-1,-1), '',  [l[0],r[0]], True)
-                elif x == "sub":
-                    p = Sub((-1,-1), '',  [l[0],r[0]], True)
-                elif x == "mul":
-                    p = Mul((-1,-1), '',  [l[0],r[0]], True)
-                elif x == "div":
-                    p = Div((-1,-1), '',  [l[0],r[0]], True)
+                
+                p = ops[x]((-1,-1), '',  [l[0],r[0]], True)
+    
                 output_queue.pop(c)
                 output_queue.pop(r[1])
                 output_queue.pop(l[1])
@@ -62,7 +57,31 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
 
     if (not has_parent):return output_queue[0]
 
-class Sum(AST_NODE):
+class Operation(AST_NODE):
+    '''Operation class to define common behavior in Operations'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
+
+        # print(self.ret_type)
+    
+    def eval_math(self):
+        pass
+
+    def eval(self, func):
+        if not self.shunted:
+            return shunt(self).eval(func)
+        else:
+            self.pre_eval()
+            return self.eval_math(func)
+
+
+class Sum(Operation):
     '''Basic sum operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
 
@@ -73,17 +92,10 @@ class Sum(AST_NODE):
         self.op_type = "sum"
         self.operator_precendence = 1
     
-    def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-        self.ir_type = Types.types[self.ret_type].ir_type
-
     def eval_math(self, func):
         # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(self.children[1].ret_type, self.children[1].eval(func))
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
         match self.ret_type:
@@ -91,15 +103,8 @@ class Sum(AST_NODE):
                 return func.builder.add(lhs, rhs)
             case 'f64':
                 return func.builder.fadd(lhs, rhs)
-    
-    def eval(self, func):
-        if not self.shunted:
-            return shunt(self).eval(func)
-        else:
-            self.pre_eval()
-            return self.eval_math(func)
 
-class Sub(AST_NODE):
+class Sub(Operation):
     '''Basic sub operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
@@ -109,18 +114,11 @@ class Sub(AST_NODE):
         self.is_operator = True
         self.op_type = "sub"
         self.operator_precendence = 1
-    
-    def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[1].eval(func))
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
         match self.ret_type:
@@ -128,16 +126,8 @@ class Sub(AST_NODE):
                 return func.builder.sub(lhs, rhs)
             case 'f64':
                 return func.builder.fsub(lhs, rhs)
-    
-    def eval(self, func):
-        if not self.shunted:
-            return shunt(self).eval(func)
-        else:
-            self.pre_eval()
-            return self.eval_math(func)
 
-
-class Mul(AST_NODE):
+class Mul(Operation):
     '''Basic sub operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
@@ -146,18 +136,11 @@ class Mul(AST_NODE):
         self.is_operator = True
         self.op_type = "mul"
         self.operator_precendence = 2
-    
-    def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-        self.ir_type = Types.types[self.ret_type].ir_type
 
     def eval_math(self, func):
         # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[1].eval(func))
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
         match self.ret_type:
@@ -166,14 +149,7 @@ class Mul(AST_NODE):
             case 'f64':
                 return func.builder.fmul(lhs, rhs)
 
-    def eval(self, func):
-        if not self.shunted:
-            return shunt(self).eval(func)
-        else:
-            self.pre_eval()
-            return self.eval_math(func)
-
-class Div(AST_NODE):
+class Div(Operation):
     '''Basic sub operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
@@ -183,17 +159,10 @@ class Div(AST_NODE):
         self.op_type = "div"
         self.operator_precendence = 2
 
-    def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-        self.ir_type = Types.types[self.ret_type].ir_type
-
     def eval_math(self, func):
         # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(self.children[0].ret_type, self.children[1].eval(func))
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
         match self.ret_type:
@@ -202,9 +171,67 @@ class Div(AST_NODE):
             case 'f64':
                 return func.builder.fdiv(lhs, rhs)
 
-    def eval(self, func):
-        if not self.shunted:
-            return shunt(self).eval(func)
-        else:
-            self.pre_eval()
-            return self.eval_math(func)
+class Mod(Operation):
+    '''Basic sub operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = "mod"
+        self.operator_precendence = 2
+
+    def eval_math(self, func):
+        # * do conversions on args
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
+        print(lhs, self.children[0].ret_type)
+
+        # * do correct add function
+        match self.ret_type:
+            case 'i32':
+                return func.builder.srem(lhs, rhs)
+            case 'f64':
+                return func.builder.frem(lhs, rhs)
+
+class Eq(Operation):
+    '''Basic sub operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = "eq"
+        self.operator_precendence = 0
+
+    def pre_eval(self, revert_type = True):
+        super().pre_eval()
+        if revert_type:
+            self.ret_type = 'i1'
+            self.ir_type = Types.Integer_1.ir_type
+        
+
+    def eval_math(self, func):
+        # * do conversions on args
+        self.pre_eval(revert_type = False)
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
+        
+        # * do correct add function
+        match self.ret_type:
+            case 'i32':
+                self.ret_type = 'i1'
+                return func.builder.icmp_signed('==', lhs, rhs)
+            case 'f64':
+                self.ret_type = 'i1'
+                return func.builder.fcmp_ordered('==', lhs, rhs)
+
+
+ops = {
+    "sum": Sum,
+    "sub": Sub,
+    "mul": Mul,
+    "div": Div,
+    "mod": Mod,
+    "eq": Eq
+}

@@ -29,7 +29,7 @@ class FunctionDef(AST_NODE):
         if not args.is_key_value_pairs():
             Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs")
         
-        self.args = {x.key: [None, types[x.value].ir_type, True] for x in args.children}
+        self.args = {x.key: [None, x.value, True] for x in args.children}
         print(self.args)
         print([types[x.value].ir_type for x in args.children])
 
@@ -51,7 +51,8 @@ class FunctionDef(AST_NODE):
         functions[self.name] = [self.function_ir, self.ret_type]
 
         args = self.function_ir.args
-        print(args)
+        print(self.block.children)
+        # print(args)
         for c,x in enumerate(self.args.keys()):
             self.block.variables[x][0] = args[c]
 
@@ -86,7 +87,6 @@ class FunctionCall(AST_NODE):
         self.paren.pre_eval()
 
         x = self.paren.eval(func)
-        print(x)
         args = self.paren.children if x==None else [x]
         
         # print(functions[self.name], args)

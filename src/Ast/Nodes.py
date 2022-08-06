@@ -59,11 +59,12 @@ class Block(AST_NODE):
 
 class ParenthBlock(AST_NODE):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = []
+    __slots__ = ['ir_type']
 
     def init(self):
         self.name = "Parenth"
         self.type = "Parenth"
+        self.ir_type = "INVALID"
         
     def pre_eval(self):
         for x in self.children:
@@ -71,6 +72,8 @@ class ParenthBlock(AST_NODE):
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
+        if self.ret_type!="void":
+            self.ir_type = self.children[0].ir_type
 
     def is_key_value_pairs(self):
         '''check if all children are `KV_pair`s, this is useful for func definitions'''
@@ -100,5 +103,5 @@ class KeyValuePair(AST_NODE):
         self.type = "kv_pair"
         self.ret_type = "KV_Pair"
 
-        self.key =  k
+        self.key = k
         self.value = v

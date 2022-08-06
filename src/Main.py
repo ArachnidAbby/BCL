@@ -73,18 +73,19 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    x=9+2-3;
-    y = 8;
-    x=x+y/12-6*2;
-    (89+(2-3))*2;
-    test(2);
-    print_int x;
-    print_int y;
+    fizzbuzz(0);
 }
 
-define test(testingus: i32) {
-    x=3+4;
-    print_int testingus
+define fizzbuzz(current: i32) {
+    // prints 1 for "fizz"
+    // prints 2 for "buzz"
+    // prints 3 for "fizzbuzz"
+    fizz = ((current%3)==0);
+    buzz = ((current%5)==0)*2;
+
+    print_int(fizz+buzz); 
+
+    fizzbuzz(current+1);
 }
 '''
         compile(example, "test.ll")

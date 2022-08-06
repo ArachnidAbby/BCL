@@ -21,7 +21,9 @@ class Lexer():
         self.lexer.add('SUM', r'\+')
         self.lexer.add('MUL', r'\*')
         self.lexer.add('DIV', r'/{1,}')
-        self.lexer.add('SUB', r'\-') 
+        self.lexer.add('SUB', r'\-')
+        self.lexer.add('MOD', r'\%') 
+        self.lexer.add('EQ', r'\=\=') 
         self.lexer.add('SET_VALUE', r'\=')
         # Number
         self.lexer.add('NUMBER', r'\d+')

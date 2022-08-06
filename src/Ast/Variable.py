@@ -22,12 +22,14 @@ class VariableAssign(AST_NODE):
     
     def eval(self, func):
         self.value.pre_eval()
+        print("TUNGUS:", func.block.variables[self.name])
         
         if func.block.variables[self.name][0]==None:
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
             func.block.variables[self.name] = (ptr, self.value.ret_type, False)
         else:
             ptr = func.block.variables[self.name][0]
+            func.block.variables[self.name][2] = False
 
         func.builder.store(self.value.eval(func), ptr)
 
@@ -41,10 +43,10 @@ class VariableRef(AST_NODE):
         self.block = block
     
     def pre_eval(self):
-        self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type)}
+        self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type, is_const)}
     
     def eval(self, func):
         ptr = func.block.variables[self.name][0] # get variable ptr
-        print(func.block.variables[self.name])
+        # print(func.block.variables[self.name])
         if not func.block.variables[self.name][2]: return func.builder.load(ptr) # var[2] is whether or not this is a static var
         else: return ptr

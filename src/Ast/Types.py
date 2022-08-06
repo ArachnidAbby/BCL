@@ -3,6 +3,30 @@ from llvmlite import ir
 
 from .Nodes import AST_NODE
 
+
+class Integer_1(AST_NODE):
+    '''The standard Integer_32 type implementation that also acts as all other `expr` nodes do.'''
+    __slots__ = ["value"]
+
+    ir_type = ir.IntType(1)
+
+    def init(self, value):
+        self.value = value
+        self.name = "I1"
+        self.type = "Literal"
+        self.ret_type = "i1"
+
+    @staticmethod
+    def convert_from(func, typ: str, previous):
+        if typ!= 'i1': return func.builder.zext(previous, Integer_32.ir_type)
+        
+        return previous
+
+    def eval(self, func) -> ir.Constant:
+        return ir.Constant(self.ir_type, self.value)
+    
+    def __repr__(self):
+        return f"<AST_I1_Literal: {self.value}>"
 class Integer_32(AST_NODE):
     '''The standard Integer_32 type implementation that also acts as all other `expr` nodes do.'''
     __slots__ = ["value"]
@@ -16,10 +40,11 @@ class Integer_32(AST_NODE):
         self.ret_type = "i32"
 
     @staticmethod
-    def convert_from(typ: str, previous):
-        if typ!= 'i32': previous.fptosi(Integer_32.ir_type)
-        
-        return previous
+    def convert_from(func, typ: str, previous):
+        if typ== 'f64': return func.builder.fptosi(previous,Integer_32.ir_type)
+        elif typ== 'i1': return func.builder.zext(previous, Integer_32.ir_type)
+        else: return previous
+
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
@@ -42,7 +67,7 @@ class Float_64(AST_NODE):
     # def pre_eval(self)
     
     @staticmethod
-    def convert_from(typ: str, previous):
+    def convert_from(func, typ: str, previous):
         if typ!= 'f64': previous.sitofp(Float_64.ir_type)
         
         return previous
@@ -79,6 +104,7 @@ class Float_64(AST_NODE):
 #         return ir.Constant(self.ir_type, self.value)
 
 types = {
+    'i1': Integer_1,
     "i32": Integer_32,
     'f64': Float_64
     # 'string': String_Literal
@@ -86,7 +112,7 @@ types = {
 
 def list_type_conversion(objs: List[AST_NODE]):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority_raw = ['i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
+    conversion_priority_raw = ['i1','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
     largest_priority = max(
@@ -97,7 +123,7 @@ def list_type_conversion(objs: List[AST_NODE]):
 
 def type_conversion(self: AST_NODE,  other: AST_NODE):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority_raw = ['unknown','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
+    conversion_priority_raw = ['unknown','i1','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
     largest_priority = max(

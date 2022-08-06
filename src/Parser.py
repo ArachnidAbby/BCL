@@ -260,6 +260,12 @@ class parser(parser_backend):
             elif self.check(1,"DIV"):
                 self.insert(3,"expr",Ast.Div((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
                 self.consume(amount=3,index=0)
+            elif self.check(1,"MOD"):
+                self.insert(3,"expr",Ast.Mod((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
+            elif self.check(1,"EQ"):
+                self.insert(3,"expr",Ast.Eq((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
+                self.consume(amount=3,index=0)
     
     def parse_parenth(self):
         '''Parses blocks of parenthises'''
