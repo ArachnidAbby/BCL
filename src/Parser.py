@@ -85,6 +85,9 @@ class parser(parser_backend):
         self.statements = [
             'return'
         ]
+        self.keywords = [
+            "define"
+        ]
 
         super().__init__(*args, **kwargs)
 
@@ -162,12 +165,15 @@ class parser(parser_backend):
         '''Everything involving functions. Calling, definitions, etc.'''
 
         # * Function Definitions
-        if self.check_group(0,"$define KEYWORD expr|paren"):
-            func_name = self.peek(1)["value"]
-            block = self.peek(2)["value"]
-            func = Ast.FunctionDef((-1,-1), '', None, func_name, self.peek(2)["value"], block, self.module)
-            self.insert(3,"func_def_portion", func)
-            self.consume(amount=3, index=0)
+        if self.check_group(0,"KEYWORD KEYWORD expr|paren"):
+            if self.peek(0)['value'] == 'define':
+                func_name = self.peek(1)["value"]
+                block = self.peek(2)["value"]
+                func = Ast.FunctionDef((-1,-1), '', None, func_name, self.peek(2)["value"], block, self.module)
+                self.insert(3,"func_def_portion", func)
+                self.consume(amount=3, index=0)
+            else:
+                error(f"invalid syntax '{self.peek(0)['value']}'")
         
         # * Set Function Return Type 
         elif self.check_group(0,"func_def_portion RIGHT_ARROW KEYWORD"):
@@ -310,7 +316,6 @@ class parser(parser_backend):
 
         while (not self.isEOF(self._cursor+counter)) and (not self.check(counter, "CLOSE_PAREN")):
             if (not self.check(counter,'COMMA')) and allow_next:
-                print(self.peek(counter))
                 output.append_child(self.peek(counter)["value"])
                 allow_next = False
             elif self.check(counter,'COMMA'):

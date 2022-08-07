@@ -9,7 +9,7 @@ func_calls = []
 
 class FunctionDef(AST_NODE):
     '''Defines a function in the IR'''
-    __slots__ = ['builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set']
+    __slots__ = ['builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types']
     
     def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
@@ -26,6 +26,7 @@ class FunctionDef(AST_NODE):
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
         self.args_ir = tuple([types[x.value].ir_type for x in args.children])
+        self.args_types = tuple([x.value for x in args.children])
         # print(self.args)
         # print([types[x.value].ir_type for x in args.children])
 
@@ -35,14 +36,17 @@ class FunctionDef(AST_NODE):
         self.function_ir = ir.Function(self.module, fnty, name=self.name)
         
         global functions
-        functions[self.name] = [self.function_ir, self.ret_type]
+        if self.name not in functions:
+            functions[self.name] = dict()
+        
+        functions[self.name][self.args_types] = [self.function_ir, self.ret_type]
     
     def eval(self):
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
 
-        global functions
-        functions[self.name] = [self.function_ir, self.ret_type]
+        # global functions
+        # functions[self.name] = [self.function_ir, self.ret_type]
 
         args = self.function_ir.args
         
@@ -76,7 +80,7 @@ class ReturnStatement(AST_NODE):
         func.builder.ret(self.expr.eval(func))
 class FunctionCall(AST_NODE):
     '''Defines a function in the IR'''
-    __slots__ = ['ir_type', 'paren', 'function']
+    __slots__ = ['ir_type', 'paren', 'function', 'args_types']
     
     def init(self, name: str, parenth: AST_NODE):
         self.name = name
@@ -90,14 +94,17 @@ class FunctionCall(AST_NODE):
         self.paren = parenth
     
     def pre_eval(self):
-        self.ret_type = functions[self.name][1]
-        self.ir_type = types[self.ret_type].ir_type
-        self.function = functions[self.name][0]
-    
-    def eval(self, func):
-        
         self.paren.pre_eval()
 
+        self.args_types = tuple([x.ret_type for x in self.paren.children])
+        if self.name not in functions:
+            Errors.error(f"function '{self.name}' was never defined")
+
+        self.ret_type = functions[self.name][self.args_types][1]
+        self.ir_type = types[self.ret_type].ir_type
+        self.function = functions[self.name][self.args_types][0]
+    
+    def eval(self, func):
         x = self.paren.eval(func)
         args = self.paren.children if x==None else [x]
         

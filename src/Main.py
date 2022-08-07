@@ -50,10 +50,10 @@ def compile(source_code: str, output_loc: str):
     for x in tokens:
         output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno]})
     
-    print("\n".join([f"TOKEN: {x['name']}, {x['value']}" for x in output]))
+    # print("\n".join([f"TOKEN: {x['name']}, {x['value']}" for x in output]))
     pg = Parser.parser(output, module)
     parsed = pg.parse()
-    print(parsed)
+    # print(parsed)
     
 
     for x in parsed:
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    fizzbuzz(0);
+    //fizzbuzz(0);
 }
 
 define as_int(in: bool) -> i32 {
@@ -95,6 +95,8 @@ define remainder_test(value: i32, divider: i32) -> bool {
     return (value % divider) == 0;
 }
 
+define jj() ->
+
 define fizzbuzz(current: i32) {
     // prints 1 for "fizz"
     // prints 2 for "buzz"
@@ -102,7 +104,7 @@ define fizzbuzz(current: i32) {
     fizz = remainder_test(current, 3).as_int();
     buzz = remainder_test(current, 5)*2;
 
-    print_int(fizz+buzz); 
+    println(fizz+buzz); 
 
     fizzbuzz(current+1);
 }

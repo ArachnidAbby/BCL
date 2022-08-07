@@ -10,7 +10,7 @@ def declare_printf(module):
     voidptr_ty = ir.IntType(8).as_pointer()
     printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
     printf = ir.Function(module, printf_ty, name="printf")
-    Function.functions["__printf"] = printf
+    Function.functions["__printf"] = [printf,'void']
 
     fmt = "%i \n\0"
     c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
@@ -46,7 +46,9 @@ def declare_printf(module):
     # )
 
     
-    Function.functions["print_int"] = [printint, "void"]
+    Function.functions["println"] = {}
+    Function.functions["println"][('i32',)] = [printint, "void"]
+    print(Function.functions)
 
 
 

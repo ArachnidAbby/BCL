@@ -1,5 +1,6 @@
 from copy import copy
 from typing import List, Tuple
+from Errors import error
 
 from llvmlite import ir
 
@@ -53,6 +54,8 @@ class Block(AST_NODE):
     
     def pre_eval(self):
         for x in self.children:
+            if isinstance(x, str):
+                error(f"Variable '{x}' not defined.")
             x.pre_eval()
 
     def append_child(self, child: AST_NODE):
@@ -85,6 +88,8 @@ class ParenthBlock(AST_NODE):
 
     def append_child(self, child: AST_NODE):
         self.children.append(child)
+        if isinstance(child, str):
+            error(f"Variable '{child}' not defined.")
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else "void"
     
     def eval(self, func):
