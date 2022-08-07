@@ -14,11 +14,11 @@ class Integer_1(AST_NODE):
         self.value = value
         self.name = "I1"
         self.type = "Literal"
-        self.ret_type = "i1"
+        self.ret_type = "bool"
 
     @staticmethod
     def convert_from(func, typ: str, previous):
-        if typ!= 'i1': return func.builder.zext(previous, Integer_32.ir_type)
+        if typ!= 'bool': return func.builder.zext(previous, Integer_32.ir_type)
         
         return previous
 
@@ -42,7 +42,7 @@ class Integer_32(AST_NODE):
     @staticmethod
     def convert_from(func, typ: str, previous):
         if typ== 'f64': return func.builder.fptosi(previous,Integer_32.ir_type)
-        elif typ== 'i1': return func.builder.zext(previous, Integer_32.ir_type)
+        elif typ== 'bool': return func.builder.zext(previous, Integer_32.ir_type)
         else: return previous
 
 
@@ -76,6 +76,28 @@ class Float_64(AST_NODE):
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
 
+class Void(AST_NODE):
+    '''The standard Void type'''
+    __slots__ = ["value"]
+
+    ir_type = ir.VoidType()
+
+    def init(self, value):
+        self.value = value
+        self.name = "Void"
+        self.type = "Literal"
+        self.ret_type = "void"
+    
+    # def pre_eval(self)
+    
+    @staticmethod
+    def convert_from(func, typ: str, previous):
+        pass
+
+
+    def eval(self, func):
+        pass
+
 # class String_Literal(AST_NODE):
 #     __slots__ = ["value", "ir_type"]
 
@@ -104,7 +126,8 @@ class Float_64(AST_NODE):
 #         return ir.Constant(self.ir_type, self.value)
 
 types = {
-    'i1': Integer_1,
+    'void': Void,
+    'bool': Integer_1,
     "i32": Integer_32,
     'f64': Float_64
     # 'string': String_Literal
@@ -112,7 +135,7 @@ types = {
 
 def list_type_conversion(objs: List[AST_NODE]):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority_raw = ['i1','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
+    conversion_priority_raw = ['bool','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
     largest_priority = max(
@@ -123,7 +146,7 @@ def list_type_conversion(objs: List[AST_NODE]):
 
 def type_conversion(self: AST_NODE,  other: AST_NODE):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority_raw = ['unknown','i1','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
+    conversion_priority_raw = ['unknown','bool','i32', 'i64', 'f64', 'f128'] # the further down the list this is, the higher priority
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
     largest_priority = max(

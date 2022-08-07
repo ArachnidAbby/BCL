@@ -7,16 +7,9 @@ import Errors
 functions = {}
 func_calls = []
 
-def process_func_call():
-    '''deprecated'''
-    # print(functions)
-    # print(func_calls)
-    for func in func_calls:
-        name = func.name
-
 class FunctionDef(AST_NODE):
     '''Defines a function in the IR'''
-    __slots__ = ['builder', 'block', 'function_ir', 'args']
+    __slots__ = ['builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set']
     
     def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
@@ -25,23 +18,24 @@ class FunctionDef(AST_NODE):
 
         self.builder = None
         self.block = block
+        self.module = module
+        self.is_ret_set = False
 
         if not args.is_key_value_pairs():
             Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs")
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
-        print(self.args)
-        print([types[x.value].ir_type for x in args.children])
+        self.args_ir = tuple([types[x.value].ir_type for x in args.children])
+        # print(self.args)
+        # print([types[x.value].ir_type for x in args.children])
 
-        fnty = ir.FunctionType(ir.VoidType(), tuple([types[x.value].ir_type for x in args.children]), False)
+    def pre_eval(self):
+        fnty = ir.FunctionType(types[self.ret_type].ir_type, self.args_ir, False)
 
-        self.function_ir = ir.Function(module, fnty, name=self.name)
+        self.function_ir = ir.Function(self.module, fnty, name=self.name)
         
-
-        # print("FUNCIN")
         global functions
-        functions[name] = [self.function_ir, self.ret_type]
-        # print(functions)
+        functions[self.name] = [self.function_ir, self.ret_type]
     
     def eval(self):
         block = self.function_ir.append_basic_block("entry")
@@ -51,8 +45,7 @@ class FunctionDef(AST_NODE):
         functions[self.name] = [self.function_ir, self.ret_type]
 
         args = self.function_ir.args
-        print(self.block.children)
-        # print(args)
+        
         for c,x in enumerate(self.args.keys()):
             self.block.variables[x][0] = args[c]
 
@@ -64,14 +57,32 @@ class FunctionDef(AST_NODE):
         if self.ret_type == "void":
             self.builder.ret_void()
 
+class ReturnStatement(AST_NODE):
+    __slots__ = ['expr']
+
+    def init(self, expr):
+        self.name = "return"
+        self.type = "Return Statement"
+        self.ret_type = "void"
+        self.expr = expr
+
+    def pre_eval(self):
+        pass
+
+    def eval(self, func):
+        if func.ret_type == "void":
+            func.builder.ret_void()
+            return None
+        func.builder.ret(self.expr.eval(func))
 class FunctionCall(AST_NODE):
     '''Defines a function in the IR'''
-    __slots__ = ['function_ir', 'paren', 'function']
+    __slots__ = ['ir_type', 'paren', 'function']
     
     def init(self, name: str, parenth: AST_NODE):
         self.name = name
         self.type = "FunctionCall"
         self.ret_type = 'unknown'
+        self.ir_type = None
 
         # global func_calls
         # func_calls.append(self)
@@ -80,6 +91,7 @@ class FunctionCall(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = functions[self.name][1]
+        self.ir_type = types[self.ret_type].ir_type
         self.function = functions[self.name][0]
     
     def eval(self, func):

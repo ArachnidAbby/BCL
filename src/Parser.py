@@ -82,12 +82,9 @@ class parser_backend():
 class parser(parser_backend):
     def __init__(self, *args, **kwargs):
         self.current_block = None
-        # self.forbidden_var_names = [
-        #     'define',
-        #     'i32',
-        #     ''
-        # ]
-        # self.functions = dict
+        self.statements = [
+            'return'
+        ]
 
         super().__init__(*args, **kwargs)
 
@@ -96,11 +93,6 @@ class parser(parser_backend):
 
         previous_start_position = self.start
         self.start = self._cursor   # where to reset cursor after consuming tokens.
-        
-        # * to be reimplemented in the next commits
-        # self.functions={
-        #     "println": Ast.Standard_Functions.Println
-        # }
 
         while (not self.isEOF(self._cursor)) and (not close_condition()):
 
@@ -135,7 +127,6 @@ class parser(parser_backend):
         # * main implementation
         output = Ast.Block((-1,-1),"")
         if self.check(-1,"func_def_portion"):
-            self.peek(-1)["value"].block = output
             for x in self.peek(-1)["value"].args.keys():
                 output.variables[x] = self.peek(-1)["value"].args[x]
 
@@ -171,22 +162,36 @@ class parser(parser_backend):
         '''Everything involving functions. Calling, definitions, etc.'''
 
         # * Function Definitions
-        # if self.check(0,"KEYWORD") :
-        if self.check_group(0,"KEYWORD KEYWORD expr|paren") and self.peek(0)["value"]=="define":
+        if self.check_group(0,"$define KEYWORD expr|paren"):
             func_name = self.peek(1)["value"]
             block = self.peek(2)["value"]
             func = Ast.FunctionDef((-1,-1), '', None, func_name, self.peek(2)["value"], block, self.module)
-            # self.functions[func_name] = func
             self.insert(3,"func_def_portion", func)
             self.consume(amount=3, index=0)
         
-        if self.check_group(0,"func_def_portion Block"):
+        # * Set Function Return Type 
+        elif self.check_group(0,"func_def_portion RIGHT_ARROW KEYWORD"):
+            if self.peek(0)["value"].is_ret_set:
+                error(f"Function {self.peek(0)['value'].name}'s cannot have it's return set twice.")
+            self.peek(0)["value"].ret_type = self.peek(2)["value"]
+            self.peek(0)["value"].is_ret_set = True
+            self.insert(3,"func_def_portion", self.peek(0)["value"])
+            self.consume(amount=3, index=0)
+        
+        # * Return statement
+        elif self.check_group(0, "$return expr SEMI_COLON"):
+            x = Ast.Function.ReturnStatement((-1,-1), '', None, self.peek(1)["value"])
+            self.insert(2,"statement", x)
+            self.consume(amount=2, index=0)
+
+        # * complete function definition.
+        elif self.check_group(0,"func_def_portion Block"):
+            self.peek(0)["value"].block = self.peek(1)["value"]
             self.insert(2,"func_def", self.peek(0)["value"])
             self.consume(amount=2, index=0)
         
         # * Function Calls
-        elif self.check_group(0,"KEYWORD expr|paren"):
-            # if self.peek(0)["value"] in Ast.Function.functions.keys():
+        elif self.check_group(0,"KEYWORD expr|paren") and (self.peek(0)["value"] not in self.statements):
             func_name = self.peek(0)["value"]
             args = self.peek(1)["value"]
             func = Ast.FunctionCall(self.peek(0)["source_pos"], func_name, None, func_name, args)
@@ -211,7 +216,7 @@ class parser(parser_backend):
             var_name = self.peek(0)["value"]
             value = self.peek(2)["value"]
             var = Ast.VariableAssign((-1,-1), '', None, var_name, value, self.current_block)
-            self.insert(3,"var_def", var)
+            self.insert(3,"statement", var)
             self.consume(amount=3, index=0)
         
         # * Variable References
@@ -304,7 +309,6 @@ class parser(parser_backend):
 
             counter+=1
         name = "paren" if counter>1 else "expr"
-        # print(name)
-        # print(output.ret_type)
+        
         self.insert(counter+1, name, output)
         self.consume(amount=counter+2, index=-1)

@@ -185,7 +185,6 @@ class Mod(Operation):
         # * do conversions on args
         lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-        print(lhs, self.children[0].ret_type)
 
         # * do correct add function
         match self.ret_type:
@@ -207,7 +206,7 @@ class Eq(Operation):
     def pre_eval(self, revert_type = True):
         super().pre_eval()
         if revert_type:
-            self.ret_type = 'i1'
+            self.ret_type = 'bool'
             self.ir_type = Types.Integer_1.ir_type
         
 

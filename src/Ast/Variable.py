@@ -1,5 +1,7 @@
 from llvmlite import ir
 
+from Ast import Types
+
 from .Nodes import AST_NODE
 
 
@@ -22,8 +24,7 @@ class VariableAssign(AST_NODE):
     
     def eval(self, func):
         self.value.pre_eval()
-        print("TUNGUS:", func.block.variables[self.name])
-        
+                
         if func.block.variables[self.name][0]==None:
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
             func.block.variables[self.name] = (ptr, self.value.ret_type, False)
@@ -35,7 +36,7 @@ class VariableAssign(AST_NODE):
 
 class VariableRef(AST_NODE):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ['block']
+    __slots__ = ['block', 'ir_type']
 
     def init(self, name: str, block):
         self.name = name
@@ -44,6 +45,7 @@ class VariableRef(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type, is_const)}
+        self.ir_type = Types.types[self.ret_type]
     
     def eval(self, func):
         ptr = func.block.variables[self.name][0] # get variable ptr

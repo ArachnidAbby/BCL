@@ -16,6 +16,7 @@ class Lexer():
         # Semi Colon, comma, etc
         self.lexer.add('SEMI_COLON', r'\;')
         self.lexer.add('COLON', r'\:')
+        self.lexer.add('RIGHT_ARROW', r'\-\>')
         self.lexer.add('COMMA', r'\,')
         # Operators
         self.lexer.add('SUM', r'\+')

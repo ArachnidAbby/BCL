@@ -1,7 +1,7 @@
 import os
 import sys
 from typing import List
-from Ast import Function
+
 
 def make_project(args: List[str]):
     '''setup project files'''
@@ -38,6 +38,7 @@ def compile(source_code: str, output_loc: str):
     import Parser
     from Lexer import Lexer
     import Ast.Standard_Functions
+    from Ast import Function
     lexer = Lexer().get_lexer()
     tokens = lexer.lex(example)
     codegen = Codegen.CodeGen()
@@ -52,7 +53,9 @@ def compile(source_code: str, output_loc: str):
     parsed = pg.parse()
 
     for x in parsed:
-        print(x)
+        x["value"].pre_eval()
+
+    for x in parsed:
         x["value"].eval()
 
     print(module, type(module))
@@ -76,12 +79,17 @@ define main() {
     fizzbuzz(0);
 }
 
+define remainder_test(value: i32, divider: i32) -> bool {
+    // random test function with new return statements.
+    return (value % divider) == 0;
+}
+
 define fizzbuzz(current: i32) {
     // prints 1 for "fizz"
     // prints 2 for "buzz"
     // prints 3 for "fizzbuzz"
-    fizz = ((current%3)==0);
-    buzz = ((current%5)==0)*2;
+    fizz = remainder_test(current, 3);
+    buzz = remainder_test(current, 5)*2;
 
     print_int(fizz+buzz); 
 
