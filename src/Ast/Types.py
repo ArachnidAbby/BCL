@@ -129,7 +129,9 @@ types = {
     'void': Void,
     'bool': Integer_1,
     "i32": Integer_32,
-    'f64': Float_64
+    "int": Integer_32,
+    'f64': Float_64,
+    'float': Float_64
     # 'string': String_Literal
 }
 

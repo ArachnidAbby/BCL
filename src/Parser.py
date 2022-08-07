@@ -109,7 +109,7 @@ class parser(parser_backend):
             self.parse_functions()
             self.parse_special()
             self.parse_vars()
-            self.parse_parenth() # * to be reimplemented in the next commits
+            self.parse_parenth()
             
             self.move()
         
@@ -197,6 +197,18 @@ class parser(parser_backend):
             func = Ast.FunctionCall(self.peek(0)["source_pos"], func_name, None, func_name, args)
             self.insert(2,"expr", func)
             self.consume(amount=2, index=0)
+
+        # * different func calls "9.to_string()" as an example
+        elif self.check_group(0,"expr|paren DOT KEYWORD expr|paren") and (self.peek(2)["value"] not in self.statements):
+            func_name = self.peek(2)["value"]
+            args1 = self.peek(0)["value"]
+            args2 = self.peek(3)["value"]
+            args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1]
+            args2 = args2.children if isinstance(args2, Ast.Nodes.ParenthBlock) else [args2]
+            args = Ast.Nodes.ParenthBlock((-1,-1), '', args1+args2)
+            func = Ast.FunctionCall(self.peek(2)["source_pos"], func_name, None, func_name, args)
+            self.insert(4,"expr", func)
+            self.consume(amount=4, index=0)
     
     def parse_special(self):
         '''check special rules'''
@@ -220,7 +232,7 @@ class parser(parser_backend):
             self.consume(amount=3, index=0)
         
         # * Variable References
-        elif self.current_block!=None and self.check_group(-1,"!SET_VALUE KEYWORD"):
+        elif self.current_block!=None and self.check_group(0,"KEYWORD !SET_VALUE"):
             if self.peek(0)["value"] in self.current_block.variables.keys():
                 var = Ast.VariableRef((-1,-1), '', None, self.peek(0)["value"], self.current_block)
                 self.insert(1,"expr", var)
@@ -297,7 +309,8 @@ class parser(parser_backend):
         allow_next = True       # allow another statement in the block
 
         while (not self.isEOF(self._cursor+counter)) and (not self.check(counter, "CLOSE_PAREN")):
-            if not self.check(counter,'COMMA') and allow_next:
+            if (not self.check(counter,'COMMA')) and allow_next:
+                print(self.peek(counter))
                 output.append_child(self.peek(counter)["value"])
                 allow_next = False
             elif self.check(counter,'COMMA'):
