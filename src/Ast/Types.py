@@ -72,6 +72,27 @@ class Integer_32(AST_NODE):
     @staticmethod
     def eq(func, lhs, rhs):
         return func.builder.icmp_signed('==', lhs, rhs)
+    
+    @staticmethod
+    def neq(func, lhs, rhs):
+        return func.builder.icmp_signed('!=', lhs, rhs)
+    
+    @staticmethod
+    def gr(func, lhs, rhs):
+        return func.builder.icmp_signed('>', lhs, rhs)
+    
+    @staticmethod
+    def geq(func, lhs, rhs):
+        return func.builder.icmp_signed('>=', lhs, rhs)
+    
+    @staticmethod
+    def le(func, lhs, rhs):
+        return func.builder.icmp_signed('<', lhs, rhs)
+    
+    @staticmethod
+    def leq(func, lhs, rhs):
+        return func.builder.icmp_signed('<=', lhs, rhs)
+    
 
 
     def eval(self, func) -> ir.Constant:

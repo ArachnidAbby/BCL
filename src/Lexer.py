@@ -28,7 +28,12 @@ class Lexer():
         self.lexer.add('DIV', r'/{1,}')
         self.lexer.add('SUB', r'\-')
         self.lexer.add('MOD', r'\%') 
-        self.lexer.add('EQ', r'\=\=') 
+        self.lexer.add('EQ', r'\=\=')
+        self.lexer.add('NEQ', r'\!\=')
+        self.lexer.add('GR', r'\>')
+        self.lexer.add('GEQ', r'\>\=') 
+        self.lexer.add('LE', r'\<')
+        self.lexer.add('LEQ', r'\<\=')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings
         self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')

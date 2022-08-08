@@ -70,7 +70,7 @@ class Operation(AST_NODE):
 
         # print(self.ret_type)
     
-    def eval_math(self):
+    def eval_math(self, func, lhs, rhs):
         pass
 
     def eval(self, func):
@@ -78,7 +78,10 @@ class Operation(AST_NODE):
             return shunt(self).eval(func)
         else:
             self.pre_eval()
-            return self.eval_math(func)
+            # * do conversions on args
+            lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+            rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
+            return self.eval_math(func, lhs, rhs)
 
 
 class Sum(Operation):
@@ -92,12 +95,7 @@ class Sum(Operation):
         self.op_type = "sum"
         self.operator_precendence = 1
     
-    def eval_math(self, func):
-        # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-
-        # * do correct add function
+    def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].sum(func,lhs,rhs)
 
 class Sub(Operation):
@@ -111,16 +109,11 @@ class Sub(Operation):
         self.op_type = "sub"
         self.operator_precendence = 1
 
-    def eval_math(self, func):
-        # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-
-        # * do correct add function
+    def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].sub(func,lhs,rhs)
 
 class Mul(Operation):
-    '''Basic sub operation. It acts as an `expr`'''
+    '''Basic Mul operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
@@ -129,16 +122,11 @@ class Mul(Operation):
         self.op_type = "mul"
         self.operator_precendence = 2
 
-    def eval_math(self, func):
-        # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-
-        # * do correct add function
+    def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].mul(func,lhs,rhs)
 
 class Div(Operation):
-    '''Basic sub operation. It acts as an `expr`'''
+    '''Basic Div operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
@@ -147,16 +135,11 @@ class Div(Operation):
         self.op_type = "div"
         self.operator_precendence = 2
 
-    def eval_math(self, func):
-        # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-
-        # * do correct add function
+    def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].div(func,lhs,rhs)
 
 class Mod(Operation):
-    '''Basic sub operation. It acts as an `expr`'''
+    '''Basic Mod operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
@@ -165,15 +148,11 @@ class Mod(Operation):
         self.op_type = "mod"
         self.operator_precendence = 2
 
-    def eval_math(self, func):
-        # * do conversions on args
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-
-        # * do correct add function
+    def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].mod(func,lhs,rhs)
+
 class Eq(Operation):
-    '''Basic sub operation. It acts as an `expr`'''
+    '''Basic Eq operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
     def init(self, shunted = False):
@@ -188,14 +167,56 @@ class Eq(Operation):
             self.ret_type = 'bool'
             self.ir_type = Types.Integer_1.ir_type
         
-    def eval_math(self, func):
+    def eval_math(self, func, lhs, rhs):
         # * do conversions on args
         self.pre_eval(revert_type = False)
         lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
         
-        # * do correct add function
         return Types.types[self.ret_type].eq(func,lhs,rhs)
+
+class BoolOp(Operation):
+    '''Basic Eq operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted", "op_name"]
+    
+    def __init__(self, op_name, run_super = False, *args, **kwargs):
+        self.op_name = op_name
+        if run_super:
+            super().__init__(*args, **kwargs)
+
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = self.op_name
+        self.operator_precendence = 0
+    
+    def __call__(self, pos, children, *args, **kwargs):
+        return BoolOp(self.op_name, True, *([pos, children] + list(args)), **kwargs)
+
+    def pre_eval(self, revert_type = True):
+        super().pre_eval()
+        if revert_type:
+            self.ret_type = 'bool'
+            self.ir_type = Types.Integer_1.ir_type
+        
+    def eval_math(self, func, lhs, rhs):
+        # * do conversions on args
+        self.pre_eval(revert_type = False)
+        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
+        match self.op_name:
+            case 'eq':
+                return Types.types[self.ret_type].eq(func,lhs,rhs)
+            case 'neq':
+                return Types.types[self.ret_type].neq(func,lhs,rhs)
+            case 'geq':
+                return Types.types[self.ret_type].geq(func,lhs,rhs)
+            case 'leq':
+                return Types.types[self.ret_type].leq(func,lhs,rhs)
+            case 'le':
+                return Types.types[self.ret_type].le(func,lhs,rhs)
+            case 'gr':
+                return Types.types[self.ret_type].gr(func,lhs,rhs)
 
 
 ops = {
@@ -209,6 +230,16 @@ ops = {
     "DIV": Div,
     "mod": Mod,
     "MOD": Mod,
-    "eq": Eq,
-    "EQ": Eq
+    "eq": BoolOp('eq'),
+    "EQ": BoolOp('eq'),
+    "neq": BoolOp('neq'),
+    "NEQ": BoolOp('neq'),
+    "geq": BoolOp('geq'),
+    "GEQ": BoolOp('geq'),
+    "leq": BoolOp('leq'),
+    "LEQ": BoolOp('leq'),
+    "le": BoolOp('le'),
+    "LE": BoolOp('le'),
+    "gr": BoolOp('gr'),
+    "GR": BoolOp('gr'),
 }

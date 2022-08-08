@@ -5,6 +5,14 @@ from Errors import error
 
 from .Nodes import AST_NODE
 
+class VariableObj:
+    '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
+    __slots__ = ["ptr", "type", "is_constant"]
+
+    def __init__(self, ptr, typ, is_constant):
+        self.ptr = ptr
+        self.type = typ
+        self.is_constant = is_constant
 
 class VariableAssign(AST_NODE):
     '''Handles Variable Assignment and Variable Instantiation.'''
@@ -17,28 +25,28 @@ class VariableAssign(AST_NODE):
         self.block = block
 
         if block!=None:
-            block.variables[self.name] = (None, self.value.ret_type, False)
+            block.variables[self.name] = VariableObj(None, self.value.ret_type, False)
         else:
             raise Exception("No Block for Variable Assignment to take place in")
         
     def pre_eval(self):
         self.value.pre_eval()
-        self.block.variables[self.name] = (None, self.value.ret_type, False)
+        self.block.variables[self.name].type = self.value.ret_type
     
     def eval(self, func):
         self.value.pre_eval()
 
-        if func.block.variables[self.name][0]==None:
+        if func.block.variables[self.name].ptr==None:
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
-            func.block.variables[self.name] = (ptr, self.value.ret_type, False)
+            func.block.variables[self.name].ptr = ptr
         else:
-            ptr = func.block.variables[self.name][0]
-            if self.value.ret_type != func.block.variables[self.name][1]:
+            ptr = func.block.variables[self.name].ptr
+            if self.value.ret_type != func.block.variables[self.name].type:
                 error(
-                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {func.block.variables[self.name][1]}",
+                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {func.block.variables[self.name].type}",
                     line = self.position
                 )
-            func.block.variables[self.name] = (func.block.variables[self.name][0],func.block.variables[self.name][1],False)
+            func.block.variables[self.name].is_constant = False
 
         func.builder.store(self.value.eval(func), ptr)
 
@@ -52,10 +60,10 @@ class VariableRef(AST_NODE):
         self.block = block
     
     def pre_eval(self):
-        self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type, is_const)}
+        self.ret_type = self.block.variables[self.name].type # get variable type {name: (ptr, type, is_const)}
         self.ir_type = Types.types[self.ret_type].ir_type
     
     def eval(self, func):
-        ptr = func.block.variables[self.name][0] # get variable ptr
-        if not func.block.variables[self.name][2]: return func.builder.load(ptr) # var[2] is whether or not this is a static var
+        ptr = func.block.variables[self.name].ptr # get variable ptr
+        if not func.block.variables[self.name].is_constant: return func.builder.load(ptr) # var[2] is whether or not this is a static var
         else: return ptr

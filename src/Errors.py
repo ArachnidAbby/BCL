@@ -15,4 +15,5 @@ def error(text: str, line = (-1,-1,-1)):
     print(f'| {text}')
     print(f'|    Line: {line[0]}')
     print(f'\\{"-"*(largest-1)}/{RESET}')
+    print("\n\n\n\n")
     quit()

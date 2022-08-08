@@ -99,7 +99,7 @@ def compile(source_code: str, output_loc: str):
 
     print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
     print(f'\\--------------------------------------------------/{Errors.RESET}')
-    print(module, type(module))
+    # print(module, type(module))
 
 
 if __name__ == "__main__":
@@ -116,10 +116,10 @@ if __name__ == "__main__":
         example = '''
 define main() {
     x = 0==0;
-    if x==0 {
-        println(x);
+    if x>0 {
+        println(x*1);
     }else {
-        println(1);
+        println(x*5);
     }
     //fizzbuzz(0);
 }

@@ -55,8 +55,6 @@ class parser(ParserBase):
             # print()
             # * end of debug code
             
-
-
             self.parse_once()
             self.move_cursor()
         
