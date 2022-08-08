@@ -168,6 +168,14 @@ class parser(ParserBase):
             kv = Ast.Nodes.KeyValuePair(self.peek(0)["source_pos"], None, self.peek(0)["value"], self.peek(2)["value"], keywords = keywords)
             self.insert(3,"kv_pair", kv)
             self.consume(amount=3, index=0)
+        
+        # * true and false
+        elif self.check(0, '$true'):
+            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 1))
+            self.consume(amount=1)
+        elif self.check(0, '$false'):
+            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 0))
+            self.consume(amount=1)
     
     def parse_vars(self):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''

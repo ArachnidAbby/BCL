@@ -99,6 +99,7 @@ def compile(source_code: str, output_loc: str):
 
     print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
     print(f'\\--------------------------------------------------/{Errors.RESET}')
+    print('\n\n\n\n')
     # print(module, type(module))
 
 
@@ -115,8 +116,8 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    x = 0==0;
-    if x>0 {
+    x = 69;
+    if x>=2 {
         println(x*1);
     }else {
         println(x*5);
