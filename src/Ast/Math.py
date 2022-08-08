@@ -188,7 +188,6 @@ class Eq(Operation):
             self.ret_type = 'bool'
             self.ir_type = Types.Integer_1.ir_type
         
-
     def eval_math(self, func):
         # * do conversions on args
         self.pre_eval(revert_type = False)

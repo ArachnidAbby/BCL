@@ -1,5 +1,4 @@
 # Python
-
 *.o
 *.pyc
 __pycache__/
@@ -7,3 +6,7 @@ env/
 
 ## sphinx-docs
 docs/build/
+
+## test compiler outputs
+test
+test.ll
