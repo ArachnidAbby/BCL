@@ -1,6 +1,7 @@
 from llvmlite import ir
 
 from Ast import Types
+from Errors import error
 
 from .Nodes import AST_NODE
 
@@ -32,6 +33,11 @@ class VariableAssign(AST_NODE):
             func.block.variables[self.name] = (ptr, self.value.ret_type, False)
         else:
             ptr = func.block.variables[self.name][0]
+            if self.value.ret_type != func.block.variables[self.name][1]:
+                error(
+                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {func.block.variables[self.name][1]}",
+                    line = self.position
+                )
             func.block.variables[self.name] = (func.block.variables[self.name][0],func.block.variables[self.name][1],False)
 
         func.builder.store(self.value.eval(func), ptr)

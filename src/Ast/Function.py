@@ -23,6 +23,9 @@ class FunctionDef(AST_NODE):
 
         if not args.is_key_value_pairs():
             Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs", line = self.position)
+        for x in args.children:
+            if not x.keywords:
+                Errors.error(f"Function {self.name}'s argument tuple can only consist of Keyword pairs\n\t invalid pair '{x.key}: {x.value}'", line = self.position)
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
         self.args_ir = tuple([types[x.value].ir_type for x in args.children])

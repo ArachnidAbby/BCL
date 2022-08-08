@@ -71,7 +71,7 @@ class parser(ParserBase):
 
         # * check for function declaration before the block.
         # * this lets arguments be interpreted as usable variables.
-        output = Ast.Block((-1,-1,-1))
+        output = Ast.Block(self.peek(0)["source_pos"])
         if self.check(-1,"func_def_portion"):
             for x in self.peek(-1)["value"].args.keys():
                 output.variables[x] = self.peek(-1)["value"].args[x]
@@ -110,12 +110,6 @@ class parser(ParserBase):
             self.peek(0)["value"].is_ret_set = True
             self.insert(3,"func_def_portion", self.peek(0)["value"], completed = False)
             self.consume(amount=3, index=0)
-        
-        # # * Return statement
-        # elif self.check_group(0, "$return expr SEMI_COLON"):
-        #     x = Ast.Function.ReturnStatement((-1,-1), '', None, self.peek(1)["value"])
-        #     self.insert(2,"statement", x)
-        #     self.consume(amount=2, index=0)
 
         # * complete function definition.
         elif self.check_group(0,"func_def_portion Block"):
@@ -148,7 +142,9 @@ class parser(ParserBase):
 
         # * KV pairs
         if self.check_group(0, '_ COLON _'):
-            kv = Ast.Nodes.KeyValuePair(self.peek(0)["source_pos"], None, self.peek(0)["value"], self.peek(2)["value"])
+            keywords = self.check_group(0, 'KEYWORD COLON KEYWORD')
+                # error(f"A Key-Value pair cannot be created for token {self.peek(0)['name']}", line = self.peek(0)["source_pos"])
+            kv = Ast.Nodes.KeyValuePair(self.peek(0)["source_pos"], None, self.peek(0)["value"], self.peek(2)["value"], keywords = keywords)
             self.insert(3,"kv_pair", kv)
             self.consume(amount=3, index=0)
     
@@ -156,10 +152,12 @@ class parser(ParserBase):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
 
         # * Variable Assignment
-        if self.check_group(0,"KEYWORD SET_VALUE expr SEMI_COLON"):
+        if self.check_group(0,"KEYWORD SET_VALUE expr|statement SEMI_COLON"):
             # validate value
             if self.current_block == None:
                 error("Variables cannot currently be defined outside of a block", line = self.peek(0)["source_pos"])
+            elif self.check(2, "statement"):
+                error("A variables value cannot be set as a statement", line = self.peek(0)["source_pos"])
             var_name = self.peek(0)["value"]
             value = self.peek(2)["value"]
             var = Ast.VariableAssign(self.peek(0)["source_pos"], None, var_name, value, self.current_block)
@@ -169,7 +167,7 @@ class parser(ParserBase):
         # * Variable References
         elif self.current_block!=None and self.check_group(0,"KEYWORD !SET_VALUE"):
             if self.peek(0)["value"] in self.current_block.variables.keys():
-                var = Ast.VariableRef((-1,-1,-1), None, self.peek(0)["value"], self.current_block)
+                var = Ast.VariableRef(self.peek(0)["source_pos"], None, self.peek(0)["value"], self.current_block)
                 self.insert(1,"expr", var)
                 self.consume(amount=1, index=0)
 
@@ -201,7 +199,7 @@ class parser(ParserBase):
         # * Parse expressions
         if self.check_group(0,'expr _ expr') and self.peek(1)['name'] in Ast.Math.ops.keys():
             op_str =self.peek(1)['name']
-            op = Ast.Math.ops[op_str]((-1,-1, -1),[self.peek(0)["value"],self.peek(2)["value"]])
+            op = Ast.Math.ops[op_str](self.peek(0)["source_pos"],[self.peek(0)["value"],self.peek(2)["value"]])
             self.insert(3,"expr",op)
             self.consume(amount=3,index=0)
     

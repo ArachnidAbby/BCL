@@ -98,11 +98,7 @@ class Sum(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                return func.builder.add(lhs, rhs)
-            case 'f64':
-                return func.builder.fadd(lhs, rhs)
+        return Types.types[self.ret_type].sum(func,lhs,rhs)
 
 class Sub(Operation):
     '''Basic sub operation. It acts as an `expr`'''
@@ -121,11 +117,7 @@ class Sub(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                return func.builder.sub(lhs, rhs)
-            case 'f64':
-                return func.builder.fsub(lhs, rhs)
+        return Types.types[self.ret_type].sub(func,lhs,rhs)
 
 class Mul(Operation):
     '''Basic sub operation. It acts as an `expr`'''
@@ -143,11 +135,7 @@ class Mul(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                return func.builder.mul(lhs, rhs)
-            case 'f64':
-                return func.builder.fmul(lhs, rhs)
+        return Types.types[self.ret_type].mul(func,lhs,rhs)
 
 class Div(Operation):
     '''Basic sub operation. It acts as an `expr`'''
@@ -165,11 +153,7 @@ class Div(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                return func.builder.sdiv(lhs, rhs)
-            case 'f64':
-                return func.builder.fdiv(lhs, rhs)
+        return Types.types[self.ret_type].div(func,lhs,rhs)
 
 class Mod(Operation):
     '''Basic sub operation. It acts as an `expr`'''
@@ -187,12 +171,7 @@ class Mod(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
 
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                return func.builder.srem(lhs, rhs)
-            case 'f64':
-                return func.builder.frem(lhs, rhs)
-
+        return Types.types[self.ret_type].mod(func,lhs,rhs)
 class Eq(Operation):
     '''Basic sub operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
@@ -217,13 +196,7 @@ class Eq(Operation):
         rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
         
         # * do correct add function
-        match self.ret_type:
-            case 'i32':
-                self.ret_type = 'i1'
-                return func.builder.icmp_signed('==', lhs, rhs)
-            case 'f64':
-                self.ret_type = 'i1'
-                return func.builder.fcmp_ordered('==', lhs, rhs)
+        return Types.types[self.ret_type].eq(func,lhs,rhs)
 
 
 ops = {

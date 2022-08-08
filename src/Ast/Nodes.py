@@ -9,7 +9,7 @@ class AST_NODE:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
     __slots__ = ['name', 'type', 'children', 'position', "ret_type", "is_operator"]
 
-    def __init__(self, position: Tuple[int,int, int], children: None|List = None, *args):
+    def __init__(self, position: Tuple[int,int, int], children: None|List = None, *args, **kwargs):
         self.type = ""
         self.name = ""
         self.ret_type = "pre-eval ret type"
@@ -18,7 +18,7 @@ class AST_NODE:
         self.is_operator = False
 
 
-        self.init(*args)
+        self.init(*args, **kwargs)
     
     def init(self):
         pass
@@ -100,12 +100,13 @@ class ParenthBlock(AST_NODE):
 
 class KeyValuePair(AST_NODE):
     '''For now, it does nothing special'''
-    __slots__ = ['key', 'value']
+    __slots__ = ['key', 'value', 'keywords']
 
-    def init(self, k, v):
+    def init(self, k, v, keywords = False):
         self.name = "kv_pair"
         self.type = "kv_pair"
         self.ret_type = "KV_Pair"
+        self.keywords = keywords
 
         self.key = k
         self.value = v
