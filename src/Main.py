@@ -89,6 +89,7 @@ def compile(source_code: str, output_loc: str):
     for x in parsed:
         x["value"].eval()
     
+    
     print(f'| module created in {time.perf_counter() - start} seconds')
 
     start=time.perf_counter()
@@ -114,32 +115,38 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    fizzbuzz(0);
+    x = 0==0;
+    if x==0 {
+        println(x);
+    }else {
+        println(1);
+    }
+    //fizzbuzz(0);
 }
 
-define as_int(in: bool) -> i32 {
-    //really bad as_int function as a proof of concept.
-    //its bad because the compiler will still try the multiplication.
-    // which is just an extra instruction.
-    return in*1;
-}
+//define as_int(in: bool) -> i32 {
+//    //really bad as_int function as a proof of concept.
+//    //its bad because the compiler will still try the multiplication.
+//    // which is just an extra instruction.
+//    return in*1;
+//}
 
-define remainder_test(value: i32, divider: i32) -> bool {
-    // random test function with new return statements.
-    return (value % divider) == 0;
-}
+//define remainder_test(value: i32, divider: i32) -> bool {
+//    // random test function with new return statements.
+//    return (value % divider) == 0;
+//}
 
-define fizzbuzz(current: i32) {
-    // prints 1 for "fizz"
-    // prints 2 for "buzz"
-    // prints 3 for "fizzbuzz"
-    fizz = remainder_test(current, 3).as_int();
-    buzz = remainder_test(current, 5)*2;
-
-    println(fizz+buzz); 
-
-    fizzbuzz(current+1);
-}
+//define fizzbuzz(current: i32) {
+//    // prints 1 for "fizz"
+//    // prints 2 for "buzz"
+//    // prints 3 for "fizzbuzz"
+//    fizz = remainder_test(current, 3).as_int();
+//    buzz = remainder_test(current, 5)*2;
+//
+//    println(fizz+buzz); 
+//
+//    fizzbuzz(current+1);
+//}
 
 '''
         compile(example, "test.ll")

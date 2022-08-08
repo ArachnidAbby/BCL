@@ -9,10 +9,10 @@ class parser(ParserBase):
     def __init__(self, *args, **kwargs):
         self.current_block = None
         self.statements = [
-            'return'
+            'return', 'if'
         ]
         self.keywords = [
-            "define", "return"
+            "define", "return", 'if'
         ]
 
         self.simple_rules = [
@@ -25,6 +25,7 @@ class parser(ParserBase):
         self.parse_blocks()
         self.parse_numbers()
         self.parse_math()
+        self.pares_control_flow()
         self.parse_functions()
         self.parse_special()
         self.parse_vars()
@@ -49,11 +50,12 @@ class parser(ParserBase):
         while (not self.isEOF(self._cursor)) and (not close_condition()):
 
             # * code for debugging. Use if needed
-            # print(self._cursor,self._tokens)
+            # print(self._cursor)
+            # print(',\n'.join([f'{x["name"]}||{x["value"]}' for x in self._tokens]))
             # print()
-            # print(self.peek(self.start-self._cursor))
-            # print('\n')
             # * end of debug code
+            
+
 
             self.parse_once()
             self.move_cursor()
@@ -75,6 +77,9 @@ class parser(ParserBase):
         if self.check(-1,"func_def_portion"):
             for x in self.peek(-1)["value"].args.keys():
                 output.variables[x] = self.peek(-1)["value"].args[x]
+        if self.current_block!=None:
+            for x in self.current_block.variables.keys():
+                output.variables[x] = self.current_block.variables[x]
 
         # * main implementation
         old_block = self.current_block # save the old block in the case of nested blocks.
@@ -83,10 +88,28 @@ class parser(ParserBase):
         o, counter = self.delimited("SEMI_COLON", "CLOSE_CURLY")
         output.children = o
 
-        self.insert(counter+1, "Block", output)
-        self.consume(amount=counter+2, index=-1)
+        self._cursor -= 1
+        self.insert(counter+2, "Block", output)
+        self.consume(amount=counter+2)
         self.current_block = old_block # return to old block
-        
+    
+    def pares_control_flow(self):
+        '''parse if/then, if/else, and loops'''
+
+        # * if blocks
+        if self.check_group(0, "$if expr Block !$else"):
+            expr = self.peek(1)["value"]
+            block = self.peek(2)["value"]
+            x = Ast.Conditionals.IfStatement(self.peek(0)["source_pos"], None, expr, block)
+            self.insert(3,"statement", x)
+            self.consume(amount=3, index=0)
+        elif self.check_group(0, "$if expr Block $else Block"):
+            expr = self.peek(1)["value"]
+            block_if = self.peek(2)["value"]
+            block_else = self.peek(4)["value"]
+            x = Ast.Conditionals.IfElseStatement(self.peek(0)["source_pos"], None, expr, block_if, block_else)
+            self.insert(5,"statement", x)
+            self.consume(amount=5, index=0)
     
     def parse_functions(self):
         '''Everything involving functions. Calling, definitions, etc.'''
@@ -118,7 +141,7 @@ class parser(ParserBase):
             self.consume(amount=2, index=0)
         
         # * Function Calls
-        elif self.check_group(0,"KEYWORD expr|paren") and (self.peek(0)["value"] not in self.statements):
+        elif self.check_group(0,"KEYWORD expr|paren") and (self.peek(0)["value"] not in self.keywords):
             func_name = self.peek(0)["value"]
             args = self.peek(1)["value"]
             func = Ast.FunctionCall(self.peek(0)["source_pos"], None, func_name, args)
@@ -169,7 +192,7 @@ class parser(ParserBase):
             if self.peek(0)["value"] in self.current_block.variables.keys():
                 var = Ast.VariableRef(self.peek(0)["source_pos"], None, self.peek(0)["value"], self.current_block)
                 self.insert(1,"expr", var)
-                self.consume(amount=1, index=0)
+                self.consume(amount=1)
 
 
     def parse_numbers(self):
@@ -215,7 +238,7 @@ class parser(ParserBase):
         pos = peek["source_pos"]
         output = Ast.ParenthBlock(pos)
 
-        o, counter = self.delimited("COMMA", "CLOSE_PAREN")
+        o, counter = self.delimited("COMMA", "CLOSE_PAREN", allow_statements = False)
         output.children = o
 
         name = "paren" if counter>1 else "expr"

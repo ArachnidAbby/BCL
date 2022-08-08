@@ -43,23 +43,19 @@ class FunctionDef(AST_NODE):
             functions[self.name] = dict()
         
         functions[self.name][self.args_types] = [self.function_ir, self.ret_type]
+        self.block.pre_eval()
     
     def eval(self):
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
 
-        # global functions
-        # functions[self.name] = [self.function_ir, self.ret_type]
-
         args = self.function_ir.args
         
+        # * add variables into block
         for c,x in enumerate(self.args.keys()):
             self.block.variables[x][0] = args[c]
-
-        self.block.pre_eval()
-
-        for instr in self.block.children:  # type: ignore
-            instr.eval(self)
+        
+        self.block.eval(self)
         
         if self.ret_type == "void":
             self.builder.ret_void()
@@ -69,7 +65,7 @@ class ReturnStatement(AST_NODE):
 
     def init(self, expr):
         self.name = "return"
-        self.type = "Return Statement"
+        self.type = "statement"
         self.ret_type = "void"
         self.expr = expr
 
@@ -77,9 +73,17 @@ class ReturnStatement(AST_NODE):
         pass
 
     def eval(self, func):
+        self.expr.pre_eval()
+        if self.expr.ret_type != func.ret_type:
+            Errors.error(
+                f"Funtion, \"{func.name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
+                line = self.position
+            )
+
         if func.ret_type == "void":
             func.builder.ret_void()
             return None
+
         func.builder.ret(self.expr.eval(func))
 class FunctionCall(AST_NODE):
     '''Defines a function in the IR'''
@@ -100,8 +104,8 @@ class FunctionCall(AST_NODE):
         self.paren.pre_eval()
 
         self.args_types = tuple([x.ret_type for x in self.paren.children])
-        if self.name not in functions:
-            Errors.error(f"function '{self.name}' was never defined", line = self.position)
+        if self.name not in functions or self.args_types not in functions[self.name]:
+            Errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
 
         self.ret_type = functions[self.name][self.args_types][1]
         self.ir_type = types[self.ret_type].ir_type
@@ -110,7 +114,5 @@ class FunctionCall(AST_NODE):
     def eval(self, func):
         x = self.paren.eval(func)
         args = self.paren.children if x==None else [x]
-        
-        # print(functions[self.name], args)
         
         return func.builder.call(self.function, args)

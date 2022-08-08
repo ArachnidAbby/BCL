@@ -81,7 +81,7 @@ class ParserBase():
 
         return all([self.check(c+start_index,x) for c,x in enumerate(tokens)])
 
-    def delimited(self, sep: str, end: str) -> tuple[list, int]:
+    def delimited(self, sep: str, end: str, allow_statements = True) -> tuple[list, int]:
         '''parse "lists" of tokens like in parenthesis or a curly block'''
         
         output=[]
@@ -98,8 +98,8 @@ class ParserBase():
                 if allow_next: 
                     output.append(self.peek(counter)["value"])
                 else:
-                    error(f"missing '{sep}'", line = ln)
-                allow_next = False
+                    error(f"missing '{sep}'", line = self.peek(counter)["source_pos"])
+                allow_next = allow_statements and self.check(counter,'statement')
             elif self.check(counter, sep):
                 allow_next=True
             elif self.isEOF(self._cursor+counter):

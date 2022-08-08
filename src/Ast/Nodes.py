@@ -56,6 +56,10 @@ class Block(AST_NODE):
             if isinstance(x, str):
                 error(f"Variable '{x}' not defined.")
             x.pre_eval()
+    
+    def eval(self, func):
+        for x in self.children:
+            x.eval(func)
 
     def append_child(self, child: AST_NODE):
         self.children.append(child)
