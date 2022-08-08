@@ -48,7 +48,7 @@ def declare_printf(module):
     
     Function.functions["println"] = {}
     Function.functions["println"][('i32',)] = [printint, "void"]
-    print(Function.functions)
+    # print(Function.functions)
 
 
 

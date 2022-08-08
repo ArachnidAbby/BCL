@@ -63,9 +63,7 @@ class Float_64(AST_NODE):
         self.name = "F64"
         self.type = "Literal"
         self.ret_type = "f64"
-    
-    # def pre_eval(self)
-    
+        
     @staticmethod
     def convert_from(func, typ: str, previous):
         if typ!= 'f64': previous.sitofp(Float_64.ir_type)
@@ -87,9 +85,7 @@ class Void(AST_NODE):
         self.name = "Void"
         self.type = "Literal"
         self.ret_type = "void"
-    
-    # def pre_eval(self)
-    
+        
     @staticmethod
     def convert_from(func, typ: str, previous):
         pass
@@ -98,33 +94,6 @@ class Void(AST_NODE):
     def eval(self, func):
         pass
 
-# class String_Literal(AST_NODE):
-#     __slots__ = ["value", "ir_type"]
-
-#     def init(self, value, module):
-#         self.name = "Str"
-#         self.type = "Literal"
-#         self.ret_type = "str"
-
-#         fmt = "%i \n\0"
-#         self.ir_type = ir.Constant(ir.ArrayType(ir.IntType(8), len(value)),
-#                             bytearray(fmt.encode("utf8")))
-#         self.value = ir.GlobalVariable(module, self.ir_type.type)
-#         self.value.linkage = 'internal'
-#         self.value.global_constant = True
-#         self.value.initializer = self.ir_type
-    
-#     @staticmethod
-#     def convert_from(typ: str, previous):
-#         if typ!= 'f64': previous.sitofp(Float_64.ir_type)
-        
-#         return previous
-
-
-#     def eval(self, func) -> ir.Constant:
-        
-#         return ir.Constant(self.ir_type, self.value)
-
 types = {
     'void': Void,
     'bool': Integer_1,
@@ -132,7 +101,6 @@ types = {
     "int": Integer_32,
     'f64': Float_64,
     'float': Float_64
-    # 'string': String_Literal
 }
 
 def list_type_conversion(objs: List[AST_NODE]):

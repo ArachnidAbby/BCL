@@ -44,7 +44,7 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()
                 
-                p = ops[x]((-1,-1), '',  [l[0],r[0]], True)
+                p = ops[x]((-1,-1, -1), [l[0],r[0]], True)
     
                 output_queue.pop(c)
                 output_queue.pop(r[1])

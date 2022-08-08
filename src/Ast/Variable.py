@@ -47,11 +47,9 @@ class VariableRef(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = self.block.variables[self.name][1] # get variable type {name: (ptr, type, is_const)}
-        print(self.ret_type)
         self.ir_type = Types.types[self.ret_type].ir_type
     
     def eval(self, func):
         ptr = func.block.variables[self.name][0] # get variable ptr
-        # print(func.block.variables[self.name])
         if not func.block.variables[self.name][2]: return func.builder.load(ptr) # var[2] is whether or not this is a static var
         else: return ptr

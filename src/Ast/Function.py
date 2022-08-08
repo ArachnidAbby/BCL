@@ -22,7 +22,7 @@ class FunctionDef(AST_NODE):
         self.is_ret_set = False
 
         if not args.is_key_value_pairs():
-            Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs")
+            Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs", line = self.position)
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
         self.args_ir = tuple([types[x.value].ir_type for x in args.children])
@@ -98,7 +98,7 @@ class FunctionCall(AST_NODE):
 
         self.args_types = tuple([x.ret_type for x in self.paren.children])
         if self.name not in functions:
-            Errors.error(f"function '{self.name}' was never defined")
+            Errors.error(f"function '{self.name}' was never defined", line = self.position)
 
         self.ret_type = functions[self.name][self.args_types][1]
         self.ir_type = types[self.ret_type].ir_type

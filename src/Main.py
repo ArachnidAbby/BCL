@@ -34,12 +34,21 @@ lib/
 
 def compile(source_code: str, output_loc: str):
     '''compile source code'''
+    import time
+    start = time.perf_counter()
+    start_beginning = start
+
     import Codegen
     import Parser
     from Lexer import Lexer
     import Ast.Standard_Functions
     from Ast import Function
     import Errors
+
+    print(f'{Errors.GREEN}/------------------------------------------------#')
+    print(f'| imports finished in {time.perf_counter() - start} seconds')
+
+    start=time.perf_counter()
 
     lexer = Lexer().get_lexer()
     tokens = lexer.lex(example)
@@ -50,31 +59,46 @@ def compile(source_code: str, output_loc: str):
     # printf = codegen.printf
     output = []
     for x in tokens:
-        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno], "completed": False})
+        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno, len(x.value)], "completed": False})
     
+    print(f'| lexing finished in {time.perf_counter() - start} seconds')
+
+    start=time.perf_counter()
+
     # print("\n".join([f"TOKEN: {x['name']}, {x['value']}" for x in output]))
     pg = Parser.parser(output, module)
     parsed = pg.parse()
     # print(parsed)
+
+    print(f'| parsing finished in {time.perf_counter() - start} seconds')
+
+    start=time.perf_counter()
     
 
     for x in parsed:
         if not x["completed"]:
             Errors.error(f"""
-            The compiler could not complete all it's operations| {x['source_pos']}.
+            The compiler could not complete all it's operations.
 
             Note: this is an error the compiler was not designed to catch.
                   If you encounter this, send all relavent information to language devs.
-            """)
+            """, line = x['source_pos'])
 
         x["value"].pre_eval()
 
     for x in parsed:
         x["value"].eval()
+    
+    print(f'| module created in {time.perf_counter() - start} seconds')
 
-    print(module, type(module))
+    start=time.perf_counter()
+
+    
     codegen.save_ir(output_loc)
 
+    print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
+    print(f'\\--------------------------------------------------/{Errors.RESET}')
+    print(module, type(module))
 
 
 if __name__ == "__main__":
@@ -90,7 +114,7 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    //fizzbuzz(0);
+    fizzbuzz(0);
 }
 
 define as_int(in: bool) -> i32 {
@@ -116,5 +140,6 @@ define fizzbuzz(current: i32) {
 
     fizzbuzz(current+1);
 }
+
 '''
         compile(example, "test.ll")

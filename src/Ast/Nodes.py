@@ -7,15 +7,14 @@ from llvmlite import ir
 
 class AST_NODE:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
-    __slots__ = ['name', 'type', 'children', 'position', 'token', "ret_type", "is_operator"]
+    __slots__ = ['name', 'type', 'children', 'position', "ret_type", "is_operator"]
 
-    def __init__(self, position: Tuple[int,int], token: str, children: None|List = None, *args):
+    def __init__(self, position: Tuple[int,int, int], children: None|List = None, *args):
         self.type = ""
         self.name = ""
         self.ret_type = "pre-eval ret type"
         self.position = position        # (line#, col#)
-        self.token = token  # source code of this NODE.
-        self.children = [] if children==None else children
+        self.children = list() if children==None else children
         self.is_operator = False
 
 
