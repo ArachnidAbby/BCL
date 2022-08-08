@@ -228,9 +228,15 @@ class Eq(Operation):
 
 ops = {
     "sum": Sum,
+    "SUM": Sum,
     "sub": Sub,
+    "SUB": Sub,
     "mul": Mul,
+    "MUL": Mul,
     "div": Div,
+    "DIV": Div,
     "mod": Mod,
-    "eq": Eq
+    "MOD": Mod,
+    "eq": Eq,
+    "EQ": Eq
 }

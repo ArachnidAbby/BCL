@@ -48,9 +48,9 @@ class parser_backend():
         self._cursor= self.start 
         self.doMove=False
     
-    def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE):
+    def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
         '''insert tokens at a specific location'''
-        self._tokens.insert(index+self._cursor,{"name":name,"value":value})
+        self._tokens.insert(index+self._cursor,{"name":name,"value":value,"completed":completed})
     
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token'''
@@ -86,7 +86,11 @@ class parser(parser_backend):
             'return'
         ]
         self.keywords = [
-            "define"
+            "define", "return"
+        ]
+
+        self.simple_rules = [
+            ("statement", "$return expr SEMI_COLON", Ast.Function.ReturnStatement, (1,) )
         ]
 
         super().__init__(*args, **kwargs)
@@ -113,7 +117,18 @@ class parser(parser_backend):
             self.parse_special()
             self.parse_vars()
             self.parse_parenth()
-            
+
+            # * parse the most basic rules possible
+            for rule in self.simple_rules:
+                if self.check_group(0,rule[1]):
+                    rule_len = len(rule[1].split(' '))
+                    start_token = self.peek(0)
+                    args = [self.peek(x)["value"] for x in rule[3]]
+                    out = rule[2](start_token["source_pos"], "", None, *args)
+                    self.insert(rule_len, rule[0], out)
+                    self.consume(amount=rule_len)
+
+            # * move cursor
             self.move()
         
         self.start = previous_start_position
@@ -181,14 +196,14 @@ class parser(parser_backend):
                 error(f"Function {self.peek(0)['value'].name}'s cannot have it's return set twice.")
             self.peek(0)["value"].ret_type = self.peek(2)["value"]
             self.peek(0)["value"].is_ret_set = True
-            self.insert(3,"func_def_portion", self.peek(0)["value"])
+            self.insert(3,"func_def_portion", self.peek(0)["value"], completed = False)
             self.consume(amount=3, index=0)
         
-        # * Return statement
-        elif self.check_group(0, "$return expr SEMI_COLON"):
-            x = Ast.Function.ReturnStatement((-1,-1), '', None, self.peek(1)["value"])
-            self.insert(2,"statement", x)
-            self.consume(amount=2, index=0)
+        # # * Return statement
+        # elif self.check_group(0, "$return expr SEMI_COLON"):
+        #     x = Ast.Function.ReturnStatement((-1,-1), '', None, self.peek(1)["value"])
+        #     self.insert(2,"statement", x)
+        #     self.consume(amount=2, index=0)
 
         # * complete function definition.
         elif self.check_group(0,"func_def_portion Block"):
@@ -270,25 +285,11 @@ class parser(parser_backend):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr'):
-            if self.check(1,"SUM"):
-                self.insert(3,"expr",Ast.Sum((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
-            elif self.check(1,"SUB"):
-                self.insert(3,"expr",Ast.Sub((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
-            elif self.check(1,"MUL"):
-                self.insert(3,"expr",Ast.Mul((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
-            elif self.check(1,"DIV"):
-                self.insert(3,"expr",Ast.Div((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
-            elif self.check(1,"MOD"):
-                self.insert(3,"expr",Ast.Mod((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
-            elif self.check(1,"EQ"):
-                self.insert(3,"expr",Ast.Eq((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]]))
-                self.consume(amount=3,index=0)
+        if self.check_group(0,'expr _ expr') and self.peek(1)['name'] in Ast.Math.ops.keys():
+            op_str =self.peek(1)['name']
+            op = Ast.Math.ops[op_str]((-1,-1),'',[self.peek(0)["value"],self.peek(2)["value"]])
+            self.insert(3,"expr",op)
+            self.consume(amount=3,index=0)
     
     def parse_parenth(self):
         '''Parses blocks of parenthises'''
@@ -319,10 +320,10 @@ class parser(parser_backend):
                 output.append_child(self.peek(counter)["value"])
                 allow_next = False
             elif self.check(counter,'COMMA'):
-                if allow_next: error.error("Syntax error: ',,'")
+                if allow_next: error("Syntax error: ',,'")
                 allow_next=True
             elif not allow_next:
-                error.error("Syntax error: missing ','")
+                error("Syntax error: missing ','")
 
 
             counter+=1

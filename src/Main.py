@@ -39,6 +39,8 @@ def compile(source_code: str, output_loc: str):
     from Lexer import Lexer
     import Ast.Standard_Functions
     from Ast import Function
+    import Errors
+
     lexer = Lexer().get_lexer()
     tokens = lexer.lex(example)
     codegen = Codegen.CodeGen()
@@ -48,7 +50,7 @@ def compile(source_code: str, output_loc: str):
     # printf = codegen.printf
     output = []
     for x in tokens:
-        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno]})
+        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno], "completed": False})
     
     # print("\n".join([f"TOKEN: {x['name']}, {x['value']}" for x in output]))
     pg = Parser.parser(output, module)
@@ -57,6 +59,14 @@ def compile(source_code: str, output_loc: str):
     
 
     for x in parsed:
+        if not x["completed"]:
+            Errors.error(f"""
+            The compiler could not complete all it's operations| {x['source_pos']}.
+
+            Note: this is an error the compiler was not designed to catch.
+                  If you encounter this, send all relavent information to language devs.
+            """)
+
         x["value"].pre_eval()
 
     for x in parsed:
@@ -94,8 +104,6 @@ define remainder_test(value: i32, divider: i32) -> bool {
     // random test function with new return statements.
     return (value % divider) == 0;
 }
-
-define jj() ->
 
 define fizzbuzz(current: i32) {
     // prints 1 for "fizz"
