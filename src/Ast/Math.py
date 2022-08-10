@@ -1,11 +1,37 @@
-from llvmlite import ir
-
 from collections import deque
+
+from llvmlite import ir
 
 from . import Types
 from .Nodes import *
+class Operation(AST_NODE):
+    '''Operation class to define common behavior in Operations'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
 
-def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False):
+    def pre_eval(self):
+        self.children[0].pre_eval()
+        self.children[1].pre_eval()
+
+        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
+        self.ir_type = Types.types[self.ret_type].ir_type
+
+        # print(self.ret_type)
+    
+    def eval_math(self, func, lhs, rhs):
+        pass
+
+    def eval(self, func):
+        if not self.shunted:
+            return shunt(self).eval(func)
+        else:
+            self.pre_eval()
+            # * do conversions on args
+            lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
+            rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
+            return self.eval_math(func, lhs, rhs)
+
+
+def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False) -> Operation|None:
     '''shunt Expressions to rearrange them based on the Order of Operations'''
 
     # * create stack and queue
@@ -56,33 +82,6 @@ def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False
     
 
     if (not has_parent):return output_queue[0]
-
-class Operation(AST_NODE):
-    '''Operation class to define common behavior in Operations'''
-    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
-
-    def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = Types.type_conversion(self.children[0], self.children[1])
-        self.ir_type = Types.types[self.ret_type].ir_type
-
-        # print(self.ret_type)
-    
-    def eval_math(self, func, lhs, rhs):
-        pass
-
-    def eval(self, func):
-        if not self.shunted:
-            return shunt(self).eval(func)
-        else:
-            self.pre_eval()
-            # * do conversions on args
-            lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-            rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-            return self.eval_math(func, lhs, rhs)
-
 
 class Sum(Operation):
     '''Basic sum operation. It acts as an `expr`'''
@@ -151,31 +150,7 @@ class Mod(Operation):
     def eval_math(self, func, lhs, rhs):
         return Types.types[self.ret_type].mod(func,lhs,rhs)
 
-class Eq(Operation):
-    '''Basic Eq operation. It acts as an `expr`'''
-    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
-    
-    def init(self, shunted = False):
-        self.shunted = shunted
-        self.is_operator = True
-        self.op_type = "eq"
-        self.operator_precendence = 0
-
-    def pre_eval(self, revert_type = True):
-        super().pre_eval()
-        if revert_type:
-            self.ret_type = 'bool'
-            self.ir_type = Types.Integer_1.ir_type
-        
-    def eval_math(self, func, lhs, rhs):
-        # * do conversions on args
-        self.pre_eval(revert_type = False)
-        lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
-        
-        return Types.types[self.ret_type].eq(func,lhs,rhs)
-
-class BoolOp(Operation):
+class Comparators(Operation):
     '''Basic Eq operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted", "op_name"]
     
@@ -191,7 +166,7 @@ class BoolOp(Operation):
         self.operator_precendence = 0
     
     def __call__(self, pos, children, *args, **kwargs):
-        return BoolOp(self.op_name, True, *([pos, children] + list(args)), **kwargs)
+        return Comparators(self.op_name, True, *([pos, children] + list(args)), **kwargs)
 
     def pre_eval(self, revert_type = True):
         super().pre_eval()
@@ -230,16 +205,16 @@ ops = {
     "DIV": Div,
     "mod": Mod,
     "MOD": Mod,
-    "eq": BoolOp('eq'),
-    "EQ": BoolOp('eq'),
-    "neq": BoolOp('neq'),
-    "NEQ": BoolOp('neq'),
-    "geq": BoolOp('geq'),
-    "GEQ": BoolOp('geq'),
-    "leq": BoolOp('leq'),
-    "LEQ": BoolOp('leq'),
-    "le": BoolOp('le'),
-    "LE": BoolOp('le'),
-    "gr": BoolOp('gr'),
-    "GR": BoolOp('gr'),
+    "eq": Comparators('eq'),
+    "EQ": Comparators('eq'),
+    "neq": Comparators('neq'),
+    "NEQ": Comparators('neq'),
+    "geq": Comparators('geq'),
+    "GEQ": Comparators('geq'),
+    "leq": Comparators('leq'),
+    "LEQ": Comparators('leq'),
+    "le": Comparators('le'),
+    "LE": Comparators('le'),
+    "gr": Comparators('gr'),
+    "GR": Comparators('gr'),
 }
