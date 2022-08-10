@@ -30,13 +30,13 @@ class AST_NODE:
     def eval(self, func):
         pass
 
-    # todo: rewrite and make this useful    
-    def show_er(self, source: List[str]) -> str:
-        '''Show an error, 
-            source: file's source seperated by lines.
-        '''
-        output = source[self.position[0]]+f'\n{" "*(self.position[1]-1)}'+f"{'^'*len(self.token)}"
-        return output
+    # # todo: rewrite and make this useful    
+    # def show_er(self, source: List[str]) -> str:
+    #     '''Show an error, 
+    #         source: file's source seperated by lines.
+    #     '''
+    #     output = source[self.position[0]]+f'\n{" "*(self.position[1]-1)}'+f"{'^'*len(self.token)}"
+    #     return output
 
 
 class Block(AST_NODE):

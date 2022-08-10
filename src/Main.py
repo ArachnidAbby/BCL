@@ -116,7 +116,8 @@ if __name__ == "__main__":
     else:
         example = '''
 define main() {
-    x = 69;
+    x = 69+1;
+    j = x+4-2*6/7%12;
     if x>=2 {
         println(x*1);
     }else {

@@ -1,7 +1,10 @@
+
 from llvmlite import ir
 
 from . import Function
 
+# ! This whole module should eventually be removed.
+# !     It is temporary while certain aspects of the language are still in developement
 
 printf = None
 
