@@ -14,35 +14,35 @@ class Abstract_Type(AST_NODE):
 
 
     @staticmethod
-    def sum  (func, lhs, rhs): error(f"Operator '+' is not supported for type '{lhs.name}'",  line = lhs.position)
+    def sum  (func, lhs, rhs): error(f"Operator '+' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
     @staticmethod
-    def sub  (func, lhs, rhs): error(f"Operator '-' is not supported for type '{lhs.name}'",  line = lhs.position)
+    def sub  (func, lhs, rhs): error(f"Operator '-' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
     @staticmethod
-    def mul  (func, lhs, rhs): error(f"Operator '*' is not supported for type '{lhs.name}'",  line = lhs.position)
+    def mul  (func, lhs, rhs): error(f"Operator '*' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
     @staticmethod
-    def div  (func, lhs, rhs): error(f"Operator '/' is not supported for type '{lhs.name}'",  line = lhs.position)
+    def div  (func, lhs, rhs): error(f"Operator '/' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
     @staticmethod
-    def mod  (func, lhs, rhs): error(f"Operator '%' is not supported for type '{lhs.name}'",  line = lhs.position)
+    def mod  (func, lhs, rhs): error(f"Operator '%' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
 
     @staticmethod
-    def eq   (func, lhs, rhs): error(f"Operator '==' is not supported for type '{lhs.name}'", line = lhs.position)
+    def eq   (func, lhs, rhs): error(f"Operator '==' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     @staticmethod
-    def neq  (func, lhs, rhs): error(f"Operator '!=' is not supported for type '{lhs.name}'", line = lhs.position)
+    def neq  (func, lhs, rhs): error(f"Operator '!=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     @staticmethod
-    def geq  (func, lhs, rhs): error(f"Operator '>=' is not supported for type '{lhs.name}'", line = lhs.position)
+    def geq  (func, lhs, rhs): error(f"Operator '>=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     @staticmethod
-    def leq  (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.name}'", line = lhs.position)
+    def leq  (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     @staticmethod
-    def le   (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.name}'", line = lhs.position)
+    def le   (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     @staticmethod
-    def gr   (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.name}'", line = lhs.position)
+    def gr   (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     @staticmethod
-    def _not (func, lhs, rhs): error(f"Operator 'not' is not supported for type '{lhs.name}'",line = lhs.position)
+    def _not (func, lhs, rhs): error(f"Operator 'not' is not supported for type '{lhs.ret_type}'",line = lhs.position)
     @staticmethod
-    def _and (func, lhs, rhs): error(f"Operator 'and' is not supported for type '{lhs.name}'",line = lhs.position)
+    def _and (func, lhs, rhs): error(f"Operator 'and' is not supported for type '{lhs.ret_type}'",line = lhs.position)
     @staticmethod
-    def _or  (func, lhs, rhs): error(f"Operator 'or' is not supported for type '{lhs.name}'", line = lhs.position)
+    def _or  (func, lhs, rhs): error(f"Operator 'or' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
 
 

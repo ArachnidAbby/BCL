@@ -41,9 +41,9 @@ class FunctionDef(AST_NODE):
             functions[self.name] = dict()
         
         functions[self.name][self.args_types] = [self.function_ir, self.ret_type]
-        self.block.pre_eval()
     
     def eval(self):
+        self.block.pre_eval()
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
 

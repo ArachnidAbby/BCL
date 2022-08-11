@@ -56,7 +56,7 @@ def compile(source_code: str, output_loc: str):
 
     module = codegen.module
     Ast.Standard_Functions.declare_printf(module)
-    # printf = codegen.printf
+
     output = []
     for x in tokens:
         output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno, len(x.value)], "completed": False})
@@ -65,10 +65,8 @@ def compile(source_code: str, output_loc: str):
 
     start=time.perf_counter()
 
-    # print("\n".join([f"TOKEN: {x['name']}, {x['value']}" for x in output]))
     pg = Parser.parser(output, module)
     parsed = pg.parse()
-    # print(parsed)
 
     print(f'| parsing finished in {time.perf_counter() - start} seconds')
 
@@ -115,15 +113,21 @@ if __name__ == "__main__":
 
     else:
         example = '''
+
 define main() {
     x = 69+1;
     j = x+4-2*6/7%12;
+    test() + 2;
     if x>=2 {
         println(x*1);
     }else {
         println(x*5);
     }
     //fizzbuzz(0);
+}
+
+define test() {
+    9;
 }
 
 //define as_int(in: bool) -> i32 {
