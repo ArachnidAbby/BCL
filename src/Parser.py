@@ -1,8 +1,8 @@
 from typing import Callable
 
 import Ast
-from Parser_Base import ParserBase
 from Errors import error
+from Parser_Base import ParserBase
 
 
 class parser(ParserBase):

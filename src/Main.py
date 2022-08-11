@@ -38,12 +38,12 @@ def compile(source_code: str, output_loc: str):
     start = time.perf_counter()
     start_beginning = start
 
-    import Codegen
-    import Parser
-    from Lexer import Lexer
     import Ast.Standard_Functions
-    from Ast import Function
+    import Codegen
     import Errors
+    import Parser
+    from Ast import Function
+    from Lexer import Lexer
 
     print(f'{Errors.GREEN}/------------------------------------------------#')
     print(f'| imports finished in {time.perf_counter() - start} seconds')

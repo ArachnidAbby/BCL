@@ -4,6 +4,8 @@ from llvmlite import ir
 
 from . import Types
 from .Nodes import *
+
+
 class Operation(AST_NODE):
     '''Operation class to define common behavior in Operations'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
@@ -14,20 +16,16 @@ class Operation(AST_NODE):
 
         self.ret_type = Types.types[self.children[0].ret_type].get_op_return(self.op_type, self.children[0], self.children[1])
         self.ir_type = Types.types[self.ret_type].ir_type
-
-        # print(self.ret_type)
     
     def eval_math(self, func, lhs, rhs):
         pass
 
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval(func)
+            return shunt(self).eval(func) # type: ignore
         else:
             self.pre_eval()
             # * do conversions on args
-            # lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-            # rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
             lhs = self.children[0]
             rhs = self.children[1]
             return self.eval_math(func, lhs, rhs)
@@ -169,18 +167,9 @@ class Comparators(Operation):
     
     def __call__(self, pos, children, *args, **kwargs):
         return Comparators(self.op_name, True, *([pos, children] + list(args)), **kwargs)
-
-    # def pre_eval(self, revert_type = True):
-    #     super().pre_eval()
-    #     if revert_type:
-    #         self.ret_type = 'bool'
-    #         self.ir_type = Types.Integer_1.ir_type
         
     def eval_math(self, func, lhs, rhs):
         # * do conversions on args
-        # self.pre_eval(revert_type = False)
-        # lhs = Types.types[self.ret_type].convert_from(func,self.children[0].ret_type, self.children[0].eval(func))
-        # rhs = Types.types[self.ret_type].convert_from(func,self.children[1].ret_type, self.children[1].eval(func))
         match self.op_name:
             case 'eq':
                 return Types.types[lhs.ret_type].eq(func,lhs,rhs)

@@ -58,9 +58,9 @@ def get_std_ret_type(self: AST_NODE,  other: AST_NODE):
 
     return conversion_priority_raw[largest_priority]
 
-from .Type_I32 import Integer_32
-from .Type_F64 import Float_64
 from .Type_Bool import Integer_1
+from .Type_F64 import Float_64
+from .Type_I32 import Integer_32
 from .Type_Void import Void
 
 types = {

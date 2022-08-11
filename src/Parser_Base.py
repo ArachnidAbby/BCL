@@ -92,7 +92,7 @@ class ParserBase():
         self._cursor=cursor_origin # set cursor back to origin after the `parse()`
 
         counter=0       # stores a mini cursor and stores the total amount of tokens to consume at the end.
-        allow_next = True       # allow another statement in the block
+        allow_next = True       # allow another Node in the block
         while not self.check(counter, end):
             if self.check(counter, '__'):
                 if allow_next: 

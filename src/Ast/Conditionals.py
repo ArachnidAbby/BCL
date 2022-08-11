@@ -1,7 +1,8 @@
-from llvmlite import ir
 from Errors import error
+from llvmlite import ir
 
 from .Nodes import AST_NODE, Block
+
 
 class IfStatement(AST_NODE):
     '''Code for an If-Statement'''

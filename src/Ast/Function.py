@@ -1,8 +1,8 @@
+import Errors
 from llvmlite import ir
 
 from .Nodes import AST_NODE, Block, ParenthBlock
 from .Types import types
-import Errors
 
 functions = {}
 func_calls = []
@@ -30,8 +30,6 @@ class FunctionDef(AST_NODE):
         self.args = {x.key: [None, x.value, True] for x in args.children}
         self.args_ir = tuple([types[x.value].ir_type for x in args.children])
         self.args_types = tuple([x.value for x in args.children])
-        # print(self.args)
-        # print([types[x.value].ir_type for x in args.children])
 
     def pre_eval(self):
         fnty = ir.FunctionType(types[self.ret_type].ir_type, self.args_ir, False)
@@ -94,9 +92,6 @@ class FunctionCall(AST_NODE):
         self.type = "FunctionCall"
         self.ret_type = 'unknown'
         self.ir_type = None
-
-        # global func_calls
-        # func_calls.append(self)
 
         self.paren = parenth
     

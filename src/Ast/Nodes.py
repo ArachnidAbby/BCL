@@ -1,7 +1,7 @@
 from copy import copy
 from typing import List, Tuple
-from Errors import error
 
+from Errors import error
 from llvmlite import ir
 
 
@@ -30,14 +30,6 @@ class AST_NODE:
     def eval(self, func):
         pass
 
-    # # todo: rewrite and make this useful    
-    # def show_er(self, source: List[str]) -> str:
-    #     '''Show an error, 
-    #         source: file's source seperated by lines.
-    #     '''
-    #     output = source[self.position[0]]+f'\n{" "*(self.position[1]-1)}'+f"{'^'*len(self.token)}"
-    #     return output
-
 
 class Block(AST_NODE):
     '''Provides a Block node that contains other `AST_NODE` objects'''
@@ -48,7 +40,7 @@ class Block(AST_NODE):
         self.type = "Block"
         self.ret_type = "void"
 
-        self.variables = dict() # {name: (ptr, type_str), ...}
+        self.variables = dict() # {name: VarObj, ...}
         self.builder = None
     
     def pre_eval(self):
@@ -63,6 +55,14 @@ class Block(AST_NODE):
 
     def append_child(self, child: AST_NODE):
         self.children.append(child)
+
+    def get_variable(self, var_name: str):
+        '''get variable by name'''
+        return self.variables[var_name]
+
+    def validate_variable(self, var_name: str) -> bool:
+        '''Return if a variable already has a ptr'''
+        return self.variables[var_name].ptr!=None
 
 class ParenthBlock(AST_NODE):
     '''Provides a node for parenthesis as an expression or tuple'''
@@ -87,7 +87,7 @@ class ParenthBlock(AST_NODE):
         for x in self.children:
             if not isinstance(x, KeyValuePair):
                 return False
-        return True        
+        return True     
 
     def append_child(self, child: AST_NODE):
         self.children.append(child)
@@ -103,7 +103,7 @@ class ParenthBlock(AST_NODE):
             return self.children[0]
 
 class KeyValuePair(AST_NODE):
-    '''For now, it does nothing special'''
+    '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ['key', 'value', 'keywords']
 
     def init(self, k, v, keywords = False):

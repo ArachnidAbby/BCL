@@ -1,9 +1,10 @@
+from Errors import error
 from llvmlite import ir
 
 from Ast import Types
-from Errors import error
 
 from .Nodes import AST_NODE
+
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
@@ -35,13 +36,14 @@ class VariableAssign(AST_NODE):
     
     def eval(self, func):
         self.value.pre_eval()
+        variable = func.block.get_variable(self.name)
 
-        if func.block.variables[self.name].ptr==None:
+        if not self.block.validate_variable(self.name):
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
-            func.block.variables[self.name].ptr = ptr
+            variable.ptr = ptr
         else:
-            ptr = func.block.variables[self.name].ptr
-            if self.value.ret_type != func.block.variables[self.name].type:
+            ptr = variable.ptr
+            if self.value.ret_type != variable.type:
                 error(
                     f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {func.block.variables[self.name].type}",
                     line = self.position
@@ -60,10 +62,10 @@ class VariableRef(AST_NODE):
         self.block = block
     
     def pre_eval(self):
-        self.ret_type = self.block.variables[self.name].type # get variable type {name: (ptr, type, is_const)}
+        self.ret_type = self.block.get_variable(self.name).type
         self.ir_type = Types.types[self.ret_type].ir_type
     
     def eval(self, func):
-        ptr = func.block.variables[self.name].ptr # get variable ptr
-        if not func.block.variables[self.name].is_constant: return func.builder.load(ptr) # var[2] is whether or not this is a static var
+        ptr = func.block.get_variable(self.name).ptr 
+        if not func.block.get_variable(self.name).is_constant: return func.builder.load(ptr) 
         else: return ptr
