@@ -102,6 +102,9 @@ class ParserBase():
                 allow_next = allow_statements and self.check(counter,'statement')
             elif self.check(counter, sep):
                 allow_next=True
+            elif self.check(counter, '_!_'):
+                sym = self.peek(counter)
+                error(f"unknown symbol '{sym['value']}'", line = sym["source_pos"])
             elif self.isEOF(self._cursor+counter):
                 error(f"EOF reached before {end} closed.", line = ln)
             counter+=1
