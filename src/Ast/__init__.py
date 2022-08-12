@@ -4,6 +4,7 @@ from typing import List, Tuple
 from llvmlite import ir
 
 from .Conditionals import *
+from .Loops import *
 from .Function import *
 from .Math import *
 from .Nodes import *

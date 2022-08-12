@@ -9,10 +9,10 @@ class parser(ParserBase):
     def __init__(self, *args, **kwargs):
         self.current_block = None
         self.statements = [
-            'return', 'if'
+            'return', 'if', 'while', 'else'
         ]
         self.keywords = [
-            "define", "return", 'if', 'else', 'and', 'or', 'not'
+            "define", "return", 'if', 'else', 'and', 'or', 'not', 'while'
         ]
 
         self.simple_rules = [
@@ -108,6 +108,13 @@ class parser(ParserBase):
             x = Ast.Conditionals.IfElseStatement(self.peek(0)["source_pos"], None, expr, block_if, block_else)
             self.insert(5,"statement", x)
             self.consume(amount=5, index=0)
+        
+        elif self.check_group(0, "$while expr Block|statement"):
+            expr = self.peek(1)["value"]
+            block = self.peek(2)["value"]
+            x = Ast.Loops.WhileStatement(self.peek(0)["source_pos"], None, expr, block)
+            self.insert(3,"statement", x)
+            self.consume(amount=3, index=0)
     
     def parse_functions(self):
         '''Everything involving functions. Calling, definitions, etc.'''

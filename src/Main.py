@@ -126,7 +126,14 @@ if __name__ == "__main__":
 define main() {
     x = 69+1;
     //j = x+4-2*6/7%12;
-    9 and 2;
+
+    while x>10 {
+        println(69420);
+        while x>70 {
+            println(69420);
+        }
+    }
+
     if not x>=2000 and x <= 70 {
         println(x*1);
     }else if x<=2{
