@@ -12,11 +12,11 @@ class parser(ParserBase):
             'return', 'if'
         ]
         self.keywords = [
-            "define", "return", 'if'
+            "define", "return", 'if', 'else', 'and', 'or', 'not'
         ]
 
         self.simple_rules = [
-            ("statement", "$return expr SEMI_COLON", Ast.Function.ReturnStatement, (1,) )
+            ("statement", "$return expr SEMI_COLON", Ast.Function.ReturnStatement, (1,) )  # type: ignore
         ]
 
         super().__init__(*args, **kwargs)
@@ -25,7 +25,7 @@ class parser(ParserBase):
         self.parse_blocks()
         self.parse_numbers()
         self.parse_math()
-        self.pares_control_flow()
+        self.parse_control_flow()
         self.parse_functions()
         self.parse_special()
         self.parse_vars()
@@ -91,17 +91,17 @@ class parser(ParserBase):
         self.consume(amount=counter+2)
         self.current_block = old_block # return to old block
     
-    def pares_control_flow(self):
+    def parse_control_flow(self):
         '''parse if/then, if/else, and loops'''
 
         # * if blocks
-        if self.check_group(0, "$if expr Block !$else"):
+        if self.check_group(0, "$if expr Block|statement !$else"):
             expr = self.peek(1)["value"]
             block = self.peek(2)["value"]
             x = Ast.Conditionals.IfStatement(self.peek(0)["source_pos"], None, expr, block)
             self.insert(3,"statement", x)
             self.consume(amount=3, index=0)
-        elif self.check_group(0, "$if expr Block $else Block"):
+        elif self.check_group(0, "$if expr Block|statement $else Block|statement"):
             expr = self.peek(1)["value"]
             block_if = self.peek(2)["value"]
             block_else = self.peek(4)["value"]
@@ -114,13 +114,13 @@ class parser(ParserBase):
 
         # * Function Definitions
         if self.check_group(0,"KEYWORD KEYWORD expr|paren"):
-            if self.peek(0)['value'] == 'define':
+            if self.check(0, '$define'):
                 func_name = self.peek(1)["value"]
                 block = self.peek(2)["value"]
                 func = Ast.FunctionDef(self.peek(0)["source_pos"], None, func_name, self.peek(2)["value"], block, self.module)
                 self.insert(3,"func_def_portion", func)
                 self.consume(amount=3, index=0)
-            else:
+            elif self.peek(0)["value"] not in self.keywords:
                 error(f"invalid syntax '{self.peek(0)['value']}'", line = self.peek(0)["source_pos"])
         
         # * Set Function Return Type 
@@ -171,10 +171,10 @@ class parser(ParserBase):
         
         # * true and false
         elif self.check(0, '$true'):
-            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 1))
+            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 1)) #type: ignore
             self.consume(amount=1)
         elif self.check(0, '$false'):
-            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 0))
+            self.insert(1,"expr", Ast.Types.Integer_1(self.peek(0)["source_pos"], None, 0)) #type: ignore
             self.consume(amount=1)
     
     def parse_vars(self):
@@ -204,7 +204,7 @@ class parser(ParserBase):
     def parse_numbers(self):
         '''Parse raw integers into `expr` token.'''
 
-        create_num = lambda x, m: Ast.Types.Integer_32(self.peek(0)["source_pos"], None, m*int(self.peek(x)["value"]))
+        create_num = lambda x, m: Ast.Types.Integer_32(self.peek(0)["source_pos"], None, m*int(self.peek(x)["value"]))  # type: ignore
         
         # * Turn `NUMBER` token into an expr
         if self.check(0,"NUMBER"):
@@ -231,6 +231,21 @@ class parser(ParserBase):
             op = Ast.Math.ops[op_str](self.peek(0)["source_pos"],[self.peek(0)["value"],self.peek(2)["value"]])
             self.insert(3,"expr",op)
             self.consume(amount=3,index=0)
+        
+        elif self.check_group(0,'expr $and expr'):
+            op = Ast.Math.ops['and'](self.peek(0)["source_pos"],[self.peek(0)["value"],self.peek(2)["value"]])
+            self.insert(3,"expr",op)
+            self.consume(amount=3,index=0)
+        
+        elif self.check_group(0,'expr $or expr'):
+            op = Ast.Math.ops['or'](self.peek(0)["source_pos"],[self.peek(0)["value"],self.peek(2)["value"]])
+            self.insert(3,"expr",op)
+            self.consume(amount=3,index=0)
+        
+        elif self.check_group(0,'$not expr'):
+            op = Ast.Math.ops['not'](self.peek(0)["source_pos"],[None,self.peek(1)["value"]])
+            self.insert(2,"expr",op)
+            self.consume(amount=2,index=0)
     
     def parse_parenth(self):
         '''Parses blocks of parenthises'''

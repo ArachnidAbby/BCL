@@ -12,6 +12,25 @@ class Abstract_Type(AST_NODE):
     @staticmethod
     def convert_to(func, orig, typ): error(f"Abstract_Type has no conversions",  line = orig.position)
 
+    @classmethod
+    def print_error(cls, op: str, lhs, rhs):
+        {
+            'sum': cls.sum,
+            'sub': cls.sub,
+            'mul': cls.mul,
+            'div': cls.div,
+            'mod': cls.mod,
+            'eq': cls.eq,
+            'neq': cls.neq,
+            'geq': cls.geq,
+            'leq': cls.leq,
+            'le': cls.le,
+            'gr': cls.gr,
+            'and': cls._and,
+            'or': cls._or,
+            'not': cls._not,
+        }[op](None, lhs, rhs)
+
 
     @staticmethod
     def sum  (func, lhs, rhs): error(f"Operator '+' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
@@ -38,7 +57,7 @@ class Abstract_Type(AST_NODE):
     def gr   (func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     @staticmethod
-    def _not (func, lhs, rhs): error(f"Operator 'not' is not supported for type '{lhs.ret_type}'",line = lhs.position)
+    def _not (func, rhs): error(f"Operator 'not' is not supported for type '{rhs.ret_type}'",line = rhs.position)
     @staticmethod
     def _and (func, lhs, rhs): error(f"Operator 'and' is not supported for type '{lhs.ret_type}'",line = lhs.position)
     @staticmethod

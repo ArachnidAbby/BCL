@@ -45,6 +45,9 @@ def compile(source_code: str, output_loc: str):
     from Ast import Function
     from Lexer import Lexer
 
+    Errors.inline_warning("Python has notoriusly high memory usage, this applies in this compiler!\nThis compiler is written in python with llvmlite!")
+    print()
+
     print(f'{Errors.GREEN}/------------------------------------------------#')
     print(f'| imports finished in {time.perf_counter() - start} seconds')
 
@@ -97,7 +100,13 @@ def compile(source_code: str, output_loc: str):
 
     print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
     print(f'\\--------------------------------------------------/{Errors.RESET}')
-    print('\n\n\n\n')
+    print()
+    import os, psutil
+    process = psutil.Process(os.getpid())
+    Errors.inline_warning(f'{process.memory_info().rss} bytes of memory used for this operation.')  # in bytes 
+
+
+    print('\n\n\n')
     # print(module, type(module))
 
 
@@ -116,13 +125,17 @@ if __name__ == "__main__":
 
 define main() {
     x = 69+1;
-    j = x+4-2*6/7%12;
-    test() + 2;
-    if x>=2 {
+    //j = x+4-2*6/7%12;
+    9 and 2;
+    if not x>=2000 and x <= 70 {
         println(x*1);
-    }else {
+    }else if x<=2{
         println(x*5);
+    } else {
+        println(98549885984);
     }
+
+    println(82);
     //fizzbuzz(0);
 }
 

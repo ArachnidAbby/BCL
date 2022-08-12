@@ -39,7 +39,7 @@ class Integer_1(Type_Base.Abstract_Type):
         match op.lower():
             case 'sum'|'sub'|'mul'|'div'|'mod':
                 return Type_Base.get_std_ret_type(lhs, rhs)
-            case 'eq'|'neq'|'geq'|'leq'|'le'|'gr':
+            case 'eq'|'neq'|'geq'|'leq'|'le'|'gr'|'and'|'or'|'not':
                 return 'bool'
 
     @staticmethod
@@ -104,3 +104,21 @@ class Integer_1(Type_Base.Abstract_Type):
     def gr(func, lhs, rhs):
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>', lhs, rhs)
+
+    @staticmethod
+    def err_if_not_bool(rhs):
+        if rhs.ret_type != 'bool':
+            error('rhs of boolean operation must be of boolean type.', line = rhs.position)
+
+    @staticmethod
+    def _and(func, lhs, rhs):
+        Integer_1.err_if_not_bool(rhs)
+        return func.builder.and_(lhs.eval(func), rhs.eval(func))
+    @staticmethod
+    def _or(func, lhs, rhs):
+        Integer_1.err_if_not_bool(rhs)
+        return func.builder.or_(lhs.eval(func), rhs.eval(func))
+    @staticmethod
+    def _not(func, rhs):
+        Integer_1.err_if_not_bool(rhs)
+        return func.builder.not_(rhs.eval(func))

@@ -5,3 +5,4 @@ sphinx-rtd-theme
 # project
 rply
 llvmlite
+psutil

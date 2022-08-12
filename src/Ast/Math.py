@@ -15,6 +15,7 @@ class Operation(AST_NODE):
         self.children[1].pre_eval()
 
         self.ret_type = Types.types[self.children[0].ret_type].get_op_return(self.op_type, self.children[0], self.children[1])
+        if self.ret_type == None: Types.Abstract_Type.print_error(self.op_type, self.children[0], self.children[1])
         self.ir_type = Types.types[self.ret_type].ir_type
     
     def eval_math(self, func, lhs, rhs):
@@ -31,6 +32,8 @@ class Operation(AST_NODE):
             return self.eval_math(func, lhs, rhs)
 
 
+# To any future programmers:
+#   I am sorry for this shunt() function.
 def shunt(node: AST_NODE, op_stack = None, output_queue = None, has_parent=False) -> Operation|None:
     '''shunt Expressions to rearrange them based on the Order of Operations'''
 
@@ -184,6 +187,46 @@ class Comparators(Operation):
             case 'gr':
                 return Types.types[lhs.ret_type].gr(func,lhs,rhs)
 
+class And(Operation):
+    '''Basic And operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = "and"
+        self.operator_precendence = -2
+
+    def eval_math(self, func, lhs, rhs):
+        return Types.types[lhs.ret_type]._and(func,lhs,rhs)
+    
+class Or(Operation):
+    '''Basic And operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = "or"
+        self.operator_precendence = -3
+
+    def eval_math(self, func, lhs, rhs):
+        return Types.types[lhs.ret_type]._or(func,lhs,rhs)
+
+class Not(Operation):
+    '''Basic And operation. It acts as an `expr`'''
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    
+    def init(self, shunted = False):
+        self.shunted = shunted
+        self.is_operator = True
+        self.op_type = "not"
+        self.operator_precendence = -1
+        self.children[0] = Types.Void(self.position, None)
+
+    def eval_math(self, func, lhs, rhs):
+        return Types.types[lhs.ret_type]._not(func,rhs)
+
 
 ops = {
     "sum": Sum,
@@ -208,4 +251,7 @@ ops = {
     "LE": Comparators('le'),
     "gr": Comparators('gr'),
     "GR": Comparators('gr'),
+    'and': And,
+    'or': Or,
+    'not': Not
 }
