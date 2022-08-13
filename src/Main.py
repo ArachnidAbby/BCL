@@ -129,7 +129,6 @@ define main() {
 
     while i < loop_amount {
         i = i+1;
-        //unsure how alloca in llvm is handled in loops. In the meantime, declare variables BEFORE the 'loop.body' block.
         fizz = is_multiple(i, 3); 
         buzz = is_multiple(i, 5)*2;
         println(fizz + buzz);

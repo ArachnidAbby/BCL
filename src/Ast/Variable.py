@@ -30,6 +30,7 @@ class VariableAssign(AST_NODE):
 
         if block!=None and self.name not in block.variables.keys():
             block.variables[self.name] = VariableObj(None, self.value.ret_type, False)
+            self.type = "variableDeclare"
         elif block==None:
             raise Exception("No Block for Variable Assignment to take place in")
         
