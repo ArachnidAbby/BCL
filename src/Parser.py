@@ -74,7 +74,8 @@ class parser(ParserBase):
         output = Ast.Block(self.peek(0)["source_pos"])
         if self.check(-1,"func_def_portion"):
             for x in self.peek(-1)["value"].args.keys():
-                output.variables[x] = self.peek(-1)["value"].args[x]
+                arg = self.peek(-1)["value"].args[x]
+                output.variables[x] = Ast.Variable.VariableObj(arg[0], arg[1], True)
         if self.current_block!=None:
             for x in self.current_block.variables.keys():
                 output.variables[x] = self.current_block.variables[x]

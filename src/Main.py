@@ -124,55 +124,22 @@ if __name__ == "__main__":
         example = '''
 
 define main() {
-    x = 69+1;
-    //j = x+4-2*6/7%12;
+    i = 0;
+    loop_amount = 200;
 
-    while x>10 {
-        println(69420);
-        while x>70 {
-            println(69420);
-        }
+    while i < loop_amount {
+        i = i+1;
+        //unsure how alloca in llvm is handled in loops. In the meantime, declare variables BEFORE the 'loop.body' block.
+        fizz = is_multiple(i, 3); 
+        buzz = is_multiple(i, 5)*2;
+        println(fizz + buzz);
+
+        
     }
-
-    if not x>=2000 and x <= 70 {
-        println(x*1);
-    }else if x<=2{
-        println(x*5);
-    } else {
-        println(98549885984);
-    }
-
-    println(82);
-    //fizzbuzz(0);
 }
 
-define test() {
-    9;
+define is_multiple(value: i32, divider: i32) -> bool {
+    return (value % divider) == 0;
 }
-
-//define as_int(in: bool) -> i32 {
-//    //really bad as_int function as a proof of concept.
-//    //its bad because the compiler will still try the multiplication.
-//    // which is just an extra instruction.
-//    return in*1;
-//}
-
-//define remainder_test(value: i32, divider: i32) -> bool {
-//    // random test function with new return statements.
-//    return (value % divider) == 0;
-//}
-
-//define fizzbuzz(current: i32) {
-//    // prints 1 for "fizz"
-//    // prints 2 for "buzz"
-//    // prints 3 for "fizzbuzz"
-//    fizz = remainder_test(current, 3).as_int();
-//    buzz = remainder_test(current, 5)*2;
-//
-//    println(fizz+buzz); 
-//
-//    fizzbuzz(current+1);
-//}
-
 '''
         compile(example, "test.ll")

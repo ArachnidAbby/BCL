@@ -14,6 +14,9 @@ class VariableObj:
         self.ptr = ptr
         self.type = typ
         self.is_constant = is_constant
+    
+    def __repr__(self) -> str:
+        return f'VAR: |{self.ptr}, {self.type}|'
 
 class VariableAssign(AST_NODE):
     '''Handles Variable Assignment and Variable Instantiation.'''
@@ -25,9 +28,9 @@ class VariableAssign(AST_NODE):
         self.value = value
         self.block = block
 
-        if block!=None:
+        if block!=None and self.name not in block.variables.keys():
             block.variables[self.name] = VariableObj(None, self.value.ret_type, False)
-        else:
+        elif block==None:
             raise Exception("No Block for Variable Assignment to take place in")
         
     def pre_eval(self):
@@ -36,7 +39,7 @@ class VariableAssign(AST_NODE):
     
     def eval(self, func):
         self.value.pre_eval()
-        variable = func.block.get_variable(self.name)
+        variable = self.block.get_variable(self.name)
 
         if not self.block.validate_variable(self.name):
             ptr = func.builder.alloca(self.value.ir_type, name=self.name)
@@ -45,10 +48,10 @@ class VariableAssign(AST_NODE):
             ptr = variable.ptr
             if self.value.ret_type != variable.type:
                 error(
-                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {func.block.variables[self.name].type}",
+                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {self.block.variables[self.name].type}",
                     line = self.position
                 )
-            func.block.variables[self.name].is_constant = False
+            self.block.variables[self.name].is_constant = False
 
         func.builder.store(self.value.eval(func), ptr)
 
@@ -63,9 +66,10 @@ class VariableRef(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
+        
         self.ir_type = Types.types[self.ret_type].ir_type
     
     def eval(self, func):
-        ptr = func.block.get_variable(self.name).ptr 
-        if not func.block.get_variable(self.name).is_constant: return func.builder.load(ptr) 
+        ptr = self.block.get_variable(self.name).ptr 
+        if not self.block.get_variable(self.name).is_constant: return func.builder.load(ptr) 
         else: return ptr

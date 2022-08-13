@@ -51,7 +51,7 @@ class FunctionDef(AST_NODE):
         
         # * add variables into block
         for c,x in enumerate(self.args.keys()):
-            self.block.variables[x][0] = args[c]
+            self.block.variables[x].ptr = args[c]
         
         self.block.eval(self)
         
