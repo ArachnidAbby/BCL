@@ -7,14 +7,13 @@ from llvmlite import ir
 
 class AST_NODE:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
-    __slots__ = ['name', 'type', 'children', 'position', "ret_type", "is_operator"]
+    __slots__ = ['name', 'type', 'position', "ret_type", "is_operator"]
 
-    def __init__(self, position: Tuple[int,int, int], children: None|List = None, *args, **kwargs):
+    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         self.type = ""
         self.name = ""
         self.ret_type = "pre-eval ret type"
         self.position = position        # (line#, col#)
-        self.children = list() if children==None else children
         self.is_operator = False
 
 
@@ -33,12 +32,13 @@ class AST_NODE:
 
 class Block(AST_NODE):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ['variables', 'builder']
+    __slots__ = ['variables', 'builder', 'children']
 
     def init(self):
         self.name = "Block"
         self.type = "Block"
         self.ret_type = "void"
+        self.children = list()
 
         self.variables = dict() # {name: VarObj, ...}
         self.builder = None
@@ -66,12 +66,13 @@ class Block(AST_NODE):
 
 class ParenthBlock(AST_NODE):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ['ir_type']
+    __slots__ = ['ir_type', 'children']
 
     def init(self):
         self.name = "Parenth"
         self.type = "Parenth"
         self.ir_type = "INVALID"
+        self.children = list()
         
     def pre_eval(self):
         for x in self.children:

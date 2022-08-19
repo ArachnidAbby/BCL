@@ -8,7 +8,11 @@ from .Nodes import *
 
 class Operation(AST_NODE):
     '''Operation class to define common behavior in Operations'''
-    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
+    __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted", "children"]
+
+    def init(self, children, shunted = False):
+        self.children = children
+        self.shunted = shunted
 
     def pre_eval(self):
         self.children[0].pre_eval()
@@ -90,8 +94,8 @@ class Sum(Operation):
     '''Basic sum operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
 
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
 
         self.is_operator = True
         self.op_type = "sum"
@@ -104,8 +108,8 @@ class Sub(Operation):
     '''Basic sub operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
 
         self.is_operator = True
         self.op_type = "sub"
@@ -118,8 +122,9 @@ class Mul(Operation):
     '''Basic Mul operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "mul"
         self.operator_precendence = 2
@@ -131,8 +136,9 @@ class Div(Operation):
     '''Basic Div operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "div"
         self.operator_precendence = 2
@@ -144,8 +150,9 @@ class Mod(Operation):
     '''Basic Mod operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "mod"
         self.operator_precendence = 2
@@ -162,11 +169,12 @@ class Comparators(Operation):
         if run_super:
             super().__init__(*args, **kwargs)
 
-    def init(self, shunted = False):
+    def init(self, children, shunted = False):
         self.shunted = shunted
         self.is_operator = True
         self.op_type = self.op_name
         self.operator_precendence = 0
+        self.children = children
     
     def __call__(self, pos, children, *args, **kwargs):
         return Comparators(self.op_name, True, *([pos, children] + list(args)), **kwargs)
@@ -191,8 +199,9 @@ class And(Operation):
     '''Basic And operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "and"
         self.operator_precendence = -2
@@ -204,8 +213,9 @@ class Or(Operation):
     '''Basic And operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "or"
         self.operator_precendence = -3
@@ -217,8 +227,9 @@ class Not(Operation):
     '''Basic And operation. It acts as an `expr`'''
     __slots__ = ["ir_type", "operator_precendence", "op_type", "shunted"]
     
-    def init(self, shunted = False):
-        self.shunted = shunted
+    def init(self, children, shunted = False):
+        super().init(children, shunted=shunted)
+
         self.is_operator = True
         self.op_type = "not"
         self.operator_precendence = -1

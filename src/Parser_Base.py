@@ -73,10 +73,13 @@ class ParserBase():
         else:
             return x["name"]==wanting
 
-
+    def replace(self, l: int, name: str, value: str, i: int = 0, completed: bool = True):
+        '''replace a group of tokens with a single token.'''
+        self.insert(l-i, name, value, completed = completed)
+        self.consume(amount=l, index=i)
 
     def check_group(self, start_index: int, wanting: str) -> bool:
-        '''check a group  of tokens in a string seperated by spaces.'''
+        '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
         return all([self.check(c+start_index,x) for c,x in enumerate(tokens)])
