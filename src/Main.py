@@ -45,7 +45,7 @@ def compile(source_code: str, output_loc: str):
     from Ast import Function
     from Lexer import Lexer
 
-    Errors.inline_warning("Python has notoriusly high memory usage, this applies in this compiler!\nThis compiler is written in python with llvmlite!")
+    Errors.inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
     print()
 
     print(f'{Errors.GREEN}/------------------------------------------------#')
