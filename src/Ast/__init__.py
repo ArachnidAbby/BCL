@@ -9,5 +9,5 @@ from .Function import *
 from .Math import *
 from .Nodes import *
 from .Standard_Functions import *
-from .Types import *
+from .Ast_Types import *
 from .Variable import *

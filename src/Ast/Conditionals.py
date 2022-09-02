@@ -1,3 +1,5 @@
+from Ast.Ast_Types.Utils import Types
+from Ast.Node_Types import NodeTypes
 from Errors import error
 from llvmlite import ir
 
@@ -7,11 +9,11 @@ from .Nodes import AST_NODE, Block
 class IfStatement(AST_NODE):
     '''Code for an If-Statement'''
 
-    __slots__ = ['cond', 'block']
+    __slots__ = ('cond', 'block')
 
     def init(self, cond: AST_NODE, block: AST_NODE):
         self.name = "If"
-        self.type = "statement"
+        self.type = NodeTypes.STATEMENT
         self.ret_type = "void"
 
         self.cond = cond
@@ -28,12 +30,12 @@ class IfStatement(AST_NODE):
 
 class IfElseStatement(AST_NODE):
     '''Code for an If-Statement'''
-    __slots__ = ['cond', 'if_block', 'else_block']
+    __slots__ = ('cond', 'if_block', 'else_block')
 
     def init(self, cond: AST_NODE, if_block: AST_NODE, else_block: AST_NODE):
         self.name = "IfElse"
-        self.type = "statement"
-        self.ret_type = "void"
+        self.type = NodeTypes.STATEMENT
+        self.ret_type = Types.VOID
 
         self.cond = cond
         self.if_block = if_block

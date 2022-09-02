@@ -2,6 +2,8 @@ import os
 import sys
 from typing import List
 
+from Parser_Base import ParserBase
+
 
 def make_project(args: List[str]):
     '''setup project files'''
@@ -41,6 +43,7 @@ def compile(source_code: str, output_loc: str):
     import Ast.Standard_Functions
     import Codegen
     import Errors
+    import Parser_Base
     import Parser
     from Ast import Function
     from Lexer import Lexer
@@ -60,9 +63,7 @@ def compile(source_code: str, output_loc: str):
     module = codegen.module
     Ast.Standard_Functions.declare_printf(module)
 
-    output = []
-    for x in tokens:
-        output.append({"name":x.name,"value":x.value,"source_pos":[x.source_pos.lineno, x.source_pos.colno, len(x.value)], "completed": False})
+    output = Parser_Base.prepare_tokens(tokens)
     
     print(f'| lexing finished in {time.perf_counter() - start} seconds')
 
@@ -77,25 +78,26 @@ def compile(source_code: str, output_loc: str):
     
 
     for x in parsed:
-        if not x["completed"]:
+        if not x.completed:
+            print(x)
             Errors.error(f"""
             The compiler could not complete all it's operations.
 
             Note: this is an error the compiler was not designed to catch.
                   If you encounter this, send all relavent information to language devs.
-            """, line = x['source_pos'])
+            """, line = x.pos)
+            
 
-        x["value"].pre_eval()
+        x.value.pre_eval()
 
     for x in parsed:
-        x["value"].eval()
+        x.value.eval()
     
     
     print(f'| module created in {time.perf_counter() - start} seconds')
 
     start=time.perf_counter()
 
-    
     codegen.save_ir(output_loc)
 
     print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
@@ -132,8 +134,9 @@ define main() {
         fizz = is_multiple(i, 3); 
         buzz = is_multiple(i, 5)*2;
         println(fizz + buzz);
-
-        
+    }
+    if 10 == 10 {
+        println(654/8);
     }
 }
 

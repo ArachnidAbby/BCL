@@ -1,6 +1,8 @@
 
 from llvmlite import ir
 
+from Ast.Ast_Types.Utils import Types
+
 from . import Function
 
 # ! This whole module should eventually be removed.
@@ -35,4 +37,4 @@ def declare_printf(module):
     builder.ret(s)
 
     Function.functions["println"] = {}
-    Function.functions["println"][('i32',)] = [printint, "void"]
+    Function.functions["println"][(Types.I32,)] = [printint, Types.VOID]

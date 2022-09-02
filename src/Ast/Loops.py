@@ -1,4 +1,6 @@
 from llvmlite import ir
+from Ast.Ast_Types.Utils import Types
+from Ast.Node_Types import NodeTypes
 
 from Ast.Variable import VariableAssign
 
@@ -7,12 +9,12 @@ from .Nodes import AST_NODE, Block
 class WhileStatement(AST_NODE):
     '''Code for an If-Statement'''
 
-    __slots__ = ['cond', 'block']
+    __slots__ = ('cond', 'block')
 
     def init(self, cond: AST_NODE, block: Block):
         self.name = "While"
-        self.type = "statement"
-        self.ret_type = "void"
+        self.type = NodeTypes.STATEMENT
+        self.ret_type = Types.VOID
 
         self.cond = cond
         self.block = block

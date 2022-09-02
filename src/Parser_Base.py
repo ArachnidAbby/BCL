@@ -1,11 +1,28 @@
-from typing import Callable
+import dataclasses
+from typing import Any, Callable, List, Tuple
 
 import Ast
 from Errors import error
 
+@dataclasses.dataclass
+class ParserToken:
+    __slots__ = ('name', 'value', 'source_pos', 'completed')
 
-class ParserBase():
-    __slots__ = ['_tokens', '_cursor', 'start', 'builder', 'module', 'do_move']
+    name: str
+    value: Any
+    source_pos: Tuple[int, int, int]
+    completed: bool
+
+    @property
+    def pos(self):
+        return self.source_pos
+
+
+def prepare_tokens(token_stream) -> List[ParserToken]:
+    return [ParserToken(x.name, x.value, (x.source_pos.lineno, x.source_pos.colno, len(x.value)), False) for x in token_stream]
+
+class ParserBase:
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
@@ -23,16 +40,15 @@ class ParserBase():
     
     def move_cursor(self,index: int=1):
         '''Moves the cursor unless `!self.doMove` '''
-        if self.do_move:
-            self._cursor+=index
-        else:
-            self.do_move=True
+        
+        self._cursor += index if self.do_move else 0
+        self.do_move  = True
 
-    def peek(self, index: int) -> dict:
+    def peek(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token'''
         index = self._cursor+index
         if self.isEOF(index=index):
-            return {"name":"EOF","value":'', 'completed': False}
+            return ParserToken("EOF", '', (-1,-1,-1), False)
         return self._tokens[index]
     
     # todo: make this just use positional arguments for the amount.
@@ -50,7 +66,7 @@ class ParserBase():
     
     def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
         '''insert tokens at a specific location'''
-        self._tokens.insert(index+self._cursor,{"name":name,"value":value,"completed":completed, "source_pos": value.position})
+        self._tokens.insert(index+self._cursor,ParserToken(name, value, value.position, completed))
     
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
@@ -61,22 +77,22 @@ class ParserBase():
         if wanting == '_': # allow any
             return True
         elif wanting == '__': # allow any with "complete" == True
-            return x["completed"]
+            return x.completed
         elif wanting == '_!_': # allow any with "complete" == False
-            return not x["completed"]
+            return not x.completed
         elif wanting.startswith('!'): # `not` operation
             return not self.check(index, wanting[1:])
         elif wanting.startswith('$'): # `match value` operation
-            return x["value"]==wanting[1:]
+            return x.value==wanting[1:]
         elif '|' in wanting: # `or` operation
             return any([self.check(index,y) for y in wanting.split('|')])
         else:
-            return x["name"]==wanting
+            return x.name==wanting
 
-    def replace(self, l: int, name: str, value: str, i: int = 0, completed: bool = True):
+    def replace(self, l: int, name: str, value, i: int = 0, completed: bool = True):
         '''replace a group of tokens with a single token.'''
-        self.insert(l-i, name, value, completed = completed)
-        self.consume(amount=l, index=i)
+        self.insert(l+i, name, value, completed = completed)
+        self.consume(amount=l, index=-i)
 
     def check_group(self, start_index: int, wanting: str) -> bool:
         '''check a group of tokens in a string seperated by spaces.'''
@@ -90,7 +106,7 @@ class ParserBase():
         output=[]
         self._cursor+=1 # skip over start
         cursor_origin = self._cursor # save old origin point
-        ln = self.peek(-1)["source_pos"]
+        ln = self.peek(-1).pos
         self.parse(close_condition = lambda: self.check(0, end))
         self._cursor=cursor_origin # set cursor back to origin after the `parse()`
 
@@ -99,15 +115,15 @@ class ParserBase():
         while not self.check(counter, end):
             if self.check(counter, '__'):
                 if allow_next: 
-                    output.append(self.peek(counter)["value"])
+                    output.append(self.peek(counter).value)
                 else:
-                    error(f"missing '{sep}'", line = self.peek(counter)["source_pos"])
+                    error(f"missing '{sep}'", line = self.peek(counter).pos)
                 allow_next = allow_statements and self.check(counter,'statement')
             elif self.check(counter, sep):
                 allow_next=True
             elif self.check(counter, '_!_'):
                 sym = self.peek(counter)
-                error(f"unknown symbol '{sym['value']}'", line = sym["source_pos"])
+                error(f"unknown symbol '{sym.value}'", line = sym.pos)
             elif self.isEOF(self._cursor+counter):
                 error(f"EOF reached before {end} closed.", line = ln)
             counter+=1

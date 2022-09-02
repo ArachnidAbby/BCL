@@ -1,18 +1,21 @@
+from Ast.Ast_Types.Type_Base import get_type
+from Ast.Ast_Types.Utils import Types
+from Ast.Node_Types import NodeTypes
 from Errors import error
 from llvmlite import ir
-
-from Ast import Types
 
 from .Nodes import AST_NODE
 
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
-    __slots__ = ["ptr", "type", "is_constant"]
+    __slots__ = ("ptr", "type", "is_constant")
 
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
         self.type = typ
+        if isinstance(typ, str):
+            self.type = Types[typ]
         self.is_constant = is_constant
     
     def __repr__(self) -> str:
@@ -58,17 +61,17 @@ class VariableAssign(AST_NODE):
 
 class VariableRef(AST_NODE):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ['block', 'ir_type']
+    __slots__ = ('block', 'ir_type')
 
     def init(self, name: str, block):
         self.name = name
-        self.type = "variableRef"
+        self.type = NodeTypes.EXPRESSION
         self.block = block
     
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
-        
-        self.ir_type = Types.types[self.ret_type].ir_type
+
+        self.ir_type = get_type(self.ret_type).ir_type
     
     def eval(self, func):
         ptr = self.block.get_variable(self.name).ptr 
