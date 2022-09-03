@@ -16,11 +16,7 @@ class ParserToken:
     @property
     def pos(self):
         return self.source_pos
-
-
-def prepare_tokens(token_stream) -> List[ParserToken]:
-    return [ParserToken(x.name, x.value, (x.source_pos.lineno, x.source_pos.colno, len(x.value)), False) for x in token_stream]
-
+        
 class ParserBase:
     __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move')
     '''Backend of the Parser.

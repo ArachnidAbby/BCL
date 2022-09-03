@@ -1,4 +1,7 @@
+from typing import List
 from rply import LexerGenerator
+
+from Parser_Base import ParserToken
 
 
 class Lexer():
@@ -45,3 +48,9 @@ class Lexer():
     def get_lexer(self):
         self._add_tokens()
         return self.lexer.build()
+
+def get_tokens(src: str) -> List[ParserToken]:
+    '''Take source and convert to a list of 'ParserToken' Objects'''
+    lexer = Lexer().get_lexer()
+    tokens = lexer.lex(src)
+    return [ParserToken(x.name, x.value, (x.source_pos.lineno, x.source_pos.colno, len(x.value)), False) for x in tokens]

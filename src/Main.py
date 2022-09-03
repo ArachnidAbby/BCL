@@ -36,80 +36,9 @@ lib/
 
 def compile(source_code: str, output_loc: str):
     '''compile source code'''
-    import time
-    start = time.perf_counter()
-    start_beginning = start
+    import Compile
 
-    import Ast.Standard_Functions
-    import Codegen
-    import Errors
-    import Parser_Base
-    import Parser
-    from Ast import Function
-    from Lexer import Lexer
-
-    Errors.inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
-    print()
-
-    print(f'{Errors.GREEN}/------------------------------------------------#')
-    print(f'| imports finished in {time.perf_counter() - start} seconds')
-
-    start=time.perf_counter()
-
-    lexer = Lexer().get_lexer()
-    tokens = lexer.lex(example)
-    codegen = Codegen.CodeGen()
-
-    module = codegen.module
-    Ast.Standard_Functions.declare_printf(module)
-
-    output = Parser_Base.prepare_tokens(tokens)
-    
-    print(f'| lexing finished in {time.perf_counter() - start} seconds')
-
-    start=time.perf_counter()
-
-    pg = Parser.parser(output, module)
-    parsed = pg.parse()
-
-    print(f'| parsing finished in {time.perf_counter() - start} seconds')
-
-    start=time.perf_counter()
-    
-
-    for x in parsed:
-        if not x.completed:
-            print(x)
-            Errors.error(f"""
-            The compiler could not complete all it's operations.
-
-            Note: this is an error the compiler was not designed to catch.
-                  If you encounter this, send all relavent information to language devs.
-            """, line = x.pos)
-            
-
-        x.value.pre_eval()
-
-    for x in parsed:
-        x.value.eval()
-    
-    
-    print(f'| module created in {time.perf_counter() - start} seconds')
-
-    start=time.perf_counter()
-
-    codegen.save_ir(output_loc)
-
-    print(f'| IR saved, compilation done | {time.perf_counter() - start_beginning}s')
-    print(f'\\--------------------------------------------------/{Errors.RESET}')
-    print()
-    import os, psutil
-    process = psutil.Process(os.getpid())
-    Errors.inline_warning(f'{process.memory_info().rss} bytes of memory used for this operation.')  # in bytes 
-
-
-    print('\n\n\n')
-    # print(module, type(module))
+    Compile.compile(source_code, output_loc)
 
 
 if __name__ == "__main__":
@@ -134,9 +63,6 @@ define main() {
         fizz = is_multiple(i, 3); 
         buzz = is_multiple(i, 5)*2;
         println(fizz + buzz);
-    }
-    if 10 == 10 {
-        println(654/8);
     }
 }
 
