@@ -4,6 +4,7 @@ from typing import Callable
 import Ast
 from Errors import error
 from Parser_Base import ParserBase
+from Ast.Ast_Types.Utils import Types
 
 
 class parser(ParserBase):
@@ -189,7 +190,8 @@ class parser(ParserBase):
             args2 = self.peek(3).value
             args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1]
             args2 = args2.children if isinstance(args2, Ast.Nodes.ParenthBlock) else [args2]
-            args = Ast.Nodes.ParenthBlock(self.peek(0).pos, args1+args2)
+            args = Ast.Nodes.ParenthBlock(self.peek(0).pos)
+            args.children = args1+args2
             func = Ast.FunctionCall(self.peek(2).pos, func_name, args)
             self.replace(4,"expr", func)
     
@@ -205,9 +207,9 @@ class parser(ParserBase):
         
         # * true and false
         elif self.check(0, '$true'):
-            self.replace(1,"expr", Ast.Types.Integer_1(self.peek(0).pos, 1)) #type: ignore
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 1, Types.BOOL)) #type: ignore
         elif self.check(0, '$false'):
-            self.replace(1,"expr", Ast.Types.Integer_1(self.peek(0).pos, 0)) #type: ignore
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 0, Types.BOOL)) #type: ignore
     
     def parse_vars(self):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
@@ -234,7 +236,7 @@ class parser(ParserBase):
     def parse_numbers(self):
         '''Parse raw integers into `expr` token.'''
 
-        create_num = lambda x, m: Ast.Ast_Types.Integer_32(self.peek(0).pos, m*int(self.peek(x).value))  # type: ignore
+        create_num = lambda x, m: Ast.Literal(self.peek(0).pos, m*int(self.peek(x).value), Types.I32)  # type: ignore
         
         # * Turn `NUMBER` token into an expr
         if self.check(0,"NUMBER"):

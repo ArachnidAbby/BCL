@@ -6,17 +6,11 @@ from . import Type_Base
 from . import Utils
 
 
-class Float_64(Type_Base.Abstract_Type):
-    __slots__ = []
+class Float_64(Type_Base.AbstractType):
+    __slots__ = tuple()
 
     ir_type = ir.IntType(32)
-    
-    def init(self, value):
-        self.value = value
-        self.name = "F64"
-        self.type = NodeTypes.EXPRESSION
-        self.ret_type = Utils.Types.F64
-        
+
     @staticmethod
     def convert_from(func, typ: str, previous):
         if typ in (Utils.Types.I32, Utils.Types.I64): return func.builder.sitofp(previous,Float_64.ir_type)
@@ -35,9 +29,6 @@ class Float_64(Type_Base.Abstract_Type):
             case Utils.Types.F128: return func.builder.fpext(orig.eval(func), ir.DoubleType())
             case _: error(f"Cannot convert 'f64' to type '{typ}'", line = orig.position)
 
-    def eval(self, func) -> ir.Constant:
-        return ir.Constant(self.ir_type, self.value)
-
     @staticmethod
     def get_op_return(op: str, lhs, rhs):
         match op.lower():
@@ -49,8 +40,8 @@ class Float_64(Type_Base.Abstract_Type):
     @staticmethod
     def convert_args(func, lhs, rhs) -> tuple:
         typ = Type_Base.get_std_ret_type(lhs, rhs)
-        lhs = Type_Base.get_type(lhs.ret_type).convert_to(func, lhs, typ)
-        rhs = Type_Base.get_type(rhs.ret_type).convert_to(func, rhs, typ)
+        lhs = (lhs.ret_type.value).convert_to(func, lhs, typ)
+        rhs = (rhs.ret_type.value).convert_to(func, rhs, typ)
         return (lhs, rhs)
 
 

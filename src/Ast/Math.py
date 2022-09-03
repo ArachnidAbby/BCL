@@ -1,8 +1,6 @@
 from collections import deque
 
-from llvmlite import ir
 from Ast import Ast_Types
-from Ast.Ast_Types.Type_Base import get_type
 
 from Ast.Node_Types import NodeTypes
 
@@ -22,9 +20,9 @@ class Operation(AST_NODE):
         self.children[0].pre_eval()
         self.children[1].pre_eval()
 
-        self.ret_type = get_type(self.children[0].ret_type).get_op_return(self.op_type, self.children[0], self.children[1])
-        if self.ret_type == None: Ast_Types.Abstract_Type.print_error(self.op_type, self.children[0], self.children[1])
-        self.ir_type = get_type(self.ret_type).ir_type
+        self.ret_type = (self.children[0].ret_type.value).get_op_return(self.op_type, self.children[0], self.children[1])
+        if self.ret_type == None: Ast_Types.AbstractType.print_error(self.op_type, self.children[0], self.children[1])
+        self.ir_type = (self.ret_type.value).ir_type
     
     def eval_math(self, func, lhs, rhs):
         pass
@@ -106,7 +104,7 @@ class Sum(Operation):
         self.operator_precendence = 1
     
     def eval_math(self, func, lhs, rhs):
-        return (get_type(lhs.ret_type)).sum(func,lhs,rhs)
+        return (lhs.ret_type.value).sum(func,lhs,rhs)
 
 class Sub(Operation):
     '''Basic sub operation. It acts as an `expr`'''
@@ -120,7 +118,7 @@ class Sub(Operation):
         self.operator_precendence = 1
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type).sub(func,lhs,rhs)
+        return (lhs.ret_type.value).sub(func,lhs,rhs)
 
 class Mul(Operation):
     '''Basic Mul operation. It acts as an `expr`'''
@@ -134,7 +132,7 @@ class Mul(Operation):
         self.operator_precendence = 2
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type).mul(func,lhs,rhs)
+        return (lhs.ret_type.value).mul(func,lhs,rhs)
 
 class Div(Operation):
     '''Basic Div operation. It acts as an `expr`'''
@@ -148,7 +146,7 @@ class Div(Operation):
         self.operator_precendence = 2
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type).div(func,lhs,rhs)
+        return (lhs.ret_type.value).div(func,lhs,rhs)
 
 class Mod(Operation):
     '''Basic Mod operation. It acts as an `expr`'''
@@ -162,7 +160,7 @@ class Mod(Operation):
         self.operator_precendence = 2
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type).mod(func,lhs,rhs)
+        return (lhs.ret_type.value).mod(func,lhs,rhs)
 
 class Comparators(Operation):
     '''Basic Eq operation. It acts as an `expr`'''
@@ -187,17 +185,17 @@ class Comparators(Operation):
         # * do conversions on args
         match self.op_name:
             case 'eq':
-                return get_type(lhs.ret_type).eq(func,lhs,rhs)
+                return (lhs.ret_type.value).eq(func,lhs,rhs)
             case 'neq':
-                return get_type(lhs.ret_type).neq(func,lhs,rhs)
+                return (lhs.ret_type.value).neq(func,lhs,rhs)
             case 'geq':
-                return get_type(lhs.ret_type).geq(func,lhs,rhs)
+                return (lhs.ret_type.value).geq(func,lhs,rhs)
             case 'leq':
-                return get_type(lhs.ret_type).leq(func,lhs,rhs)
+                return (lhs.ret_type.value).leq(func,lhs,rhs)
             case 'le':
-                return get_type(lhs.ret_type).le(func,lhs,rhs)
+                return (lhs.ret_type.value).le(func,lhs,rhs)
             case 'gr':
-                return get_type(lhs.ret_type).gr(func,lhs,rhs)
+                return (lhs.ret_type.value).gr(func,lhs,rhs)
 
 class And(Operation):
     '''Basic And operation. It acts as an `expr`'''
@@ -211,7 +209,7 @@ class And(Operation):
         self.operator_precendence = -2
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type)._and(func,lhs,rhs)
+        return (lhs.ret_type.value)._and(func,lhs,rhs)
     
 class Or(Operation):
     '''Basic And operation. It acts as an `expr`'''
@@ -225,7 +223,7 @@ class Or(Operation):
         self.operator_precendence = -3
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type)._or(func,lhs,rhs)
+        return (lhs.ret_type.value)._or(func,lhs,rhs)
 
 class Not(Operation):
     '''Basic And operation. It acts as an `expr`'''
@@ -240,7 +238,7 @@ class Not(Operation):
         self.children[0] = Ast_Types.Void(self.position, None)
 
     def eval_math(self, func, lhs, rhs):
-        return get_type(lhs.ret_type)._not(func,rhs)
+        return (lhs.ret_type.value)._not(func,rhs)
 
 
 ops = {

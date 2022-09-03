@@ -3,15 +3,15 @@ from Ast.Nodes import AST_NODE
 from Errors import error
 
 
-class Abstract_Type(AST_NODE):
+class AbstractType:
     '''abstract type class that outlines the necessary features of a type class.'''
 
-    __slots__ = ['value', 'ir_type']
+    __slots__ = ('ir_type')
 
     @staticmethod
-    def convert_from(func, typ, previous): error(f"Abstract_Type has no conversions",  line = previous.position)
+    def convert_from(func, typ, previous): error(f"AbstractType has no conversions",  line = previous.position)
     @staticmethod
-    def convert_to(func, orig, typ): error(f"Abstract_Type has no conversions",  line = orig.position)
+    def convert_to(func, orig, typ): error(f"AbstractType has no conversions",  line = orig.position)
 
     @classmethod
     def print_error(cls, op: str, lhs, rhs):
@@ -68,15 +68,6 @@ class Abstract_Type(AST_NODE):
     def _or  (func, lhs, rhs): error(f"Operator 'or' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
 
-# types = {
-#     'void': Void,
-#     'bool': Integer_1,
-#     "i32": Integer_32,
-#     "int": Integer_32,
-#     'f64': Float_64,
-#     'float': Float_64
-# }
-
 from .Utils import Types
 
 from .Type_Bool import Integer_1
@@ -84,19 +75,27 @@ from .Type_F64 import Float_64
 from .Type_I32 import Integer_32
 from .Type_Void import Void
 
-def get_type(typ: Types) -> Abstract_Type:
-    match typ:
-        case Types.VOID:
-            return Void  # type: ignore
-        case Types.I32|Types.INT:
-            return Integer_32  # type: ignore
-        case Types.F64|Types.FLOAT:
-            return Float_64  # type: ignore
-        case Types.BOOL:
-            return Integer_1  # type: ignore
-        case _:
-            raise ValueError(typ)
+# def get_type(typ: Types) -> AbstractType:
+#     match typ:
+#         case Types.VOID:
+#             return Void  # type: ignore
+#         case Types.I32|Types.INT:
+#             return Integer_32  # type: ignore
+#         case Types.F64|Types.FLOAT:
+#             return Float_64  # type: ignore
+#         case Types.BOOL:
+#             return Integer_1  # type: ignore
+#         case _:
+#             return None  # type: ignore
 
+types_dict = {
+    'void': Void,
+    'bool': Integer_1,
+    "i32": Integer_32,
+    "int": Integer_32,
+    'f64': Float_64,
+    'float': Float_64
+}
 
 conversion_priority_raw = [
     Types.UNKNOWN,

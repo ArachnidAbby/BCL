@@ -1,5 +1,3 @@
-
-
 from contextlib import contextmanager
 from time import perf_counter
 
@@ -70,3 +68,41 @@ def compile(src_str: str, output_loc: str):
 
 
     print('\n\n\n')
+
+
+def compile_silent(src_str: str, output_loc: str):
+    import Ast.Standard_Functions
+    import Codegen
+    import Parser_Base
+    import Parser
+    from Ast import Function
+    import Lexer as lex
+    from Lexer import Lexer
+
+    tokens = lex.get_tokens(src_str)
+    
+    codegen = Codegen.CodeGen()
+    
+    module = codegen.module
+    Ast.Standard_Functions.declare_printf(module)
+
+    pg = Parser.parser(tokens, module)
+    parsed = pg.parse()
+        
+    for x in parsed:
+        if not x.completed:
+            print(x)
+            Errors.error(f"""
+            The compiler could not complete all it's operations.
+
+            Note: this is an error the compiler was not designed to catch.
+                If you encounter this, send all relavent information to language devs.
+            """, line = x.pos)
+            
+
+        x.value.pre_eval()
+
+    for x in parsed:
+        x.value.eval()
+
+    codegen.save_ir(output_loc)

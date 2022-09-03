@@ -1,8 +1,6 @@
-from Ast.Ast_Types.Type_Base import get_type
 from Ast.Ast_Types.Utils import Types
 from Ast.Node_Types import NodeTypes
 from Errors import error
-from llvmlite import ir
 
 from .Nodes import AST_NODE
 
@@ -71,7 +69,7 @@ class VariableRef(AST_NODE):
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
 
-        self.ir_type = get_type(self.ret_type).ir_type
+        self.ir_type = (self.ret_type.value).ir_type
     
     def eval(self, func):
         ptr = self.block.get_variable(self.name).ptr 

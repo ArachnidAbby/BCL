@@ -1,4 +1,3 @@
-from Ast.Ast_Types.Type_Base import get_type
 from Ast.Node_Types import NodeTypes
 import Errors
 from llvmlite import ir
@@ -31,11 +30,11 @@ class FunctionDef(AST_NODE):
                     '{x.key}: {x.value}'", line = self.position)
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
-        self.args_ir = tuple([get_type(Types[x.validate_type()]).ir_type for x in args.children])  # type: ignore
+        self.args_ir = tuple([(Types[x.validate_type()].value).ir_type for x in args.children])  # type: ignore
         self.args_types = tuple([Types[x.validate_type()] for x in args.children])
 
     def pre_eval(self):
-        fnty = ir.FunctionType((get_type(self.ret_type)).ir_type, self.args_ir, False)
+        fnty = ir.FunctionType((self.ret_type.value).ir_type, self.args_ir, False)
 
         self.function_ir = ir.Function(self.module, fnty, name=self.name)
         
@@ -106,7 +105,7 @@ class FunctionCall(AST_NODE):
             Errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
 
         self.ret_type = functions[self.name][self.args_types][1]
-        self.ir_type = get_type(self.ret_type).ir_type
+        self.ir_type = (self.ret_type.value).ir_type
         self.function = functions[self.name][self.args_types][0]
     
     def eval(self, func):

@@ -1,8 +1,9 @@
 import dataclasses
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Tuple
 
 import Ast
 from Errors import error
+
 
 @dataclasses.dataclass
 class ParserToken:

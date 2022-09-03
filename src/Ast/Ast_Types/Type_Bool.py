@@ -6,16 +6,10 @@ from . import Type_Base
 from . import Utils
 
 
-class Integer_1(Type_Base.Abstract_Type):
-    __slots__ = []
+class Integer_1(Type_Base.AbstractType):
+    __slots__ = tuple()
 
     ir_type = ir.IntType(1)
-    
-    def init(self, value):
-        self.value = value
-        self.name = "I1"
-        self.type = NodeTypes.EXPRESSION
-        self.ret_type = Utils.Types.BOOL
 
     @staticmethod
     def convert_from(func, typ: str, previous):
@@ -33,9 +27,6 @@ class Integer_1(Type_Base.Abstract_Type):
             case Utils.Types.F128: return func.builder.sitofp(orig.eval(func), ir.DoubleType())
             case _: error(f"Cannot convert 'bool' to type '{typ}'", line = orig.position)
 
-    def eval(self, func) -> ir.Constant:
-        return ir.Constant(self.ir_type, self.value)
-
     @staticmethod
     def get_op_return(op: str, lhs, rhs):
         match op.lower():
@@ -49,8 +40,8 @@ class Integer_1(Type_Base.Abstract_Type):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if override_bool and typ==Utils.Types.BOOL: typ = Utils.Types.I32
         
-        lhs = Type_Base.get_type(lhs.ret_type).convert_to(func, lhs, typ)
-        rhs = Type_Base.get_type(rhs.ret_type).convert_to(func, rhs, typ)
+        lhs = (lhs.ret_type.value).convert_to(func, lhs, typ)
+        rhs = (rhs.ret_type.value).convert_to(func, rhs, typ)
         return (lhs, rhs)
 
 

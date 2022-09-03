@@ -2,9 +2,6 @@ import os
 import sys
 from typing import List
 
-from Parser_Base import ParserBase
-
-
 def make_project(args: List[str]):
     '''setup project files'''
     if not os.path.isdir(args[1]): os.mkdir(args[1])

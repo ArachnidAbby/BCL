@@ -1,10 +1,8 @@
-from copy import copy
-from typing import List, Tuple
+from typing import Tuple
 from Ast.Node_Types import NodeTypes
 from Ast.Ast_Types.Utils import Types
 
 from Errors import error
-from llvmlite import ir
 
 
 class AST_NODE:
@@ -30,7 +28,6 @@ class AST_NODE:
 
     def eval(self, func):
         pass
-
 
 class Block(AST_NODE):
     '''Provides a Block node that contains other `AST_NODE` objects'''
@@ -144,7 +141,9 @@ class KeyValuePair(AST_NODE):
         self.value = v
     
     def validate_type(self) -> str:        
-        if self.value.upper() in Types._member_names_:
-            return self.value
+        if self.value.upper() not in Types._member_names_:
+            error(f"unknown type '{self.value}'", line = self.position)
         
-        error(f"unknown type '{self.value}'", line = self.position)
+        return self.value
+        
+       

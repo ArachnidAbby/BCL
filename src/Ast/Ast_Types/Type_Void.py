@@ -6,16 +6,10 @@ from llvmlite import ir
 from . import Type_Base
 
 
-class Void(Type_Base.Abstract_Type):
-    __slots__ = []
+class Void(Type_Base.AbstractType):
+    __slots__ = tuple()
 
     ir_type = ir.VoidType()
-    
-    def init(self):
-        self.value = 'void'
-        self.name = "I1"
-        self.type = NodeTypes.EXPRESSION
-        self.ret_type = Types.VOID
 
     @staticmethod
     def convert_from(func, typ: str, previous):
@@ -27,9 +21,6 @@ class Void(Type_Base.Abstract_Type):
         match typ:
             case Types.VOID: return orig.eval(func)
             case _: error(f"Cannot convert 'void' to type '{typ}'", line = orig.position)
-
-    def eval(self, func):
-        pass
 
     @staticmethod
     def get_op_return(op: str, lhs, rhs):

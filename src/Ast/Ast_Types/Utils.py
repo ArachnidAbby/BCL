@@ -1,8 +1,14 @@
-from enum import Enum, EnumMeta
+from enum import Enum, EnumMeta, IntEnum, auto
 
+
+from . import Type_Base
 from Errors import error
 
+# Todo: improve cases-sensitivity.
 class CaseInsensitiveEnumMeta(EnumMeta):
+    '''Allow fetching of type-names without case-sensitivity. 
+    The case-sensitivity will later be readded, but for the time being, this remains.
+    '''
     def __getitem__(self, item):
         if not isinstance(item, str):
             raise ValueError(item)
@@ -11,14 +17,19 @@ class CaseInsensitiveEnumMeta(EnumMeta):
 
         return super().__getitem__(item.upper())  # type: ignore
 
-class Types(Enum, metaclass=CaseInsensitiveEnumMeta):
-    UNKNOWN = 0
-    KV_PAIR = 1
-    VOID    = 2
-    BOOL    = 3
-    I32     = 4
-    I64     = 5
-    INT     = 6
-    F64     = 7
-    F128    = 8
-    FLOAT   = 9
+class Types(IntEnum, metaclass=CaseInsensitiveEnumMeta):
+    '''Known return-types in the language.'''
+    UNKNOWN = auto()
+    KV_PAIR = auto()
+    VOID    = auto()
+    BOOL    = auto()
+    I32     = auto()
+    I64     = auto()
+    INT     = auto()
+    F64     = auto()
+    F128    = auto()
+    FLOAT   = auto()
+
+    @property
+    def value(self):
+        return Type_Base.types_dict[self._name_.lower()]
