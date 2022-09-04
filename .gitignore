@@ -9,4 +9,4 @@ docs/build/
 
 ## test compiler outputs
 test
-test.ll
+*.ll

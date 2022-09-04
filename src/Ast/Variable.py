@@ -68,6 +68,8 @@ class VariableRef(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
+        if self.block.get_variable(self.name).type == Types.UNKNOWN:
+            error(f"Unknown variable '{self.name}'", line = self.position)
 
         self.ir_type = (self.ret_type.value).ir_type
     

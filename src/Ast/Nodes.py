@@ -44,8 +44,6 @@ class Block(AST_NODE):
     
     def pre_eval(self):
         for x in self.children:
-            if isinstance(x, str):
-                error(f"Variable '{x}' not defined.")
             x.pre_eval()
     
     def eval(self, func):
@@ -80,8 +78,6 @@ class StatementList(AST_NODE):
 
     def pre_eval(self):
         for x in self.children:
-            if isinstance(x, str):
-                error(f"Variable '{x}' not defined.")
             x.pre_eval()
     
     def eval(self, func):

@@ -36,7 +36,7 @@ class parser(ParserBase):
 
             # * code for debugging. Use if needed
             # print(self._cursor)
-            # print(',\n'.join([f'{x["name"]}||{x.value}' for x in self._tokens]))
+            # print(',\n'.join([f'{x.name}||{x.value}' for x in self._tokens]))
             # print()
             # * end of debug code
 
@@ -46,7 +46,7 @@ class parser(ParserBase):
             self.parse_math()
             self.parse_control_flow()
             self.parse_functions()
-            self.parse_special()
+            self.parse_special() # must be before self.parse_vars
             self.parse_vars()
             self.parse_parenth()
 
@@ -67,24 +67,19 @@ class parser(ParserBase):
 
     def parse_blocks(self):
         '''Parses blocks of Curly-braces'''
-
-        # * loop to beginning of block when at `}`
-        if self.check(0, "CLOSE_CURLY"):
-            self._cursor = self.start
-            self.do_move = False
         
         # * finished block
-        elif self.check_group(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY"):
+        if self.check_group(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY"):
             old_block = self.blocks.pop()
             
             self.start = old_block[1]
 
             if self.check(1, 'statement_list'):
                 self.current_block[0].children = self.peek(1).value.children
-            else:
+            elif self.check(1, 'statement'):
                 self.current_block[0].children = [self.peek(1).value]
 
-            self.replace(3, "Block", self.current_block[0]) # return to old block
+            self.replace(3, "statement", self.current_block[0]) # return to old block
             self.current_block = old_block
 
         # * opening of a block
@@ -132,19 +127,19 @@ class parser(ParserBase):
         '''parse if/then, if/else, and loops'''
 
         # * if blocks
-        if self.check_group(0, "$if expr Block|statement !$else"):
+        if self.check_group(0, "$if expr statement !$else"):
             expr = self.peek(1).value
             block = self.peek(2).value
             x = Ast.Conditionals.IfStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
-        elif self.check_group(0, "$if expr Block|statement $else Block|statement"):
+        elif self.check_group(0, "$if expr statement $else statement"):
             expr = self.peek(1).value
             block_if = self.peek(2).value
             block_else = self.peek(4).value
             x = Ast.Conditionals.IfElseStatement(self.peek(0).pos, expr, block_if, block_else)
             self.replace(5,"statement", x)
         
-        elif self.check_group(0, "$while expr Block|statement"):
+        elif self.check_group(0, "$while expr statement"):
             expr = self.peek(1).value
             block = self.peek(2).value
             x = Ast.Loops.WhileStatement(self.peek(0).pos, expr, block)
@@ -172,20 +167,25 @@ class parser(ParserBase):
             self.replace(3,"func_def_portion", self.peek(0).value, completed = False)
 
         # * complete function definition.
-        elif self.check_group(0,"func_def_portion Block"):
+        elif self.check_group(0,"func_def_portion statement"):
             self.peek(0).value.block = self.peek(1).value
             self.replace(2,"func_def", self.peek(0).value)
         
         # * Function Calls
-        elif self.check_group(0,"KEYWORD expr|paren") and (self.peek(0).value not in self.keywords):
-            func_name = self.peek(0).value
+        elif self.check_group(0,"expr expr|paren") and (isinstance(self.peek(0).value, Ast.Variable.VariableRef)):
+            func_name = self.peek(0).value.name
             args = self.peek(1).value
+
+            if not isinstance(args, Ast.Nodes.ParenthBlock):
+                args = Ast.Nodes.ParenthBlock(self.peek(1).pos)
+                args.children.append(self.peek(1).value)
+
             func = Ast.FunctionCall(self.peek(0).pos, func_name, args)
             self.replace(2,"expr", func)
 
         # * different func calls "9.to_string()" as an example
-        elif self.check_group(0,"expr|paren DOT KEYWORD expr|paren") and (self.peek(2).value not in self.statements):
-            func_name = self.peek(2).value
+        elif self.check_group(0,"expr|paren DOT expr expr|paren") and (isinstance(self.peek(2).value, Ast.Variable.VariableRef)):
+            func_name = self.peek(2).value.name
             args1 = self.peek(0).value
             args2 = self.peek(3).value
             args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1]
@@ -227,8 +227,8 @@ class parser(ParserBase):
             self.replace(3,"statement", var)
         
         # * Variable References
-        elif self.current_block[0]!=None and self.check_group(0,"KEYWORD !SET_VALUE"):
-            if self.peek(0).value in self.current_block[0].variables.keys():
+        elif self.current_block[0]!=None and self.check_group(0,"KEYWORD !SET_VALUE") and self.check(1, "!expr"):
+            if self.peek(0).value not in self.keywords:#self.current_block[0].variables.keys():
                 var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.current_block[0])
                 self.replace(1,"expr", var)
 

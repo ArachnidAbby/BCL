@@ -68,3 +68,9 @@ define is_multiple(value: i32, divider: i32) -> bool {
 }
 '''
         compile(example, "test.ll")
+
+
+
+
+
+# todo: add "first-class functions" 

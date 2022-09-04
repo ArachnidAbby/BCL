@@ -5,8 +5,8 @@ env/bin/activate: requirements.txt
 run: env/bin/activate
 	./env/bin/python3 src/Main.py hmm
 
-build: env/bin/activate
-	./env/bin/python3 -m ursina.build
+unittest: env/bin/activate
+	./env/bin/python3 tests/Basic_Test.py
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/
