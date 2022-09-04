@@ -1,22 +1,24 @@
-from llvmlite import binding, ir
+
+from llvmlite.ir import Module, FunctionType, Function, IntType
+from llvmlite import binding
 
 # This was coppied from a tutorial.
 # todo: understand this code and rewrite it myself in my own style.
 
 class CodeGen():
+    __slots__ = ('module', 'engine', 'printf')
     def __init__(self):
-        self.binding = binding
-        self.binding.initialize()
-        self.binding.initialize_native_target()
-        self.binding.initialize_native_asmprinter()
+        binding.initialize()
+        binding.initialize_native_target()
+        binding.initialize_native_asmprinter()
         self._config_llvm()
         self._create_execution_engine()
         # self._declare_print_function()
 
     def _config_llvm(self):
         # Config LLVM
-        self.module = ir.Module(name=__file__)
-        self.module.triple = self.binding.get_default_triple()
+        self.module = Module(name=__file__)
+        self.module.triple = binding.get_default_triple()
         # func_type = ir.FunctionType(ir.VoidType(), [], False)
         # base_func = ir.Function(self.module, func_type, name="main")
         # block = base_func.append_basic_block(name="entry")
@@ -28,7 +30,7 @@ class CodeGen():
         the host CPU.  The engine is reusable for an arbitrary number of
         modules.
         """
-        target = self.binding.Target.from_default_triple()
+        target = binding.Target.from_default_triple()
         target_machine = target.create_target_machine()
         # And an execution engine with an empty backing module
         backing_mod = binding.parse_assembly("")
@@ -51,7 +53,7 @@ class CodeGen():
         # Create a LLVM module object from the IR
         #self.builder.ret_void()
         llvm_ir = str(self.module)
-        mod = self.binding.parse_assembly(llvm_ir)
+        mod = binding.parse_assembly(llvm_ir)
         mod.verify()
         # Now add the module and make sure it is ready for execution
         self.engine.add_module(mod)

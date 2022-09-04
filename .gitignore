@@ -1,6 +1,7 @@
 # Python
 *.o
 *.pyc
+*.prof
 __pycache__/
 env/
 

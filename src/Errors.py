@@ -3,10 +3,11 @@ RESET = "\u001b[0m"
 YELLOW = "\u001b[33;1m"
 GREEN = "\u001b[32m"
 ORANGE = "\u001b[38;5;209;1m"
+PURPLE = "\u001b[35m"
 
 
 SILENT_MODE = False
-
+PROFILING = False
 
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
@@ -37,3 +38,15 @@ def inline_warning(text: str, line = (-1,-1,-1)):
     _print_text(text)
     if line!= (-1,-1,-1): print(f'|    Line: {line[0]}')
     print(RESET, end='')
+
+def output_profile_info(name: str, mem_bytes: int):
+    if SILENT_MODE or not PROFILING: return None
+
+    print(PURPLE, end='')
+    print(f"| PROFILER:{name} >> {mem_bytes:+,} bytes")
+    print(RESET, end='')
+
+def profile_info(obj, detailed = False):
+    if SILENT_MODE or not PROFILING: return None
+
+    obj._mem_profile(detailed = detailed)

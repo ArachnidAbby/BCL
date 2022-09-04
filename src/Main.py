@@ -30,7 +30,6 @@ lib/
 # other files
 ''')
 
-
 def compile(source_code: str, output_loc: str):
     '''compile source code'''
     import Compile

@@ -19,25 +19,28 @@ def compile(src_str: str, output_loc: str):
     print(f'{Errors.GREEN}/------------------------------------------------#')
 
     with timingContext('imports'):
-        import Ast.Standard_Functions
+        import os, psutil, sys
+        process = psutil.Process(os.getpid())
+        tmp = imports_mem = process.memory_info().rss
         import Codegen
-        import Parser_Base
+        codegen = Codegen.CodeGen()
+        imports_mem = process.memory_info().rss - tmp
+        import Ast.Standard_Functions
         import Parser
-        from Ast import Function
         import Lexer as lex
-        from Lexer import Lexer
 
     with timingContext('lexing finished'):
         tokens = lex.get_tokens(src_str)
     
     with timingContext('parsing finished'):
-        codegen = Codegen.CodeGen()
+        
     
         module = codegen.module
         Ast.Standard_Functions.declare_printf(module)
 
         pg = Parser.parser(tokens, module)
         parsed = pg.parse()
+        Errors.output_profile_info("ParserClassObject", sys.getsizeof(parsed))
         
     with timingContext('module created'):
         for x in parsed:
@@ -55,6 +58,7 @@ def compile(src_str: str, output_loc: str):
 
         for x in parsed:
             x.value.eval()
+        Errors.output_profile_info("ParserClassObject--2", sys.getsizeof(parsed))
     
     codegen.save_ir(output_loc)
 
@@ -62,9 +66,8 @@ def compile(src_str: str, output_loc: str):
     print(f'\\--------------------------------------------------/{Errors.RESET}')
     print()
 
-    import os, psutil
-    process = psutil.Process(os.getpid())
-    Errors.inline_warning(f'{process.memory_info().rss} bytes of memory used for this operation.')  # in bytes 
+    usage = process.memory_info().rss
+    Errors.inline_warning(f'{(usage - imports_mem)/1000:,.1f}KB of memory used for this operation.')  # in bytes 
 
 
     print('\n\n\n')
@@ -73,11 +76,8 @@ def compile(src_str: str, output_loc: str):
 def compile_silent(src_str: str, output_loc: str):
     import Ast.Standard_Functions
     import Codegen
-    import Parser_Base
     import Parser
-    from Ast import Function
     import Lexer as lex
-    from Lexer import Lexer
 
     tokens = lex.get_tokens(src_str)
     

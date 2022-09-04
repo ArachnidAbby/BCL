@@ -1,13 +1,11 @@
-import dataclasses
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, NamedTuple, Tuple
 
 import Ast
 from Errors import error
 
 
-@dataclasses.dataclass
-class ParserToken:
-    __slots__ = ('name', 'value', 'source_pos', 'completed')
+class ParserToken(NamedTuple):
+    # __slots__ = ('name', 'value', 'source_pos', 'completed')
 
     name: str
     value: Any
@@ -48,22 +46,25 @@ class ParserBase:
             return ParserToken("EOF", '', (-1,-1,-1), False)
         return self._tokens[index]
     
-    # todo: make this just use positional arguments for the amount.
-    def consume(self, index: int=0, amount: int=1):
-        '''Consume a specific `amount` of tokens starting at `index`'''
+    def _consume(self, index: int=0, amount: int=1):
+        '''consume specific amount of tokens but don't reset cursor position'''
         index = self._cursor+index
         if self.isEOF(index=index):
             return None
-        
-        for x in range(amount):
-            self._tokens.pop(index)
+
+        del self._tokens[index : index+amount]
+
+    # todo: make this just use positional arguments for the amount.
+    def consume(self, index: int=0, amount: int=1):
+        '''Consume a specific `amount` of tokens starting at `index`'''
+        self._consume(index = index, amount = amount)
 
         self._cursor= self.start 
         self.do_move=False
     
     def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
         '''insert tokens at a specific location'''
-        self._tokens.insert(index+self._cursor,ParserToken(name, value, value.position, completed))
+        self._tokens.insert(index+self._cursor, ParserToken(name, value, value.position, completed))
     
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
@@ -88,8 +89,12 @@ class ParserBase:
 
     def replace(self, l: int, name: str, value, i: int = 0, completed: bool = True):
         '''replace a group of tokens with a single token.'''
-        self.insert(l+i, name, value, completed = completed)
-        self.consume(amount=l, index=-i)
+        self._consume(amount=l, index=-i)
+        self.insert(i, name, value, completed = completed)
+
+        self._cursor= self.start 
+        self.do_move=False
+        
 
     def check_group(self, start_index: int, wanting: str) -> bool:
         '''check a group of tokens in a string seperated by spaces.'''

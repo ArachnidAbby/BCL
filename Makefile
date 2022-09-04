@@ -12,6 +12,10 @@ vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/
 	vsce package
 
+profile_cpu: env/bin/activate
+	./env/bin/python3 -m cProfile -o tests/random/program.prof src/Main.py hmmmm
+	./env/bin/snakeviz tests/random/program.prof
+
 # build sphinx html docs
 sphinx-build: env/bin/activate
 	./env/bin/sphinx-build -b html docs/source/ docs/build/html

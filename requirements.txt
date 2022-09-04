@@ -6,3 +6,8 @@ sphinx-rtd-theme
 rply
 llvmlite
 psutil
+
+## profiling
+memory_profiler
+matplotlib
+snakeviz
