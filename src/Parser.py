@@ -61,26 +61,11 @@ class parser(ParserBase):
                     out = rule[2](start_token.pos, *args)
                     self.replace(rule_len, rule[0], out)
             
-            # self._mem_profile()
-            
             self.move_cursor()
         
         self.start = previous_start_position
 
         return self._tokens
-
-    def _mem_profile(self, detailed: bool = False):
-        blocks_size = sys.getsizeof(self.blocks)
-        current_block_size = sys.getsizeof(self.blocks)
-        tokenlist_size = sys.getsizeof(self.blocks)
-        start_size = sys.getsizeof(self.start)
-        cursor_size = sys.getsizeof(self._cursor)
-
-        total_size = blocks_size + current_block_size + tokenlist_size + cursor_size + start_size
-
-        if not detailed:
-            Errors.output_profile_info("Parsing::current_block", total_size)
-
 
     def parse_blocks(self):
         '''Parses blocks of Curly-braces'''

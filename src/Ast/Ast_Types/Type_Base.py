@@ -15,6 +15,8 @@ class AbstractType:
 
     @classmethod
     def print_error(cls, op: str, lhs, rhs):
+        if op=='not': cls._not(None, rhs)
+
         {
             'sum': cls.sum,
             'sub': cls.sub,
@@ -29,7 +31,6 @@ class AbstractType:
             'gr': cls.gr,
             'and': cls._and,
             'or': cls._or,
-            'not': cls._not,
         }[op](None, lhs, rhs)
 
     @staticmethod

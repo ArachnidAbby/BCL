@@ -1,4 +1,4 @@
-from typing import Any, Callable, NamedTuple, Tuple
+from typing import Any, Callable, NamedTuple
 
 import Ast
 from Errors import error
@@ -9,7 +9,7 @@ class ParserToken(NamedTuple):
 
     name: str
     value: Any
-    source_pos: Tuple[int, int, int]
+    source_pos: tuple[int, int, int]
     completed: bool
 
     @property
@@ -41,16 +41,11 @@ class ParserBase:
 
     def peek(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token'''
-        index = self._cursor+index
-        if self.isEOF(index=index):
-            return ParserToken("EOF", '', (-1,-1,-1), False)
-        return self._tokens[index]
+        return self._tokens[self._cursor+index]
     
     def _consume(self, index: int=0, amount: int=1):
         '''consume specific amount of tokens but don't reset cursor position'''
         index = self._cursor+index
-        if self.isEOF(index=index):
-            return None
 
         del self._tokens[index : index+amount]
 
@@ -69,21 +64,19 @@ class ParserBase:
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
         x = self.peek(index=index)
-        if not x:
-            return False
 
         if wanting == '_': # allow any
             return True
         elif wanting == '__': # allow any with "complete" == True
             return x.completed
-        elif wanting == '_!_': # allow any with "complete" == False
-            return not x.completed
         elif wanting.startswith('!'): # `not` operation
             return not self.check(index, wanting[1:])
         elif wanting.startswith('$'): # `match value` operation
             return x.value==wanting[1:]
         elif '|' in wanting: # `or` operation
-            return any([self.check(index,y) for y in wanting.split('|')])
+            for y in wanting.split('|'):
+                if self.check(index,y): return True
+            return False
         else:
             return x.name==wanting
 
@@ -100,7 +93,14 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        return all([self.check(c+start_index,x) for c,x in enumerate(tokens)])
+        if (len(tokens)+self._cursor+start_index-1) > len(self._tokens):
+            return False
+
+        for c,x in enumerate(tokens):
+            if not self.check(c+start_index,x):
+                return False
+
+        return True
 
     def delimited(self, sep: str, end: str, allow_statements = True) -> tuple[list, int]:
         '''parse "lists" of tokens like in parenthesis or a curly block'''
@@ -123,7 +123,7 @@ class ParserBase:
                 allow_next = allow_statements and self.check(counter,'statement')
             elif self.check(counter, sep):
                 allow_next=True
-            elif self.check(counter, '_!_'):
+            elif self.check(counter, '!__'):
                 sym = self.peek(counter)
                 error(f"unknown symbol '{sym.value}'", line = sym.pos)
             elif self.isEOF(self._cursor+counter):
