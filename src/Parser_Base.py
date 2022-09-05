@@ -80,9 +80,9 @@ class ParserBase:
         else:
             return x.name==wanting
 
-    def replace(self, l: int, name: str, value, i: int = 0, completed: bool = True):
+    def replace(self, leng: int, name: str, value, i: int = 0, completed: bool = True):
         '''replace a group of tokens with a single token.'''
-        self._consume(amount=l, index=-i)
+        self._consume(amount=leng, index=-i)
         self.insert(i, name, value, completed = completed)
 
         self._cursor= self.start 

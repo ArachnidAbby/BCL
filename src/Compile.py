@@ -40,7 +40,7 @@ def compile(src_str: str, output_loc: str):
 
         pg = Parser.parser(tokens, module)
         parsed = pg.parse()
-        Errors.output_profile_info("ParserClassObject", sys.getsizeof(parsed))
+        Errors.output_mem_prof("ParserClassObject", sys.getsizeof(parsed))
         
     with timingContext('module created'):
         for x in parsed:
@@ -58,7 +58,7 @@ def compile(src_str: str, output_loc: str):
 
         for x in parsed:
             x.value.eval()
-        Errors.output_profile_info("ParserClassObject--2", sys.getsizeof(parsed))
+        Errors.output_mem_prof("ParserClassObject--2", sys.getsizeof(parsed))
     
     codegen.save_ir(output_loc)
 

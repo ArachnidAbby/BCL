@@ -84,6 +84,26 @@ class StatementList(AST_NODE):
         for x in self.children:
             x.eval(func)
 
+class ExpressionList(AST_NODE):
+    __slots__ = ('children',)
+
+    def init(self):
+        self.name = "StatementList"
+        self.type = NodeTypes.STATEMENTLIST
+        self.ret_type = Types.VOID
+        self.children = list()
+
+    def append_child(self, child: AST_NODE):
+        self.children.append(child)
+
+    def pre_eval(self):
+        for x in self.children:
+            x.pre_eval()
+    
+    def eval(self, func):
+        for x in self.children:
+            x.eval(func)
+
 class ParenthBlock(AST_NODE):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ir_type', 'children')

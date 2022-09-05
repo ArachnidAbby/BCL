@@ -13,7 +13,7 @@ def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
     if SILENT_MODE: return None
 
-    [print(f'| {x}') for x in text.split('\n')]
+    for x in text.split('\n'): print(f'| {x}')
 
 
 def error(text: str, line = (-1,-1,-1)):
@@ -39,7 +39,14 @@ def inline_warning(text: str, line = (-1,-1,-1)):
     if line!= (-1,-1,-1): print(f'|    Line: {line[0]}')
     print(RESET, end='')
 
-def output_profile_info(name: str, mem_bytes: int):
+def output_profile_info(text):
+    if SILENT_MODE or not PROFILING: return None
+
+    print(PURPLE, end='')
+    print(f"| {text}")
+    print(RESET, end='')
+
+def output_mem_prof(name: str, mem_bytes: int):
     if SILENT_MODE or not PROFILING: return None
 
     print(PURPLE, end='')
