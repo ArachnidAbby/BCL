@@ -17,7 +17,7 @@ class ParserToken(NamedTuple):
         return self.source_pos
         
 class ParserBase:
-    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move')
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
@@ -28,6 +28,7 @@ class ParserBase:
         self.start    = 0
         self.module   = module
         self.do_move   = True
+        self.start_min = 0
     
     def isEOF(self, index: int=0) -> bool:
         '''Checks if the End-Of-File has been reached'''
@@ -54,7 +55,7 @@ class ParserBase:
         '''Consume a specific `amount` of tokens starting at `index`'''
         self._consume(index = index, amount = amount)
 
-        self._cursor= self.start 
+        self._cursor= max(self.start, self.start_min)
         self.do_move=False
     
     def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
@@ -85,7 +86,7 @@ class ParserBase:
         self._consume(amount=leng, index=-i)
         self.insert(i, name, value, completed = completed)
 
-        self._cursor= self.start 
+        self._cursor= max(self.start, self.start_min)
         self.do_move=False
         
 
@@ -93,7 +94,7 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        if (len(tokens)+self._cursor+start_index-1) > len(self._tokens):
+        if (len(tokens)+self._cursor+start_index) > len(self._tokens):
             return False
 
         for c,x in enumerate(tokens):
@@ -101,36 +102,3 @@ class ParserBase:
                 return False
 
         return True
-
-    def delimited(self, sep: str, end: str, allow_statements = True) -> tuple[list, int]:
-        '''parse "lists" of tokens like in parenthesis or a curly block'''
-        
-        output=[]
-        self._cursor+=1 # skip over start
-        cursor_origin = self._cursor # save old origin point
-        ln = self.peek(-1).pos
-        self.parse(close_condition = lambda: self.check(0, end))
-        self._cursor=cursor_origin # set cursor back to origin after the `parse()`
-
-        counter=0       # stores a mini cursor and stores the total amount of tokens to consume at the end.
-        allow_next = True       # allow another Node in the block
-        while not self.check(counter, end):
-            if self.check(counter, '__'):
-                if allow_next: 
-                    output.append(self.peek(counter).value)
-                else:
-                    error(f"missing '{sep}'", line = self.peek(counter).pos)
-                allow_next = allow_statements and self.check(counter,'statement')
-            elif self.check(counter, sep):
-                allow_next=True
-            elif self.check(counter, '!__'):
-                sym = self.peek(counter)
-                error(f"unknown symbol '{sym.value}'", line = sym.pos)
-            elif self.isEOF(self._cursor+counter):
-                error(f"EOF reached before {end} closed.", line = ln)
-            counter+=1
-
-        return output, counter
-    
-    def parse(self, close_condition: Callable[[],bool]=lambda: False):
-        pass

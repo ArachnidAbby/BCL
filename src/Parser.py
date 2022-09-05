@@ -10,6 +10,7 @@ from Ast.Ast_Types.Utils import Types
 
 
 class parser(ParserBase):
+    __slots__ = ('statements', 'keywords', 'simple_rules', 'current_block', 'blocks', 'current_paren', 'parens')
 
     def __init__(self, *args, **kwargs):
         self.statements = (
@@ -127,7 +128,14 @@ class parser(ParserBase):
             stmt_list = self.peek(0).value
 
             stmt_list.append_child(self.peek(1).value)
+            if self.current_block[0] != None:
+                if self.check(2,"!CLOSE_CURLY"):
+                    self.start = self._cursor
+                else:
+                    self.start-=1
             self.replace(2, "statement_list", stmt_list)
+
+
 
 
     
@@ -147,7 +155,7 @@ class parser(ParserBase):
             block_else = self.peek(4).value
             x = Ast.Conditionals.IfElseStatement(self.peek(0).pos, expr, block_if, block_else)
             self.replace(5,"statement", x)
-        
+
         elif self.check_group(0, "$while expr statement"):
             expr = self.peek(1).value
             block = self.peek(2).value
@@ -163,6 +171,7 @@ class parser(ParserBase):
                 func_name = self.peek(1).value
                 block = self.peek(2).value
                 func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, block, self.module)
+                self.start_min = self._cursor
                 self.replace(3,"func_def_portion", func)
             elif self.peek(0).value not in self.keywords:
                 error(f"invalid syntax '{self.peek(0).value}'", line = self.peek(0).pos)
@@ -178,7 +187,9 @@ class parser(ParserBase):
         # * complete function definition.
         elif self.check_group(0,"func_def_portion statement"):
             self.peek(0).value.block = self.peek(1).value
+            self.start_min = self._cursor
             self.replace(2,"func_def", self.peek(0).value)
+            
         
         # * Function Calls
         elif self.check_group(0,"expr expr|paren") and (isinstance(self.peek(0).value, Ast.Variable.VariableRef)):
