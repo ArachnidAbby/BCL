@@ -1,6 +1,6 @@
 from typing import Tuple
 from Ast.Node_Types import NodeTypes
-from Ast.Ast_Types.Utils import Types
+from . import Ast_Types
 
 from Errors import error
 
@@ -12,7 +12,7 @@ class AST_NODE:
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         self.type = ""
         self.name = ""
-        self.ret_type = Types.UNKNOWN
+        self.ret_type = Ast_Types.Type_Base.AbstractType()
         self.position = position        # (line#, col#)
         self.is_operator = False
 
@@ -36,7 +36,7 @@ class Block(AST_NODE):
     def init(self):
         self.name = "Block"
         self.type = NodeTypes.BLOCK
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
         self.children = list()
 
         self.variables = dict() # {name: VarObj, ...}
@@ -67,7 +67,7 @@ class StatementList(AST_NODE):
     def init(self):
         self.name = "StatementList"
         self.type = NodeTypes.STATEMENTLIST
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
         self.children = list()
 
     def append_child(self, child: AST_NODE):
@@ -90,7 +90,7 @@ class ExpressionList(AST_NODE):
     def init(self):
         self.name = "StatementList"
         self.type = NodeTypes.STATEMENTLIST
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
         self.children = list()
 
     def append_child(self, child: AST_NODE):
@@ -111,7 +111,7 @@ class ParenthBlock(AST_NODE):
     def init(self):
         self.name = "Parenth"
         self.type = NodeTypes.EXPRESSION
-        self.ir_type = Types.UNKNOWN
+        self.ir_type = Ast_Types.Void()
         self.children = list()
         
     def pre_eval(self):
@@ -119,8 +119,8 @@ class ParenthBlock(AST_NODE):
             x.pre_eval()
         
         # * tuples return `void` but an expr returns the same data as its child
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Types.VOID
-        if self.ret_type!=Types.VOID:
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Type_Void.Void()
+        if self.ret_type!=Ast_Types.Void():
             self.ir_type = self.children[0].ir_type
 
     def is_key_value_pairs(self):
@@ -149,15 +149,15 @@ class KeyValuePair(AST_NODE):
 
     def init(self, k, v, keywords = False):
         self.name = "kv_pair"
-        self.type = Types.KV_PAIR
-        self.ret_type = Types.KV_PAIR
+        self.type = 'kv pair'
+        self.ret_type = Ast_Types.Type_Base.AbstractType()
         self.keywords = keywords
 
         self.key = k
         self.value = v
     
     def validate_type(self) -> str:        
-        if self.value.upper() not in Types._member_names_:
+        if self.value not in Ast_Types.Type_Base.types_dict:
             error(f"unknown type '{self.value}'", line = self.position)
         
         return self.value

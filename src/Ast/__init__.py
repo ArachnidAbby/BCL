@@ -15,13 +15,13 @@ from .Variable import *
 class Literal(AST_NODE):
     __slots__ = ('value', 'ir_type')
 
-    def init(self, value: Any, typ: Types):
+    def init(self, value: Any, typ: Ast_Types.AbstractType):
         self.value = value
-        self.name = typ._name_
+        self.name = 'literal'
         self.type = NodeTypes.EXPRESSION
         self.ret_type = typ
 
-        self.ir_type = (typ.value).ir_type
+        self.ir_type = typ.ir_type
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)

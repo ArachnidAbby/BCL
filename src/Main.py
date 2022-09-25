@@ -53,10 +53,9 @@ if __name__ == "__main__":
 define main() {
     i = 0;
     loop_amount = 200;
-
     while i < loop_amount {
         i = i+1;
-        fizz = is_multiple(i, 3); 
+        fizz = is_multiple(i, 3);
         buzz = is_multiple(i, 5)*2;
         println(fizz + buzz);
     }

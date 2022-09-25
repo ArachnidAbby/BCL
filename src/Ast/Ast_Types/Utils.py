@@ -17,19 +17,19 @@ class CaseInsensitiveEnumMeta(EnumMeta):
 
         return super().__getitem__(item.upper())  # type: ignore
 
-class Types(IntEnum, metaclass=CaseInsensitiveEnumMeta):
-    '''Known return-types in the language.'''
-    UNKNOWN = auto()
-    KV_PAIR = auto()
-    VOID    = auto()
-    BOOL    = auto()
-    I32     = auto()
-    I64     = auto()
-    INT     = auto()
-    F64     = auto()
-    F128    = auto()
-    FLOAT   = auto()
+# class Types(IntEnum, metaclass=CaseInsensitiveEnumMeta):
+#     '''Known return-types in the language.'''
+#     UNKNOWN = auto()
+#     KV_PAIR = auto()
+#     VOID    = auto()
+#     BOOL    = auto()
+#     I32     = auto()
+#     I64     = auto()
+#     INT     = auto()
+#     F64     = auto()
+#     F128    = auto()
+#     FLOAT   = auto()
 
-    @property
-    def value(self):
-        return Type_Base.types_dict[self._name_.lower()]
+#     @property
+#     def value(self):
+#         return Type_Base.types_dict[self._name_.lower()]

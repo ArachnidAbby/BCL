@@ -3,7 +3,8 @@ import Errors
 from llvmlite import ir
 
 from .Nodes import AST_NODE, Block, ParenthBlock
-from .Ast_Types.Utils import Types
+from . import Ast_Types
+from Ast.Ast_Types.Type_Base import types_dict
 
 functions = {}
 func_calls = []
@@ -15,7 +16,7 @@ class FunctionDef(AST_NODE):
     def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
         self.type = NodeTypes.STATEMENT
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
 
         self.builder = None
         self.block = block
@@ -30,11 +31,11 @@ class FunctionDef(AST_NODE):
                     '{x.key}: {x.value}'", line = self.position)
         
         self.args = {x.key: [None, x.value, True] for x in args.children}
-        self.args_ir = tuple([(Types[x.validate_type()].value).ir_type for x in args.children])  # type: ignore
-        self.args_types = tuple([Types[x.validate_type()] for x in args.children])
+        self.args_ir = tuple([(types_dict[x.validate_type()]()).ir_type for x in args.children])
+        self.args_types = tuple([types_dict[x.validate_type()]() for x in args.children])
 
     def pre_eval(self):
-        fnty = ir.FunctionType((self.ret_type.value).ir_type, self.args_ir, False)
+        fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         self.function_ir = ir.Function(self.module, fnty, name=self.name)
         
@@ -57,7 +58,7 @@ class FunctionDef(AST_NODE):
         
         self.block.eval(self)
         
-        if self.ret_type == Types.VOID:
+        if self.ret_type.name == 'void':
             self.builder.ret_void()
 
 class ReturnStatement(AST_NODE):
@@ -66,7 +67,7 @@ class ReturnStatement(AST_NODE):
     def init(self, expr):
         self.name = "return"
         self.type = NodeTypes.STATEMENT
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
         self.expr = expr
 
     def pre_eval(self):
@@ -80,7 +81,7 @@ class ReturnStatement(AST_NODE):
                 line = self.position
             )
 
-        if func.ret_type == Types.VOID:
+        if func.ret_type.name == 'void':
             func.builder.ret_void()
             return None
 
@@ -92,7 +93,7 @@ class FunctionCall(AST_NODE):
     def init(self, name: str, parenth: ParenthBlock):
         self.name = name
         self.type = NodeTypes.EXPRESSION
-        self.ret_type = Types.UNKNOWN
+        self.ret_type = Ast_Types.Void()
         self.ir_type = None
 
         self.paren = parenth
@@ -102,10 +103,12 @@ class FunctionCall(AST_NODE):
 
         self.args_types = tuple([x.ret_type for x in self.paren.children])
         if self.name not in functions or self.args_types not in functions[self.name]:
+            print(functions)
+            print(self.args_types)
             Errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
 
         self.ret_type = functions[self.name][self.args_types][1]
-        self.ir_type = (self.ret_type.value).ir_type
+        self.ir_type = (self.ret_type).ir_type
         self.function = functions[self.name][self.args_types][0]
     
     def eval(self, func):

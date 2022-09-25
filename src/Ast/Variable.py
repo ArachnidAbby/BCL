@@ -1,8 +1,8 @@
-from Ast.Ast_Types.Utils import Types
 from Ast.Node_Types import NodeTypes
 from Errors import error
 
 from .Nodes import AST_NODE
+from .Ast_Types import Type_Base
 
 
 class VariableObj:
@@ -13,7 +13,7 @@ class VariableObj:
         self.ptr = ptr
         self.type = typ
         if isinstance(typ, str):
-            self.type = Types[typ]
+            self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
     
     def __repr__(self) -> str:
@@ -30,7 +30,7 @@ class VariableAssign(AST_NODE):
         self.block = block
 
         if block!=None and self.name not in block.variables.keys():
-            block.variables[self.name] = VariableObj(None, self.value.ret_type, False)
+            block.variables[self.name] = VariableObj(None, self.ret_type, False)
             self.type = "variableDeclare"
         elif block==None:
             raise Exception("No Block for Variable Assignment to take place in")
@@ -68,10 +68,10 @@ class VariableRef(AST_NODE):
     
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
-        if self.block.get_variable(self.name).type == Types.UNKNOWN:
+        if self.block.get_variable(self.name).type.name=="UNKNOWN": # todo -1 is a placeholder for UNKNOWN type
             error(f"Unknown variable '{self.name}'", line = self.position)
 
-        self.ir_type = (self.ret_type.value).ir_type
+        self.ir_type = self.ret_type.ir_type
     
     def eval(self, func):
         ptr = self.block.get_variable(self.name).ptr 

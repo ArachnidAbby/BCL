@@ -30,9 +30,11 @@ class ParserBase:
         self.do_move   = True
         self.start_min = 0
     
+    
     def isEOF(self, index: int=0) -> bool:
         '''Checks if the End-Of-File has been reached'''
         return index>=len(self._tokens)
+    
     
     def move_cursor(self,index: int=1):
         '''Moves the cursor unless `!self.doMove` '''
@@ -40,9 +42,11 @@ class ParserBase:
         self._cursor += index if self.do_move else 0
         self.do_move  = True
 
+    
     def peek(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token'''
         return self._tokens[self._cursor+index]
+    
     
     def _consume(self, index: int=0, amount: int=1):
         '''consume specific amount of tokens but don't reset cursor position'''
@@ -51,6 +55,7 @@ class ParserBase:
         del self._tokens[index : index+amount]
 
     # todo: make this just use positional arguments for the amount.
+    
     def consume(self, index: int=0, amount: int=1):
         '''Consume a specific `amount` of tokens starting at `index`'''
         self._consume(index = index, amount = amount)
@@ -58,9 +63,11 @@ class ParserBase:
         self._cursor= max(self.start, self.start_min)
         self.do_move=False
     
+    
     def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
         '''insert tokens at a specific location'''
         self._tokens.insert(index+self._cursor, ParserToken(name, value, value.position, completed))
+    
     
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
@@ -81,6 +88,7 @@ class ParserBase:
         else:
             return x.name==wanting
 
+    
     def replace(self, leng: int, name: str, value, i: int = 0, completed: bool = True):
         '''replace a group of tokens with a single token.'''
         self._consume(amount=leng, index=-i)

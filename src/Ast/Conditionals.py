@@ -1,4 +1,4 @@
-from Ast.Ast_Types.Utils import Types
+from Ast import Ast_Types
 from Ast.Node_Types import NodeTypes
 
 from .Nodes import AST_NODE
@@ -12,7 +12,7 @@ class IfStatement(AST_NODE):
     def init(self, cond: AST_NODE, block: AST_NODE):
         self.name = "If"
         self.type = NodeTypes.STATEMENT
-        self.ret_type = "void"
+        self.ret_type = Ast_Types.Void()
 
         self.cond = cond
         self.block = block
@@ -33,7 +33,7 @@ class IfElseStatement(AST_NODE):
     def init(self, cond: AST_NODE, if_block: AST_NODE, else_block: AST_NODE):
         self.name = "IfElse"
         self.type = NodeTypes.STATEMENT
-        self.ret_type = Types.VOID
+        self.ret_type = Ast_Types.Void()
 
         self.cond = cond
         self.if_block = if_block

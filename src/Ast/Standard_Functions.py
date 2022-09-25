@@ -1,7 +1,8 @@
 
 from llvmlite import ir
 
-from Ast.Ast_Types.Utils import Types
+from Ast import Ast_Types
+
 
 from . import Function
 
@@ -37,4 +38,4 @@ def declare_printf(module):
     builder.ret(s)
 
     Function.functions["println"] = {}
-    Function.functions["println"][(Types.I32,)] = [printint, Types.VOID]
+    Function.functions["println"][(Ast_Types.Integer_32(),)] = [printint, Ast_Types.Void()]

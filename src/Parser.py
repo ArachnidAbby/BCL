@@ -6,7 +6,7 @@ import Ast
 import Errors
 from Errors import error
 from Parser_Base import ParserBase, ParserToken
-from Ast.Ast_Types.Utils import Types
+
 
 
 class parser(ParserBase):
@@ -32,6 +32,7 @@ class parser(ParserBase):
 
         super().__init__(*args, **kwargs)
 
+    
     def parse(self, close_condition: Callable[[],bool]=lambda: False):
         '''Parser main'''
 
@@ -39,7 +40,7 @@ class parser(ParserBase):
         self.start = self._cursor   # where to reset cursor after consuming tokens.
         iters = 0
 
-        while (not self.isEOF(self._cursor)) and (not close_condition()):
+        while (not self.isEOF(self._cursor)): # and (not close_condition()):
 
             # * code for debugging. Use if needed
             # print(self._cursor)
@@ -75,6 +76,7 @@ class parser(ParserBase):
 
         return self._tokens
 
+    
     def parse_blocks(self):
         '''Parses blocks of Curly-braces'''
         
@@ -113,6 +115,7 @@ class parser(ParserBase):
             self.start = self._cursor
             self._tokens[self._cursor] = ParserToken("OPEN_CURLY_USED", '{', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
 
+    
     def parse_statement(self):
         if self.check_group(0, "expr|statement SEMI_COLON"):
             self.replace(2, "statement", self.peek(0).value)
@@ -134,9 +137,6 @@ class parser(ParserBase):
                 else:
                     self.start-=1
             self.replace(2, "statement_list", stmt_list)
-
-
-
 
     
     def parse_control_flow(self):
@@ -162,6 +162,7 @@ class parser(ParserBase):
             x = Ast.Loops.WhileStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
     
+    
     def parse_functions(self):
         '''Everything involving functions. Calling, definitions, etc.'''
 
@@ -180,7 +181,7 @@ class parser(ParserBase):
         elif self.check_group(0,"func_def_portion RIGHT_ARROW KEYWORD"):
             if self.peek(0).value.is_ret_set:
                 error(f"Function, \"{self.peek(0).value.name}\", cannot have it's return-type set twice.", line = self.peek(0).pos)
-            self.peek(0).value.ret_type = Ast.Ast_Types.Utils.Types[self.peek(2).value]
+            self.peek(0).value.ret_type = Ast.Ast_Types.Type_Base.types_dict[self.peek(2).value]()
             self.peek(0).value.is_ret_set = True
             self.replace(3,"func_def_portion", self.peek(0).value, completed = False)
 
@@ -215,6 +216,7 @@ class parser(ParserBase):
             func = Ast.FunctionCall(self.peek(2).pos, func_name, args)
             self.replace(4,"expr", func)
     
+    
     def parse_special(self):
         '''check special rules'''
 
@@ -227,9 +229,15 @@ class parser(ParserBase):
         
         # * true and false
         elif self.check(0, '$true'):
-            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 1, Types.BOOL)) #type: ignore
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 1, Ast.Ast_Types.Type_Bool.Integer_1())) #type: ignore
         elif self.check(0, '$false'):
-            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 0, Types.BOOL)) #type: ignore
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 0, Ast.Ast_Types.Type_Bool.Integer_1())) #type: ignore
+
+
+        # * parse lists
+        elif self.check_group(0, "OPEN_CURLY expr|expr_list CLOSE_CURLY"):
+            pass
+    
     
     def parse_vars(self):
         '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
@@ -252,11 +260,11 @@ class parser(ParserBase):
                 var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.current_block[0])
                 self.replace(1,"expr", var)
 
-
+    
     def parse_numbers(self):
         '''Parse raw integers into `expr` token.'''
 
-        create_num = lambda x, m: Ast.Literal(self.peek(0).pos, m*int(self.peek(x).value), Types.I32)  # type: ignore
+        create_num = lambda x, m: Ast.Literal(self.peek(0).pos, m*int(self.peek(x).value), Ast.Ast_Types.Integer_32())  # type: ignore
         
         # * Turn `NUMBER` token into an expr
         if self.check(0,"NUMBER"):
@@ -268,6 +276,7 @@ class parser(ParserBase):
                 self.replace(2, "expr", create_num(1,-1))
             elif self.check(0,"SUM"):
                 self.replace(2, "expr", create_num(1,1))
+    
     
     def parse_math(self):
         '''Parse mathematical expressions'''
@@ -291,6 +300,7 @@ class parser(ParserBase):
         elif self.check_group(0,'$not expr'):
             op = Ast.Math.ops['not'](self.peek(0).pos,[None,self.peek(1).value])
             self.replace(2,"expr",op)
+    
     
     def parse_parenth(self):
         '''Parses blocks of parenthises'''

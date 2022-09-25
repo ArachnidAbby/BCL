@@ -1,27 +1,27 @@
-from Ast.Ast_Types.Utils import Types
 from Ast.Node_Types import NodeTypes
 from Errors import error
 from llvmlite import ir
 
 from . import Type_Base
+from Ast import Ast_Types
 
 
 class Void(Type_Base.AbstractType):
     __slots__ = tuple()
 
     ir_type = ir.VoidType()
+    name = 'void'
 
-    @staticmethod
-    def convert_from(func, typ: str, previous):
-        if typ == Types.VOID: return previous
+    @classmethod
+    def convert_from(cls, func, typ: str, previous):
+        if typ == Ast_Types.Void(): return previous
         else: error(f"type '{typ}' cannot be converted to type 'void'", line = previous.position)
 
-    @staticmethod
-    def convert_to(func, orig, typ):
+    def convert_to(self, func, orig, typ):
         match typ:
-            case Types.VOID: return orig.eval(func)
+            case Ast_Types.Void(): return orig.eval(func)
             case _: error(f"Cannot convert 'void' to type '{typ}'", line = orig.position)
 
-    @staticmethod
-    def get_op_return(op: str, lhs, rhs):
-        return Types.VOID
+
+    def get_op_return(self, op: str, lhs, rhs):
+        return Ast_Types.Void()

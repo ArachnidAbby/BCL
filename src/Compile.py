@@ -18,7 +18,7 @@ def compile(src_str: str, output_loc: str):
 
     print(f'{Errors.GREEN}/------------------------------------------------#')
 
-    with timingContext('imports'):
+    with timingContext('imports finished'):
         import os, psutil, sys
         process = psutil.Process(os.getpid())
         tmp = imports_mem = process.memory_info().rss

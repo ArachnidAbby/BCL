@@ -4,96 +4,99 @@ from llvmlite import ir
 
 from . import Type_Base
 from . import Utils
+from Ast import Ast_Types
 
 class Integer_32(Type_Base.AbstractType):
     __slots__ = tuple()
 
     ir_type = ir.IntType(32)
+    name = 'i32'
 
-    @staticmethod
-    def convert_from(func, typ: str, previous):
-        if typ in (Utils.Types.F64,Utils.Types.F128): return func.builder.fptosi(previous.eval(),Integer_32.ir_type)
-        elif typ== Utils.Types.BOOL: return func.builder.zext(previous.eval(), Integer_32.ir_type)
-        elif typ == Utils.Types.I64: return func.builder.trunc(previous.eval(), Integer_32.ir_type)
-        elif typ == Utils.Types.I32: return previous.eval()
+    @classmethod
+    def convert_from(cls, func, typ, previous):
+        if typ.name in ('f64', 'f128'): return func.builder.fptosi(previous.eval(),Integer_32.ir_type)
+        elif typ.name == 'bool': return func.builder.zext(previous.eval(), Integer_32.ir_type)
+        elif typ.name == 'i64': return func.builder.trunc(previous.eval(), Integer_32.ir_type)
+        elif typ.name == 'i32': return previous.eval()
 
-        else: error(f"type '{typ}' cannot be converted to type 'i32'",line = previous.position)
+        error(f"type '{typ}' cannot be converted to type 'i32'",line = previous.position)
 
-    @staticmethod
-    def convert_to(func, orig, typ):
-        match typ:
-            case Utils.Types.I32: return orig.eval(func)
-            case Utils.Types.BOOL: return func.builder.trunc(orig.eval(func), ir.IntType(1))
-            case Utils.Types.I64: return func.builder.zext(orig.eval(func), ir.IntType(64))
-            case Utils.Types.F64: return func.builder.sitofp(orig.eval(func), ir.FloatType())
-            case Utils.Types.F128: return func.builder.sitofp(orig.eval(func), ir.DoubleType())
-            case _: error(f"Cannot convert 'i32' to type '{typ}'", line = orig.position)
+    
+    def convert_to(self, func, orig, typ):
+        match typ.name:
+            case 'i32': return orig.eval(func)
+            case 'bool': return func.builder.trunc(orig.eval(func), ir.IntType(1))
+            case 'i64': return func.builder.zext(orig.eval(func), ir.IntType(64))
+            case 'f64': return func.builder.sitofp(orig.eval(func), ir.FloatType())
+            case 'f128': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
+        
+        error(f"Cannot convert 'i32' to type '{typ}'", line = orig.position)
 
-    @staticmethod
-    def get_op_return(op: str, lhs, rhs):
+    @classmethod
+    def get_op_return(cls, op: str, lhs, rhs):
         match op.lower():
             case 'sum'|'sub'|'mul'|'div'|'mod':
                 return Type_Base.get_std_ret_type(lhs, rhs)
             case 'eq'|'neq'|'geq'|'leq'|'le'|'gr':
-                return Utils.Types.BOOL
+                return Ast_Types.Type_Bool.Integer_1()
 
     @staticmethod
     def convert_args(func, lhs, rhs) -> tuple:
         typ = Type_Base.get_std_ret_type(lhs, rhs)
-        lhs = (lhs.ret_type.value).convert_to(func, lhs, typ)
-        rhs = (rhs.ret_type.value).convert_to(func, rhs, typ)
+        lhs = (lhs.ret_type).convert_to(func, lhs, typ)
+        rhs = (rhs.ret_type).convert_to(func, rhs, typ)
         return (lhs, rhs)
 
 
-    @staticmethod
-    def sum(func, lhs, rhs): 
+    
+    def sum(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.add(lhs, rhs)
 
-    @staticmethod
-    def sub(func, lhs, rhs): 
+    
+    def sub(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.sub(lhs, rhs)
 
-    @staticmethod
-    def mul(func, lhs, rhs): 
+    
+    def mul(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.mul(lhs, rhs)
 
-    @staticmethod
-    def div(func, lhs, rhs): 
+    
+    def div(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
 
-    @staticmethod
-    def mod(func, lhs, rhs): 
+    
+    def mod(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.srem(lhs, rhs)
 
 
 
     
-    @staticmethod
-    def eq(func, lhs, rhs): 
+    
+    def eq(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('==', lhs, rhs)
-    @staticmethod
-    def neq(func, lhs, rhs):
+    
+    def neq(self, func, lhs, rhs):
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('!=', lhs, rhs)
-    @staticmethod
-    def geq(func, lhs, rhs):
+    
+    def geq(self, func, lhs, rhs):
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>=', lhs, rhs)
-    @staticmethod
-    def leq(func, lhs, rhs):
+    
+    def leq(self, func, lhs, rhs):
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('<=', lhs, rhs)
-    @staticmethod
-    def le(func, lhs, rhs):
+    
+    def le(self, func, lhs, rhs):
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('<', lhs, rhs)
-    @staticmethod
-    def gr(func, lhs, rhs):
+    
+    def gr(self, func, lhs, rhs):
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>', lhs, rhs)
