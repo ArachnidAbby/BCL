@@ -11,3 +11,8 @@ docs/build/
 ## test compiler outputs
 test
 *.ll
+
+## nuitka compilation outputs
+
+*.build/
+Main.bin

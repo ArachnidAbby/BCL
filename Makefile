@@ -8,6 +8,9 @@ run: env/bin/activate
 unittest: env/bin/activate
 	./env/bin/python3 tests/Basic_Test.py
 
+compile: env/bin/activate
+	./env/bin/python3 -m nuitka --follow-imports src/Main.py
+
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/
 	vsce package
@@ -26,4 +29,5 @@ sphinx-clean: env/bin/activate
 
 clean:
 	rm -rf __pycache__
-	rm -rf env  
+	rm -rf env
+	rm -rf Main.build/

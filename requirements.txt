@@ -11,3 +11,7 @@ psutil
 memory_profiler
 matplotlib
 snakeviz
+
+## compilation
+
+nuitka
