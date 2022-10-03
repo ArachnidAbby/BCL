@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from pathlib import Path
 from time import perf_counter
 
 import Errors
@@ -106,3 +107,7 @@ def compile_silent(src_str: str, output_loc: str):
         x.value.eval()
 
     codegen.save_ir(output_loc)
+
+def compile_file(file: Path):
+    with file.open() as f:
+        compile(f.read(), str(file.absolute().parents[0] / "output.ll"))

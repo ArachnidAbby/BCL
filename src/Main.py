@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 from typing import List
 
@@ -46,6 +47,10 @@ if __name__ == "__main__":
 
     elif args[0] == "make": 
         make_project(args)
+    
+    elif args[0] == "compile": 
+        import Compile
+        Compile.compile_file(Path(args[1]))
 
     else:
         example = '''
