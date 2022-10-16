@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Any, Iterator, Tuple
 from Ast.Node_Types import NodeTypes
 from . import Ast_Types
 
@@ -123,6 +123,9 @@ class ParenthBlock(AST_NODE):
         if self.ret_type!=Ast_Types.Void():
             self.ir_type = self.children[0].ir_type
 
+    def __iter__(self) -> Iterator[Any]:
+        yield from self.children
+    
     def is_key_value_pairs(self):
         '''check if all children are `KV_pair`s, this is useful for func definitions'''
         for x in self.children:
@@ -134,7 +137,7 @@ class ParenthBlock(AST_NODE):
         self.children.append(child)
         if isinstance(child, str):
             error(f"Variable '{child}' not defined.", line = child.position)
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Types.VOID
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Type_Void.Void()
     
     def eval(self, func):
         for c, child in enumerate(self.children):
@@ -142,6 +145,9 @@ class ParenthBlock(AST_NODE):
         
         if len(self.children)==1:
             return self.children[0]
+
+    def __repr__(self) -> str:
+        return f'<Parenth Block: \'({", ".join((repr(x) for x in self.children))})\'>'
 
 class KeyValuePair(AST_NODE):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
@@ -161,5 +167,9 @@ class KeyValuePair(AST_NODE):
             error(f"unknown type '{self.value}'", line = self.position)
         
         return self.value
+
+    def get_type(self) -> Any:
+        '''Get and validate type'''
+        return Ast_Types.Type_Base.types_dict[self.validate_type()]() # The types_dict returns an class that needs instantiated. Hence the extra ()
         
        

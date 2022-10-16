@@ -9,7 +9,7 @@ from Errors import _print_text, inline_warning
 def timingContext(text: str):
     start = perf_counter()
     yield
-    _print_text(f'{text} in {perf_counter() - start} seconds')
+    _print_text(f'{Errors.GREEN}{text} in {perf_counter() - start} seconds')
 
 def compile(src_str: str, output_loc: str):
     start = perf_counter()

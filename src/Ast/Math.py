@@ -69,7 +69,7 @@ def shunt(node: Operation, op_stack = None, output_queue = None, has_parent=Fals
                 op_stack.append([item.op_type,item.operator_precendence])
     
     # * push remaining operators to Queue
-    while (not has_parent) and len(op_stack)>0:
+    while (not has_parent) and len(op_stack) > 0:
         output_queue.append(op_stack.pop()[0])
 
     # * Create new Expression AST from output Queue

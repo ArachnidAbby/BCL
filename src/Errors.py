@@ -1,9 +1,13 @@
+from inspect import currentframe, getframeinfo
+
 RED = "\u001b[31m"
 RESET = "\u001b[0m"
 YELLOW = "\u001b[33;1m"
 GREEN = "\u001b[32m"
 ORANGE = "\u001b[38;5;209;1m"
 PURPLE = "\u001b[35m"
+MAGENTA = "\u001b[35m"
+CODE125 = u"\u001b[38;5;125m" 
 
 
 SILENT_MODE = False
@@ -37,6 +41,17 @@ def inline_warning(text: str, line = (-1,-1,-1)):
     print(ORANGE, end='')
     _print_text(text)
     if line!= (-1,-1,-1): print(f'|    Line: {line[0]}')
+    print(RESET, end='')
+
+def developer_warning(text: str):
+    '''give warnings to developers of the language that unsupported behavior is being used.'''
+    if SILENT_MODE: return None
+
+    print(CODE125, end='')
+
+    frameinfo = getframeinfo(currentframe())
+    _print_text(text + f"\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
+    
     print(RESET, end='')
 
 def output_profile_info(text):
