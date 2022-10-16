@@ -3,7 +3,7 @@ env/bin/activate: requirements.txt
 	./env/bin/pip3 install -r requirements.txt
 
 run: env/bin/activate
-	./env/bin/python3 src/Main.py hmm
+	./env/bin/python3 src/Main.py compile tests/current.bcl
 
 unittest: env/bin/activate
 	./env/bin/python3 tests/Basic_Test.py

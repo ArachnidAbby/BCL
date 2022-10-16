@@ -53,27 +53,4 @@ if __name__ == "__main__":
         Compile.compile_file(Path(args[1]))
 
     else:
-        example = '''
-
-define main() {
-    i = 0;
-    loop_amount = 200;
-    while i < loop_amount {
-        i = i+1;
-        fizz = is_multiple(i, 3);
-        buzz = is_multiple(i, 5)*2;
-        println(fizz + buzz);
-    }
-}
-
-define is_multiple(value: i32, divider: i32) -> bool {
-    return (value % divider) == 0;
-}
-'''
-        compile(example, "test.ll")
-
-
-
-
-
-# todo: add "first-class functions" 
+        print(f"Invalid sub-command: {args[0]}")
