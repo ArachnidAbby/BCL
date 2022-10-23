@@ -7,8 +7,6 @@ import Errors
 from Errors import error
 from Parser_Base import ParserBase, ParserToken
 
-
-
 class parser(ParserBase):
     __slots__ = ('statements', 'keywords', 'simple_rules', 'current_block', 'blocks', 'current_paren', 'parens')
 
@@ -117,6 +115,8 @@ class parser(ParserBase):
 
     
     def parse_statement(self):
+        '''Parsing statements and statement lists'''
+
         if self.check_group(0, "expr|statement SEMI_COLON"):
             self.replace(2, "statement", self.peek(0).value)
 
@@ -209,8 +209,8 @@ class parser(ParserBase):
             func_name = self.peek(2).value.name
             args1 = self.peek(0).value
             args2 = self.peek(3).value
-            args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1]
-            args2 = args2.children if isinstance(args2, Ast.Nodes.ParenthBlock) else [args2]
+            args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1] # wrap in a list if not already done
+            args2 = args2.children if isinstance(args2, Ast.Nodes.ParenthBlock) else [args2] # wrap in a list if not already done
             args = Ast.Nodes.ParenthBlock(self.peek(0).pos)
             args.children = args1+args2
             func = Ast.FunctionCall(self.peek(2).pos, func_name, args)
@@ -284,7 +284,7 @@ class parser(ParserBase):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.Math.ops.keys():
+        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.Math.ops.keys(): # catch all operators and then match them later
             op_str =self.peek(1).name
             op = Ast.Math.ops[op_str](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
             self.replace(3,"expr",op)

@@ -1,11 +1,13 @@
 from typing import Any, Callable, Optional
-from Ast.Node_Types import NodeTypes
+
 import Errors
 from llvmlite import ir
 
-from .Nodes import AST_NODE, Block, ParenthBlock
-from . import Ast_Types
 from Ast.Ast_Types.Type_Base import types_dict
+from Ast.Node_Types import NodeTypes
+
+from . import Ast_Types
+from .Nodes import ASTNode, Block, ExpressionNode, ParenthBlock
 
 functions = {}
 
@@ -73,9 +75,9 @@ def internal_function(name: str, ret_type: Any,
 # print(functions)
 # functions["jo_jo_reference"][tuple()].call(0,(0,)) # no warnings
 
-class FunctionDef(AST_NODE):
+class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types')
+    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type')
     
     def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
@@ -120,11 +122,7 @@ class FunctionDef(AST_NODE):
         self.function_ir = ir.Function(self.module, fnty, name=self.name)
         
         global functions
-        # if self.name not in functions:
-        #     functions[self.name] = dict()
         
-        # functions[self.name][self.args_types] = [self.function_ir, self.ret_type]
-
         if self.name not in functions:
             functions[self.name] = dict()
         functions[self.name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
@@ -147,13 +145,12 @@ class FunctionDef(AST_NODE):
         if self.ret_type.name == 'void':
             self.builder.ret_void()
 
-class ReturnStatement(AST_NODE):
+class ReturnStatement(ASTNode):
     __slots__ = ('expr')
 
     def init(self, expr):
         self.name = "return"
         self.type = NodeTypes.STATEMENT
-        self.ret_type = Ast_Types.Void()
         self.expr = expr
 
     def pre_eval(self):
@@ -172,13 +169,12 @@ class ReturnStatement(AST_NODE):
             return None
 
         func.builder.ret(self.expr.eval(func))
-class FunctionCall(AST_NODE):
+class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''
     __slots__ = ('ir_type', 'paren', 'function', 'args_types')
     
     def init(self, name: str, parenth: ParenthBlock):
         self.name = name
-        self.type = NodeTypes.EXPRESSION
         self.ret_type = Ast_Types.Void()
         self.ir_type = None
 

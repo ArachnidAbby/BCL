@@ -5,6 +5,7 @@ from time import perf_counter
 import Errors
 from Errors import _print_text, inline_warning
 
+
 @contextmanager
 def timingContext(text: str):
     start = perf_counter()
@@ -20,15 +21,18 @@ def compile(src_str: str, output_loc: str):
     print(f'{Errors.GREEN}/------------------------------------------------#')
 
     with timingContext('imports finished'):
-        import os, psutil, sys
+        import os
+        import sys
+
+        import psutil
         process = psutil.Process(os.getpid())
         tmp = imports_mem = process.memory_info().rss
         import Codegen
         codegen = Codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
         import Ast.Standard_Functions
-        import Parser
         import Lexer as lex
+        import Parser
 
     with timingContext('lexing finished'):
         tokens = lex.get_tokens(src_str)
@@ -77,8 +81,8 @@ def compile(src_str: str, output_loc: str):
 def compile_silent(src_str: str, output_loc: str):
     import Ast.Standard_Functions
     import Codegen
-    import Parser
     import Lexer as lex
+    import Parser
 
     tokens = lex.get_tokens(src_str)
     

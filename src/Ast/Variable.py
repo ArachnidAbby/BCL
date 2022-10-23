@@ -1,8 +1,9 @@
-from Ast.Node_Types import NodeTypes
 from Errors import error
 
-from .Nodes import AST_NODE
-from .Ast_Types import Type_Base
+from Ast.Node_Types import NodeTypes
+
+from .Ast_Types import Type_Base, Void
+from .Nodes import ASTNode, ExpressionNode
 
 
 class VariableObj:
@@ -19,9 +20,9 @@ class VariableObj:
     def __repr__(self) -> str:
         return f'VAR: |{self.ptr}, {self.type}|'
 
-class VariableAssign(AST_NODE):
+class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
-    __slots__ = ["value", 'block']
+    __slots__ = ("value", 'block')
 
     def init(self, name: str, value, block):
         self.name = name
@@ -30,8 +31,9 @@ class VariableAssign(AST_NODE):
         self.block = block
 
         if block!=None and self.name not in block.variables.keys():
-            block.variables[self.name] = VariableObj(None, self.ret_type, False)
+            block.variables[self.name] = VariableObj(None, Void(), False)
             self.type = "variableDeclare"
+            
         elif block==None:
             raise Exception("No Block for Variable Assignment to take place in")
         
@@ -57,13 +59,12 @@ class VariableAssign(AST_NODE):
 
         func.builder.store(self.value.eval(func), ptr)
 
-class VariableRef(AST_NODE):
+class VariableRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ('block', 'ir_type')
+    __slots__ = ('block')
 
     def init(self, name: str, block):
         self.name = name
-        self.type = NodeTypes.EXPRESSION
         self.block = block
     
     def pre_eval(self):

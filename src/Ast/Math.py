@@ -1,18 +1,17 @@
 from collections import deque
 
 from Ast import Ast_Types
-
 from Ast.Node_Types import NodeTypes
 
 from .Nodes import *
 
 
-class Operation(AST_NODE):
+class Operation(ExpressionNode):
     '''Operation class to define common behavior in Operations'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted", "children")
+    __slots__ = ("operator_precendence", "op_type", "shunted", "children")
+    is_operator = True
 
     def init(self, children, shunted = False):
-        self.type = NodeTypes.EXPRESSION
         self.children = children
         self.shunted = shunted
 
@@ -99,7 +98,6 @@ class Sum(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "sum"
         self.operator_precendence = 1
     
@@ -113,7 +111,6 @@ class Sub(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "sub"
         self.operator_precendence = 1
 
@@ -127,7 +124,6 @@ class Mul(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "mul"
         self.operator_precendence = 2
 
@@ -141,7 +137,6 @@ class Div(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "div"
         self.operator_precendence = 2
 
@@ -155,7 +150,6 @@ class Mod(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "mod"
         self.operator_precendence = 2
 
@@ -173,7 +167,6 @@ class Comparators(Operation):
 
     def init(self, children, shunted = False):
         self.shunted = shunted
-        self.is_operator = True
         self.op_type = self.op_name
         self.operator_precendence = 0
         self.children = children
@@ -204,7 +197,6 @@ class And(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "and"
         self.operator_precendence = -2
 
@@ -218,7 +210,6 @@ class Or(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "or"
         self.operator_precendence = -3
 
@@ -232,7 +223,6 @@ class Not(Operation):
     def init(self, children, shunted = False):
         super().init(children, shunted=shunted)
 
-        self.is_operator = True
         self.op_type = "not"
         self.operator_precendence = -1
         self.children[0] = Ast_Types.Void(self.position, None)

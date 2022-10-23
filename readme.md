@@ -22,18 +22,18 @@ The language is *not* fit for production use. It is missing a very large number 
 - [ ] variable assignment-operators (`+=`, `-=`, etc)
 - [ ] Lists
 - [ ] for-loops
-- [ ] points/references
+- [ ] pointers/references
 - [ ] `const`ants
 - [ ] structs
 - [ ] struct functions
 - [ ] struct operator overloading
 - [ ] `import` statement with the ability to import modules/packages
-- [ ] compile a folder or file instead of hardcoded test string.
+- [x] compile a folder or file instead of hardcoded test string.
 - [ ] heap allocation with garbage collection
 - [ ] `del` or `free` statement (only work when GC is off)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
-- [ ] some access to llvm function directly.
+- [x] some access to llvm function directly. (notice: more can, and will, be added)
 - [ ] access to cpu registers.
 - [ ] standard math library
 - [ ] strings

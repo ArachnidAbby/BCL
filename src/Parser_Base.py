@@ -64,7 +64,7 @@ class ParserBase:
         self.do_move=False
     
     
-    def insert(self, index: int, name: str, value: Ast.Nodes.AST_NODE, completed = True):
+    def insert(self, index: int, name: str, value: Ast.Nodes.ASTNode, completed = True):
         '''insert tokens at a specific location'''
         self._tokens.insert(index+self._cursor, ParserToken(name, value, value.position, completed))
     

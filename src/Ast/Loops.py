@@ -1,19 +1,18 @@
-from . import Ast_Types
 from Ast.Node_Types import NodeTypes
-
 from Ast.Variable import VariableAssign
 
-from .Nodes import AST_NODE, Block
+from . import Ast_Types
+from .Nodes import ASTNode, Block
 
-class WhileStatement(AST_NODE):
+
+class WhileStatement(ASTNode):
     '''Code for an If-Statement'''
 
     __slots__ = ('cond', 'block')
 
-    def init(self, cond: AST_NODE, block: Block):
+    def init(self, cond: ASTNode, block: Block):
         self.name = "While"
         self.type = NodeTypes.STATEMENT
-        self.ret_type = Ast_Types.Void()
 
         self.cond = cond
         self.block = block

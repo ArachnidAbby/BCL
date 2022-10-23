@@ -1,5 +1,6 @@
 from enum import Enum
-from Ast.Nodes import AST_NODE
+
+from Ast.Nodes import ASTNode
 from Errors import error
 
 
@@ -129,7 +130,7 @@ conversion_priority_raw = [
     'f128'
 ] # the further down the list this is, the higher priority
 
-def get_std_ret_type(self: AST_NODE,  other: AST_NODE):
+def get_std_ret_type(self: ASTNode,  other: ASTNode):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
     largest_priority = max(

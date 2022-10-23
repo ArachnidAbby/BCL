@@ -1,21 +1,21 @@
 from typing import Any, Iterator, Tuple
-from Ast.Node_Types import NodeTypes
-from . import Ast_Types
 
 from Errors import error
 
+from Ast.Node_Types import NodeTypes
 
-class AST_NODE:
+from . import Ast_Types
+
+
+class ASTNode:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
-    __slots__ = ('name', 'type', 'position', "ret_type", "is_operator")
+    __slots__ = ('name', 'type', 'position')
+    is_operator = False
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         self.type = ""
         self.name = ""
-        self.ret_type = Ast_Types.Type_Base.AbstractType()
         self.position = position        # (line#, col#)
-        self.is_operator = False
-
 
         self.init(*args, **kwargs)
     
@@ -29,14 +29,26 @@ class AST_NODE:
     def eval(self, func):
         pass
 
-class Block(AST_NODE):
+
+class ExpressionNode(ASTNode):
+    '''Acts as an Expression in the AST. This means it has a value and return type'''
+    __slots__ = ("ret_type", "ir_type")
+
+    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
+        self.type = NodeTypes.EXPRESSION
+        self.name = ""
+        self.ret_type = Ast_Types.Type_Base.AbstractType()
+        self.position = position        # (line#, col#)
+
+        self.init(*args, **kwargs)
+
+class Block(ASTNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
     __slots__ = ('variables', 'builder', 'children')
 
     def init(self):
         self.name = "Block"
         self.type = NodeTypes.BLOCK
-        self.ret_type = Ast_Types.Void()
         self.children = list()
 
         self.variables = dict() # {name: VarObj, ...}
@@ -50,7 +62,7 @@ class Block(AST_NODE):
         for x in self.children:
             x.eval(func)
 
-    def append_child(self, child: AST_NODE):
+    def append_child(self, child: ASTNode):
         self.children.append(child)
 
     def get_variable(self, var_name: str):
@@ -61,16 +73,15 @@ class Block(AST_NODE):
         '''Return if a variable already has a ptr'''
         return self.variables[var_name].ptr!=None
 
-class StatementList(AST_NODE):
+class StatementList(ASTNode):
     __slots__ = ('children',)
 
     def init(self):
         self.name = "StatementList"
         self.type = NodeTypes.STATEMENTLIST
-        self.ret_type = Ast_Types.Void()
         self.children = list()
 
-    def append_child(self, child: AST_NODE):
+    def append_child(self, child: ASTNode):
         if isinstance(child, StatementList):
             self.children+=child.children
         else:
@@ -84,16 +95,15 @@ class StatementList(AST_NODE):
         for x in self.children:
             x.eval(func)
 
-class ExpressionList(AST_NODE):
+class ExpressionList(ASTNode):
     __slots__ = ('children',)
 
     def init(self):
         self.name = "StatementList"
         self.type = NodeTypes.STATEMENTLIST
-        self.ret_type = Ast_Types.Void()
         self.children = list()
 
-    def append_child(self, child: AST_NODE):
+    def append_child(self, child: ASTNode):
         self.children.append(child)
 
     def pre_eval(self):
@@ -104,9 +114,9 @@ class ExpressionList(AST_NODE):
         for x in self.children:
             x.eval(func)
 
-class ParenthBlock(AST_NODE):
+class ParenthBlock(ASTNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'children')
+    __slots__ = ('ir_type', 'children', 'ret_type')
 
     def init(self):
         self.name = "Parenth"
@@ -133,10 +143,10 @@ class ParenthBlock(AST_NODE):
                 return False
         return True     
 
-    def append_child(self, child: AST_NODE):
+    def append_child(self, child: ASTNode):
         self.children.append(child)
-        if isinstance(child, str):
-            error(f"Variable '{child}' not defined.", line = child.position)
+        # if isinstance(child, str):
+        #     error(f"Variable '{child}' not defined.", line = child.position)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Type_Void.Void()
     
     def eval(self, func):
@@ -149,14 +159,13 @@ class ParenthBlock(AST_NODE):
     def __repr__(self) -> str:
         return f'<Parenth Block: \'({", ".join((repr(x) for x in self.children))})\'>'
 
-class KeyValuePair(AST_NODE):
+class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value', 'keywords')
 
     def init(self, k, v, keywords = False):
         self.name = "kv_pair"
         self.type = 'kv pair'
-        self.ret_type = Ast_Types.Type_Base.AbstractType()
         self.keywords = keywords
 
         self.key = k
