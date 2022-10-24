@@ -17,23 +17,33 @@ class VariableObj:
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
     
+    def define(self, func):
+        '''alloca memory for the variable'''
+        ptr = func.builder.alloca(self.type.ir_type)
+        self.ptr = ptr
+        return ptr
+    
+    def store(self, func, value):
+        func.builder.store(value.eval(func), self.ptr)
+
     def __repr__(self) -> str:
         return f'VAR: |{self.ptr}, {self.type}|'
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
-    __slots__ = ("value", 'block')
+    __slots__ = ("value", 'block', 'is_declaration')
+    type = NodeTypes.EXPRESSION
 
     def init(self, name: str, value, block):
         self.name = name
-        self.type = "variableAssign"
+        self.is_declaration = False
         self.value = value
         self.block = block
 
         if block!=None and self.name not in block.variables.keys():
             block.variables[self.name] = VariableObj(None, Void(), False)
-            self.type = "variableDeclare"
-            
+            self.is_declaration = True
+
         elif block==None:
             raise Exception("No Block for Variable Assignment to take place in")
         
@@ -46,10 +56,8 @@ class VariableAssign(ASTNode):
         variable = self.block.get_variable(self.name)
 
         if not self.block.validate_variable(self.name):
-            ptr = func.builder.alloca(self.value.ir_type, name=self.name)
-            variable.ptr = ptr
+            variable.define(func)
         else:
-            ptr = variable.ptr
             if self.value.ret_type != variable.type:
                 error(
                     f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {self.block.variables[self.name].type}",
@@ -57,7 +65,7 @@ class VariableAssign(ASTNode):
                 )
             self.block.variables[self.name].is_constant = False
 
-        func.builder.store(self.value.eval(func), ptr)
+        variable.store(func, self.value)
 
 class VariableRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
@@ -69,7 +77,7 @@ class VariableRef(ExpressionNode):
     
     def pre_eval(self):
         self.ret_type = self.block.get_variable(self.name).type
-        if self.block.get_variable(self.name).type.name=="UNKNOWN": # todo -1 is a placeholder for UNKNOWN type
+        if self.block.get_variable(self.name).type.name=="UNKNOWN":
             error(f"Unknown variable '{self.name}'", line = self.position)
 
         self.ir_type = self.ret_type.ir_type

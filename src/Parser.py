@@ -1,11 +1,12 @@
-from collections import deque
 import sys
+from collections import deque
 from typing import Callable
 
 import Ast
 import Errors
 from Errors import error
 from Parser_Base import ParserBase, ParserToken
+
 
 class parser(ParserBase):
     __slots__ = ('statements', 'keywords', 'simple_rules', 'current_block', 'blocks', 'current_paren', 'parens')
@@ -265,10 +266,14 @@ class parser(ParserBase):
         '''Parse raw integers into `expr` token.'''
 
         create_num = lambda x, m: Ast.Literal(self.peek(0).pos, m*int(self.peek(x).value), Ast.Ast_Types.Integer_32())  # type: ignore
+        create_num_f = lambda x, m: Ast.Literal(self.peek(0).pos, m*float(self.peek(x).value), Ast.Ast_Types.Float_64())  # type: ignore
         
         # * Turn `NUMBER` token into an expr
         if self.check(0,"NUMBER"):
             self.replace(1,"expr",create_num(0,1))
+
+        if self.check(0, "NUMBER_F"):
+            self.replace(1,"expr",create_num_f(0,1))
 
         # * allow leading `+` or `-`.
         elif self.check_group(-1,'!expr SUB|SUM NUMBER'):
@@ -276,6 +281,12 @@ class parser(ParserBase):
                 self.replace(2, "expr", create_num(1,-1))
             elif self.check(0,"SUM"):
                 self.replace(2, "expr", create_num(1,1))
+        
+        elif self.check_group(-1,'!expr SUB|SUM NUMBER_F'):
+            if self.check(0,"SUB"):
+                self.replace(2, "expr", create_num_f(1,-1))
+            elif self.check(0,"SUM"):
+                self.replace(2, "expr", create_num_f(1,1))
     
     
     def parse_math(self):

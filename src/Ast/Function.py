@@ -78,10 +78,10 @@ def internal_function(name: str, ret_type: Any,
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type')
-    
+    type = NodeTypes.STATEMENT
+
     def init(self, name: str, args: ParenthBlock, block: Block, module):
         self.name = name
-        self.type = NodeTypes.STATEMENT
         self.ret_type = Ast_Types.Void()
 
         self.builder = None
@@ -147,10 +147,10 @@ class FunctionDef(ASTNode):
 
 class ReturnStatement(ASTNode):
     __slots__ = ('expr')
+    type = NodeTypes.STATEMENT
+    name = "return"
 
     def init(self, expr):
-        self.name = "return"
-        self.type = NodeTypes.STATEMENT
         self.expr = expr
 
     def pre_eval(self):
@@ -176,7 +176,6 @@ class FunctionCall(ExpressionNode):
     def init(self, name: str, parenth: ParenthBlock):
         self.name = name
         self.ret_type = Ast_Types.Void()
-        self.ir_type = None
 
         self.paren = parenth
     

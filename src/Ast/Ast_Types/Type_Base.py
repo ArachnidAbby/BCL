@@ -1,6 +1,6 @@
 from enum import Enum
 
-from Ast.Nodes import ASTNode
+from Ast.Nodes import ASTNode, ExpressionNode
 from Errors import error
 
 
@@ -98,19 +98,6 @@ from .Type_F64 import Float_64
 from .Type_I32 import Integer_32
 from .Type_Void import Void
 
-# def get_type(typ: Types) -> AbstractType:
-#     match typ:
-#         case Types.VOID:
-#             return Void  # type: ignore
-#         case Types.I32|Types.INT:
-#             return Integer_32  # type: ignore
-#         case Types.F64|Types.FLOAT:
-#             return Float_64  # type: ignore
-#         case Types.BOOL:
-#             return Integer_1  # type: ignore
-#         case _:
-#             return None  # type: ignore
-
 types_dict = {
     'void': Void,
     'bool': Integer_1,
@@ -130,7 +117,7 @@ conversion_priority_raw = [
     'f128'
 ] # the further down the list this is, the higher priority
 
-def get_std_ret_type(self: ASTNode,  other: ASTNode):
+def get_std_ret_type(self: ExpressionNode,  other: ExpressionNode):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
     largest_priority = max(

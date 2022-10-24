@@ -50,7 +50,7 @@ def compile(src_str: str, output_loc: str):
     with timingContext('module created'):
         for x in parsed:
             if not x.completed:
-                print(x)
+                print(x, parsed)
                 Errors.error(f"""
                 The compiler could not complete all it's operations.
 
@@ -60,7 +60,6 @@ def compile(src_str: str, output_loc: str):
                 
 
             x.value.pre_eval()
-
         for x in parsed:
             x.value.eval()
         Errors.output_mem_prof("ParserClassObject--2", sys.getsizeof(parsed))

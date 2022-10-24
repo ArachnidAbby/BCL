@@ -8,10 +8,10 @@ class IfStatement(ASTNode):
     '''Code for an If-Statement'''
 
     __slots__ = ('cond', 'block')
+    type = NodeTypes.STATEMENT
 
     def init(self, cond: ASTNode, block: ASTNode):
         self.name = "If"
-        self.type = NodeTypes.STATEMENT
 
         self.cond = cond
         self.block = block
@@ -28,10 +28,10 @@ class IfStatement(ASTNode):
 class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
+    type = NodeTypes.STATEMENT
 
     def init(self, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
         self.name = "IfElse"
-        self.type = NodeTypes.STATEMENT
 
         self.cond = cond
         self.if_block = if_block

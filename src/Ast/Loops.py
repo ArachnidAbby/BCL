@@ -10,10 +10,10 @@ class WhileStatement(ASTNode):
 
     __slots__ = ('cond', 'block')
 
-    def init(self, cond: ASTNode, block: Block):
-        self.name = "While"
-        self.type = NodeTypes.STATEMENT
+    name = "While"
+    type = NodeTypes.STATEMENT
 
+    def init(self, cond: ASTNode, block: Block):
         self.cond = cond
         self.block = block
     
@@ -29,7 +29,7 @@ class WhileStatement(ASTNode):
 
         # alloca outside of the loop body in order to not have a stack overflow!
         for c,x in enumerate(self.block.children):
-            if isinstance(x, VariableAssign) and x.type == "variableDeclare":
+            if isinstance(x, VariableAssign) and x.is_declaration:
                 variable = self.block.get_variable(x.name)
                 if not self.block.validate_variable(x.name):
                     ptr = func.builder.alloca(self.block.get_variable(x.name).type.ir_type, name=x.name)

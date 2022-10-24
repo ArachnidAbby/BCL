@@ -4,7 +4,6 @@ from Errors import error
 from llvmlite import ir
 
 from . import Type_Base
-from . import Utils
 
 
 class Integer_1(Type_Base.AbstractType):

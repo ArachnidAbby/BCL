@@ -15,10 +15,10 @@ from .Variable import *
 
 class Literal(ExpressionNode):
     __slots__ = ('value', 'ir_type')
+    name = 'literal'
 
     def init(self, value: Any, typ: Ast_Types.AbstractType):
         self.value = value
-        self.name = 'literal'
         self.ret_type = typ
 
         self.ir_type = typ.ir_type

@@ -3,7 +3,6 @@ from Errors import error
 from llvmlite import ir
 
 from . import Type_Base
-from . import Utils
 
 
 class Array(Type_Base.AbstractType):

@@ -1,4 +1,5 @@
 from typing import List
+
 from rply import LexerGenerator
 
 from Parser_Base import ParserToken
@@ -20,8 +21,8 @@ class Lexer():
         self.lexer.add('OPEN_SQUARE', r'\[')
         self.lexer.add('CLOSE_SQUARE', r'\]')
         # Number
-        self.lexer.add('NUMBER', r'\d+')
         self.lexer.add('NUMBER_F', r'\d+((\.\d+f)|(\.\d+)|f)')
+        self.lexer.add('NUMBER', r'\d+')
         # Semi Colon, comma, etc
         self.lexer.add('SEMI_COLON', r'\;')
         self.lexer.add('COLON', r'\:')
