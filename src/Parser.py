@@ -266,7 +266,7 @@ class parser(ParserBase):
         '''Parse raw integers into `expr` token.'''
 
         create_num = lambda x, m: Ast.Literal(self.peek(0).pos, m*int(self.peek(x).value), Ast.Ast_Types.Integer_32())  # type: ignore
-        create_num_f = lambda x, m: Ast.Literal(self.peek(0).pos, m*float(self.peek(x).value), Ast.Ast_Types.Float_64())  # type: ignore
+        create_num_f = lambda x, m: Ast.Literal(self.peek(0).pos, m*float(self.peek(x).value.strip('f')), Ast.Ast_Types.Float_64())  # type: ignore
         
         # * Turn `NUMBER` token into an expr
         if self.check(0,"NUMBER"):
