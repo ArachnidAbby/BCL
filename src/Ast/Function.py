@@ -119,12 +119,15 @@ class FunctionDef(ASTNode):
     def pre_eval(self):
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
-        self.function_ir = ir.Function(self.module, fnty, name=self.name)
-        
         global functions
-        
+
         if self.name not in functions:
             functions[self.name] = dict()
+
+        name = f"{self.name}{len(functions[self.name].keys())}" # avoid name collisions by adding a # to the end of the function name
+
+        self.function_ir = ir.Function(self.module, fnty, name=name)
+        
         functions[self.name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
