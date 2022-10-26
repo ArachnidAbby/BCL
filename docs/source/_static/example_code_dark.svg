@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet href="./docs/source/_static/text_styles.css" type="text/css"?>
+<svg viewBox="0 0 250 290" xmlns="http://www.w3.org/2000/svg" version="1.1">
+
+<style>
+text {
+    font: normal 13px serif;
+}
+tspan {
+    fill: white;
+}
+.comment-color {
+    fill: #bdc4cc;
+}
+.storage {
+    fill: #ff9492; 
+}
+.source {
+    fill: #f0f3f6; /*--color-prettylights-syntax-storage-modifier-import*/
+}
+.bracket {
+    fill:  #7a8280; /*--color-prettylights-syntax-sublimelinter-gutter-mark*/
+}
+.punctuation-terminator {
+    fill: #addcff; /*--color-prettylights-syntax-string*/
+}
+.constant {
+    fill: #91cbff;
+}
+
+.entity {
+    fill: #dbb7ff;
+}
+</style>
+
+<text x="0" y="0" font-size="13" dy="0" dx="0">
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47;  fizzbuzz program</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47; ===================</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47; outputs</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47;   0: not fizz or buzz</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47;   1: fizz</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47;   2: buzz</tspan>
+    <tspan x="0" dy="15" class="comment-color">&#47;&#47;  3: fizzbuzz</tspan>
+    <tspan x="0" dy="15" class="storage">define&#32;</tspan>
+      <tspan class="entity">main</tspan>
+      <tspan class="bracket">()&#32;{</tspan>
+    
+    <tspan x="0" dy="15" class="source">&#9;i</tspan>
+      <tspan class="constant">&#32;=&#32;0</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+    <tspan x="0" dy="15" class="source">&#9;loop_amount</tspan>
+      <tspan class="constant">&#32;=&#32;200</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+    
+    <tspan x="0" dy="15" class="storage">&#9;while</tspan>
+      <tspan class="source">&#32;i</tspan>
+      <tspan class="constant">&#32;&lt;&#32;</tspan>
+      <tspan class="source">loop_amount&#32;</tspan>
+      <tspan class="bracket">{</tspan>
+
+    <tspan x="0" dy="15" class="source">&#9;&#9;i</tspan>
+      <tspan class="constant">&#32;=&#32;</tspan>
+      <tspan class="source">i&#32;</tspan>
+      <tspan class="constant">+&#32;1</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+
+    <tspan x="0" dy="15" class="source">&#9;&#9;fizz</tspan>
+      <tspan class="constant">&#32;=&#32;</tspan>
+      <tspan class="entity">is_multiple</tspan>
+      <tspan class="bracket">(</tspan>
+      <tspan class="source">i,&#32;</tspan>
+      <tspan class="constant">3</tspan>
+      <tspan class="bracket">)</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+    <tspan x="0" dy="15" class="source">&#9;&#9;buzz</tspan>
+      <tspan class="constant">&#32;=&#32;</tspan>
+      <tspan class="entity">is_multiple</tspan>
+      <tspan class="bracket">(</tspan>
+      <tspan class="source">i,&#32;</tspan>
+      <tspan class="constant">5</tspan>
+      <tspan class="bracket">)</tspan>
+      <tspan class="constant">&#32;*&#32;2</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+    <tspan x="0" dy="15" class="entity">&#9;&#9;println</tspan>
+      <tspan class="bracket">(</tspan>
+      <tspan class="source">fizz&#32;</tspan>
+      <tspan class="constant">+&#32;</tspan>
+      <tspan class="source">buzz</tspan>
+      <tspan class="bracket">)</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+
+    <tspan x="0" dy="15" class="bracket">&#9;}</tspan>
+    <tspan x="0" dy="15" class="bracket">}</tspan>
+
+
+    <tspan x="0" dy="15" class="storage">define&#32;</tspan>
+      <tspan class="entity">is_multiple</tspan>
+      <tspan class="bracket">(</tspan>
+      <tspan class="source">value:&#32;i32,&#32;divider:&#32;i32</tspan>
+      <tspan class="bracket">) {</tspan>
+    
+    <tspan x="0" dy="15" class="storage">&#9;return&#32;</tspan>
+      <tspan class="bracket">(</tspan>
+      <tspan class="source">buzz</tspan>
+      <tspan class="constant">&#32;%&#32;</tspan>
+      <tspan class="source">buzz</tspan>
+      <tspan class="bracket">)</tspan>
+      <tspan class="constant">&#32;==&#32;0</tspan>
+      <tspan class="punctuation-terminator">;</tspan>
+
+    <tspan x="0" dy="15" class="bracket">}</tspan>
+</text>
+</svg>
