@@ -12,8 +12,8 @@ compile: env/bin/activate
 	./env/bin/python3.11 -m nuitka --follow-imports src/Main.py
 
 vs-build: syntax_highlighting/package.json
-	cd syntax_highlighting/
-	vsce package
+	cd syntax_highlighting/; \
+	  vsce package
 
 profile_cpu: env/bin/activate
 	./env/bin/python3.11 -m cProfile -o tests/random/program.prof src/Main.py hmmmm
