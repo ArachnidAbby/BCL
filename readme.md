@@ -2,6 +2,33 @@
 
 BCL (Ben's Compiled Language) is a compiled programming language that is inspired by python and other languages.
 
+# Example code
+
+```
+//  fizzbuzz program
+// ===================
+// outputs
+//   0: not fizz or buzz
+//   1: fizz
+//   2: buzz
+///  3: fizzbuzz
+
+define main() {
+    i = 0;
+    loop_amount = 200;
+    while i < loop_amount {
+        i = i+1;
+        fizz = is_multiple(i, 3);
+        buzz = is_multiple(i, 5)*2;
+        println(fizz + buzz);
+    }
+}
+
+define is_multiple(value: i32, divider: i32) -> bool {
+    return (value % divider) == 0;
+}
+```
+
 # State of the language
 
 The language is *not* fit for production use. It is missing a very large number of features.
