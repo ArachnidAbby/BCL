@@ -1,13 +1,13 @@
 from typing import Any, Callable, Optional
 
-import Errors
+import errors
 from llvmlite import ir
 
 from Ast.Ast_Types.Type_Base import types_dict
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
 from . import Ast_Types
-from .Nodes import ASTNode, Block, ExpressionNode, ParenthBlock
+from .nodes import ASTNode, Block, ExpressionNode, ParenthBlock
 
 functions = {}
 
@@ -58,7 +58,7 @@ def internal_function(name: str, ret_type: Any,
 
         def call(ast_func, args: tuple) -> Optional[ir.Instruction]:
             # warning does not display in `_Function(...).call(...)`
-            Errors.developer_warning("You should not call internal functions via python __call__ convention.\
+            errors.developer_warning("You should not call internal functions via python __call__ convention.\
                                       \ntip: @internal_function indicates use inside of BCL code")
             return func(ast_func, args)
 
@@ -107,11 +107,11 @@ class FunctionDef(ASTNode):
     def _validate(self, args):
         '''Validate that all args are syntactically valid'''
         if not args.is_key_value_pairs():
-            Errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs", line = self.position)
+            errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs", line = self.position)
 
         for x in args:
             if not x.keywords:
-                Errors.error(f"Function {self.name}'s argument tuple can only consist of Keyword pairs\
+                errors.error(f"Function {self.name}'s argument tuple can only consist of Keyword pairs\
                                \n\t invalid pair \
                                '{x.key}: {x.value}'", 
                                line = self.position)
@@ -162,7 +162,7 @@ class ReturnStatement(ASTNode):
     def eval(self, func):
         self.expr.pre_eval()
         if self.expr.ret_type != func.ret_type:
-            Errors.error(
+            errors.error(
                 f"Funtion, \"{func.name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
                 line = self.position
             )
@@ -188,7 +188,7 @@ class FunctionCall(ExpressionNode):
         self.args_types = tuple([x.ret_type for x in self.paren])
         if self.name not in functions \
             or self.args_types not in functions[self.name]:
-            Errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
+            errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
         
         self.ret_type = functions[self.name][self.args_types].ret_type
         self.ir_type = (self.ret_type).ir_type

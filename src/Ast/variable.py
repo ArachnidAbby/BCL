@@ -1,9 +1,9 @@
-from Errors import error
+from errors import error
 
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
 from .Ast_Types import Type_Base, Void
-from .Nodes import ASTNode, ExpressionNode
+from .nodes import ASTNode, ExpressionNode
 
 
 class VariableObj:

@@ -5,10 +5,10 @@ import unittest
 p = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{p}/../src')
 
-import Compile
-import Errors
+import compile
+import errors
 
-Errors.SILENT_MODE = True
+errors.SILENT_MODE = True
 
 class basictests(unittest.TestCase):
     def test_functions(self):
@@ -22,7 +22,7 @@ class basictests(unittest.TestCase):
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
         """
 
-        Compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
 
     def test_function_overloading(self):
         test_code = """
@@ -38,7 +38,7 @@ class basictests(unittest.TestCase):
         define test_func(x: f64, y: f64) -> f64 { return x+y;}
         """
 
-        Compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
     
     @unittest.expectedFailure
     def test_variables_1(self):
@@ -49,7 +49,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        Compile.compile_silent(test_code, f'{p}/random/test_variables_1.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_variables_1.ll')
     
     @unittest.expectedFailure
     def test_variables_2(self):
@@ -62,7 +62,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        Compile.compile_silent(test_code, f'{p}/random/test_variables_2.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_variables_2.ll')
     
     def test_variables_3(self):
         test_code = """
@@ -74,7 +74,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        Compile.compile_silent(test_code, f'{p}/random/test_variables_3.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_variables_3.ll')
 
 if __name__ == '__main__':
     unittest.main()

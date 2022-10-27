@@ -1,8 +1,8 @@
-from Ast.Node_Types import NodeTypes
-from Ast.Variable import VariableAssign
+from Ast.nodetypes import NodeTypes
+from Ast.variable import VariableAssign
 
 from . import Ast_Types
-from .Nodes import ASTNode, Block
+from .nodes import ASTNode, Block
 
 
 class WhileStatement(ASTNode):

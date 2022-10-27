@@ -1,7 +1,7 @@
 from Ast import Ast_Types
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
-from .Nodes import ASTNode
+from .nodes import ASTNode
 
 
 class IfStatement(ASTNode):

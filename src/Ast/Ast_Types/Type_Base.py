@@ -1,7 +1,7 @@
 from enum import Enum
 
-from Ast.Nodes import ASTNode, ExpressionNode
-from Errors import error
+from Ast.nodes import ASTNode, ExpressionNode
+from errors import error
 
 
 class AbstractType:

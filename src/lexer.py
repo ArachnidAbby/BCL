@@ -2,7 +2,7 @@ from typing import List
 
 from rply import LexerGenerator
 
-from Parser_Base import ParserToken
+from parserbase import ParserToken
 
 
 class Lexer():

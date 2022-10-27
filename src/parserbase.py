@@ -1,7 +1,7 @@
 from typing import Any, Callable, NamedTuple
 
 import Ast
-from Errors import error
+from errors import error
 
 
 class ParserToken(NamedTuple):
@@ -64,7 +64,7 @@ class ParserBase:
         self.do_move=False
     
     
-    def insert(self, index: int, name: str, value: Ast.Nodes.ASTNode, completed = True):
+    def insert(self, index: int, name: str, value: Ast.nodes.ASTNode, completed = True):
         '''insert tokens at a specific location'''
         self._tokens.insert(index+self._cursor, ParserToken(name, value, value.position, completed))
     

@@ -1,9 +1,9 @@
 from collections import deque
 
 from Ast import Ast_Types
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
-from .Nodes import *
+from .nodes import *
 
 
 class Operation(ExpressionNode):

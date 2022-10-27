@@ -3,9 +3,9 @@ from collections import deque
 from typing import Callable
 
 import Ast
-import Errors
-from Errors import error
-from Parser_Base import ParserBase, ParserToken
+import errors
+from errors import error
+from parserbase import ParserBase, ParserToken
 
 
 class parser(ParserBase):
@@ -20,13 +20,13 @@ class parser(ParserBase):
         )
 
         self.simple_rules = (
-            ("statement", "$return expr SEMI_COLON", Ast.Function.ReturnStatement, (1,) ),  # type: ignore
+            ("statement", "$return expr SEMI_COLON", Ast.function.ReturnStatement, (1,) ),  # type: ignore
         )
 
-        self.current_block = (None, 0)
+        self.current_block: tuple[Ast.StatementList|Ast.Block, int] = (None, 0)  # type: ignore
         self.blocks        = deque()
 
-        self.current_paren = (None, 0)
+        self.current_paren: tuple[Ast.ExpressionList|Ast.ExpressionNode, int] = (None, 0)  # type: ignore
         self.parens        = deque()
 
         super().__init__(*args, **kwargs)
@@ -69,7 +69,7 @@ class parser(ParserBase):
             self.move_cursor()
             iters+=1
 
-        Errors.output_profile_info(f"iters: {iters}")
+        errors.output_profile_info(f"iters: {iters}")
         
         self.start = previous_start_position
 
@@ -103,8 +103,8 @@ class parser(ParserBase):
             if self.check(-1,"func_def_portion"):
                 for x in self.peek(-1).value.args.keys():
                     arg = self.peek(-1).value.args[x]
-                    output.variables[x] = Ast.Variable.VariableObj(arg[0], arg[1], True)
-            if self.current_block[0]!=None and isinstance(self.current_block[0], Ast.Nodes.Block):
+                    output.variables[x] = Ast.variable.VariableObj(arg[0], arg[1], True)
+            if self.current_block[0]!=None and isinstance(self.current_block[0], Ast.nodes.Block):
                 for x in self.current_block[0].variables.keys():
                     output.variables[x] = self.current_block[0].variables[x]
 
@@ -147,20 +147,20 @@ class parser(ParserBase):
         if self.check_group(0, "$if expr statement !$else"):
             expr = self.peek(1).value
             block = self.peek(2).value
-            x = Ast.Conditionals.IfStatement(self.peek(0).pos, expr, block)
+            x = Ast.conditionals.IfStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
 
         elif self.check_group(0, "$if expr statement $else statement"):
             expr = self.peek(1).value
             block_if = self.peek(2).value
             block_else = self.peek(4).value
-            x = Ast.Conditionals.IfElseStatement(self.peek(0).pos, expr, block_if, block_else)
+            x = Ast.conditionals.IfElseStatement(self.peek(0).pos, expr, block_if, block_else)
             self.replace(5,"statement", x)
 
         elif self.check_group(0, "$while expr statement"):
             expr = self.peek(1).value
             block = self.peek(2).value
-            x = Ast.Loops.WhileStatement(self.peek(0).pos, expr, block)
+            x = Ast.loops.WhileStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
     
     
@@ -194,25 +194,25 @@ class parser(ParserBase):
             
         
         # * Function Calls
-        elif self.check_group(0,"expr expr|paren") and (isinstance(self.peek(0).value, Ast.Variable.VariableRef)):
+        elif self.check_group(0,"expr expr|paren") and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
             func_name = self.peek(0).value.name
             args = self.peek(1).value
 
-            if not isinstance(args, Ast.Nodes.ParenthBlock):
-                args = Ast.Nodes.ParenthBlock(self.peek(1).pos)
+            if not isinstance(args, Ast.nodes.ParenthBlock):
+                args = Ast.nodes.ParenthBlock(self.peek(1).pos)
                 args.children.append(self.peek(1).value)
 
             func = Ast.FunctionCall(self.peek(0).pos, func_name, args)
             self.replace(2,"expr", func)
 
         # * different func calls "9.to_string()" as an example
-        elif self.check_group(0,"expr|paren DOT expr expr|paren") and (isinstance(self.peek(2).value, Ast.Variable.VariableRef)):
+        elif self.check_group(0,"expr|paren DOT expr expr|paren") and (isinstance(self.peek(2).value, Ast.variable.VariableRef)):
             func_name = self.peek(2).value.name
             args1 = self.peek(0).value
             args2 = self.peek(3).value
-            args1 = args1.children if isinstance(args1, Ast.Nodes.ParenthBlock) else [args1] # wrap in a list if not already done
-            args2 = args2.children if isinstance(args2, Ast.Nodes.ParenthBlock) else [args2] # wrap in a list if not already done
-            args = Ast.Nodes.ParenthBlock(self.peek(0).pos)
+            args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) else [args1] # wrap in a list if not already done
+            args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) else [args2] # wrap in a list if not already done
+            args = Ast.nodes.ParenthBlock(self.peek(0).pos)
             args.children = args1+args2
             func = Ast.FunctionCall(self.peek(2).pos, func_name, args)
             self.replace(4,"expr", func)
@@ -225,7 +225,7 @@ class parser(ParserBase):
         if self.check_group(0, '_ COLON _'):
             keywords = self.check_group(0, 'KEYWORD COLON KEYWORD')
                 # error(f"A Key-Value pair cannot be created for token {self.peek(0)['name']}", line = self.peek(0).pos)
-            kv = Ast.Nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value, keywords = keywords)
+            kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value, keywords = keywords)
             self.replace(3,"kv_pair", kv)
         
         # * true and false
@@ -295,21 +295,21 @@ class parser(ParserBase):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.Math.ops.keys(): # catch all operators and then match them later
+        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.math.ops.keys(): # catch all operators and then match them later
             op_str =self.peek(1).name
-            op = Ast.Math.ops[op_str](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops[op_str](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'expr $and expr'):
-            op = Ast.Math.ops['and'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops['and'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'expr $or expr'):
-            op = Ast.Math.ops['or'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops['or'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'$not expr'):
-            op = Ast.Math.ops['not'](self.peek(0).pos,[None,self.peek(1).value])
+            op = Ast.math.ops['not'](self.peek(0).pos,[None,self.peek(1).value])
             self.replace(2,"expr",op)
     
     
@@ -324,7 +324,7 @@ class parser(ParserBase):
                 expr.value.append_child(self.peek(2).value)
                 out = expr.value
             else:
-                out = Ast.Nodes.ExpressionList((-1,-1,-1))
+                out = Ast.nodes.ExpressionList((-1,-1,-1))
                 out.append_child(expr.value)
                 out.append_child(self.peek(2).value)
             

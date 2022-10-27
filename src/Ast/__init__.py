@@ -4,13 +4,13 @@ from typing import List, Tuple
 from llvmlite import ir
 
 from .Ast_Types import *
-from .Conditionals import *
-from .Function import *
-from .Loops import *
-from .Math import *
-from .Nodes import *
-from .Standard_Functions import *
-from .Variable import *
+from .conditionals import *
+from .function import *
+from .loops import *
+from .math import *
+from .nodes import *
+from .standardfunctions import *
+from .variable import *
 
 
 class Literal(ExpressionNode):

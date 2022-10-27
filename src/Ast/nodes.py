@@ -1,8 +1,8 @@
 from typing import Any, Iterator, Tuple
 
-from Errors import error
+from errors import error
 
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
 from . import Ast_Types
 

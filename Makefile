@@ -3,20 +3,20 @@ env/bin/activate: requirements.txt
 	./env/bin/pip3.11 install -r requirements.txt
 
 run: env/bin/activate
-	./env/bin/python3.11 src/Main.py compile tests/current.bcl
+	./env/bin/python3.11 src/main.py compile tests/current.bcl
 
 unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py
 
 compile: env/bin/activate
-	./env/bin/python3.11 -m nuitka --follow-imports src/Main.py
+	./env/bin/python3.11 -m nuitka --follow-imports src/main.py
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/; \
 	  vsce package
 
 profile_cpu: env/bin/activate
-	./env/bin/python3.11 -m cProfile -o tests/random/program.prof src/Main.py hmmmm
+	./env/bin/python3.11 -m cProfile -o tests/random/program.prof src/main.py hmmmm
 	./env/bin/snakeviz tests/random/program.prof
 
 # build sphinx html docs
@@ -30,4 +30,4 @@ sphinx-clean: env/bin/activate
 clean:
 	rm -rf __pycache__
 	rm -rf env
-	rm -rf Main.build/
+	rm -rf main.build/
