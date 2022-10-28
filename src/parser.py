@@ -19,12 +19,6 @@ class parser(ParserBase):
             "define", "return", 'if', 'else', 'and', 'or', 'not', 'while'
         )
 
-        self.skippable_tokens = ( # no rules start with these tokens! They can be skipped and save computation
-            "EQ", "MOD", "DIV", "NEQ", "GEQ", "MUL", "LEQ",
-            "LE", "GR", "SET_VALUE", "DOT", "COLON", "SEMI_COLON",
-            "RIGHT_ARROW", "COMMA", "func_def"
-        )
-
         self.parsing_functions = { # functions used for parsing. Put into a tuple based on the starting tokens of their rules
             "OPEN_CURLY": (self.parse_blocks, self.parse_special, ),
             "OPEN_CURLY_USED": (self.parse_blocks,),
@@ -69,7 +63,7 @@ class parser(ParserBase):
 
             token_name = self.peek(0).name
 
-            if token_name in self.skippable_tokens: # skip tokens if possible
+            if token_name not in self.parsing_functions.keys(): # skip tokens if possible
                 self.move_cursor()
                 continue
 
@@ -82,7 +76,7 @@ class parser(ParserBase):
             # self.parse_special() # must be before self.parse_vars
             # self.parse_vars()
             # self.parse_parenth()
-            
+
             functions = self.parsing_functions[token_name]
 
             for func in functions:
