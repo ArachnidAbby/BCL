@@ -88,6 +88,9 @@ class ParserBase:
         else:
             return x.name==wanting
 
+    def simple_check(self, index: int, wanting: str) -> bool:
+        '''check the value of a token (without formatting)'''
+        return self.peek(index=index).name==wanting
     
     def replace(self, leng: int, name: str, value, i: int = 0, completed: bool = True):
         '''replace a group of tokens with a single token.'''
@@ -107,6 +110,19 @@ class ParserBase:
 
         for c,x in enumerate(tokens):
             if not self.check(c+start_index,x):
+                return False
+
+        return True
+
+    def check_simple_group(self, start_index: int, wanting: str) -> bool:
+        '''check a group of tokens in a string seperated by spaces. (unformatted)'''
+        tokens = wanting.split(' ')
+
+        if (len(tokens)+self._cursor+start_index) > len(self._tokens):
+            return False
+
+        for c,x in enumerate(tokens):
+            if not self.simple_check(c+start_index,x):
                 return False
 
         return True
