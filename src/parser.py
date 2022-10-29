@@ -34,7 +34,8 @@ class parser(ParserBase):
             "kv_pair": (self.parse_parenth, ),
             "expr_list": (self.parse_parenth, ),
             "OPEN_PAREN": (self.parse_parenth, ),
-            "OPEN_PAREN_USED": (self.parse_parenth, )
+            "OPEN_PAREN_USED": (self.parse_parenth, ),
+            "paren": (self.parse_functions,)
         }
 
         self.current_block: tuple[Ast.StatementList|Ast.Block, int] = (None, 0)  # type: ignore
