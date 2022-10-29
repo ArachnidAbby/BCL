@@ -1,5 +1,5 @@
 define main() {
-    i = 0;
+    i = 0.0;
     loop_amount = 200;
     while i < loop_amount {
         i = i+1;
@@ -10,5 +10,9 @@ define main() {
 }
 
 define is_multiple(value: i32, divider: i32) -> bool {
+    return (value % divider) == 0;
+}
+
+define is_multiple(value: f64, divider: i32) -> bool {
     return (value % divider) == 0;
 }

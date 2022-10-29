@@ -1,10 +1,9 @@
 from Ast.Ast_Types import Type_F64, Type_I32
-from Ast.Node_Types import NodeTypes
-from Errors import error
+from Ast.nodetypes import NodeTypes
+from errors import error
 from llvmlite import ir
 
 from . import Type_Base
-from . import Utils
 
 
 class Integer_1(Type_Base.AbstractType):

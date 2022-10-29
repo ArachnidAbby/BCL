@@ -1,7 +1,8 @@
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import List
+
 
 def make_project(args: List[str]):
     '''setup project files'''
@@ -33,14 +34,14 @@ lib/
 
 def compile(source_code: str, output_loc: str):
     '''compile source code'''
-    import Compile
+    import compile
 
-    Compile.compile(source_code, output_loc)
+    compile.compile(source_code, output_loc)
 
 
 if __name__ == "__main__":
     args = sys.argv
-    if args[0]=="src/Main.py": args=args[1::]
+    if args[0]=="src/main.py": args=args[1::]
 
     if len(args)==0:
         print("Valid sub-commands: build, run, make, publish")
@@ -49,31 +50,8 @@ if __name__ == "__main__":
         make_project(args)
     
     elif args[0] == "compile": 
-        import Compile
-        Compile.compile_file(Path(args[1]))
+        import compile
+        compile.compile_file(Path(args[1]))
 
     else:
-        example = '''
-
-define main() {
-    i = 0;
-    loop_amount = 200;
-    while i < loop_amount {
-        i = i+1;
-        fizz = is_multiple(i, 3);
-        buzz = is_multiple(i, 5)*2;
-        println(fizz + buzz);
-    }
-}
-
-define is_multiple(value: i32, divider: i32) -> bool {
-    return (value % divider) == 0;
-}
-'''
-        compile(example, "test.ll")
-
-
-
-
-
-# todo: add "first-class functions" 
+        print(f"Invalid sub-command: {args[0]}")

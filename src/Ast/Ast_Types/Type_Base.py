@@ -1,8 +1,10 @@
 from enum import Enum
-from Ast.Nodes import AST_NODE
-from Errors import error
+
+from Ast.nodes import ASTNode, ExpressionNode
+from errors import error
 
 
+# todo: look into interfaces and see if this is applicable here.
 class AbstractType:
     '''abstract type class that outlines the necessary features of a type class.'''
 
@@ -17,12 +19,16 @@ class AbstractType:
     
     def convert_to(self, func, orig, typ): error(f"AbstractType has no conversions",  line = orig.position)
 
+    def is_void(self) -> bool:
+        return self.name == "void"
+
     def __eq__(self, other):
         return (other != None) and self.name == other.name
     def __neq__(self, other):
         print(self.name != other.name)
         return self.name != other.name
 
+    # todo: remove this
     @classmethod
     def print_error(cls, op: str, lhs, rhs):
         if op=='not': cls._not(None, None, rhs)
@@ -84,7 +90,10 @@ class AbstractType:
     def __hash__(self):
         return hash(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        return f'<Type: {self.name}>'
+    
+    def __str__(self) -> str:
         return self.name
 
 
@@ -93,19 +102,6 @@ from .Type_Bool import Integer_1
 from .Type_F64 import Float_64
 from .Type_I32 import Integer_32
 from .Type_Void import Void
-
-# def get_type(typ: Types) -> AbstractType:
-#     match typ:
-#         case Types.VOID:
-#             return Void  # type: ignore
-#         case Types.I32|Types.INT:
-#             return Integer_32  # type: ignore
-#         case Types.F64|Types.FLOAT:
-#             return Float_64  # type: ignore
-#         case Types.BOOL:
-#             return Integer_1  # type: ignore
-#         case _:
-#             return None  # type: ignore
 
 types_dict = {
     'void': Void,
@@ -126,7 +122,7 @@ conversion_priority_raw = [
     'f128'
 ] # the further down the list this is, the higher priority
 
-def get_std_ret_type(self: AST_NODE,  other: AST_NODE):
+def get_std_ret_type(self: ExpressionNode,  other: ExpressionNode):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
     conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
     largest_priority = max(

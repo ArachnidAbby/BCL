@@ -1,9 +1,8 @@
-from Ast.Node_Types import NodeTypes
-from Errors import error
+from Ast.nodetypes import NodeTypes
+from errors import error
 from llvmlite import ir
 
 from . import Type_Base
-from . import Utils
 
 
 class Array(Type_Base.AbstractType):

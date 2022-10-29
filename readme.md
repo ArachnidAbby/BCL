@@ -1,6 +1,35 @@
+![Project Status](https://img.shields.io/badge/Project%20Status-In%20Development-orange?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/spidertyler2005/BCL?style=for-the-badge) ![Discord](https://img.shields.io/discord/875155614202994761?style=for-the-badge)
+
 # What is BCL?
 
 BCL (Ben's Compiled Language) is a compiled programming language that is inspired by python and other languages.
+
+# Example code
+
+```
+//  fizzbuzz program
+// ===================
+// outputs
+//   0: not fizz or buzz
+//   1: fizz
+//   2: buzz
+///  3: fizzbuzz
+
+define main() {
+    i = 0;
+    loop_amount = 200;
+    while i < loop_amount {
+        i = i+1;
+        fizz = is_multiple(i, 3);
+        buzz = is_multiple(i, 5)*2;
+        println(fizz + buzz);
+    }
+}
+
+define is_multiple(value: i32, divider: i32) -> bool {
+    return (value % divider) == 0;
+}
+```
 
 # State of the language
 
@@ -17,23 +46,23 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] boolean operators
 - [x] if and else statements
 - [x] while loops
-- [ ] floats
+- [x] floats
 - [ ] variable type declaration
 - [ ] variable assignment-operators (`+=`, `-=`, etc)
 - [ ] Lists
 - [ ] for-loops
-- [ ] points/references
+- [ ] pointers/references
 - [ ] `const`ants
 - [ ] structs
 - [ ] struct functions
 - [ ] struct operator overloading
 - [ ] `import` statement with the ability to import modules/packages
-- [ ] compile a folder or file instead of hardcoded test string.
+- [x] compile a folder or file instead of hardcoded test string.
 - [ ] heap allocation with garbage collection
 - [ ] `del` or `free` statement (only work when GC is off)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
-- [ ] some access to llvm function directly.
+- [x] some access to llvm function directly. (notice: more can, and will, be added)
 - [ ] access to cpu registers.
 - [ ] standard math library
 - [ ] strings

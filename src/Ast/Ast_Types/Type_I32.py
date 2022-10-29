@@ -1,10 +1,10 @@
-from Ast.Node_Types import NodeTypes
-from Errors import error
+from Ast import Ast_Types
+from Ast.nodetypes import NodeTypes
+from errors import error
 from llvmlite import ir
 
 from . import Type_Base
-from . import Utils
-from Ast import Ast_Types
+
 
 class Integer_32(Type_Base.AbstractType):
     __slots__ = tuple()

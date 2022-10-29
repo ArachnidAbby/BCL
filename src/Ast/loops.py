@@ -1,20 +1,19 @@
+from Ast.nodetypes import NodeTypes
+from Ast.variable import VariableAssign
+
 from . import Ast_Types
-from Ast.Node_Types import NodeTypes
+from .nodes import ASTNode, Block
 
-from Ast.Variable import VariableAssign
 
-from .Nodes import AST_NODE, Block
-
-class WhileStatement(AST_NODE):
+class WhileStatement(ASTNode):
     '''Code for an If-Statement'''
 
     __slots__ = ('cond', 'block')
 
-    def init(self, cond: AST_NODE, block: Block):
-        self.name = "While"
-        self.type = NodeTypes.STATEMENT
-        self.ret_type = Ast_Types.Void()
+    name = "While"
+    type = NodeTypes.STATEMENT
 
+    def init(self, cond: ASTNode, block: Block):
         self.cond = cond
         self.block = block
     
@@ -30,7 +29,7 @@ class WhileStatement(AST_NODE):
 
         # alloca outside of the loop body in order to not have a stack overflow!
         for c,x in enumerate(self.block.children):
-            if isinstance(x, VariableAssign) and x.type == "variableDeclare":
+            if isinstance(x, VariableAssign) and x.is_declaration:
                 variable = self.block.get_variable(x.name)
                 if not self.block.validate_variable(x.name):
                     ptr = func.builder.alloca(self.block.get_variable(x.name).type.ir_type, name=x.name)

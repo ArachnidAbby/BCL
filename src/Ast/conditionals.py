@@ -1,18 +1,17 @@
 from Ast import Ast_Types
-from Ast.Node_Types import NodeTypes
+from Ast.nodetypes import NodeTypes
 
-from .Nodes import AST_NODE
+from .nodes import ASTNode
 
 
-class IfStatement(AST_NODE):
+class IfStatement(ASTNode):
     '''Code for an If-Statement'''
 
     __slots__ = ('cond', 'block')
+    type = NodeTypes.STATEMENT
 
-    def init(self, cond: AST_NODE, block: AST_NODE):
+    def init(self, cond: ASTNode, block: ASTNode):
         self.name = "If"
-        self.type = NodeTypes.STATEMENT
-        self.ret_type = Ast_Types.Void()
 
         self.cond = cond
         self.block = block
@@ -26,14 +25,13 @@ class IfStatement(AST_NODE):
         with func.builder.if_then(cond) as if_block:
             self.block.eval(func)
 
-class IfElseStatement(AST_NODE):
+class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
+    type = NodeTypes.STATEMENT
 
-    def init(self, cond: AST_NODE, if_block: AST_NODE, else_block: AST_NODE):
+    def init(self, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
         self.name = "IfElse"
-        self.type = NodeTypes.STATEMENT
-        self.ret_type = Ast_Types.Void()
 
         self.cond = cond
         self.if_block = if_block

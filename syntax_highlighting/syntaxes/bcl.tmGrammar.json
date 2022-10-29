@@ -16,24 +16,28 @@
       "keywords": {
         "patterns": [
           {
-            "match": "(?<!define\\s*)[a-zA-Z0-9_]+(?=\\(.*\\))",
+            "match": "(?<!define\\s+)[a-zA-Z0-9_]+(?=\\(.*\\))",
             "name": "meta.function-call.generic.bcl"
           },
           {
-            "match": "((if)|(elif)|(else)|(define)|(for)(while)|(import))(?=\\W+)",
+            "match": "((if)|(else)|(for)|(while)|(import)|(return))",
             "name": "keyword.control.bcl"
           },
           {
-            "match": "(?<=\\W+)((or)|(and)|(not)|(in))(?=\\W+)",
+            "match": "(define)",
+            "name": "storage.type.function"
+          },
+          {
+            "match": "((or)|(and)|(not)|(in))",
             "name": "keyword.operator.bcl"
           },
           {
-            "match": "(?<=\\W+)((byte)|(short)|(int)|(long)|(float)|(double)|(bool)|(char)|(string))(?=\\W+)",
+            "match": "((i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|(char)|(string)|(str))",
             "name": "storage.type.bcl"
           },
           {
-            "match": "[a-zA-Z0-9_]+",
-            "name": "variable.other.bcl"
+            "match": "([a-zA-Z0-9_]+)|(\\s+)",
+            "name": "source.bcl"
           }
         ]
       },
@@ -50,7 +54,7 @@
             "name": "entity.name.function.bcl"
           },
           {
-            "match": "(?<=define\\s*[a-zA-Z0-9_]+\\()([a-zA-Z0-9_]+([\\s\\,]*))*",
+            "match": "([\\w\\d_]+(?=\\s*\\:))",
             "name": "variable.parameter.function.bcl"
           }
         ]
@@ -73,11 +77,12 @@
             "name": "keyword.operator.assignment.bcl"
           },
           {
-            "match": "[\\+\\-\\*/]",
+            "match": "[\\+\\-\\*\\/\\%]",
             "name": "keyword.operator.arithmetic.bcl"
           },
           
           {"match": "[;]", "name": "punctuation.terminator.statement.bcl"},
+          {"match": "[,]", "name": "punctuation.seperator.bcl"},
           {
             "begin": "\\(",
             "end": "\\)",

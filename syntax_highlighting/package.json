@@ -1,11 +1,11 @@
 {
     "name": "bcl-langauage",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "publisher": "Benjamin A.",
     "description": "syntax highlighting for BCL",
     "repository": "https://github.com/spidertyler2005/BCL",
     "engines": {
-        "vscode":"^1.50.1"
+        "vscode":"*"
     },
     "contributes": {
         "languages": [

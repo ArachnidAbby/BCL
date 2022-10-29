@@ -1,12 +1,13 @@
 
-from llvmlite.ir import Module, FunctionType, Function, IntType
 from llvmlite import binding
+from llvmlite.ir import Function, FunctionType, IntType, Module
 
 # This was coppied from a tutorial.
 # todo: understand this code and rewrite it myself in my own style.
 
 class CodeGen():
     __slots__ = ('module', 'engine', 'printf')
+
     def __init__(self):
         binding.initialize()
         binding.initialize_native_target()
@@ -37,12 +38,12 @@ class CodeGen():
         engine = binding.create_mcjit_compiler(backing_mod, target_machine)
         self.engine = engine
 
-    def _declare_print_function(self):
-        # Declare Printf function
-        voidptr_ty = ir.IntType(8).as_pointer()
-        printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
-        printf = ir.Function(self.module, printf_ty, name="printf")
-        self.printf = printf
+    # def _declare_print_function(self):
+    #     # Declare Printf function
+    #     voidptr_ty = ir.IntType(8).as_pointer()
+    #     printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
+    #     printf = ir.Function(self.module, printf_ty, name="printf")
+    #     self.printf = printf
         
 
     def _compile_ir(self):
