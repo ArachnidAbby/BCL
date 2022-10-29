@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Tuple
+from typing import Any, Iterator, Self, Tuple
 
 from errors import error
 
@@ -11,7 +11,7 @@ class ASTNode:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
     __slots__ = ('name', 'position')
     is_operator = False
-    type = ""
+    type = NodeTypes.DEFAULT
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         #self.type = ""
@@ -19,6 +19,9 @@ class ASTNode:
         self.position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
+
+    def is_expression(self):
+        return self.type==NodeTypes.EXPRESSION
     
     def init(self):
         pass
@@ -38,7 +41,7 @@ class ExpressionNode(ASTNode):
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         #self.name = ""
-        self.ret_type = Ast_Types.Type_Base.AbstractType()
+        self.ret_type = Ast_Types.AbstractType()
         self.position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
@@ -48,15 +51,35 @@ class ExpressionNode(ASTNode):
         '''get functionality from type (example: operators) automatically'''
         pass
 
-class Block(ASTNode):
+class ContainerNode(ASTNode):
+    '''A node consistening of other nodes. Containers do not directly do operations on these nodes'''
+    __slots__ = ("children", )
+
+    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
+        self.children = list()
+        super().__init__(position, *args, **kwargs)
+
+    def __iter__(self) -> Iterator[Any]:
+        yield from self.children
+
+    def append_child(self, child: ASTNode|Self):
+        self.children.append(child)
+
+    def append_children(self, child: ASTNode|Self):
+        '''possible to append 1 or more children'''
+        if isinstance(child, ContainerNode):
+            self.children += child.children
+            return
+        self.append_child(child)
+
+
+class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder', 'children')
+    __slots__ = ('variables', 'builder')
     type = NodeTypes.BLOCK
+    name = "Block"
 
     def init(self):
-        self.name = "Block"
-        self.children = list()
-
         self.variables = dict() # {name: VarObj, ...}
         self.builder = None
     
@@ -68,8 +91,8 @@ class Block(ASTNode):
         for x in self.children:
             x.eval(func)
 
-    def append_child(self, child: ASTNode):
-        self.children.append(child)
+    # def append_child(self, child: ASTNode):
+    #     self.children.append(child)
 
     def get_variable(self, var_name: str):
         '''get variable by name'''
@@ -79,19 +102,19 @@ class Block(ASTNode):
         '''Return if a variable already has a ptr'''
         return self.variables[var_name].ptr!=None
 
-class StatementList(ASTNode):
+class StatementList(ContainerNode):
     __slots__ = ('children',)
     type = NodeTypes.STATEMENTLIST
+    name = "StatementList"
 
     def init(self):
-        self.name = "StatementList"
         self.children = list()
 
-    def append_child(self, child: ASTNode):
-        if isinstance(child, StatementList):
-            self.children+=child.children
-        else:
-            self.children.append(child)
+    # def append_child(self, child: ASTNode):
+    #     if isinstance(child, StatementList):
+    #         self.children+=child.children
+    #     else:
+    #         self.children.append(child)
 
     def pre_eval(self):
         for x in self.children:
@@ -101,16 +124,12 @@ class StatementList(ASTNode):
         for x in self.children:
             x.eval(func)
 
-class ExpressionList(ASTNode):
-    __slots__ = ('children',)
+class ExpressionList(ContainerNode):
+    __slots__ = tuple()
     type = NodeTypes.STATEMENTLIST
 
     def init(self):
         self.name = "StatementList"
-        self.children = list()
-
-    def append_child(self, child: ASTNode):
-        self.children.append(child)
 
     def pre_eval(self):
         for x in self.children:
@@ -120,29 +139,28 @@ class ExpressionList(ASTNode):
         for x in self.children:
             x.eval(func)
 
-class ParenthBlock(ASTNode):
+class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'children', 'ret_type')
+    __slots__ = ('ir_type', 'ret_type')
     type = NodeTypes.EXPRESSION
 
     def init(self):
         self.name = "Parenth"
         self.ir_type = Ast_Types.Void()
-        self.children = list()
         
     def pre_eval(self):
         for x in self.children:
             x.pre_eval()
         
         # * tuples return `void` but an expr returns the same data as its child
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Type_Void.Void()
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
         if self.ret_type!=Ast_Types.Void():
             self.ir_type = self.children[0].ir_type
 
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
     
-    def is_key_value_pairs(self):
+    def is_key_value_pairs(self) -> bool:
         '''check if all children are `KV_pair`s, this is useful for func definitions'''
         for x in self.children:
             if not isinstance(x, KeyValuePair):
@@ -153,7 +171,7 @@ class ParenthBlock(ASTNode):
         self.children.append(child)
         # if isinstance(child, str):
         #     error(f"Variable '{child}' not defined.", line = child.position)
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Type_Void.Void()
+        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
     
     def eval(self, func):
         for c, child in enumerate(self.children):
@@ -178,13 +196,13 @@ class KeyValuePair(ASTNode):
         self.value = v
     
     def validate_type(self) -> str:        
-        if self.value not in Ast_Types.Type_Base.types_dict:
+        if self.value not in Ast_Types.Type_Base.types_dict:  # type: ignore
             error(f"unknown type '{self.value}'", line = self.position)
         
         return self.value
 
     def get_type(self) -> Any:
         '''Get and validate type'''
-        return Ast_Types.Type_Base.types_dict[self.validate_type()]() # The types_dict returns an class that needs instantiated. Hence the extra ()
+        return Ast_Types.Type_Base.types_dict[self.validate_type()]() # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
         
        

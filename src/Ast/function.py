@@ -66,14 +66,6 @@ def internal_function(name: str, ret_type: Any,
 
     return wrapper
 
-# *example
-# @internal_function("jo_jo_reference", Integer32, tuple())
-# def test(func, args):
-#     return None
-
-# test(0,0) # throws a warning at runtime
-# print(functions)
-# functions["jo_jo_reference"][tuple()].call(0,(0,)) # no warnings
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
@@ -145,7 +137,7 @@ class FunctionDef(ASTNode):
         
         self.block.eval(self)
         
-        if self.ret_type.name == 'void':
+        if self.ret_type.is_void():
             self.builder.ret_void()
 
 class ReturnStatement(ASTNode):
@@ -167,7 +159,7 @@ class ReturnStatement(ASTNode):
                 line = self.position
             )
 
-        if func.ret_type.name == 'void':
+        if func.ret_type.is_void():
             func.builder.ret_void()
             return None
 

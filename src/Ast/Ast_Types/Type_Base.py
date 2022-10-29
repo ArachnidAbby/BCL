@@ -4,6 +4,7 @@ from Ast.nodes import ASTNode, ExpressionNode
 from errors import error
 
 
+# todo: look into interfaces and see if this is applicable here.
 class AbstractType:
     '''abstract type class that outlines the necessary features of a type class.'''
 
@@ -18,12 +19,16 @@ class AbstractType:
     
     def convert_to(self, func, orig, typ): error(f"AbstractType has no conversions",  line = orig.position)
 
+    def is_void(self) -> bool:
+        return self.name == "void"
+
     def __eq__(self, other):
         return (other != None) and self.name == other.name
     def __neq__(self, other):
         print(self.name != other.name)
         return self.name != other.name
 
+    # todo: remove this
     @classmethod
     def print_error(cls, op: str, lhs, rhs):
         if op=='not': cls._not(None, None, rhs)

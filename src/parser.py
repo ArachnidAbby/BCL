@@ -40,7 +40,7 @@ class parser(ParserBase):
         self.current_block: tuple[Ast.StatementList|Ast.Block, int] = (None, 0)  # type: ignore
         self.blocks        = deque()
 
-        self.current_paren: tuple[Ast.ExpressionList|Ast.ExpressionNode, int] = (None, 0)  # type: ignore
+        self.current_paren: tuple[Ast.ExpressionList|Ast.ParenthBlock, int] = (None, 0)  # type: ignore
         self.parens        = deque()
 
         super().__init__(*args, **kwargs)
@@ -148,7 +148,7 @@ class parser(ParserBase):
         elif self.check_group(0, "statement_list statement|statement_list !SEMI_COLON"):
             stmt_list = self.peek(0).value
 
-            stmt_list.append_child(self.peek(1).value)
+            stmt_list.append_children(self.peek(1).value)
             if self.current_block[0] != None:
                 if self.check(2,"!CLOSE_CURLY"):
                     self.start = self._cursor
@@ -199,7 +199,7 @@ class parser(ParserBase):
         elif self.check_simple_group(0,"func_def_portion RIGHT_ARROW KEYWORD"):
             if self.peek(0).value.is_ret_set:
                 error(f"Function, \"{self.peek(0).value.name}\", cannot have it's return-type set twice.", line = self.peek(0).pos)
-            self.peek(0).value.ret_type = Ast.Ast_Types.Type_Base.types_dict[self.peek(2).value]()
+            self.peek(0).value.ret_type = Ast.Ast_Types.Type_Base.types_dict[self.peek(2).value]()  # type: ignore
             self.peek(0).value.is_ret_set = True
             self.replace(3,"func_def_portion", self.peek(0).value, completed = False)
 
@@ -253,7 +253,7 @@ class parser(ParserBase):
 
         elif self.check_group(0, "$return expr SEMI_COLON"):
             value = self.peek(1).value
-            self.replace(3, 'statement', Ast.function.ReturnStatement(self.peek(0).pos, value))
+            self.replace(3, 'statement', Ast.ReturnStatement(self.peek(0).pos, value))
 
 
         # * parse lists
@@ -342,7 +342,7 @@ class parser(ParserBase):
             expr = self.peek(0)
             out = None
             if expr.name == "expr_list":
-                expr.value.append_child(self.peek(2).value)
+                expr.value.append_children(self.peek(2).value)
                 out = expr.value
             else:
                 out = Ast.nodes.ExpressionList((-1,-1,-1))
