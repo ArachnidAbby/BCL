@@ -1,3 +1,5 @@
+![BCL logo](docs/source/_static/experimental_BCL_LOGO.png)
+
 ![Project Status](https://img.shields.io/badge/Project%20Status-In%20Development-orange?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/spidertyler2005/BCL?style=for-the-badge) ![Discord](https://img.shields.io/discord/875155614202994761?style=for-the-badge)
 
 # What is BCL?
