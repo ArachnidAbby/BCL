@@ -116,7 +116,7 @@ class FunctionDef(ASTNode):
         if self.name not in functions:
             functions[self.name] = dict()
 
-        name = f"{self.name}{len(functions[self.name].keys())}" # avoid name collisions by adding a # to the end of the function name
+        name = f"{self.name}.{len(functions[self.name].keys())}" if self.name!="main" else self.name # avoid name collisions by adding a # to the end of the function name
 
         self.function_ir = ir.Function(self.module, fnty, name=name)
         
