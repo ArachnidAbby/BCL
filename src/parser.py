@@ -317,21 +317,21 @@ class parser(ParserBase):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.math.ops.keys(): # catch all operators and then match them later
+        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.math.ops.keys():
             op_str =self.peek(1).name
-            op = Ast.math.ops[op_str](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'expr $and expr'):
-            op = Ast.math.ops['and'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'expr $or expr'):
-            op = Ast.math.ops['or'](self.peek(0).pos,[self.peek(0).value,self.peek(2).value])
+            op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'$not expr'):
-            op = Ast.math.ops['not'](self.peek(0).pos,[None,self.peek(1).value])
+            op = Ast.math.ops['not'](self.peek(0).pos, None, self.peek(1).value)
             self.replace(2,"expr",op)
     
     

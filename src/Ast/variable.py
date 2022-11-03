@@ -86,3 +86,6 @@ class VariableRef(ExpressionNode):
         ptr = self.block.get_variable(self.name).ptr 
         if not self.block.get_variable(self.name).is_constant: return func.builder.load(ptr) 
         else: return ptr
+
+    def __repr__(self) -> str:
+        return f"<VariableRef to `{self.name}`>"
