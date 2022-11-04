@@ -38,7 +38,7 @@ class basictests(unittest.TestCase):
         define test_func(x: f64, y: f64) -> f64 { return x+y;}
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
+        compile.compile_silent(test_code, f'{p}/random/test_functions_2.ll')
     
     @unittest.expectedFailure
     def test_variables_1(self):
@@ -75,6 +75,20 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile_silent(test_code, f'{p}/random/test_variables_3.ll')
+
+    def test_ops(self):
+        test_code = """
+        define main() { 
+            8+2*8-292/15==9;
+            not true;
+            true and true;
+            true and not true;
+            true or true and not true;
+        }
+        """
+
+        compile.compile_silent(test_code, f'{p}/random/test_ops.ll')
+
 
 if __name__ == '__main__':
     unittest.main()

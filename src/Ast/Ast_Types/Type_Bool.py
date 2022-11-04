@@ -100,7 +100,7 @@ class Integer_1(Type_Base.AbstractType):
 
     @staticmethod
     def err_if_not_bool(rhs):
-        if rhs.ret_type != 'bool':
+        if rhs.ret_type.name != 'bool':
             error('rhs of boolean operation must be of boolean type.', line = rhs.position)
 
     

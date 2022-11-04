@@ -9,9 +9,7 @@ from Ast.nodetypes import NodeTypes
 
 from .nodes import *
 
-ops = {
-
-}
+ops = dict()
 
 class Operation(NamedTuple):
     operator_precendence: int
@@ -43,6 +41,7 @@ class OperationNode(ExpressionNode):
     def pre_eval(self):
         self.lhs.pre_eval()
         self.rhs.pre_eval()
+        
 
         self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
         if self.ret_type == None: Ast_Types.AbstractType.print_error(self.op_type, self.lhs, self.rhs)
@@ -53,71 +52,74 @@ class OperationNode(ExpressionNode):
 
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval(func) # type: ignore
+            return RPN_to_node(shunt(self)).eval(func)
         else:
             self.pre_eval()
-            # * do conversions on args
             return self.eval_math(func, self.lhs, self.rhs)
-        
-    def __repr__(self) -> str:
-        return f"<OperationNode `{self.lhs}` `{self.op.name}` `{self.rhs}`>"
-
 
 # To any future programmers:
 #   I am sorry for this shunt() function.
-def shunt(node: OperationNode, op_stack = None, output_queue = None, has_parent=False) -> OperationNode|None:
-    '''shunt Expressions to rearrange them based on the Order of Operations'''
-
+def shunt(node: OperationNode) -> deque:
     # * create stack and queue
-    if op_stack == None:
-        op_stack = deque()
-    if output_queue==None:
-        output_queue = []
     
+    op_stack = deque()
+    output_queue = deque()
+    
+    input_queue = deque([node.rhs, node, node.lhs])
+    active_node = [node]
 
-    # * shunt thru the AST
-    input_list = [node.lhs, node, node.rhs] # node: R,M,L
-    for item in input_list:
-        if type(item)==list: print(item[0].position, item[0])
+    while input_queue:
+        item = input_queue.pop()
         if not item.is_operator:
             output_queue.append(item)
         if item.is_operator:
-            if item != node:
-                shunt(item, op_stack, output_queue, True)
-            if item == node:
-                while len(op_stack) > 0:
-                    x = op_stack.pop()
-                    if x[1] > item.operator_precendence:
-                        output_queue.append(x[0])
+            if item not in active_node:
+                input_queue.append(item.rhs)
+                input_queue.append(item)
+                input_queue.append(item.lhs)
+                active_node.append(item)
+                continue
+            elif item in active_node:
+                while op_stack:
+                    op = op_stack.pop()
+                    if op[1] > item.operator_precendence:
+                        output_queue.append(op[0])
                     else:
-                        op_stack.append(x)
+                        op_stack.append(op)
                         break
-                op_stack.append([item.op_type,item.operator_precendence])
+                op_stack.append((item.op_type, item.operator_precendence))
     
-    # * push remaining operators to Queue
-    while (not has_parent) and len(op_stack) > 0:
-        output_queue.append(op_stack.pop()[0])
+    # * put remaining operators onto the output queue
+    for op in op_stack:
+        output_queue.append(op[0])
 
-    # * Create new Expression AST from output Queue
-    while (not has_parent) and len(output_queue) > 1:
+    return output_queue
+
+
+def RPN_to_node(shunted_data: deque) -> OperationNode:
+    '''take RPN from shunt function and convert them into new nodes'''
+
+    op_stack = deque()
+
+    while len(shunted_data) > 1:
         stack = deque()
-        for c,x in enumerate(output_queue):
+        for c,x in enumerate(shunted_data):
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()
                 
-                p = ops[x]((-1,-1, -1), l[0],r[0], True)
+                p = ops[x](l[0].position, l[0],r[0], True)
     
-                output_queue.pop(c)
-                output_queue.pop(r[1])
-                output_queue.pop(l[1])
-                output_queue.insert(c-2, p)
+                del shunted_data[c]
+                del shunted_data[r[1]]
+                del shunted_data[l[1]]
+
+                shunted_data.insert(c-2, p)
                 break
             else:
-                stack.append([x,c])
+                stack.append((x,c))
     
 
-    if (not has_parent):
-        return output_queue[0]
+    return shunted_data[0]
 
 def operator(precedence: int, name: str):
     def wrapper(func):
@@ -189,4 +191,4 @@ def _and(self, func, lhs, rhs):
 
 @operator(-1, "not")
 def _not(self, func, lhs, rhs):
-    return (rhs.ret_type)._not(func, lhs, rhs)
+    return (lhs.ret_type)._not(func, lhs)

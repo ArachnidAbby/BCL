@@ -331,7 +331,7 @@ class parser(ParserBase):
             self.replace(3,"expr",op)
         
         elif self.check_group(0,'$not expr'):
-            op = Ast.math.ops['not'](self.peek(0).pos, None, self.peek(1).value)
+            op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
             self.replace(2,"expr",op)
     
     
