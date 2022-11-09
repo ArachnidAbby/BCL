@@ -1,9 +1,12 @@
 env/bin/activate: requirements.txt
-	python3.11 -m venv env
+	python3.11 -m venv env 
 	./env/bin/pip3.11 install -r requirements.txt
 
 run: env/bin/activate
 	./env/bin/python3.11 src/main.py compile tests/current.bcl
+
+run-dev: env/bin/activate
+	./env/bin/python3.11 src/main.py compile tests/current.bcl --dev
 
 unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py

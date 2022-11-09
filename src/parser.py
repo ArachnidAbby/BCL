@@ -8,18 +8,28 @@ from errors import error
 from parserbase import ParserBase, ParserToken
 
 
-class parser(ParserBase):
-    __slots__ = ('statements', 'keywords', 'simple_rules', 'current_block', 'blocks', 'current_paren', 'parens', 'skippable_tokens', 'parsing_functions')
+class Parser(ParserBase):
+    ''' The actual BCL parser implementation.
+    =========================================
+
+    Properties/Variables explained for other devs:
+    - keywords:= the keywords used in the language. This prevents them from being turned into variables by the parser
+    - blocks:= a `collections.deque` that stores the stack of blocks. This allows for nested blocks of curly-braces. There is also a default node.
+    - parens:= a `collections.deque` that stores the stack of parens. This allows for nested sets of parenthesis. There is also a default node.
+    - parsing_functions:= a dict of all the functions used for parsing. 
+        This is to allow lookup of token names at the current cursor position and only run parsing functions that are relevant to that node.
+    
+    '''
+
+    __slots__ = ('keywords', 'blocks', 'parens', 'parsing_functions')
 
     def __init__(self, *args, **kwargs):
-        self.statements = (
-            'return', 'if', 'while', 'else'
-        )
         self.keywords = (
-            "define", "return", 'if', 'else', 'and', 'or', 'not', 'while'
+            "define", 'and', 'or', 'not', 'return',
+            'if', 'while', 'else'
         )
 
-        self.parsing_functions = { # functions used for parsing. Put into a tuple based on the starting tokens of their rules
+        self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, self.parse_special, ),
             "OPEN_CURLY_USED": (self.parse_blocks,),
             "expr": (self.parse_statement, self.parse_math, self.parse_functions, self.parse_parenth, ),
@@ -38,11 +48,8 @@ class parser(ParserBase):
             "paren": (self.parse_functions,)
         }
 
-        self.current_block: tuple[Ast.StatementList|Ast.Block, int] = (None, 0)  # type: ignore
-        self.blocks        = deque()
-
-        self.current_paren: tuple[Ast.ExpressionList|Ast.ParenthBlock, int] = (None, 0)  # type: ignore
-        self.parens        = deque()
+        self.blocks = deque(((None, 0),))
+        self.parens = deque(((None, 0),))
 
         super().__init__(*args, **kwargs)
 
@@ -68,26 +75,14 @@ class parser(ParserBase):
                 self.move_cursor()
                 continue
 
-            # self.parse_blocks()
-            # self.parse_statement()
-            # self.parse_numbers()
-            # self.parse_math()
-            # self.parse_control_flow()
-            # self.parse_functions()
-            # self.parse_special() # must be before self.parse_vars
-            # self.parse_vars()
-            # self.parse_parenth()
-
-            functions = self.parsing_functions[token_name]
-
-            for func in functions:
+            for func in self.parsing_functions[token_name]:
                 func()
             
 
             self.move_cursor()
             iters+=1
 
-        errors.output_profile_info(f"iters: {iters}")
+        errors.developer_info(f"iters: {iters}")
         
         self.start = previous_start_position
 
@@ -99,17 +94,16 @@ class parser(ParserBase):
         
         # * finished block
         if self.check_group(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY"):
-            old_block = self.blocks.pop()
-            
-            self.start = old_block[1]
-
             if self.simple_check(1, 'statement_list'):
-                self.current_block[0].children = self.peek(1).value.children
+                self.blocks[-1][0].children = self.peek(1).value.children
             elif self.simple_check(1, 'statement'):
-                self.current_block[0].children = [self.peek(1).value]
+                self.blocks[-1][0].children = [self.peek(1).value]
+            
 
-            self.replace(3, "statement", self.current_block[0]) # return to old block
-            self.current_block = old_block
+            block = self.blocks.pop()
+            self.start = self.blocks[-1][1]
+
+            self.replace(3, "statement", block[0])
 
         # * opening of a block
         elif self.simple_check(0, "OPEN_CURLY"):
@@ -122,13 +116,12 @@ class parser(ParserBase):
                 for x in self.peek(-1).value.args.keys():
                     arg = self.peek(-1).value.args[x]
                     output.variables[x] = Ast.variable.VariableObj(arg[0], arg[1], True)
-            if self.current_block[0]!=None and isinstance(self.current_block[0], Ast.nodes.Block):
-                for x in self.current_block[0].variables.keys():
-                    output.variables[x] = self.current_block[0].variables[x]
+            if self.blocks[-1][0]!=None and isinstance(self.blocks[-1][0], Ast.nodes.Block):
+                for x in self.blocks[-1][0].variables.keys():
+                    output.variables[x] = self.blocks[-1][0].variables[x]
 
             # * main implementation
-            self.blocks.append(self.current_block)
-            self.current_block = (output, self._cursor)
+            self.blocks.append((output, self._cursor))
             self.start = self._cursor
             self._tokens[self._cursor] = ParserToken("OPEN_CURLY_USED", '{', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
 
@@ -150,7 +143,7 @@ class parser(ParserBase):
             stmt_list = self.peek(0).value
 
             stmt_list.append_children(self.peek(1).value)
-            if self.current_block[0] != None:
+            if self.blocks[-1][0] != None:
                 if self.check(2,"!CLOSE_CURLY"):
                     self.start = self._cursor
                 else:
@@ -268,19 +261,19 @@ class parser(ParserBase):
         # * Variable Assignment
         if self.check_group(0,"KEYWORD SET_VALUE expr|statement SEMI_COLON"):
             # validate value
-            if self.current_block[0] == None:
+            if self.blocks[-1][0] == None:
                 error("Variables cannot currently be defined outside of a block", line = self.peek(0).pos)
             elif self.simple_check(2, "statement"):
                 error("A variables value cannot be set as a statement", line = self.peek(0).pos)
             var_name = self.peek(0).value
             value = self.peek(2).value
-            var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.current_block[0])
+            var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0])
             self.replace(3,"statement", var)
         
         # * Variable References
-        elif self.current_block[0]!=None and self.check_group(0,"KEYWORD !SET_VALUE") and self.check(1, "!expr"):
-            if self.peek(0).value not in self.keywords:#self.current_block[0].variables.keys():
-                var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.current_block[0])
+        elif self.blocks[-1][0]!=None and self.check_group(0,"KEYWORD !SET_VALUE") and self.check(1, "!expr"):
+            if self.peek(0).value not in self.keywords:
+                var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.blocks[-1][0])
                 self.replace(1,"expr", var)
 
     
@@ -361,23 +354,23 @@ class parser(ParserBase):
             output = Ast.ParenthBlock(self.peek(0).pos)
 
             # * main implementation
-            self.parens.append(self.current_paren)
-            self.current_paren = (output, self._cursor)
+            self.parens.append((output, self._cursor))
+
             self.start = self._cursor
             self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
             
         # * parse full paren blocks
         elif self.check_group(0, "OPEN_PAREN_USED expr|expr_list CLOSE_PAREN"):
-            old_block = self.parens.pop()
-            
-            self.start = old_block[1]
             name = "expr"
 
             if self.simple_check(1, 'expr_list'):
-                self.current_paren[0].children = self.peek(1).value.children
+                self.parens[-1][0].children = self.peek(1).value.children
                 name = "paren"
             elif self.simple_check(1, 'expr'):
-                self.current_paren[0].children = [self.peek(1).value]
+                self.parens[-1][0].children = [self.peek(1).value]
 
-            self.replace(3, name, self.current_paren[0]) # return to old block
-            self.current_paren = old_block
+            block = self.parens.pop()
+            
+            self.start = self.parens[-1][1]
+
+            self.replace(3, name, block[0]) # return to old block

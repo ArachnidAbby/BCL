@@ -54,21 +54,9 @@ def developer_warning(text: str):
     
     print(RESET, end='')
 
-def output_profile_info(text):
+def developer_info(text):
     if SILENT_MODE or not PROFILING: return None
 
-    print(PURPLE, end='')
+    print(CODE125, end='')
     print(f"| {text}")
     print(RESET, end='')
-
-def output_mem_prof(name: str, mem_bytes: int):
-    if SILENT_MODE or not PROFILING: return None
-
-    print(PURPLE, end='')
-    print(f"| PROFILER:{name} >> {mem_bytes:+,} bytes")
-    print(RESET, end='')
-
-def profile_info(obj, detailed = False):
-    if SILENT_MODE or not PROFILING: return None
-
-    obj._mem_profile(detailed = detailed)

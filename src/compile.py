@@ -1,3 +1,5 @@
+import os
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
@@ -21,13 +23,12 @@ def compile(src_str: str, output_loc: str):
     print(f'{errors.GREEN}/------------------------------------------------#')
 
     with timingContext('imports finished'):
-        import os
-        import sys
-
         import psutil
+
         process = psutil.Process(os.getpid())
         tmp = imports_mem = process.memory_info().rss
         import codegen
+
         codegen = codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
         import parser
@@ -39,19 +40,15 @@ def compile(src_str: str, output_loc: str):
         tokens = lex.get_tokens(src_str)
     
     with timingContext('parsing finished'):
-        
-    
         module = codegen.module
         Ast.standardfunctions.declare_printf(module)
-
-        pg = parser.parser(tokens, module)
+        pg = parser.Parser(tokens, module)
         parsed = pg.parse()
-        errors.output_mem_prof("ParserClassObject", sys.getsizeof(parsed))
         
     with timingContext('module created'):
         for x in parsed:
             if not x.completed:
-                print(x, parsed)
+                errors.developer_info(f'{x} {parsed}')
                 errors.error(f"""
                 The compiler could not complete all it's operations.
 
@@ -63,7 +60,6 @@ def compile(src_str: str, output_loc: str):
             x.value.pre_eval()
         for x in parsed:
             x.value.eval()
-        errors.output_mem_prof("ParserClassObject--2", sys.getsizeof(parsed))
     
     codegen.save_ir(output_loc)
 
@@ -92,7 +88,7 @@ def compile_silent(src_str: str, output_loc: str):
     module = codegen.module
     Ast.standardfunctions.declare_printf(module)
 
-    pg = parser.parser(tokens, module)
+    pg = parser.Parser(tokens, module)
     parsed = pg.parse()
         
     for x in parsed:
@@ -109,6 +105,7 @@ def compile_silent(src_str: str, output_loc: str):
         x.value.pre_eval()
 
     for x in parsed:
+        print(x)
         x.value.eval()
 
     codegen.save_ir(output_loc)

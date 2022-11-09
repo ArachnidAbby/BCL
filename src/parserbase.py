@@ -111,7 +111,7 @@ class ParserBase:
         for c,x in enumerate(tokens):
             if not self.check(c+start_index,x):
                 return False
-
+                
         return True
 
     def check_simple_group(self, start_index: int, wanting: str) -> bool:
@@ -126,3 +126,18 @@ class ParserBase:
                 return False
 
         return True
+
+    def match_multiple(self, start: int):
+        end = self._cursor
+        end_node = self.peek(0)
+        self._cursor = start+1
+        
+        while not self.isEOF() and self._tokens[self._cursor]!=end_node:
+            yield
+            self.move_cursor()
+
+        self._cursor = start
+        
+        
+
+
