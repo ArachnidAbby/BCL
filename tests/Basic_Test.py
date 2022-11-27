@@ -8,7 +8,7 @@ sys.path.append(f'{p}/../src')
 import compile
 import errors
 
-errors.SILENT_MODE = True
+errors.SILENT_MODE = False
 
 class basictests(unittest.TestCase):
     def test_functions(self):
@@ -88,6 +88,23 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile_silent(test_code, f'{p}/random/test_ops.ll')
+    
+    def test_if_else_if(self):
+        test_code = """
+        define main() { 
+            if true {
+                println(9);
+            }
+
+            if true {
+                println(0);
+            }else {
+                println(9);
+            }
+        }
+        """
+
+        compile.compile(test_code, f'{p}/random/test_ifs.ll')
 
 
 if __name__ == '__main__':

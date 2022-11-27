@@ -2,6 +2,7 @@ from typing import List
 
 from rply import LexerGenerator
 
+import Ast
 from parserbase import ParserToken
 
 
@@ -57,4 +58,16 @@ def get_tokens(src: str) -> List[ParserToken]:
     '''Take source and convert to a list of 'ParserToken' Objects'''
     lexer = Lexer().get_lexer()
     tokens = lexer.lex(src)
-    return [ParserToken(x.name, x.value, (x.source_pos.lineno, x.source_pos.colno, len(x.value)), False) for x in tokens]
+    output  = []
+    for x in tokens:
+        pos = (x.source_pos.lineno, x.source_pos.colno, len(x.value))
+        if x.name == "NUMBER":
+            val = Ast.Literal(pos, int(x.value), Ast.Ast_Types.Integer_32())
+            tok = ParserToken("expr", val, pos, True)
+        elif x.name == "NUMBER_F":
+            val = Ast.Literal(pos, float(x.value), Ast.Ast_Types.Float_64())
+            tok = ParserToken("expr", val, pos, True)
+        else: tok = ParserToken(x.name, x.value, pos, False)
+        output.append(tok)
+    
+    return output

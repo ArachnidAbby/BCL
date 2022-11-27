@@ -108,6 +108,9 @@ class Block(ContainerNode):
     def validate_variable(self, var_name: str) -> bool:
         '''Return if a variable already has a ptr'''
         return self.variables[var_name].ptr!=None
+    
+    def validate_variable_exists(self, var_name: str) -> bool:
+        return var_name in self.variables.keys()
 
 class StatementList(ContainerNode):
     __slots__ = ('children',)

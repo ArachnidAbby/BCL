@@ -90,6 +90,9 @@ class VariableRef(ExpressionNode):
         self.block = block
     
     def pre_eval(self):
+        if not self.block.validate_variable_exists(self.name):
+            error(f"Undefined variable '{self.name}'", line = self.position)
+
         self.ret_type = self.block.get_variable(self.name).type
         if self.block.get_variable(self.name).type.name=="UNKNOWN":
             error(f"Unknown variable '{self.name}'", line = self.position)
