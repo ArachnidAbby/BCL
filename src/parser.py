@@ -32,20 +32,22 @@ class Parser(ParserBase):
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, self.parse_special, ),
             "OPEN_CURLY_USED": (self.parse_blocks,),
-            "expr": (self.parse_statement, self.parse_math, self.parse_functions, self.parse_parenth, ),
+            "expr": (self.parse_arrays, self.check_type_names, self.parse_special, self.parse_statement, self.parse_math, self.parse_functions, self.parse_parenth),
             "statement": (self.parse_statement, ),
             "statement_list": (self.parse_statement, ),
             "NUMBER": (self.parse_numbers, ),
             "NUMBER_F": (self.parse_numbers, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_math, self.parse_control_flow, self.parse_functions, self.parse_special, self.parse_vars, ),
+            "KEYWORD": (self.check_type_names, self.parse_math, self.parse_control_flow, self.parse_functions, self.parse_special, self.parse_vars, ),
             "func_def_portion": (self.parse_functions, ),
             "kv_pair": (self.parse_parenth, ),
             "expr_list": (self.parse_parenth, ),
             "OPEN_PAREN": (self.parse_parenth, ),
             "OPEN_PAREN_USED": (self.parse_parenth, ),
-            "paren": (self.parse_functions,)
+            "paren": (self.parse_functions,),
+            "OPEN_SQUARE": (self.parse_arrays,),
+            "typeref": (self.check_type_names,)
         }
 
         self.blocks = deque(((None, 0),))
@@ -86,6 +88,11 @@ class Parser(ParserBase):
         
         self.start = previous_start_position
 
+
+        # * give warnings about experimental features
+        if errors.USES_FEATURE["array"]:
+            errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
+
         return self._tokens
 
     
@@ -112,10 +119,11 @@ class Parser(ParserBase):
 
             # * check for function declaration before the block.
             # * this lets arguments be interpreted as usable variables.
+            # print(self.peek(-1))
             if self.simple_check(-1,"func_def_portion"):
                 for x in self.peek(-1).value.args.keys():
                     arg = self.peek(-1).value.args[x]
-                    output.variables[x] = Ast.variable.VariableObj(arg[0], arg[1], True)
+                    output.variables[x] = Ast.variable.VariableObj(arg[0], arg[1].value, True)
             if self.blocks[-1][0]!=None and isinstance(self.blocks[-1][0], Ast.nodes.Block):
                 for x in self.blocks[-1][0].variables.keys():
                     output.variables[x] = self.blocks[-1][0].variables[x]
@@ -149,6 +157,36 @@ class Parser(ParserBase):
                 else:
                     self.start-=1
             self.replace(2, "statement_list", stmt_list)
+
+    def parse_arrays(self):
+        '''check for all nodes dealing with arrays'''
+
+        if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "expr|typeref|KEYWORD"):
+            errors.USES_FEATURE["array"] = True
+            exprs = self.peek(1).value if self.peek(1).name == "expr" else self.peek(1).value.children
+            literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+            self.replace(3,"expr", literal)
+        
+        if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE") and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
+            errors.USES_FEATURE["array"] = True
+            expr = self.peek(2).value
+            ref = self.peek(0).value
+            fin = Ast.variable.VariableIndexRef(self.peek(0).pos, ref, expr)
+            self.replace(4,"expr", fin)
+
+    def check_type_names(self):
+        '''checks for type refs'''
+        if self.simple_check(0, "KEYWORD") and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
+            val = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.types_dict[self.peek(0).value]())
+            self.replace(1,"typeref", val)
+
+        if self.check_simple_group(0, "typeref OPEN_SQUARE expr CLOSE_SQUARE"):
+            errors.USES_FEATURE["array"] = True
+            init_typ = self.peek(0).value
+            typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ.value, -1))
+            self.replace(4,"typeref", typ)
+        
+        
 
     
     def parse_control_flow(self):
@@ -190,10 +228,10 @@ class Parser(ParserBase):
                 error(f"invalid syntax '{self.peek(0).value}'", line = self.peek(0).pos)
         
         # * Set Function Return Type 
-        elif self.check_simple_group(0,"func_def_portion RIGHT_ARROW KEYWORD"):
+        elif self.check_simple_group(0,"func_def_portion RIGHT_ARROW typeref") and self.check(3, "!OPEN_SQUARE"):
             if self.peek(0).value.is_ret_set:
-                error(f"Function, \"{self.peek(0).value.name}\", cannot have it's return-type set twice.", line = self.peek(0).pos)
-            self.peek(0).value.ret_type = Ast.Ast_Types.Type_Base.types_dict[self.peek(2).value]()  # type: ignore
+                error(f"Function, \"{self.peek(0).value.name}\", cannot have it's return-type set twice.", line = self.peek(1).pos)
+            self.peek(0).value.ret_type = self.peek(2).value.value  # type: ignore
             self.peek(0).value.is_ret_set = True
             self.replace(3,"func_def_portion", self.peek(0).value, completed = False)
 
@@ -233,8 +271,8 @@ class Parser(ParserBase):
         '''check special rules'''
 
         # * KV pairs
-        if self.check_group(0, '_ COLON _'):
-            keywords = self.check_simple_group(0, 'KEYWORD COLON KEYWORD')
+        if self.check_group(0, 'KEYWORD COLON typeref !OPEN_SQUARE'):# and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
+            keywords = self.check_simple_group(0, 'KEYWORD COLON typeref')
                 # error(f"A Key-Value pair cannot be created for token {self.peek(0)['name']}", line = self.peek(0).pos)
             kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value, keywords = keywords)
             self.replace(3,"kv_pair", kv)
@@ -332,7 +370,7 @@ class Parser(ParserBase):
         '''Parses blocks of parenthises'''
 
         # * parse expression lists
-        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair"):
+        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair !COLON"):
             expr = self.peek(0)
             out = None
             if expr.name == "expr_list":
@@ -360,13 +398,13 @@ class Parser(ParserBase):
             self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
             
         # * parse full paren blocks
-        elif self.check_group(0, "OPEN_PAREN_USED expr|expr_list CLOSE_PAREN"):
+        elif self.check_group(0, "OPEN_PAREN_USED expr|expr_list|kv_pair CLOSE_PAREN"):
             name = "expr"
 
             if self.simple_check(1, 'expr_list'):
                 self.parens[-1][0].children = self.peek(1).value.children
                 name = "paren"
-            elif self.simple_check(1, 'expr'):
+            elif self.simple_check(1, 'expr') or self.simple_check(1, 'kv_pair'):
                 self.parens[-1][0].children = [self.peek(1).value]
 
             block = self.parens.pop()

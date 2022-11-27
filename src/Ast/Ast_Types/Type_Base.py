@@ -25,7 +25,6 @@ class AbstractType:
     def __eq__(self, other):
         return (other != None) and self.name == other.name
     def __neq__(self, other):
-        print(self.name != other.name)
         return self.name != other.name
 
     # todo: remove this

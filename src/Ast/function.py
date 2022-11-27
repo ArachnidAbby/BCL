@@ -1,9 +1,9 @@
+'''All AST nodes related to functions.'''
 from typing import Any, Callable, Optional
 
 import errors
 from llvmlite import ir
 
-from Ast.Ast_Types.Type_Base import types_dict
 from Ast.nodetypes import NodeTypes
 
 from . import Ast_Types
@@ -49,17 +49,21 @@ class _Function:
 
 def internal_function(name: str, ret_type: Any,
                       arg_types: tuple, *,
-                      container=functions):
+                      container=None):
     '''decorator to create internal functions'''
+    if container is None:
+        container = functions
     def wrapper(func):
         if name not in container:
-            container[name] = dict()
-        container[name][arg_types] = _Function(_Function.BEHAVIOR_INTERNAL, name, func, ret_type, arg_types)
+            container[name] = {}
+        container[name][arg_types] = \
+            _Function(_Function.BEHAVIOR_INTERNAL, name, func, ret_type, arg_types)
 
         def call(ast_func, args: tuple) -> Optional[ir.Instruction]:
             # warning does not display in `_Function(...).call(...)`
-            errors.developer_warning("You should not call internal functions via python __call__ convention.\
-                                      \ntip: @internal_function indicates use inside of BCL code")
+            errors.developer_warning("You should not call internal functions \
+                via python __call__ convention.\ntip: @internal_function indicates \
+                use inside of BCL code")
             return func(ast_func, args)
 
         return call
@@ -87,7 +91,7 @@ class FunctionDef(ASTNode):
         self.args = dict()
         self.args_ir = list()
         self.args_types = list()
-
+        
         for arg in args:
             self.args[arg.key] = [None, arg.value, True]
             self.args_ir.append(arg.get_type().ir_type)
@@ -104,8 +108,7 @@ class FunctionDef(ASTNode):
         for x in args:
             if not x.keywords:
                 errors.error(f"Function {self.name}'s argument tuple can only consist of Keyword pairs\
-                               \n\t invalid pair \
-                               '{x.key}: {x.value}'", 
+                               \n\t invalid pair:    '{x.key}: {x.value}'\n", 
                                line = self.position)
 
     def pre_eval(self):

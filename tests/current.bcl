@@ -1,5 +1,8 @@
 define main() {
-    i = 0.0;
+    x = 6;
+    test = [0,0,0,0];
+    println(test[x]);
+    i = 0;
     loop_amount = 200;
     while i < loop_amount {
         i = i+1;
@@ -13,6 +16,6 @@ define is_multiple(value: i32, divider: i32) -> bool {
     return (value % divider) == 0;
 }
 
-define is_multiple(value: f64, divider: i32) -> bool {
-    return (value % divider) == 0;
+define test(x: i32[3]) -> i32[3] {
+    return x;
 }

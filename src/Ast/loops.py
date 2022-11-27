@@ -32,8 +32,7 @@ class WhileStatement(ASTNode):
             if isinstance(x, VariableAssign) and x.is_declaration:
                 variable = self.block.get_variable(x.name)
                 if not self.block.validate_variable(x.name):
-                    ptr = func.builder.alloca(self.block.get_variable(x.name).type.ir_type, name=x.name)
-                    variable.ptr = ptr
+                    variable.define(func, x.name)
         
         # branching and loop body
 

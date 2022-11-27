@@ -6,16 +6,17 @@ from Ast.nodes import ASTNode
 global_functions = {} #! this will likely be later deprecated once `import <name>` is added
 
 class Module(ASTNode):
-    __slots__ = ('name', 'location', 'functions', 'globals', 'imports', 'children', 'module')
+    __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module')
 
     def init(self, name, location):
         self.name      = name
         self.location  = location
-        self.functions = dict() # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
-        self.globals   = dict()
-        self.imports   = dict()
+        self.functions = {} # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
+        self.globals   = {}
+        self.imports   = {}
+        self.module    = None
 
-        self.children  = list()
+        self.children  = []
     
     def add_child(self, item):
         self.children.append(item)
@@ -24,15 +25,14 @@ class Module(ASTNode):
         '''get a local object by name, this could be a global, import, or function'''
         if name in self.globals:
             return self.globals[name]
-        
-        elif name in self.functions:
+
+        if name in self.functions:
             return self.functions[name]
-        
-        elif name in self.imports:
+
+        if name in self.imports:
             return self.imports[name]
-        
-        else:
-            errors.error(f"Cannot find '{name}' in module '{self.name}'", line = position)
+
+        errors.error(f"Cannot find '{name}' in module '{self.name}'", line = position)
 
     def get_global(self, name: str, position: tuple[int, int, int]):
         '''get a global/constant'''
@@ -56,7 +56,7 @@ class Module(ASTNode):
         for child in self.children:
             if not child.completed:
                 print(child)
-                errors.error(f"""
+                errors.error("""
                 The compiler could not complete all it's operations.
 
                 Note: this is an error the compiler was not designed to catch.

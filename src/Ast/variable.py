@@ -8,7 +8,7 @@ from .nodes import ASTNode, ExpressionNode
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
-    __slots__ = ("ptr", "type", "is_constant")
+    __slots__ = ("ptr", "type", "is_constant", "prev_load", "changed")
 
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
@@ -16,15 +16,29 @@ class VariableObj:
         if isinstance(typ, str):
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
+        self.changed = False
+        self.prev_load = None # prevents multiple loads from memory when zero changes have happened
     
-    def define(self, func):
+    def define(self, func, name):
         '''alloca memory for the variable'''
-        ptr = func.builder.alloca(self.type.ir_type)
+        ptr = func.builder.alloca(self.type.ir_type, name=name)
         self.ptr = ptr
         return ptr
     
     def store(self, func, value):
+        self.changed = True
         func.builder.store(value.eval(func), self.ptr)
+    
+    def get_value(self, func):
+        if self.changed and self.prev_load is not None:
+            return self.prev_load
+
+        self.changed = False
+        if not self.is_constant: 
+            self.prev_load = func.builder.load(self.ptr) 
+            return self.prev_load
+        return self.ptr
+        
 
     def __repr__(self) -> str:
         return f'VAR: |{self.ptr}, {self.type}|'
@@ -56,7 +70,7 @@ class VariableAssign(ASTNode):
         variable = self.block.get_variable(self.name)
 
         if not self.block.validate_variable(self.name):
-            variable.define(func)
+            variable.define(func, self.name)
         else:
             if self.value.ret_type != variable.type:
                 error(
@@ -83,9 +97,31 @@ class VariableRef(ExpressionNode):
         self.ir_type = self.ret_type.ir_type
     
     def eval(self, func):
-        ptr = self.block.get_variable(self.name).ptr 
-        if not self.block.get_variable(self.name).is_constant: return func.builder.load(ptr) 
-        else: return ptr
+        return self.block.get_variable(self.name).get_value(func)
+
+    def get_ptr(self):
+        return self.block.get_variable(self.name).ptr 
+
+    def __repr__(self) -> str:
+        return f"<VariableRef to `{self.name}`>"
+
+class VariableIndexRef(ExpressionNode):
+    '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
+    __slots__ = ('ind', 'varref')
+    name = "varIndRef"
+
+    def init(self, varref: VariableRef, ind: ExpressionNode):
+        self.varref = varref
+        self.ind = ind
+    
+    def pre_eval(self):
+        self.varref.pre_eval()
+        self.ind.pre_eval()
+        self.ret_type = self.varref.ret_type.typ
+        self.ir_type = self.ret_type.ir_type
+    
+    def eval(self, func):
+        return self.varref.ret_type.index(func, self.varref, self.ind)
 
     def __repr__(self) -> str:
         return f"<VariableRef to `{self.name}`>"

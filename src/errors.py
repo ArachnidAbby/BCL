@@ -1,4 +1,8 @@
+'''This module is used to print errors, warning etc. It does all the proper formatting.'''
+
+import sys
 from inspect import currentframe, getframeinfo
+from typing import Sequence
 
 RED = "\u001b[31m"
 RESET = "\u001b[0m"
@@ -7,56 +11,84 @@ GREEN = "\u001b[32m"
 ORANGE = "\u001b[38;5;209;1m"
 PURPLE = "\u001b[35m"
 MAGENTA = "\u001b[35m"
-CODE125 = u"\u001b[38;5;125m" 
+CODE125 = "\u001b[38;5;125m"
+CODE202 = "\u001b[38;5;202m"
 
 
 SILENT_MODE = False
 PROFILING = False
 
+USES_FEATURE = {"array": False}
+
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
-    if SILENT_MODE: return None
+    if SILENT_MODE:
+        return
 
-    for x in text.split('\n'): print(f'| {x}')
+    for line in text.split('\n'):
+        print(f'| {line}')
 
 
 def error(text: str, line = (-1,-1,-1)):
-    if SILENT_MODE: quit()
+    '''prints an error with a line # if provided'''
+    if SILENT_MODE:
+        sys.exit(1)
 
     largest = max(
         [len(x) for x in f"| {text}".split('\n')]+
         [len(f"|    Line: {line[0]}")]
     )
     print(f'{RED}#{"-"*(largest//4)}')
-    # print(f'| {text}')
+
     _print_text(text)
-    if line!= (-1,-1,-1): print(f'|    Line: {line[0]}')
+    if line!= (-1,-1,-1):
+        print(f'|    Line: {line[0]}')
     print(f'\\{"-"*(largest-1)}/{RESET}')
     print("\n\n\n\n")
-    quit()
+    sys.exit(1)
 
 def inline_warning(text: str, line = (-1,-1,-1)):
-    if SILENT_MODE: return None
+    '''displays a warning without any special formatting encasing it.'''
+    if SILENT_MODE:
+        return
 
     print(ORANGE, end='')
     _print_text(text)
-    if line!= (-1,-1,-1): print(f'|    Line: {line[0]}')
+    if line!= (-1,-1,-1):
+        print(f'|    Line: {line[0]}')
     print(RESET, end='')
 
 def developer_warning(text: str):
     '''give warnings to developers of the language that unsupported behavior is being used.'''
-    if SILENT_MODE: return None
+    if SILENT_MODE:
+        return
 
     print(CODE125, end='')
 
-    frameinfo = getframeinfo(currentframe())
-    _print_text(text + f"\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
-    
+    if (frame:=currentframe()) is not None:
+        frameinfo = getframeinfo(frame)
+        _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
+
     print(RESET, end='')
 
 def developer_info(text):
-    if SILENT_MODE or not PROFILING: return None
+    '''print info directed at the developer. This is profiling infomation used \
+    for debugging purposes'''
+    if SILENT_MODE or not PROFILING:
+        return
 
     print(CODE125, end='')
     print(f"| {text}")
+    print(RESET, end='')
+
+def experimental_warning(text: str, possible_bugs: Sequence[str]):
+    '''gives a warning about the use of experimental features and risks involved.'''
+    if SILENT_MODE:
+        return
+    line_size = 35
+    print(CODE202, end='')
+    print(f'#{"-"*(line_size)}')
+    bugs = '\n'.join(('\t- '+bug for bug in possible_bugs))
+    _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  POSSIBLE BUGS INCLUDE:\n{bugs}")
+    print(f'#{"-"*(line_size)}')
     print(RESET, end='')

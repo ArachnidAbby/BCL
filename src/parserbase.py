@@ -137,7 +137,3 @@ class ParserBase:
             self.move_cursor()
 
         self._cursor = start
-        
-        
-
-
