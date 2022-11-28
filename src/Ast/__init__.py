@@ -50,9 +50,10 @@ class ArrayLiteral(ExpressionNode):
         typ = self.value[0].ret_type
 
         for x in self.value:
+            x.pre_eval()
             if x.ret_type!=typ:
                 errors.error(f"Invalid type '{x.ret_type}' in a list of type '{typ}'", line = x.position)
-            x.pre_eval()
+            
 
         array_size  = Literal((-1,-1,-1), len(self.value), Ast_Types.Integer_32)
         self.ret_type = Ast_Types.Array(array_size, typ, None)

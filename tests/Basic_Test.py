@@ -105,6 +105,35 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile(test_code, f'{p}/random/test_ifs.ll')
+    
+    def test_arrays(self):
+        test_code = """
+        define main() { 
+            x = 6;
+            test = [0,0,0,0];
+            jest = [[1,2], [3,4]];
+
+            println(jest[0][0]);
+            jest[0][0] = 9;
+            println(jest[0][0]);
+            println(test[x]);
+            test[x] = 8;
+            println(test[x]);
+        }
+        """
+
+        compile.compile(test_code, f'{p}/random/test_arrays.ll')
+
+    @unittest.expectedFailure
+    def test_array_fail(self):
+        test_code = """
+        define main() { 
+            test = [0,0,0];
+            test[4]; // over-index
+        }
+        """
+
+        compile.compile_silent(test_code, f'{p}/random/test_array_fail.ll')
 
 
 if __name__ == '__main__':
