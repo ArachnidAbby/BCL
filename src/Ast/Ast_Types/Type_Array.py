@@ -51,11 +51,8 @@ class Array(Type_Base.AbstractType):
     def __hash__(self):
         return hash(f"{self.name}--|{self.size}|")
 
-    def index(self, func, lhs, rhs):
-        if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value:
-            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = lhs.position)
-        elif rhs.name != "literal":
-            inline_warning("Arrays are experimental! You can index over their bounds! Be careful!",line = rhs.position)
+    def index(self, func, lhs):
+        
         #     size = ir.Constant(ir.IntType(32), lhs.ir_type.count-1)
         #     cond = rhs.ret_type.leq()
         #     with func.builder.if_else(cond) as (if_block, else_block):
@@ -63,10 +60,7 @@ class Array(Type_Base.AbstractType):
         #             self.if_block.eval(func)
         #         with else_block:
         #             self.else_block.eval(func)
-        ptr = func.builder.gep(lhs.get_ptr() , [rhs.eval(func),])
-        return func.builder.load(ptr)
+        return func.builder.load(lhs.get_ptr(func))
     
-    def put(self, func, lhs, rhs, value):
-        if lhs.ir_type.count < rhs.value:
-            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = lhs.position)
-        return func.builder.insert_value(lhs.eval(func), value.eval(func), rhs.eval(func))
+    def put(self, func, lhs, value):
+        return func.builder.store(value.eval(func), lhs.get_ptr(func))

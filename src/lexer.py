@@ -65,7 +65,7 @@ def get_tokens(src: str) -> List[ParserToken]:
             val = Ast.Literal(pos, int(x.value), Ast.Ast_Types.Integer_32())
             tok = ParserToken("expr", val, pos, True)
         elif x.name == "NUMBER_F":
-            val = Ast.Literal(pos, float(x.value), Ast.Ast_Types.Float_64())
+            val = Ast.Literal(pos, float(x.value), Ast.Ast_Types.Float_32())
             tok = ParserToken("expr", val, pos, True)
         else: tok = ParserToken(x.name, x.value, pos, False)
         output.append(tok)

@@ -33,7 +33,8 @@ class Parser(ParserBase):
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, self.parse_special, ),
             "OPEN_CURLY_USED": (self.parse_finished_blocks,),
-            "expr": (self.parse_array_index, self.parse_special, self.parse_statement, self.parse_math, self.parse_func_call, self.parse_parenth),
+            "expr": (self.parse_array_index, self.parse_special, self.parse_statement, self.parse_math, self.parse_func_call,
+                     self.parse_parenth, self.parse_array_putat),
             "statement": (self.parse_statement, ),
             "statement_list": (self.parse_statement, ),
             "SUB": (self.parse_numbers, ),
@@ -131,6 +132,12 @@ class Parser(ParserBase):
             ref = self.peek(0).value
             fin = Ast.variable.VariableIndexRef(self.peek(0).pos, ref, expr)
             self.replace(4,"expr", fin)
+    
+    def parse_array_putat(self):
+        if self.check_group(0, "expr SET_VALUE expr SEMI_COLON") and (isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
+            ref = self.peek(0).value
+            val = self.peek(2).value
+            self.replace(4,"statement", Ast.variable.VariableIndexPutAt(self.peek(0).pos, ref, val))
 
     # * typerefs
 
@@ -175,7 +182,6 @@ class Parser(ParserBase):
     
     def parse_functions(self):
         '''Everything involving functions. Calling, definitions, etc.'''
-
         # * Function Definitions
         if self.check_group(0,"KEYWORD KEYWORD expr|paren !RIGHT_ARROW"):
             if self.check(0, '$define'):
@@ -293,7 +299,7 @@ class Parser(ParserBase):
 
         # * allow leading `+` or `-`.
         if self.check_group(-1,'!expr SUB|SUM expr') and isinstance(self.peek(1).value, Ast.Literal) and \
-                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_64, Ast.Ast_Types.Integer_32):
+                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32, Ast.Ast_Types.Integer_32):
             if self.check(0,"SUB"):
                 self.peek(1).value.value *= -1
                 self.replace(2, "expr", self.peek(1).value)
@@ -358,7 +364,7 @@ class Parser(ParserBase):
             self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
             
         # * parse full paren blocks
-        if self.check_group(0, "OPEN_PAREN_USED|OPEN_PAREN expr|expr_list|kv_pair CLOSE_PAREN"):
+        if self.check_group(0, "OPEN_PAREN_USED expr|expr_list|kv_pair CLOSE_PAREN"):
             name = "expr"
 
             if self.simple_check(1, 'expr_list'):

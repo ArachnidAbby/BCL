@@ -98,7 +98,7 @@ class AbstractType:
 
 
 from .Type_Bool import Integer_1
-from .Type_F64 import Float_64
+from .Type_F32 import Float_32
 from .Type_I32 import Integer_32
 from .Type_Void import Void
 
@@ -107,8 +107,8 @@ types_dict = {
     'bool': Integer_1,
     "i32": Integer_32,
     "int": Integer_32,
-    'f64': Float_64,
-    'float': Float_64
+    'f32': Float_32,
+    'float': Float_32
 }
 
 # todo: replace strings in the future
@@ -117,8 +117,8 @@ conversion_priority_raw = [
     Integer_1(),
     Integer_32(),
     'i64',
-    Float_64(),
-    'f128'
+    Float_32(),
+    'f64'
 ] # the further down the list this is, the higher priority
 
 def get_std_ret_type(self: ExpressionNode,  other: ExpressionNode):

@@ -35,7 +35,7 @@ class basictests(unittest.TestCase):
             0.2.test_func(0.8);
         }
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
-        define test_func(x: f64, y: f64) -> f64 { return x+y;}
+        define test_func(x: f32, y: f32) -> f32 { return x+y;}
         """
 
         compile.compile_silent(test_code, f'{p}/random/test_functions_2.ll')

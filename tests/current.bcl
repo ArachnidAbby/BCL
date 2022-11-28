@@ -2,13 +2,15 @@ define main() {
     x = 6;
     test = [0,0,0,0];
     println(test[x]);
+    test[2] = 8;
+    println(test[2]);
     i = 0;
     loop_amount = 200;
     while i < loop_amount {
         i = i+1;
         fizz = is_multiple(i, 3);
         buzz = is_multiple(i, 5)*2;
-        println(fizz + buzz);
+        //println(fizz + buzz);
     }
 }
 

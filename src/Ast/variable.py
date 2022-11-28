@@ -1,10 +1,12 @@
-from errors import error
+from errors import error, inline_warning
+from llvmlite import ir
 
 from Ast.nodetypes import NodeTypes
 
 from .Ast_Types import Type_Base, Void
 from .nodes import ASTNode, ExpressionNode
 
+ZERO_CONST = const = ir.Constant(ir.IntType(64), 0)
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
@@ -30,7 +32,7 @@ class VariableObj:
         func.builder.store(value.eval(func), self.ptr)
     
     def get_value(self, func):
-        if self.changed and self.prev_load is not None:
+        if not self.changed and self.prev_load is not None:
             return self.prev_load
 
         self.changed = False
@@ -64,6 +66,7 @@ class VariableAssign(ASTNode):
     def pre_eval(self):
         self.value.pre_eval()
         self.block.variables[self.name].type = self.value.ret_type
+        self.block.variables[self.name].changed = True
     
     def eval(self, func):
         self.value.pre_eval()
@@ -102,7 +105,7 @@ class VariableRef(ExpressionNode):
     def eval(self, func):
         return self.block.get_variable(self.name).get_value(func)
 
-    def get_ptr(self):
+    def get_ptr(self, func):
         return self.block.get_variable(self.name).ptr 
 
     def __repr__(self) -> str:
@@ -122,9 +125,37 @@ class VariableIndexRef(ExpressionNode):
         self.ind.pre_eval()
         self.ret_type = self.varref.ret_type.typ
         self.ir_type = self.ret_type.ir_type
+
+    def check_valid_literal(self, lhs, rhs):
+        if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value:
+            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = lhs.position)
+        elif rhs.name != "literal":
+            inline_warning("Arrays are experimental! You can index over their bounds! Be careful!",line = rhs.position)
+    
+    def get_ptr(self, func) -> ir.Instruction:
+        self.check_valid_literal(self.varref, self.ind)
+        return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
+
+    def eval(self, func):
+        return self.varref.ret_type.index(func, self)
+
+    def __repr__(self) -> str:
+        return f"<VariableRef to `{self.name}`>"
+
+class VariableIndexPutAt(ASTNode):
+    __slots__ = ('value', 'ref')
+    name = "varIndPutAt"
+
+    def init(self, varindref: VariableRef, value: ExpressionNode):
+        self.ref = varindref
+        self.value = value
+    
+    def pre_eval(self):
+        self.ref.pre_eval()
+        self.value.pre_eval()
     
     def eval(self, func):
-        return self.varref.ret_type.index(func, self.varref, self.ind)
+        return self.ref.varref.ret_type.put(func, self.ref, self.value)
 
     def __repr__(self) -> str:
         return f"<VariableRef to `{self.name}`>"

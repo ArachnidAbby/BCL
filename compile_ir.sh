@@ -1,3 +1,3 @@
-llc -filetype=obj test.ll
-gcc test.o -no-pie -o test
-./test
+llc -filetype=obj tests/output.ll
+gcc tests/output.o -no-pie -o tests/output 
+tests/output

@@ -1,4 +1,4 @@
-from Ast.Ast_Types import Type_F64, Type_I32
+from Ast.Ast_Types import Type_F32, Type_I32
 from Ast.nodetypes import NodeTypes
 from errors import error
 from llvmlite import ir
@@ -14,7 +14,7 @@ class Integer_1(Type_Base.AbstractType):
 
     @classmethod
     def convert_from(cls, func, typ: str, previous):
-        if typ in (Type_I32.Integer_32, Type_F64.Float_64): return func.builder.trunc(previous,Integer_1.ir_type)
+        if typ in (Type_I32.Integer_32, Type_F32.Float_32): return func.builder.trunc(previous,Integer_1.ir_type)
         elif typ == Integer_1: return previous
         else: error(f"type '{typ}' cannot be converted to type 'bool'", line = previous.position)
 
@@ -23,8 +23,8 @@ class Integer_1(Type_Base.AbstractType):
             case Integer_1(): return orig.eval(func)
             case Type_I32.Integer_32(): return func.builder.zext(orig.eval(func), ir.IntType(32))
             case 'i64': return func.builder.zext(orig.eval(func), ir.IntType(64))
-            case Type_F64.Float_64(): return func.builder.sitofp(orig.eval(func), ir.FloatType())
-            case 'f128': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
+            case Type_F32.Float_32(): return func.builder.sitofp(orig.eval(func), ir.FloatType())
+            case 'f64': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
             case _: error(f"Cannot convert 'bool' to type '{typ}'", line = orig.position)
 
     
