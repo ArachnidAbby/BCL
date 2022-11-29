@@ -26,6 +26,7 @@ class WhileStatement(ASTNode):
         orig_block_name = func.builder.block._name
         while_body = func.builder.append_basic_block(f'{orig_block_name}.while.body')
         while_after = func.builder.append_basic_block(f'{orig_block_name}.while.after')
+        bfor = func.has_return
 
         # alloca outside of the loop body in order to not have a stack overflow!
         for c,x in enumerate(self.block.children):
@@ -40,7 +41,13 @@ class WhileStatement(ASTNode):
         func.builder.position_at_start(while_body)
 
         self.block.eval(func)
-        cond = self.cond.eval(func)
-        func.builder.cbranch(cond, while_body, while_after)
+        if not func.has_return:
+            cond = self.cond.eval(func)
+            func.builder.cbranch(cond, while_body, while_after)
+        
+        func.has_return = bfor
 
         func.builder.position_at_start(while_after)
+
+        if func.block.last_instruction:
+            func.builder.unreachable()

@@ -73,7 +73,7 @@ def internal_function(name: str, ret_type: Any,
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type')
+    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type', "has_return")
     type = NodeTypes.STATEMENT
 
     def init(self, name: str, args: ParenthBlock, block: Block, module):
@@ -84,6 +84,7 @@ class FunctionDef(ASTNode):
         self.block = block
         self.module = module
         self.is_ret_set = False
+        self.has_return = False
 
         self._validate(args) # validate arguments
 
@@ -131,6 +132,7 @@ class FunctionDef(ASTNode):
         self.block.pre_eval()
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
+        self.function_ir.attributes.add("nounwind")
 
         args = self.function_ir.args
         
@@ -142,6 +144,8 @@ class FunctionDef(ASTNode):
         
         if self.ret_type.is_void():
             self.builder.ret_void()
+        elif not self.has_return:
+            errors.error(f"Function '{self.name}' has no guaranteed return! Ensure that at least 1 return statement is reachable!")
 
 class ReturnStatement(ASTNode):
     __slots__ = ('expr')
@@ -156,6 +160,7 @@ class ReturnStatement(ASTNode):
 
     def eval(self, func):
         self.expr.pre_eval()
+        func.has_return = True
         if self.expr.ret_type != func.ret_type:
             errors.error(
                 f"Funtion, \"{func.name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
@@ -165,7 +170,6 @@ class ReturnStatement(ASTNode):
         if func.ret_type.is_void():
             func.builder.ret_void()
             return None
-
         func.builder.ret(self.expr.eval(func))
 class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''

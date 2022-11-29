@@ -85,21 +85,26 @@ class ContainerNode(ASTNode):
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder')
+    __slots__ = ('variables', 'builder', 'last_instruction')
     type = NodeTypes.BLOCK
     name = "Block"
 
     def init(self):
         self.variables = {} # {name: VarObj, ...}
         self.builder = None
+        self.last_instruction = False
     
     def pre_eval(self):
         for x in self.children:
             x.pre_eval()
     
     def eval(self, func):
-        for x in self.children:
+        for x in self.children[0:-1]:
             x.eval(func)
+            if func.has_return:
+                return
+        self.last_instruction = func.ret_type.name!="void"
+        self.children[-1].eval(func)
 
     def get_variable(self, var_name: str):
         '''get variable by name'''
