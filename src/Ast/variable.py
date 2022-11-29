@@ -1,6 +1,7 @@
 from errors import error, inline_warning
 from llvmlite import ir
 
+from Ast import Ast_Types, Literal, exception
 from Ast.nodetypes import NodeTypes
 
 from .Ast_Types import Type_Base, Void
@@ -129,11 +130,14 @@ class VariableIndexRef(ExpressionNode):
     def check_valid_literal(self, lhs, rhs):
         if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value:
             error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = lhs.position)
-        elif rhs.name != "literal":
-            inline_warning("Arrays are experimental! You can index over their bounds! Be careful!",line = rhs.position)
     
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
+        if self.ind.name != "literal": #* error checking at runtime
+            size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
+            cond = self.ind.ret_type.leq(func, size, self.ind)
+            with func.builder.if_then(cond) as if_block:
+                exception.over_index_exception(func, self.varref.name, self.ind.eval(func), self.position)
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
     def eval(self, func):

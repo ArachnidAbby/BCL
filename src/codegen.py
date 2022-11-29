@@ -4,7 +4,7 @@ from llvmlite.ir import Module
 
 
 class CodeGen():
-    __slots__ = ('module', 'printf')
+    __slots__ = ('module')
 
     def __init__(self):
         binding.initialize()

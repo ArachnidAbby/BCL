@@ -8,7 +8,7 @@ sys.path.append(f'{p}/../src')
 import compile
 import errors
 
-errors.SILENT_MODE = False
+errors.SILENT_MODE = True
 
 class basictests(unittest.TestCase):
     def test_functions(self):
@@ -22,7 +22,7 @@ class basictests(unittest.TestCase):
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_functions.ll')
+        compile.compile(test_code, f'{p}/random/test_functions.ll')
 
     def test_function_overloading(self):
         test_code = """
@@ -38,7 +38,7 @@ class basictests(unittest.TestCase):
         define test_func(x: f32, y: f32) -> f32 { return x+y;}
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_functions_2.ll')
+        compile.compile(test_code, f'{p}/random/test_functions_2.ll')
     
     @unittest.expectedFailure
     def test_variables_1(self):
@@ -49,7 +49,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_variables_1.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_1.ll')
     
     @unittest.expectedFailure
     def test_variables_2(self):
@@ -62,7 +62,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_variables_2.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_2.ll')
     
     def test_variables_3(self):
         test_code = """
@@ -74,7 +74,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_variables_3.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_3.ll')
 
     def test_ops(self):
         test_code = """
@@ -87,7 +87,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_ops.ll')
+        compile.compile(test_code, f'{p}/random/test_ops.ll')
     
     def test_if_else_if(self):
         test_code = """
@@ -133,7 +133,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile_silent(test_code, f'{p}/random/test_array_fail.ll')
+        compile.compile(test_code, f'{p}/random/test_array_fail.ll')
 
 
 if __name__ == '__main__':

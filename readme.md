@@ -51,7 +51,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] floats
 - [ ] variable type declaration
 - [ ] variable assignment-operators (`+=`, `-=`, etc)
-- [ ] Lists
+- [x] Arrays
 - [ ] for-loops
 - [ ] pointers/references
 - [ ] `const`ants

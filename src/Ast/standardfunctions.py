@@ -9,6 +9,7 @@ from . import function
 # !     It is temporary while certain aspects of the language are still in developement
 
 printf = None
+exit_func = None
 
 fmt = "%i \n\0"
 c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
@@ -33,11 +34,21 @@ def declare_printf(module):
     gpistr.initializer = c_fmt
     gpistr.global_constant = True
 
+def declare_exit(module):
+    global exit_func
+    exit_ty = ir.FunctionType(ir.VoidType(), [ir.IntType(32)])
+    exit_func = ir.Function(module, exit_ty, name="exit")
+
 @function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Integer_32(),))
 def std_println_int(func, args):
     x = args[0]
     pistr = func.builder.bitcast(gpistr, voidptr_ty)
     return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("exit", Ast_Types.Void(), (Ast_Types.Integer_32(),))
+def std_exit(func, args):
+    return func.builder.call(exit_func, args)
+
 
 # LLVM functions made accessible to users below
 #   this is all just functionality not usually afforded so `add`, `sub`, etc. will not be provided

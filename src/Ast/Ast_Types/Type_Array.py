@@ -52,14 +52,6 @@ class Array(Type_Base.AbstractType):
         return hash(f"{self.name}--|{self.size}|")
 
     def index(self, func, lhs):
-        
-        #     size = ir.Constant(ir.IntType(32), lhs.ir_type.count-1)
-        #     cond = rhs.ret_type.leq()
-        #     with func.builder.if_else(cond) as (if_block, else_block):
-        #         with if_block:
-        #             self.if_block.eval(func)
-        #         with else_block:
-        #             self.else_block.eval(func)
         return func.builder.load(lhs.get_ptr(func))
     
     def put(self, func, lhs, value):

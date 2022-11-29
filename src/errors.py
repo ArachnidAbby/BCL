@@ -28,6 +28,13 @@ def _print_text(text):
     for line in text.split('\n'):
         print(f'| {line}')
 
+def _print_raw(text):
+    '''print text with preceeding '|' regardless of line count'''
+    if SILENT_MODE:
+        return
+
+    print(text)
+
 
 def error(text: str, line = (-1,-1,-1)):
     '''prints an error with a line # if provided'''

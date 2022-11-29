@@ -60,8 +60,8 @@ class ParserBase:
         self.start = previous_start_position
 
         # * give warnings about experimental features
-        if errors.USES_FEATURE["array"]:
-            errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
+        # if errors.USES_FEATURE["array"]:
+        #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
 
         return self._tokens
     
