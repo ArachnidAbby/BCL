@@ -1,7 +1,7 @@
 from Ast import Ast_Types
 from Ast.nodetypes import NodeTypes
 
-from .nodes import ASTNode
+from .nodes import ASTNode, Block
 
 
 class IfStatement(ASTNode):
@@ -22,6 +22,7 @@ class IfStatement(ASTNode):
     def eval(self, func):
         cond = self.cond.eval(func)
         bfor = func.has_return
+        
         with func.builder.if_then(cond) as if_block:
             self.block.eval(func)
             func.has_return = bfor
@@ -55,7 +56,9 @@ class IfElseStatement(ASTNode):
         yield obj
     
     def iter_block(self, obj):
+        Block.BLOCK_STACK.append(obj)
         yield from obj.children
+        Block.BLOCK_STACK.pop()
 
     def eval(self, func):
         cond = self.cond.eval(func)

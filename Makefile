@@ -12,7 +12,7 @@ unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py
 
 compile: env/bin/activate
-	./env/bin/python3.11 -m nuitka --follow-imports src/main.py
+	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python311 src/main.py
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/; \

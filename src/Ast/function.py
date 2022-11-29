@@ -73,7 +73,7 @@ def internal_function(name: str, ret_type: Any,
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type', "has_return")
+    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type', "has_return", "inside_loop")
     type = NodeTypes.STATEMENT
 
     def init(self, name: str, args: ParenthBlock, block: Block, module):
@@ -85,6 +85,7 @@ class FunctionDef(ASTNode):
         self.module = module
         self.is_ret_set = False
         self.has_return = False
+        self.inside_loop = None
 
         self._validate(args) # validate arguments
 

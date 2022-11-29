@@ -179,6 +179,14 @@ class Parser(ParserBase):
             block = self.peek(2).value
             x = Ast.loops.WhileStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
+        
+        elif self.check_group(0, "$continue SEMI_COLON"):
+            x = Ast.loops.ContinueStatement(self.peek(0).pos)
+            self.replace(2,"statement", x)
+        
+        elif self.check_group(0, "$break SEMI_COLON"):
+            x = Ast.loops.BreakStatement(self.peek(0).pos)
+            self.replace(2,"statement", x)
     
     
     def parse_functions(self):

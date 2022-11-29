@@ -1,5 +1,6 @@
 '''Define basic classes for nodes. These are the most basic nodes such as the ASTNode baseclass.'''
 
+from collections import deque
 from typing import Any, Iterator, Self, Tuple
 
 from errors import error
@@ -85,26 +86,31 @@ class ContainerNode(ASTNode):
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder', 'last_instruction')
+    __slots__ = ('variables', 'builder', 'last_instruction', 'ended')
     type = NodeTypes.BLOCK
     name = "Block"
+
+    BLOCK_STACK = deque()
 
     def init(self):
         self.variables = {} # {name: VarObj, ...}
         self.builder = None
         self.last_instruction = False
+        self.ended = False
     
     def pre_eval(self):
         for x in self.children:
             x.pre_eval()
     
     def eval(self, func):
+        self.BLOCK_STACK.append(self)
         for x in self.children[0:-1]:
             x.eval(func)
-            if func.has_return:
+            if func.has_return or self.ended:
                 return
         self.last_instruction = func.ret_type.name!="void"
         self.children[-1].eval(func)
+        self.BLOCK_STACK.pop()
 
     def get_variable(self, var_name: str):
         '''get variable by name'''

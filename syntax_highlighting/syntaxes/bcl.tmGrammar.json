@@ -36,6 +36,10 @@
             "name": "storage.type.bcl"
           },
           {
+            "match": "((break)|(continue))",
+            "name": "keyword.control.flow.bcl"
+          },
+          {
             "match": "([a-zA-Z0-9_]+)|(\\s+)",
             "name": "source.bcl"
           }
