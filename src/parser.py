@@ -119,7 +119,6 @@ class Parser(ParserBase):
     def parse_array_literals(self):
         '''check for all nodes dealing with arrays'''
         if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "expr|typeref|KEYWORD"):
-            errors.USES_FEATURE["array"] = True
             exprs = self.peek(1).value if self.peek(1).name == "expr" else self.peek(1).value.children
             literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
             self.replace(3,"expr", literal)
@@ -128,7 +127,6 @@ class Parser(ParserBase):
         '''parse indexing of ararys'''
         if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE") and \
                 (isinstance(self.peek(0).value, Ast.variable.VariableRef) or isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
-            errors.USES_FEATURE["array"] = True
             expr = self.peek(2).value
             ref = self.peek(0).value
             fin = Ast.variable.VariableIndexRef(self.peek(0).pos, ref, expr)

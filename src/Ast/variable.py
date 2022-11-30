@@ -129,7 +129,10 @@ class VariableIndexRef(ExpressionNode):
 
     def check_valid_literal(self, lhs, rhs):
         if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value:
-            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = lhs.position)
+            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = rhs.position)
+        
+        if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
+            error(f'Array index operation must use an integer index. type used: \'{rhs.ret_type}\'', line = rhs.position)
     
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
