@@ -13,7 +13,8 @@
                 "id": "bcl",
                 "extensions": [
                     ".bcl"
-                ]
+                ],
+                "configuration": "./language-configuration.json"
             }
         ],
         "grammars": [
