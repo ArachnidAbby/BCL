@@ -24,7 +24,7 @@ class ASTNode:
     is_operator = False
     type = NodeTypes.DEFAULT
 
-    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
+    def __init__(self, position: tuple[int,int, int], *args, **kwargs):
         self.position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
@@ -41,6 +41,14 @@ class ASTNode:
 
     def eval(self, func):
         '''eval step, often returns ir.Instruction'''
+    
+    def merge_pos(self, positions: Tuple[Tuple[int, int, int], ...]) -> tuple[int, int, int]:
+        new_pos = list(self.position)
+        for x in positions:
+            end_pos = x[1]+x[2]
+            new_pos[2] = end_pos
+        
+        return tuple(new_pos)
 
 
 class ExpressionNode(ASTNode):
@@ -118,7 +126,7 @@ class Block(ContainerNode):
 
     def validate_variable(self, var_name: str) -> bool:
         '''Return if a variable already has a ptr'''
-        return self.variables[var_name].ptr!=None
+        return self.variables[var_name].ptr is not None
     
     def validate_variable_exists(self, var_name: str) -> bool:
         return var_name in self.variables.keys()

@@ -75,5 +75,6 @@ def compile(src_str: str, output_loc: str):
     _print_raw('\n\n\n')
 
 def compile_file(file: Path):
+    errors.FILE = file
     with file.open() as f:
         compile(f.read(), str(file.absolute().parents[0] / "output.ll"))

@@ -23,9 +23,9 @@ class AbstractType:
         return self.name == "void"
 
     def __eq__(self, other):
-        return (other != None) and self.name == other.name
+        return (other is not None) and self.name == other.name
     def __neq__(self, other):
-        return self.name != other.name
+        return other is None or self.name != other.name
 
     # todo: remove this
     @classmethod

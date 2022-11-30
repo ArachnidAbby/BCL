@@ -66,8 +66,10 @@ class VariableAssign(ASTNode):
         
     def pre_eval(self):
         self.value.pre_eval()
-        self.block.variables[self.name].type = self.value.ret_type
-        self.block.variables[self.name].changed = True
+
+        if self.block.get_variable(self.name).type.is_void():
+            self.block.variables[self.name].type = self.value.ret_type
+            self.block.variables[self.name].changed = True
     
     def eval(self, func):
         self.value.pre_eval()
@@ -78,8 +80,8 @@ class VariableAssign(ASTNode):
         else:
             if self.value.ret_type != variable.type:
                 error(
-                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type {self.block.variables[self.name].type}",
-                    line = self.position
+                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type '{self.block.variables[self.name].type}'",
+                    line = self.value.position
                 )
             self.block.variables[self.name].is_constant = False
 
@@ -147,7 +149,7 @@ class VariableIndexRef(ExpressionNode):
         return self.varref.ret_type.index(func, self)
 
     def __repr__(self) -> str:
-        return f"<VariableRef to `{self.name}`>"
+        return f"<index of `{self.varref.name}`>"
 
 class VariableIndexPutAt(ASTNode):
     __slots__ = ('value', 'ref')
@@ -165,4 +167,4 @@ class VariableIndexPutAt(ASTNode):
         return self.ref.varref.ret_type.put(func, self.ref, self.value)
 
     def __repr__(self) -> str:
-        return f"<VariableRef to `{self.name}`>"
+        return f"<putat for `{self.ref.varref.name}`>"

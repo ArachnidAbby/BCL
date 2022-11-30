@@ -17,6 +17,7 @@ CODE202 = "\u001b[38;5;202m"
 
 SILENT_MODE = False
 PROFILING = False
+FILE = ""
 
 USES_FEATURE = {"array": False}
 
@@ -41,16 +42,21 @@ def error(text: str, line = (-1,-1,-1)):
     if SILENT_MODE:
         sys.exit(1)
 
+    code_line = show_error_spot(FILE, line)
+
     largest = max(
         [len(x) for x in f"| {text}".split('\n')]+
-        [len(f"|    Line: {line[0]}")]
+        [len(f"|    Line: {line[0]}")]+
+        [len(code_line.split('\n')[0])]
     )
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
     if line!= (-1,-1,-1):
         print(f'|    Line: {line[0]}')
-    print(f'\\{"-"*(largest-1)}/{RESET}')
+        print("#"+"-"*len(code_line.split('\n')[0]))
+        print(f"{RESET}{code_line}")
+    print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
     print("\n\n\n\n")
     sys.exit(1)
 
@@ -99,3 +105,19 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  POSSIBLE BUGS INCLUDE:\n{bugs}")
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
+
+def show_error_spot(file_loc, position: tuple[int, int, int]) -> str:
+    if position == (-1,-1,-1):
+        return ""
+    full_line = ""
+    with open(file_loc, 'r') as fp:
+        for i, line in enumerate(fp):
+            if i == position[0]-1:
+                full_line = line.strip('\n')
+                break
+    underline = " "*(position[1]-1) + "^"*position[2]
+    full_line_len = len(full_line)
+    full_line = full_line.strip()
+    underline= underline[full_line_len-len(full_line):]
+    return f"{RED}|    {RESET}{full_line}\n{RED}|    {RESET}{underline}"
+
