@@ -32,8 +32,8 @@ def compile(src_str: str, output_loc: str):
 
         codegen = codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
-        import parser
 
+        import Ast.module
         import Ast.standardfunctions
         import lexer as lex
 
@@ -41,49 +41,16 @@ def compile(src_str: str, output_loc: str):
         tokens = lex.get_tokens(src_str)
     
     with timingContext('parsing finished'):
-        module = codegen.module
-        Ast.standardfunctions.declare_printf(module)
-        Ast.standardfunctions.declare_exit(module)
-        pg = parser.Parser(tokens, module)
-        parsed = pg.parse()
+        module = Ast.module.Module((-1,-1,-1), "main", src_str, tokens)
+        Ast.standardfunctions.declare_printf(module.module)
+        Ast.standardfunctions.declare_exit(module.module)
+        module.parse()
         
     with timingContext('module created'):
-        for c, x in enumerate(parsed):
-            if not x.completed:
-                if x.name in ["OPEN_CURLY_USED", "OPEN_PAREN_USED"] and parsed[c+1].completed:
-                    continue
-                    
-                if x.name == "CLOSED_SQUARE" and parsed[c+1].completed:
-                    errors.error(f"""
-                    Unclosed square brackets
-                    """.strip(), line = x.pos)
-
-                errors.developer_info(f'item: {x}   in: {parsed}')
-
-                reached_semicolon = False
-                last_pos = (-1,-1,-1)
-                for err in parsed[c:]:
-                    if err.completed: break
-                    if err.name == "SEMI_COLON":
-                        reached_semicolon = True
-                    last_pos = x.pos
-                
-                if not reached_semicolon:
-                    errors.error(f"""
-                    Missing semicolon
-                    """.strip(), line = last_pos, full_line= True)
-                
-                errors.error(f"""
-                Syntax error or compiler bug. If you have questions, ask on the github issues page.
-                (or use '--dev' when compiling to see the remaining tokens)
-                """.strip(), line = x.pos, full_line = True)
-                
-
-            x.value.pre_eval()
-        for x in parsed:
-            x.value.eval()
+        module.pre_eval()
+        module.eval()
     
-    codegen.save_ir(output_loc)
+    module.save_ir(output_loc)
 
     _print_raw(f'| IR saved, compilation done | {perf_counter() - start}s')
     _print_raw(f'\\--------------------------------------------------/{errors.RESET}')

@@ -61,10 +61,10 @@ class Parser(ParserBase):
         #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
 
         if len(self.blocks) > 1: # check for unclosed blocks
-            errors.error("Unclosed '{'", line = self.blocks[-1][0].pos)
+            errors.error("Unclosed '{'", line = self.blocks[-1][0].position)
         
         elif len(self.parens) > 1: # check for unclosed blocks
-            errors.error("Unclosed '('", line = self.parens[-1][0].pos)
+            errors.error("Unclosed '('", line = self.parens[-1][0].position)
 
     
     def parse_finished_blocks(self):
@@ -79,7 +79,6 @@ class Parser(ParserBase):
                 tok = self._tokens[self.parens[-1][1]]
                 errors.error("Unclosed '('", line=tok.pos)
             
-
             block = self.blocks.pop()
             self.start = self.blocks[-1][1]
 
@@ -89,7 +88,6 @@ class Parser(ParserBase):
         '''Parses blocks of Curly-braces'''
         if self.simple_check(0, "OPEN_CURLY"):
             output = Ast.Block(self.peek(0).pos)
-
 
             # * check for function declaration before the block.
             # * this lets arguments be interpreted as usable variables.

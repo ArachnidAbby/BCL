@@ -125,7 +125,7 @@ class FunctionDef(ASTNode):
 
         name = f"{self.func_name}.{len(functions[self.func_name].keys())}" if self.func_name!="main" else self.func_name # avoid name collisions by adding a # to the end of the function name
 
-        self.function_ir = ir.Function(self.module, fnty, name=name)
+        self.function_ir = ir.Function(self.module.module, fnty, name=name)
         
         functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.func_name, self.function_ir,

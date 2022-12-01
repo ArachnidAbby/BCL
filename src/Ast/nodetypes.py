@@ -6,4 +6,4 @@ class NodeTypes(Enum):
     EXPRESSION    = 2
     STATEMENT     = 3
     BLOCK         = 4
-    KV_PAIR        = 5
+    KV_PAIR       = 5
