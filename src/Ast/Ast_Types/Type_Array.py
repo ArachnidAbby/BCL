@@ -6,7 +6,7 @@ from llvmlite import ir
 from . import Type_Base
 
 
-class Array(Type_Base.AbstractType):
+class Array(Type_Base.Type):
     __slots__ = ('size', 'typ')
     name = "array"
 

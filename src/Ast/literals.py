@@ -11,7 +11,7 @@ class Literal(ExpressionNode):
     __slots__ = ('value', 'ir_type')
     name = 'literal'
 
-    def init(self, value: Any, typ: Ast_Types.AbstractType):
+    def init(self, value: Any, typ: Ast_Types.Type):
         self.value = value
         self.ret_type = typ
 

@@ -58,7 +58,7 @@ class ExpressionNode(ASTNode):
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         super().__init__(position, *args, **kwargs)
-        self.ret_type = Ast_Types.AbstractType()
+        self.ret_type = Ast_Types.Type()
         self.position = position        # (line#, col#)
 
         self.init(*args, **kwargs)

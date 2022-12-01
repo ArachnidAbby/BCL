@@ -6,7 +6,7 @@ from llvmlite import ir
 from . import Type_Base
 
 
-class Void(Type_Base.AbstractType):
+class Void(Type_Base.Type):
     __slots__ = tuple()
 
     ir_type = ir.VoidType()

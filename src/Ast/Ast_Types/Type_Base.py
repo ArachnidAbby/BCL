@@ -5,7 +5,7 @@ from errors import error
 
 
 # todo: look into interfaces and see if this is applicable here.
-class AbstractType:
+class Type:
     '''abstract type class that outlines the necessary features of a type class.'''
 
     __slots__ = ('ir_type')
@@ -15,9 +15,9 @@ class AbstractType:
         pass
 
     @classmethod
-    def convert_from(cls, func, typ, previous): error(f"AbstractType has no conversions",  line = previous.position)
+    def convert_from(cls, func, typ, previous): error(f"Type has no conversions",  line = previous.position)
     
-    def convert_to(self, func, orig, typ): error(f"AbstractType has no conversions",  line = orig.position)
+    def convert_to(self, func, orig, typ): error(f"Type has no conversions",  line = orig.position)
 
     def is_void(self) -> bool:
         return self.name == "void"
@@ -113,7 +113,7 @@ types_dict = {
 
 # todo: replace strings in the future
 conversion_priority_raw = [
-    AbstractType(),
+    Type(),
     Integer_1(),
     Integer_32(),
     'i64',

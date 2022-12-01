@@ -6,7 +6,7 @@ from llvmlite import ir
 from . import Type_Base
 
 
-class Integer_1(Type_Base.AbstractType):
+class Integer_1(Type_Base.Type):
     __slots__ = tuple()
 
     ir_type = ir.IntType(1)

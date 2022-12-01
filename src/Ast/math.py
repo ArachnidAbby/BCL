@@ -44,7 +44,7 @@ class OperationNode(ExpressionNode):
         
 
         self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
-        if self.ret_type == None: Ast_Types.AbstractType.print_error(self.op_type, self.lhs, self.rhs)
+        if self.ret_type == None: Ast_Types.Type.print_error(self.op_type, self.lhs, self.rhs)
         self.ir_type = self.ret_type.ir_type
     
     def eval_math(self, func, lhs, rhs):
