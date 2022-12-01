@@ -127,7 +127,7 @@ class VariableIndexRef(ExpressionNode):
         self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
-        if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value and rhs.value < 0: # check inbounds
+        if rhs.name == "literal" and (lhs.ir_type.count-1 < rhs.value or rhs.value < 0): # check inbounds
             error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = rhs.position)
         
         if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
