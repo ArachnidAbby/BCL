@@ -3,13 +3,14 @@ from llvmlite import binding
 from llvmlite.ir import Module
 
 
+#todo: defer this functionality to a simple function, not a class
 class CodeGen():
     __slots__ = ('module')
 
     def __init__(self):
         binding.initialize()
         binding.initialize_native_target()
-        binding.initialize_native_asmprinter()
+        # binding.initialize_native_asmprinter()
         self._config_llvm()
 
     def _config_llvm(self):
