@@ -48,68 +48,70 @@ class VariableObj:
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
-    __slots__ = ("value", 'block', 'is_declaration')
+    __slots__ = ("value", 'block', 'is_declaration', 'var_name')
     type = NodeTypes.EXPRESSION
+    name = "varAssign"
 
     def init(self, name: str, value, block):
-        self.name = name
+        self.var_name = name
         self.is_declaration = False
         self.value = value
         self.block = block
 
-        if block!=None and self.name not in block.variables.keys():
-            block.variables[self.name] = VariableObj(None, Void(), False)
+        if block!=None and self.var_name not in block.variables.keys():
+            block.variables[self.var_name] = VariableObj(None, Void(), False)
             self.is_declaration = True
         
     def pre_eval(self):
         self.value.pre_eval()
 
-        if self.block.get_variable(self.name).type.is_void():
-            self.block.variables[self.name].type = self.value.ret_type
-            self.block.variables[self.name].changed = True
+        if self.block.get_variable(self.var_name).type.is_void():
+            self.block.variables[self.var_name].type = self.value.ret_type
+            self.block.variables[self.var_name].changed = True
     
     def eval(self, func):
         self.value.pre_eval()
-        variable = self.block.get_variable(self.name)
+        variable = self.block.get_variable(self.var_name)
 
-        if not self.block.validate_variable(self.name):
-            variable.define(func, self.name)
+        if not self.block.validate_variable(self.var_name):
+            variable.define(func, self.var_name)
         else:
             if self.value.ret_type != variable.type:
                 error(
-                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type '{self.block.variables[self.name].type}'",
+                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type '{self.block.variables[self.var_name].type}'",
                     line = self.value.position
                 )
-            self.block.variables[self.name].is_constant = False
+            self.block.variables[self.var_name].is_constant = False
 
         variable.store(func, self.value)
 
 class VariableRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ('block')
+    __slots__ = ('block', 'var_name')
+    name = "varRef"
 
     def init(self, name: str, block):
-        self.name = name
+        self.var_name = name
         self.block = block
     
     def pre_eval(self):
-        if not self.block.validate_variable_exists(self.name):
-            error(f"Undefined variable '{self.name}'", line = self.position)
+        if not self.block.validate_variable_exists(self.var_name):
+            error(f"Undefined variable '{self.var_name}'", line = self.position)
 
-        self.ret_type = self.block.get_variable(self.name).type
-        if self.block.get_variable(self.name).type.name=="UNKNOWN":
-            error(f"Unknown variable '{self.name}'", line = self.position)
+        self.ret_type = self.block.get_variable(self.var_name).type
+        if self.block.get_variable(self.var_name).type.name=="UNKNOWN":
+            error(f"Unknown variable '{self.var_name}'", line = self.position)
 
         self.ir_type = self.ret_type.ir_type
     
     def eval(self, func):
-        return self.block.get_variable(self.name).get_value(func)
+        return self.block.get_variable(self.var_name).get_value(func)
 
     def get_ptr(self, func):
-        return self.block.get_variable(self.name).ptr 
+        return self.block.get_variable(self.var_name).ptr 
 
     def __repr__(self) -> str:
-        return f"<VariableRef to `{self.name}`>"
+        return f"<VariableRef to '{self.var_name}'>"
 
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
@@ -142,7 +144,7 @@ class VariableIndexRef(ExpressionNode):
             cond2 = self.ind.ret_type.gr(func, zero, self.ind)
             condcomb = func.builder.or_(cond, cond2)
             with func.builder.if_then(condcomb) as if_block:
-                exception.over_index_exception(func, self.varref.name, self.ind.eval(func), self.position)
+                exception.over_index_exception(func, self.varref.var_name, self.ind.eval(func), self.position)
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
     def eval(self, func):
@@ -155,7 +157,7 @@ class VariableIndexPutAt(ASTNode):
     __slots__ = ('value', 'ref')
     name = "varIndPutAt"
 
-    def init(self, varindref: VariableRef, value: ExpressionNode):
+    def init(self, varindref: VariableIndexRef, value: ExpressionNode):
         self.ref = varindref
         self.value = value
     
@@ -167,4 +169,4 @@ class VariableIndexPutAt(ASTNode):
         return self.ref.varref.ret_type.put(func, self.ref, self.value)
 
     def __repr__(self) -> str:
-        return f"<putat for `{self.ref.varref.name}`>"
+        return f"<putat for `{self.ref.varref.var_name}`>"

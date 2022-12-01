@@ -6,10 +6,10 @@ from Ast.nodes import ASTNode
 global_functions = {} #! this will likely be later deprecated once `import <name>` is added
 
 class Module(ASTNode):
-    __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module')
+    __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module', 'mod_name')
 
     def init(self, name, location):
-        self.name      = name
+        self.mod_name      = name
         self.location  = location
         self.functions = {} # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
         self.globals   = {}
@@ -32,25 +32,25 @@ class Module(ASTNode):
         if name in self.imports:
             return self.imports[name]
 
-        errors.error(f"Cannot find '{name}' in module '{self.name}'", line = position)
+        errors.error(f"Cannot find '{name}' in module '{self.mod_name}'", line = position)
 
     def get_global(self, name: str, position: tuple[int, int, int]):
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
         
-        errors.error(f"Cannot find global '{name}' in module '{self.name}'", line = position)
+        errors.error(f"Cannot find global '{name}' in module '{self.mod_name}'", line = position)
     
     def get_function(self, name: str, position: tuple[int, int, int]):
         '''get a function defined in module'''
         if name in self.functions:
             return self.functions[name]
         
-        errors.error(f"Cannot find function '{name}' in module '{self.name}'", line = position)
+        errors.error(f"Cannot find function '{name}' in module '{self.mod_name}'", line = position)
 
     def pre_eval(self):
 
-        self.module = ir.Module(name=self.name)
+        self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
 
         for child in self.children:

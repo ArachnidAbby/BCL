@@ -39,9 +39,9 @@ class WhileStatement(ASTNode):
         # alloca outside of the loop body in order to not have a stack overflow!
         for c,x in enumerate(self.block.children):
             if isinstance(x, VariableAssign) and x.is_declaration:
-                variable = self.block.get_variable(x.name)
-                if not self.block.validate_variable(x.name):
-                    variable.define(func, x.name)
+                variable = self.block.get_variable(x.var_name)
+                if not self.block.validate_variable(x.var_name):
+                    variable.define(func, x.var_name)
         
         # branching and loop body
 
@@ -72,7 +72,7 @@ class ContinueStatement(ASTNode):
 
     def eval(self, func):
         if func.inside_loop is None:
-            errors.error("Cannot use 'continue' outside of loop scope", line = self.pos)
+            errors.error("Cannot use 'continue' outside of loop scope", line = self.position)
         
         Block.BLOCK_STACK[-1].ended = True
         func.inside_loop.branch_logic(func)
@@ -83,7 +83,7 @@ class BreakStatement(ASTNode):
 
     def eval(self, func):
         if func.inside_loop is None:
-            errors.error("Cannot use 'break' outside of loop scope", line = self.pos)
+            errors.error("Cannot use 'break' outside of loop scope", line = self.position)
         
         Block.BLOCK_STACK[-1].ended = True
         func.builder.branch(func.inside_loop.while_after)

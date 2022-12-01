@@ -26,28 +26,6 @@ class Type:
         return (other is not None) and self.name == other.name
     def __neq__(self, other):
         return other is None or self.name != other.name
-
-    # todo: remove this
-    @classmethod
-    def print_error(cls, op: str, lhs, rhs):
-        if op=='not': cls._not(None, None, rhs)
-
-        {
-            'sum': cls.sum,
-            'sub': cls.sub,
-            'mul': cls.mul,
-            'div': cls.div,
-            'mod': cls.mod,
-            'eq': cls.eq,
-            'neq': cls.neq,
-            'geq': cls.geq,
-            'leq': cls.leq,
-            'le': cls.le,
-            'gr': cls.gr,
-            'and': cls._and,
-            'or': cls._or,
-        }[op](None, None, lhs, rhs)
-
     
     def get_op_return(self, op, lhs, rhs): pass
 

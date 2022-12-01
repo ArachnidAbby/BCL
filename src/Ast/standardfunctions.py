@@ -5,9 +5,6 @@ from Ast import Ast_Types
 
 from . import function
 
-# ! This whole module should eventually be removed.
-# !     It is temporary while certain aspects of the language are still in developement
-
 printf = None
 exit_func = None
 
@@ -31,7 +28,7 @@ def declare_printf(module):
                         bytearray(fmt.encode("utf8")))
     gpistr = ir.GlobalVariable(module, c_fmt.type, name="fstr_int_n")
     gpistr.linkage = 'internal'
-    gpistr.initializer = c_fmt
+    gpistr.initializer = c_fmt  # type: ignore
     gpistr.global_constant = True
 
 def declare_exit(module):

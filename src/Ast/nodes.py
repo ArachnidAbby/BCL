@@ -19,10 +19,11 @@ class ASTNode:
     * pre_eval -- run before eval(). Often used to validate certain conditions, such as a function or variable existing, return type, etc.
     * eval -- returns ir.Instruction object or None. This is used when construction final ir code.
     '''
-    __slots__ = ('name', 'position')
+    __slots__ = ('position')
 
     is_operator = False
     type = NodeTypes.DEFAULT
+    name = "AST_NODE"
 
     def __init__(self, position: tuple[int,int, int], *args, **kwargs):
         self.position = position        # (line#, col#)
@@ -125,50 +126,19 @@ class Block(ContainerNode):
         return self.variables[var_name]
 
     def validate_variable(self, var_name: str) -> bool:
-        '''Return if a variable already has a ptr'''
+        '''Return true if a variable already has a ptr'''
         return self.variables[var_name].ptr is not None
     
     def validate_variable_exists(self, var_name: str) -> bool:
         return var_name in self.variables.keys()
 
-class StatementList(ContainerNode):
-    __slots__ = ('children',)
-    type = NodeTypes.STATEMENTLIST
-    name = "StatementList"
-
-    def init(self):
-        self.children = list()
-
-    def pre_eval(self):
-        for x in self.children:
-            x.pre_eval()
-    
-    def eval(self, func):
-        for x in self.children:
-            x.eval(func)
-
-class ExpressionList(ContainerNode):
-    __slots__ = tuple()
-    type = NodeTypes.STATEMENTLIST
-
-    def init(self):
-        self.name = "StatementList"
-
-    def pre_eval(self):
-        for x in self.children:
-            x.pre_eval()
-    
-    def eval(self, func):
-        for x in self.children:
-            x.eval(func)
-
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ir_type', 'ret_type')
     type = NodeTypes.EXPRESSION
+    name = "Parenth"
 
     def init(self):
-        self.name = "Parenth"
         self.ir_type = Ast_Types.Void()
         
     def pre_eval(self):
@@ -208,10 +178,10 @@ class ParenthBlock(ContainerNode):
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value', 'keywords')
-    type = 'kv pair'
+    type = NodeTypes.KV_PAIR
+    name = "kv_pair"
 
     def init(self, k, v, keywords = False):
-        self.name = "kv_pair"
         self.keywords = keywords
 
         self.key = k

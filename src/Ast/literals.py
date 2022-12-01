@@ -38,7 +38,6 @@ class ArrayLiteral(ExpressionNode):
     def init(self, value: list[Any]):
         self.value = value
         
-    
     def pre_eval(self):
         self.value[0].pre_eval()
         typ = self.value[0].ret_type
@@ -54,8 +53,4 @@ class ArrayLiteral(ExpressionNode):
         self.ir_type = self.ret_type.ir_type
 
     def eval(self, func) -> ir.Constant:
-        # l = []
-        # for x in self.value:
-        #     l.append(x.eval())
-
         return ir.Constant.literal_array([x.eval(func) for x in self.value])

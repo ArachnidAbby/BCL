@@ -114,7 +114,7 @@ class Parser(ParserBase):
             self.replace(2, "statement", self.peek(0).value)
 
         elif self.check_group(0, "statement statement !SEMI_COLON"):
-            stmt_list = Ast.StatementList((-1,-1, -1))
+            stmt_list = Ast.ContainerNode((-1,-1, -1))
 
             stmt_list.append_child(self.peek(0).value)
             stmt_list.append_child(self.peek(1).value)
@@ -166,7 +166,6 @@ class Parser(ParserBase):
     def parse_array_types(self):
         '''parse typerefs with array types'''
         if self.check_simple_group(0, "typeref OPEN_SQUARE expr CLOSE_SQUARE"):
-            errors.USES_FEATURE["array"] = True
             init_typ = self.peek(0).value
             typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ.value, -1))
             self.replace(4,"typeref", typ)
@@ -244,7 +243,7 @@ class Parser(ParserBase):
     def parse_func_call(self):
         # * Function Calls
         if self.check_group(-1,"!DOT expr expr|paren") and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
-            func_name = self.peek(0).value.name
+            func_name = self.peek(0).value.var_name
             args = self.peek(1).value
 
             if not isinstance(args, Ast.nodes.ParenthBlock):
@@ -256,7 +255,7 @@ class Parser(ParserBase):
 
         # * different func calls "9.to_string()" as an example
         elif self.check_group(0,"expr|paren DOT expr expr|paren") and (isinstance(self.peek(2).value, Ast.variable.VariableRef)):
-            func_name = self.peek(2).value.name
+            func_name = self.peek(2).value.var_name
             args1 = self.peek(0).value
             args2 = self.peek(3).value
             args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) else [args1] # wrap in a list if not already done
@@ -361,7 +360,7 @@ class Parser(ParserBase):
                 expr.value.append_children(self.peek(2).value)
                 out = expr.value
             else:
-                out = Ast.nodes.ExpressionList((-1,-1,-1))
+                out = Ast.nodes.ContainerNode((-1,-1,-1))
                 out.append_child(expr.value)
                 out.append_child(self.peek(2).value)
             

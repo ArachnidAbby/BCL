@@ -13,6 +13,7 @@ PURPLE = "\u001b[35m"
 MAGENTA = "\u001b[35m"
 CODE125 = "\u001b[38;5;125m"
 CODE202 = "\u001b[38;5;202m"
+CODE177 = "\u001b[38;5;177m"
 
 
 SILENT_MODE = False
@@ -123,5 +124,5 @@ def show_error_spot(file_loc, position: tuple[int, int, int], use_full_line: boo
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
     
-    return f"{RED}|    {RESET}{full_line}\n{RED}|    {RESET}{underline}"
+    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}{RESET}"
 
