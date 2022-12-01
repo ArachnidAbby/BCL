@@ -27,23 +27,23 @@ class Parser(ParserBase):
         super().__init__(*args, **kwargs)
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
-            'if', 'while', 'else'
+            'if', 'while', 'else', 'break', 'continue'
         )
 
         self.parsing_functions = {
-            "OPEN_CURLY": (self.parse_blocks, self.parse_special, ),
+            "OPEN_CURLY": (self.parse_blocks, ),
             "OPEN_CURLY_USED": (self.parse_finished_blocks,),
-            "expr": (self.parse_array_index, self.parse_special, self.parse_statement, self.parse_math, self.parse_func_call,
-                     self.parse_parenth, self.parse_array_putat),
+            "expr": (self.parse_array_index, self.parse_KV_pairs, self.parse_statement, self.parse_math, self.parse_func_call,
+                     self.parse_expr_list, self.parse_array_putat),
             "statement": (self.parse_statement, ),
             "statement_list": (self.parse_statement, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
             "KEYWORD": (self.parse_type_names, self.parse_return_statement, self.parse_math, self.parse_keyword_literals,
-                        self.parse_control_flow, self.parse_functions, self.parse_vars, self.parse_special),
+                        self.parse_control_flow, self.parse_functions, self.parse_vars, self.parse_KV_pairs),
             "func_def_portion": (self.parse_functions, ),
-            "kv_pair": (self.parse_parenth, ),
-            "expr_list": (self.parse_parenth, ),
+            "kv_pair": (self.parse_expr_list, ),
+            "expr_list": (self.parse_expr_list, ),
             "OPEN_PAREN": (self.parse_parenth, ),
             "OPEN_PAREN_USED": (self.parse_parenth, ),
             "paren": (self.parse_func_call,),
@@ -53,6 +53,19 @@ class Parser(ParserBase):
 
         self.blocks = deque(((None, 0),))
         self.parens = deque(((None, 0),))
+
+    def post_parse(self):
+        '''definition inside parserbase, essentially just runs after parsing'''
+        # * give warnings about experimental features
+        # if errors.USES_FEATURE["array"]:
+        #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
+
+        if len(self.blocks) > 1: # check for unclosed blocks
+            errors.error("Unclosed '{'", line = self.blocks[-1][0].pos)
+        
+        elif len(self.parens) > 1: # check for unclosed blocks
+            errors.error("Unclosed '('", line = self.parens[-1][0].pos)
+
     
     def parse_finished_blocks(self):
         '''parsing finished sets of curly braces into blocks'''
@@ -61,6 +74,10 @@ class Parser(ParserBase):
                 self.blocks[-1][0].children = self.peek(1).value.children
             elif self.simple_check(1, 'statement'):
                 self.blocks[-1][0].children = [self.peek(1).value]
+            
+            if self.parens[-1][0] is not None:
+                tok = self._tokens[self.parens[-1][1]]
+                errors.error("Unclosed '('", line=tok.pos)
             
 
             block = self.blocks.pop()
@@ -87,13 +104,13 @@ class Parser(ParserBase):
             # * main implementation
             self.blocks.append((output, self._cursor))
             self.start = self._cursor
-            self._tokens[self._cursor] = ParserToken("OPEN_CURLY_USED", '{', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
+            self._tokens[self._cursor] = ParserToken("OPEN_CURLY_USED", '{', self._tokens[self._cursor].pos, False)
 
     
     def parse_statement(self):
         '''Parsing statements and statement lists'''
 
-        if self.check_group(0, "expr|statement SEMI_COLON"):
+        if self.check_group(-1, "__|OPEN_CURLY_USED expr|statement SEMI_COLON"):
             self.replace(2, "statement", self.peek(0).value)
 
         elif self.check_group(0, "statement statement !SEMI_COLON"):
@@ -188,7 +205,7 @@ class Parser(ParserBase):
     
     
     def parse_functions(self):
-        '''Everything involving functions. Calling, definitions, etc.'''
+        '''Function definitions'''
         # * Function Definitions
         if self.check_group(0,"KEYWORD KEYWORD expr|paren !RIGHT_ARROW"):
             if self.check(0, '$define'):
@@ -250,7 +267,7 @@ class Parser(ParserBase):
             self.replace(4,"expr", func)
     
     
-    def parse_special(self):
+    def parse_KV_pairs(self):
         '''check special rules'''
 
         # * KV pairs
@@ -299,7 +316,6 @@ class Parser(ParserBase):
             if self.peek(0).value not in self.keywords:
                 var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.blocks[-1][0])
                 self.replace(1,"expr", var)
-
     
     def parse_numbers(self):
         '''Parse raw integers into `expr` token.'''
@@ -312,8 +328,6 @@ class Parser(ParserBase):
                 self.replace(2, "expr", self.peek(1).value)
             elif self.check(0,"SUM"):
                 self.replace(2, "expr", self.peek(1).value)
-        
-    
     
     def parse_math(self):
         '''Parse mathematical expressions'''
@@ -338,10 +352,7 @@ class Parser(ParserBase):
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
             self.replace(2,"expr",op)
     
-    
-    def parse_parenth(self):
-        '''Parses blocks of parenthises'''
-
+    def parse_expr_list(self):
         # * parse expression lists
         if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair !COLON"):
             expr = self.peek(0)
@@ -355,9 +366,12 @@ class Parser(ParserBase):
                 out.append_child(self.peek(2).value)
             
             self.replace(3, "expr_list", out)
-        
+
+
+    def parse_parenth(self):
+        '''Parses blocks of parenthises'''        
         # * parse empty paren blocks
-        elif self.check_simple_group(0, "OPEN_PAREN CLOSE_PAREN"):
+        if self.check_simple_group(0, "OPEN_PAREN CLOSE_PAREN"):
             self.replace(2, "paren", Ast.ParenthBlock(self.peek(0).pos))
         
         # * parse paren start
@@ -368,7 +382,7 @@ class Parser(ParserBase):
             self.parens.append((output, self._cursor))
 
             self.start = self._cursor
-            self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, self._tokens[self._cursor].completed)
+            self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, False)
             
         # * parse full paren blocks
         if self.check_group(0, "OPEN_PAREN_USED expr|expr_list|kv_pair CLOSE_PAREN"):

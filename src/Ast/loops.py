@@ -9,7 +9,6 @@ from .nodes import ASTNode, Block
 
 class WhileStatement(ASTNode):
     '''Code for an If-Statement'''
-
     __slots__ = ('cond', 'block', 'loop_before', 'while_after', 'while_body')
 
     name = "While"
@@ -65,9 +64,6 @@ class WhileStatement(ASTNode):
     def branch_logic(self, func):
         cond = self.cond.eval(func)
         func.builder.cbranch(cond, self.while_body, self.while_after)
-        
-        
-
 
 class ContinueStatement(ASTNode):
     __slots__ = ()
@@ -80,8 +76,6 @@ class ContinueStatement(ASTNode):
         
         Block.BLOCK_STACK[-1].ended = True
         func.inside_loop.branch_logic(func)
-        
-
 class BreakStatement(ASTNode):
     __slots__ = ()
     type = NodeTypes.STATEMENT

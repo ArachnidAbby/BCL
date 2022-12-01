@@ -59,11 +59,12 @@ class ParserBase:
         errors.developer_info(f"iters: {iters}")
         self.start = previous_start_position
 
-        # * give warnings about experimental features
-        # if errors.USES_FEATURE["array"]:
-        #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
+        self.post_parse()
 
         return self._tokens
+
+    def post_parse(self):
+        '''steps that happen after parsing has finished. Used to check for syntax errors, give warnings, etc.'''
     
     def isEOF(self, index: int=0) -> bool:
         '''Checks if the End-Of-File has been reached'''

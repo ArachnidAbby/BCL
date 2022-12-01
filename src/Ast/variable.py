@@ -60,9 +60,6 @@ class VariableAssign(ASTNode):
         if block!=None and self.name not in block.variables.keys():
             block.variables[self.name] = VariableObj(None, Void(), False)
             self.is_declaration = True
-
-        elif block==None:
-            raise Exception("No Block for Variable Assignment to take place in")
         
     def pre_eval(self):
         self.value.pre_eval()
@@ -130,7 +127,7 @@ class VariableIndexRef(ExpressionNode):
         self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
-        if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value:
+        if rhs.name == "literal" and lhs.ir_type.count-1 < rhs.value and rhs.value < 0: # check inbounds
             error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = rhs.position)
         
         if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
@@ -140,8 +137,11 @@ class VariableIndexRef(ExpressionNode):
         self.check_valid_literal(self.varref, self.ind)
         if self.ind.name != "literal": #* error checking at runtime
             size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
-            cond = self.ind.ret_type.leq(func, size, self.ind)
-            with func.builder.if_then(cond) as if_block:
+            zero = Literal((-1,-1,-1), 0, Ast_Types.Integer_32())
+            cond = self.ind.ret_type.le(func, size, self.ind)
+            cond2 = self.ind.ret_type.gr(func, zero, self.ind)
+            condcomb = func.builder.or_(cond, cond2)
+            with func.builder.if_then(condcomb) as if_block:
                 exception.over_index_exception(func, self.varref.name, self.ind.eval(func), self.position)
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 

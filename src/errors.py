@@ -37,12 +37,12 @@ def _print_raw(text):
     print(text)
 
 
-def error(text: str, line = (-1,-1,-1)):
+def error(text: str, line = (-1,-1,-1), full_line=False):
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
 
-    code_line = show_error_spot(FILE, line)
+    code_line = show_error_spot(FILE, line, full_line)
 
     largest = max(
         [len(x) for x in f"| {text}".split('\n')]+
@@ -106,7 +106,7 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
 
-def show_error_spot(file_loc, position: tuple[int, int, int]) -> str:
+def show_error_spot(file_loc, position: tuple[int, int, int], use_full_line: bool) -> str:
     if position == (-1,-1,-1):
         return ""
     full_line = ""
@@ -115,9 +115,13 @@ def show_error_spot(file_loc, position: tuple[int, int, int]) -> str:
             if i == position[0]-1:
                 full_line = line.strip('\n')
                 break
-    underline = " "*(position[1]-1) + "^"*position[2]
+    if use_full_line:
+        underline = "^"*len(full_line)
+    else:
+        underline = " "*(position[1]-1) + "^"*position[2]
     full_line_len = len(full_line)
     full_line = full_line.strip()
-    underline= underline[full_line_len-len(full_line):]
+    underline = underline[full_line_len-len(full_line):]
+    
     return f"{RED}|    {RESET}{full_line}\n{RED}|    {RESET}{underline}"
 
