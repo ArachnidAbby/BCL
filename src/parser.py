@@ -61,9 +61,11 @@ class Parser(ParserBase):
         #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
 
         if len(self.blocks) > 1: # check for unclosed blocks
+            errors.developer_info(f"{self._tokens}")
             errors.error("Unclosed '{'", line = self.blocks[-1][0].position)
         
         elif len(self.parens) > 1: # check for unclosed blocks
+            errors.developer_info(f"{self._tokens}")
             errors.error("Unclosed '('", line = self.parens[-1][0].position)
 
     
@@ -77,6 +79,7 @@ class Parser(ParserBase):
             
             if self.parens[-1][0] is not None:
                 tok = self._tokens[self.parens[-1][1]]
+                errors.developer_info(f'{self._tokens}')
                 errors.error("Unclosed '('", line=tok.pos)
             
             block = self.blocks.pop()
@@ -133,7 +136,9 @@ class Parser(ParserBase):
 
     def parse_array_literals(self):
         '''check for all nodes dealing with arrays'''
-        if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "expr|typeref|KEYWORD"):
+        if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "expr|typeref"):
+            if self.simple_check(-1, "KEYWORD") and self.peek(-1).value not in self.keywords:
+                return
             exprs = self.peek(1).value if self.peek(1).name == "expr" else self.peek(1).value.children
             literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
             self.replace(3,"expr", literal)
@@ -157,15 +162,15 @@ class Parser(ParserBase):
 
     def parse_type_names(self):
         '''checks for type refs'''
-        if self.simple_check(0, "KEYWORD") and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
-            val = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.types_dict[self.peek(0).value]())
+        if self.check_group(-1, "COLON|RIGHT_ARROW KEYWORD"):# and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
+            val = Ast.TypeRefLiteral(self.peek(0).pos, self.peek(0).value)
             self.replace(1,"typeref", val)
         
     def parse_array_types(self):
         '''parse typerefs with array types'''
         if self.check_simple_group(0, "typeref OPEN_SQUARE expr CLOSE_SQUARE"):
             init_typ = self.peek(0).value
-            typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ.value, -1))
+            typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ))
             self.replace(4,"typeref", typ)
 
     
@@ -220,7 +225,7 @@ class Parser(ParserBase):
                 func_name = self.peek(1).value
                 block = self.peek(2).value
                 func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, block, self.module)
-                func.ret_type = self.peek(4).value.value
+                func.ret_type = self.peek(4).value
                 func.is_ret_set = True
                 self.start_min = self._cursor
                 self.replace(5,"func_def_portion", func)
@@ -229,7 +234,7 @@ class Parser(ParserBase):
         
         # * bug check
         elif self.check_simple_group(0,"func_def_portion RIGHT_ARROW typeref") and self.check(3, "!OPEN_SQUARE"):
-            error(f"Function, \"{self.peek(0).value.name}\", cannot have it's return-type set twice.", line = self.peek(1).pos)
+            error(f"Function, '{self.peek(0).value.name}', cannot have it's return-type set twice.", line = self.peek(1).pos)
 
         # * complete function definition.
         elif self.check_simple_group(0,"func_def_portion statement"):
@@ -302,7 +307,9 @@ class Parser(ParserBase):
             if self.blocks[-1][0] == None:
                 error("Variables cannot currently be defined outside of a block", line = self.peek(0).pos)
             elif self.simple_check(2, "statement"):
-                error("A variables value cannot be set as a statement", line = self.peek(0).pos)
+                error("A variable's value cannot be set as a statement", line = self.peek(0).pos)
+            elif self.peek(0).value in self.keywords:
+                error("A variable's name can NOT be a language keyword", line = self.peek(0).pos)
             var_name = self.peek(0).value
             value = self.peek(2).value
             var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0])

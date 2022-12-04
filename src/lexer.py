@@ -31,6 +31,10 @@ class Lexer():
         self.lexer.add('COMMA', r'\,')
         self.lexer.add('DOT', r'\.')
         # Operators
+        self.lexer.add('ISUM', r'\+\=')
+        self.lexer.add('IMUL', r'\*\=')
+        self.lexer.add('IDIV', r'/{1,}\=')
+        self.lexer.add('ISUB', r'\-\=')
         self.lexer.add('SUM', r'\+')
         self.lexer.add('MUL', r'\*')
         self.lexer.add('DIV', r'/{1,}')

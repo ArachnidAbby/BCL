@@ -10,8 +10,11 @@ class Array(Type_Base.Type):
     __slots__ = ('size', 'typ')
     name = "array"
 
-    def __init__(self, size, typ, default_value):
-        self.typ = typ # elements' type
+    def __init__(self, size, typ):
+        self.typ = typ
+        if typ.name == "literal":
+            typ.eval(None)
+            self.typ = typ.value # elements' type
 
         if size.name != "literal":
             error(f"size of array type must be a int-literal", line = size.position)\
@@ -23,6 +26,7 @@ class Array(Type_Base.Type):
         elif size.ret_type != Type_I32.Integer_32:
             error(f"Array size must be an integer", line = size.position)
 
+        typ.eval(None)
         self.ir_type = ir.ArrayType(typ.ir_type, self.size)
 
     @staticmethod
@@ -30,7 +34,9 @@ class Array(Type_Base.Type):
         error(f"type '{typ}' cannot be converted to type 'Array<{typ}>'", line = previous.position)
 
     def convert_to(self, func, orig, typ):
-        error(f"Cannot convert 'Array<{orig.ir_type.element}>' to type '{typ}'", line = orig.position)
+        if typ!=self:
+            error(f"Cannot convert 'Array<{orig.ir_type.element}>' to type '{typ}'", line = orig.position)
+        return orig.eval(func)
     
     def get_op_return(self, op, lhs, rhs):
         if op == "ind":
@@ -56,3 +62,9 @@ class Array(Type_Base.Type):
     
     def put(self, func, lhs, value):
         return func.builder.store(value.eval(func), lhs.get_ptr(func))
+
+    def __repr__(self) -> str:
+        return f"{self.typ}[{self.size}]"
+    
+    def __str__(self) -> str:
+        return f"{self.typ}[{self.size}]"

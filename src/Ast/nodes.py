@@ -190,11 +190,14 @@ class KeyValuePair(ASTNode):
     def validate_type(self) -> str:        
         # if self.value not in Ast_Types.Type_Base.types_dict:  # type: ignore
         #     error(f"unknown type '{self.value}'", line = self.position)
+        self.value.eval(None)
         
         return self.value.value
 
     def get_type(self) -> Any:
         '''Get and validate type'''
+        self.value.eval(None)
+
         return self.value.value # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
         
        

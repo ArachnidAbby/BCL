@@ -116,6 +116,9 @@ class FunctionDef(ASTNode):
                                line = self.position)
 
     def pre_eval(self):
+        if self.is_ret_set:
+            self.ret_type.eval(self)
+            self.ret_type = self.ret_type.ret_type
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         global functions
@@ -123,7 +126,11 @@ class FunctionDef(ASTNode):
         if self.func_name not in functions:
             functions[self.func_name] = dict()
 
-        name = f"{self.func_name}.{len(functions[self.func_name].keys())}" if self.func_name!="main" else self.func_name # avoid name collisions by adding a # to the end of the function name
+        if self.func_name!="main":
+            # avoid name collisions by adding a # to the end of the function name
+            name = f"{self.func_name}.{len(functions[self.func_name].keys())}"
+        else:
+            name =  self.func_name 
 
         self.function_ir = ir.Function(self.module.module, fnty, name=name)
         
@@ -166,7 +173,7 @@ class ReturnStatement(ASTNode):
         func.has_return = True
         if self.expr.ret_type != func.ret_type:
             errors.error(
-                f"Funtion, \"{func.name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
+                f"Funtion, \"{func.func_name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
                 line = self.position
             )
 

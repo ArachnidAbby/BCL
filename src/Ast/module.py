@@ -60,7 +60,6 @@ class Module(ASTNode):
             if not child.completed:
                 if child.name in ["OPEN_CURLY_USED", "OPEN_PAREN_USED"] and self.children[c+1].completed:
                     continue
-                
                 self.syntax_error_information(child, c)
 
             child.value.pre_eval()
@@ -75,12 +74,12 @@ class Module(ASTNode):
 
     def syntax_error_information(self, child, c: int):
         '''more useful syntax error messages'''
+        errors.developer_info(f'item: {child}   in: {self.children}')
+
         if child.name == "CLOSED_SQUARE" and self.children[c+1].completed:
             errors.error(f"""
             Unclosed square brackets
             """.strip(), line = child.pos)
-
-        errors.developer_info(f'item: {child}   in: {self.children}')
 
         reached_semicolon = False
         last_pos = (-1,-1,-1)

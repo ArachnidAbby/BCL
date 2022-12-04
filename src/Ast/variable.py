@@ -21,6 +21,10 @@ class VariableObj:
         self.is_constant = is_constant
         self.changed = False
         self.prev_load = None # prevents multiple loads from memory when zero changes have happened
+
+    @property
+    def ret_type(self):
+        return self.type
     
     def define(self, func, name):
         '''alloca memory for the variable'''
@@ -30,7 +34,8 @@ class VariableObj:
     
     def store(self, func, value):
         self.changed = True
-        func.builder.store(value.eval(func), self.ptr)
+        self.type.assign(func, self, value, self.type)
+        # func.builder.store(value.eval(func), self.ptr)
     
     def get_value(self, func):
         if not self.changed and self.prev_load is not None:
@@ -109,6 +114,9 @@ class VariableRef(ExpressionNode):
 
     def get_ptr(self, func):
         return self.block.get_variable(self.var_name).ptr 
+    
+    def get_var(self, func):
+        return self.block.get_variable(self.var_name)
 
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"

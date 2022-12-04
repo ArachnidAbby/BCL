@@ -27,8 +27,16 @@ class TypeRefLiteral(ExpressionNode):
     def init(self, value: Any):
         self.value = value
         self.ret_type = value
-
-        self.ir_type = value.ir_type
+    
+    def eval(self, func):
+        #print(self.value, Ast_Types.types_dict)
+        if isinstance(self.value, str):
+            self.value = Ast_Types.types_dict[self.value]()
+            self.ret_type = self.value
+            self.ir_type = self.value.ir_type
+        else:
+            self.ret_type = self.value
+            self.ir_type = self.value.ir_type
 
 
 class ArrayLiteral(ExpressionNode):
@@ -37,6 +45,9 @@ class ArrayLiteral(ExpressionNode):
 
     def init(self, value: list[Any]):
         self.value = value
+        self.position = list(self.merge_pos(tuple([x.position for x in self.value])))
+        self.position[2] += 1
+        self.position = tuple(self.position)
         
     def pre_eval(self):
         self.value[0].pre_eval()
@@ -49,7 +60,7 @@ class ArrayLiteral(ExpressionNode):
             
 
         array_size  = Literal((-1,-1,-1), len(self.value), Ast_Types.Integer_32)
-        self.ret_type = Ast_Types.Array(array_size, typ, None)
+        self.ret_type = Ast_Types.Array(array_size, typ)
         self.ir_type = self.ret_type.ir_type
 
     def eval(self, func) -> ir.Constant:

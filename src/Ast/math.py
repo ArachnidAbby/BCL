@@ -1,11 +1,8 @@
 from collections import deque
-from dataclasses import dataclass
 from typing import Callable, NamedTuple
 
+import errors
 from llvmlite import ir
-
-from Ast import Ast_Types
-from Ast.nodetypes import NodeTypes
 
 from .nodes import *
 
@@ -44,7 +41,8 @@ class OperationNode(ExpressionNode):
         
 
         self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
-        self.ir_type = self.ret_type.ir_type
+        if self.ret_type!=None:
+            self.ir_type = self.ret_type.ir_type
     
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -154,6 +152,7 @@ def div(self, func, lhs, rhs):
 def mod(self, func, lhs, rhs):
     return (lhs.ret_type).mod(func, lhs, rhs)
 
+# * comparators
 
 @operator(0, "eq")
 def eq(self, func, lhs, rhs):
@@ -179,6 +178,7 @@ def gr(self, func, lhs, rhs):
 def geq(self, func, lhs, rhs):
     return (lhs.ret_type).geq(func, lhs, rhs)
 
+# * boolean ops
 
 @operator(-3, "or")
 def _or(self, func, lhs, rhs):
@@ -191,3 +191,30 @@ def _and(self, func, lhs, rhs):
 @operator(-1, "not")
 def _not(self, func, lhs, rhs):
     return (lhs.ret_type)._not(func, lhs)
+
+# * Inplace ops (-100 used as precedence to ensure that it is ALWAYS the last operation)
+
+def check_valid_inplace(lhs) -> bool:
+    '''check if lhs is a variable ref'''
+    return lhs.name == "varRef" or \
+      errors.error("Left-hand-side of inplace operation must be a variable!", line = lhs.position) # only runs if false!
+
+@operator(-100, "isum")
+def isum(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).isum(func, lhs, rhs)
+
+@operator(-100, "isub")
+def isub(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).isub(func, lhs, rhs)
+
+@operator(-100, "imul")
+def imul(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).imul(func, lhs, rhs)
+
+@operator(-100, "idiv")
+def idiv(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).idiv(func, lhs, rhs)
