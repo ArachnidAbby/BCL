@@ -19,14 +19,14 @@ class ASTNode:
     * pre_eval -- run before eval(). Often used to validate certain conditions, such as a function or variable existing, return type, etc.
     * eval -- returns ir.Instruction object or None. This is used when construction final ir code.
     '''
-    __slots__ = ('position')
+    __slots__ = ('_position')
 
     is_operator = False
     type = NodeTypes.DEFAULT
     name = "AST_NODE"
 
     def __init__(self, position: tuple[int,int, int], *args, **kwargs):
-        self.position = position        # (line#, col#)
+        self._position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
 
@@ -44,12 +44,21 @@ class ASTNode:
         '''eval step, often returns ir.Instruction'''
     
     def merge_pos(self, positions: Tuple[Tuple[int, int, int], ...]) -> tuple[int, int, int]:
-        new_pos = list(self.position)
+        new_pos = list(self._position)
         for x in positions:
-            end_pos = x[1]+x[2]
+            current_len = (new_pos[2]+new_pos[1]-1) # len of current position ptr
+            end_pos = (x[1]-current_len)+x[2]
             new_pos[2] = end_pos
         
         return tuple(new_pos)
+    
+    @property
+    def position(self) -> tuple[int, int, int]:
+        return self._position
+
+    @position.setter
+    def position(self, val):
+        self._position = val
 
 
 class ExpressionNode(ASTNode):
@@ -199,5 +208,9 @@ class KeyValuePair(ASTNode):
         self.value.eval(None)
 
         return self.value.value # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
+
+    @property
+    def position(self) -> tuple[int, int, int]:
+        return self.merge_pos([self.value.position])
         
        

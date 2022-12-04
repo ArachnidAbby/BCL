@@ -31,7 +31,7 @@ def _print_text(text):
         print(f'| {line}')
 
 def _print_raw(text):
-    '''print text with preceeding '|' regardless of line count'''
+    '''print text unless SILENT_MODE is active'''
     if SILENT_MODE:
         return
 

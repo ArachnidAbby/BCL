@@ -53,19 +53,25 @@ class VariableObj:
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
-    __slots__ = ("value", 'block', 'is_declaration', 'var_name')
+    __slots__ = ('value', 'block', 'is_declaration', 'var_name', 'explicit_typ')
     type = NodeTypes.EXPRESSION
     name = "varAssign"
 
-    def init(self, name: str, value, block):
+    def init(self, name: str, value, block, typ = Void()):
         self.var_name = name
         self.is_declaration = False
         self.value = value
         self.block = block
+        self.explicit_typ = typ!=Void
 
         if block!=None and self.var_name not in block.variables.keys():
-            block.variables[self.var_name] = VariableObj(None, Void(), False)
+            if typ.name == "literal":
+                typ.eval(None)
+                typ = typ.value
+            block.variables[self.var_name] = VariableObj(None, typ, False)
             self.is_declaration = True
+        if not self.is_declaration and self.explicit_typ:
+            error("Cannot declare the type of a variable after initial declaration", line = self.position)
         
     def pre_eval(self):
         self.value.pre_eval()

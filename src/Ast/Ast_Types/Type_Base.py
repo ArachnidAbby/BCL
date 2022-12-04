@@ -67,7 +67,7 @@ class Type:
     def put(self, func, lhs, value): error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     def assign(self, func, ptr, value, typ: Self):
-        val = self.convert_to(func, value, typ)  # type: ignore
+        val = value.ret_type.convert_to(func, value, typ)  # type: ignore
         func.builder.store(val, ptr.ptr)
 
     def isum(self, func, ptr, rhs):

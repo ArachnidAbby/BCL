@@ -39,7 +39,6 @@ class OperationNode(ExpressionNode):
         self.lhs.pre_eval()
         self.rhs.pre_eval()
         
-
         self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
         if self.ret_type!=None:
             self.ir_type = self.ret_type.ir_type

@@ -42,7 +42,7 @@ class Parser(ParserBase):
             "KEYWORD": (self.parse_type_names, self.parse_return_statement, self.parse_math, self.parse_keyword_literals,
                         self.parse_control_flow, self.parse_functions, self.parse_vars, self.parse_KV_pairs),
             "func_def_portion": (self.parse_functions, ),
-            "kv_pair": (self.parse_expr_list, ),
+            "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit),
             "expr_list": (self.parse_expr_list, ),
             "OPEN_PAREN": (self.parse_parenth, ),
             "OPEN_PAREN_USED": (self.parse_parenth, ),
@@ -320,10 +320,25 @@ class Parser(ParserBase):
             if self.peek(0).value not in self.keywords:
                 var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.blocks[-1][0])
                 self.replace(1,"expr", var)
+
+    def parse_vardecl_explicit(self):
+        '''variable declarations with explicit typing'''
+        if self.check_group(0,"kv_pair SET_VALUE expr|statement SEMI_COLON"):
+            # validate value
+            var_name = self.peek(0).value.key.var_name
+            var_typ = self.peek(0).value.value
+            if self.blocks[-1][0] == None:
+                error("Variables cannot currently be defined outside of a block", line = self.peek(0).pos)
+            elif self.simple_check(2, "statement"):
+                error("A variable's value cannot be set as a statement", line = self.peek(0).pos)
+            elif var_name in self.keywords:
+                error("A variable's name cannot be a language keyword", line = self.peek(0).pos)
+            value = self.peek(2).value
+            var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0], typ = var_typ)
+            self.replace(4,"statement", var)
     
     def parse_numbers(self):
-        '''Parse raw integers into `expr` token.'''
-
+        '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
         if self.check_group(-1,'!expr SUB|SUM expr') and isinstance(self.peek(1).value, Ast.Literal) and \
                 self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32, Ast.Ast_Types.Integer_32):

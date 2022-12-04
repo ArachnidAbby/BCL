@@ -45,9 +45,6 @@ class ArrayLiteral(ExpressionNode):
 
     def init(self, value: list[Any]):
         self.value = value
-        self.position = list(self.merge_pos(tuple([x.position for x in self.value])))
-        self.position[2] += 1
-        self.position = tuple(self.position)
         
     def pre_eval(self):
         self.value[0].pre_eval()
@@ -65,3 +62,9 @@ class ArrayLiteral(ExpressionNode):
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
+    
+    @property
+    def position(self) -> tuple[int, int, int]:
+        x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore
+        x[2] += 1
+        return tuple(x)

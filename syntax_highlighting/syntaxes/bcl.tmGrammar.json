@@ -58,7 +58,7 @@
             "name": "entity.name.function.bcl"
           },
           {
-            "match": "([\\w\\d_]+(?=\\s*\\:))",
+            "match": "(?<=([,\\(]))\\s*([\\w\\d_]+(?=\\s*\\:))",
             "name": "variable.parameter.function.bcl"
           }
         ]
@@ -108,6 +108,7 @@
 
       "constants": {
         "patterns": [
+          {"match": "\\d+((\\.\\d+f)|(\\.\\d+)|f)", "name": "constant.numeric.bcl"},
           {"match": "\\d+", "name": "constant.numeric.bcl"},
           {
             "match": "(true)|(false)|(none)",
