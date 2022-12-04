@@ -16,3 +16,6 @@ snakeviz
 ## compilation
 
 nuitka
+
+## source management
+pylint

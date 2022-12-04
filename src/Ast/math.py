@@ -1,260 +1,219 @@
 from collections import deque
+from typing import Callable, NamedTuple
 
-from Ast import Ast_Types
-from Ast.nodetypes import NodeTypes
+import errors
+from llvmlite import ir
 
 from .nodes import *
 
+ops = dict()
 
-class Operation(ExpressionNode):
+class Operation(NamedTuple):
+    operator_precendence: int
+    name: str
+    function: Callable[[ASTNode, ASTNode, Any, Any], ir.Instruction|None]
+
+    def __call__(self, pos, lhs, rhs, shunted=False):
+        return OperationNode(pos, self, lhs, rhs, shunted)
+
+class OperationNode(ExpressionNode):
     '''Operation class to define common behavior in Operations'''
-    __slots__ = ("operator_precendence", "op_type", "shunted", "children")
+    __slots__ = ("op", "shunted", "lhs", "rhs")
     is_operator = True
 
-    def init(self, children, shunted = False):
-        self.children = children
+    def init(self, op, lhs, rhs, shunted = False):
+        self.lhs     = lhs
+        self.rhs     = rhs
         self.shunted = shunted
+        self.op      = op
+
+    @property
+    def op_type(self):
+        return self.op.name
+
+    @property
+    def operator_precendence(self):
+        return self.op.operator_precendence
 
     def pre_eval(self):
-        self.children[0].pre_eval()
-        self.children[1].pre_eval()
-
-        self.ret_type = (self.children[0].ret_type).get_op_return(self.op_type, self.children[0], self.children[1])
-        if self.ret_type == None: Ast_Types.AbstractType.print_error(self.op_type, self.children[0], self.children[1])
-        self.ir_type = self.ret_type.ir_type
+        self.lhs.pre_eval()
+        self.rhs.pre_eval()
+        
+        self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
+        if self.ret_type!=None:
+            self.ir_type = self.ret_type.ir_type
     
     def eval_math(self, func, lhs, rhs):
-        pass
+        return self.op.function(self, func, lhs, rhs)
 
     def eval(self, func):
         if not self.shunted:
-            return shunt(self).eval(func) # type: ignore
+            return RPN_to_node(shunt(self)).eval(func)
         else:
             self.pre_eval()
-            # * do conversions on args
-            lhs = self.children[0]
-            rhs = self.children[1]
-            return self.eval_math(func, lhs, rhs)
-
+            return self.eval_math(func, self.lhs, self.rhs)
 
 # To any future programmers:
 #   I am sorry for this shunt() function.
-def shunt(node: Operation, op_stack = None, output_queue = None, has_parent=False) -> Operation|None:
-    '''shunt Expressions to rearrange them based on the Order of Operations'''
-
+def shunt(node: OperationNode) -> deque:
     # * create stack and queue
-    if op_stack == None:
-        op_stack = deque()
-    if output_queue==None:
-        output_queue = []
     
+    op_stack = deque()
+    output_queue = deque()
+    
+    input_queue = deque([node.rhs, node, node.lhs])
+    active_node = [node]
 
-    # * shunt thru the AST
-    input_list = [node.children[0], node, node.children[1]] # node: R,M,L
-    for item in input_list:
+    while input_queue:
+        item = input_queue.pop()
         if not item.is_operator:
             output_queue.append(item)
         if item.is_operator:
-            if item != node:
-                shunt(item, op_stack, output_queue, True)
-            if item == node:
-                while len(op_stack) > 0:
-                    x = op_stack.pop()
-                    if x[1] > item.operator_precendence:
-                        output_queue.append(x[0])
+            if item not in active_node:
+                input_queue.append(item.rhs)
+                input_queue.append(item)
+                input_queue.append(item.lhs)
+                active_node.append(item)
+                continue
+            elif item in active_node:
+                while op_stack:
+                    op = op_stack.pop()
+                    if op[1] > item.operator_precendence:
+                        output_queue.append(op[0])
                     else:
-                        op_stack.append(x)
+                        op_stack.append(op)
                         break
-                op_stack.append([item.op_type,item.operator_precendence])
+                op_stack.append((item.op_type, item.operator_precendence))
     
-    # * push remaining operators to Queue
-    while (not has_parent) and len(op_stack) > 0:
-        output_queue.append(op_stack.pop()[0])
+    # * put remaining operators onto the output queue
+    for op in op_stack:
+        output_queue.append(op[0])
 
-    # * Create new Expression AST from output Queue
-    while (not has_parent) and len(output_queue) > 1:
+    return output_queue
+
+
+def RPN_to_node(shunted_data: deque) -> OperationNode:
+    '''take RPN from shunt function and convert them into new nodes'''
+
+    op_stack = deque()
+
+    while len(shunted_data) > 1:
         stack = deque()
-        for c,x in enumerate(output_queue):
+        for c,x in enumerate(shunted_data):
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()
                 
-                p = ops[x]((-1,-1, -1), [l[0],r[0]], True)
+                p = ops[x](l[0].position, l[0],r[0], True)
     
-                output_queue.pop(c)
-                output_queue.pop(r[1])
-                output_queue.pop(l[1])
-                output_queue.insert(c-2, p)
+                del shunted_data[c]
+                del shunted_data[r[1]]
+                del shunted_data[l[1]]
+
+                shunted_data.insert(c-2, p)
                 break
             else:
-                stack.append([x,c])
+                stack.append((x,c))
     
 
-    if (not has_parent):return output_queue[0]
+    return shunted_data[0]
 
-class Sum(Operation):
-    '''Basic sum operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
+def operator(precedence: int, name: str):
+    def wrapper(func):
+        global ops
+        op = Operation(precedence, name.lower(), func)
+        ops[name.upper()] = op
+        ops[name.lower()] = op
 
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+        def new_func(self, pos, lhs, rhs, shunted=False):
+            '''changes the original function into a factory/generator for OperationNode(pos, op, ...)'''
+            return op(pos, lhs, rhs, shunted)
 
-        self.op_type = "sum"
-        self.operator_precendence = 1
-    
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type).sum(func,lhs,rhs)
+        return new_func
+    return wrapper
 
-class Sub(Operation):
-    '''Basic sub operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(1, "Sum")
+def sum(self, func, lhs, rhs):
+    return (lhs.ret_type).sum(func, lhs, rhs)
 
-        self.op_type = "sub"
-        self.operator_precendence = 1
+@operator(1, "Sub")
+def sub(self, func, lhs, rhs):
+    return (lhs.ret_type).sub(func, lhs, rhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type.value).sub(func,lhs,rhs)
+@operator(2, "Mul")
+def mul(self, func, lhs, rhs):
+    return (lhs.ret_type).mul(func, lhs, rhs)
 
-class Mul(Operation):
-    '''Basic Mul operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(2, "Div")
+def div(self, func, lhs, rhs):
+    return (lhs.ret_type).div(func, lhs, rhs)
 
-        self.op_type = "mul"
-        self.operator_precendence = 2
+@operator(2, "Mod")
+def mod(self, func, lhs, rhs):
+    return (lhs.ret_type).mod(func, lhs, rhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type).mul(func,lhs,rhs)
+# * comparators
 
-class Div(Operation):
-    '''Basic Div operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(0, "eq")
+def eq(self, func, lhs, rhs):
+    return (lhs.ret_type).eq(func, lhs, rhs)
 
-        self.op_type = "div"
-        self.operator_precendence = 2
+@operator(0, "neq")
+def neq(self, func, lhs, rhs):
+    return (lhs.ret_type).neq(func, lhs, rhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type).div(func,lhs,rhs)
+@operator(0, "le")
+def le(self, func, lhs, rhs):
+    return (lhs.ret_type).le(func, lhs, rhs)
 
-class Mod(Operation):
-    '''Basic Mod operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(0, "leq")
+def leq(self, func, lhs, rhs):
+    return (lhs.ret_type).leq(func, lhs, rhs)
 
-        self.op_type = "mod"
-        self.operator_precendence = 2
+@operator(0, "gr")
+def gr(self, func, lhs, rhs):
+    return (lhs.ret_type).gr(func, lhs, rhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type).mod(func,lhs,rhs)
+@operator(0, "geq")
+def geq(self, func, lhs, rhs):
+    return (lhs.ret_type).geq(func, lhs, rhs)
 
-class Comparators(Operation):
-    '''Basic Eq operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted", "op_name")
-    
-    def __init__(self, op_name, run_super = False, *args, **kwargs):
-        self.op_name = op_name
-        if run_super:
-            super().__init__(*args, **kwargs)
+# * boolean ops
 
-    def init(self, children, shunted = False):
-        self.shunted = shunted
-        self.op_type = self.op_name
-        self.operator_precendence = 0
-        self.children = children
-    
-    def __call__(self, pos, children, *args, **kwargs):
-        return Comparators(self.op_name, True, *([pos, children] + list(args)), **kwargs)
-        
-    def eval_math(self, func, lhs, rhs):
-        # * do conversions on args
-        match self.op_name:
-            case 'eq':
-                return (lhs.ret_type).eq(func,lhs,rhs)
-            case 'neq':
-                return (lhs.ret_type).neq(func,lhs,rhs)
-            case 'geq':
-                return (lhs.ret_type).geq(func,lhs,rhs)
-            case 'leq':
-                return (lhs.ret_type).leq(func,lhs,rhs)
-            case 'le':
-                return (lhs.ret_type).le(func,lhs,rhs)
-            case 'gr':
-                return (lhs.ret_type).gr(func,lhs,rhs)
+@operator(-3, "or")
+def _or(self, func, lhs, rhs):
+    return (lhs.ret_type)._or(func, lhs, rhs)
 
-class And(Operation):
-    '''Basic And operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(-2, "and")
+def _and(self, func, lhs, rhs):
+    return (lhs.ret_type)._and(func, lhs, rhs)
 
-        self.op_type = "and"
-        self.operator_precendence = -2
+@operator(-1, "not")
+def _not(self, func, lhs, rhs):
+    return (lhs.ret_type)._not(func, lhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type)._and(func,lhs,rhs)
-    
-class Or(Operation):
-    '''Basic And operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+# * Inplace ops (-100 used as precedence to ensure that it is ALWAYS the last operation)
 
-        self.op_type = "or"
-        self.operator_precendence = -3
+def check_valid_inplace(lhs) -> bool:
+    '''check if lhs is a variable ref'''
+    return lhs.name == "varRef" or \
+      errors.error("Left-hand-side of inplace operation must be a variable!", line = lhs.position) # only runs if false!
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type)._or(func,lhs,rhs)
+@operator(-100, "isum")
+def isum(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).isum(func, lhs, rhs)
 
-class Not(Operation):
-    '''Basic And operation. It acts as an `expr`'''
-    __slots__ = ("ir_type", "operator_precendence", "op_type", "shunted")
-    
-    def init(self, children, shunted = False):
-        super().init(children, shunted=shunted)
+@operator(-100, "isub")
+def isub(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).isub(func, lhs, rhs)
 
-        self.op_type = "not"
-        self.operator_precendence = -1
-        self.children[0] = Ast_Types.Void(self.position, None)
+@operator(-100, "imul")
+def imul(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).imul(func, lhs, rhs)
 
-    def eval_math(self, func, lhs, rhs):
-        return (lhs.ret_type)._not(func,rhs)
-
-
-ops = {
-    "sum": Sum,
-    "SUM": Sum,
-    "sub": Sub,
-    "SUB": Sub,
-    "mul": Mul,
-    "MUL": Mul,
-    "div": Div,
-    "DIV": Div,
-    "mod": Mod,
-    "MOD": Mod,
-    "eq": Comparators('eq'),
-    "EQ": Comparators('eq'),
-    "neq": Comparators('neq'),
-    "NEQ": Comparators('neq'),
-    "geq": Comparators('geq'),
-    "GEQ": Comparators('geq'),
-    "leq": Comparators('leq'),
-    "LEQ": Comparators('leq'),
-    "le": Comparators('le'),
-    "LE": Comparators('le'),
-    "gr": Comparators('gr'),
-    "GR": Comparators('gr'),
-    'and': And,
-    'or': Or,
-    'not': Not
-}
+@operator(-100, "idiv")
+def idiv(self, func, lhs, rhs):
+    check_valid_inplace(lhs)
+    return (lhs.ret_type).idiv(func, lhs, rhs)

@@ -10,8 +10,11 @@ This is a list of all standardized functions and what they do.
     * - function
       - description
     
-    * - println(T)
+    * - println(Any)
       - Prints to the standard output.
     
-    * - print(T)
+    * - print(Any)
       - Prints to the standard output
+
+    * - exit(i32)
+      - exits the application early. :code:`exit(1)` is used for an early exit in case of an exception at runtime.

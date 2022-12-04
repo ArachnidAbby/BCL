@@ -1,9 +1,9 @@
+'''All AST nodes related to functions.'''
 from typing import Any, Callable, Optional
 
 import errors
 from llvmlite import ir
 
-from Ast.Ast_Types.Type_Base import types_dict
 from Ast.nodetypes import NodeTypes
 
 from . import Ast_Types
@@ -49,17 +49,21 @@ class _Function:
 
 def internal_function(name: str, ret_type: Any,
                       arg_types: tuple, *,
-                      container=functions):
+                      container=None):
     '''decorator to create internal functions'''
+    if container is None:
+        container = functions
     def wrapper(func):
         if name not in container:
-            container[name] = dict()
-        container[name][arg_types] = _Function(_Function.BEHAVIOR_INTERNAL, name, func, ret_type, arg_types)
+            container[name] = {}
+        container[name][arg_types] = \
+            _Function(_Function.BEHAVIOR_INTERNAL, name, func, ret_type, arg_types)
 
         def call(ast_func, args: tuple) -> Optional[ir.Instruction]:
             # warning does not display in `_Function(...).call(...)`
-            errors.developer_warning("You should not call internal functions via python __call__ convention.\
-                                      \ntip: @internal_function indicates use inside of BCL code")
+            errors.developer_warning("You should not call internal functions \
+                via python __call__ convention.\ntip: @internal_function indicates \
+                use inside of BCL code")
             return func(ast_func, args)
 
         return call
@@ -69,17 +73,21 @@ def internal_function(name: str, ret_type: Any,
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set', 'args_types', 'ret_type')
+    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set',
+                'args_types', 'ret_type', "has_return", "inside_loop", "func_name")
     type = NodeTypes.STATEMENT
+    name = "funcDef"
 
     def init(self, name: str, args: ParenthBlock, block: Block, module):
-        self.name = name
+        self.func_name = name
         self.ret_type = Ast_Types.Void()
 
         self.builder = None
         self.block = block
         self.module = module
         self.is_ret_set = False
+        self.has_return = False
+        self.inside_loop = None
 
         self._validate(args) # validate arguments
 
@@ -87,7 +95,7 @@ class FunctionDef(ASTNode):
         self.args = dict()
         self.args_ir = list()
         self.args_types = list()
-
+        
         for arg in args:
             self.args[arg.key] = [None, arg.value, True]
             self.args_ir.append(arg.get_type().ir_type)
@@ -99,35 +107,42 @@ class FunctionDef(ASTNode):
     def _validate(self, args):
         '''Validate that all args are syntactically valid'''
         if not args.is_key_value_pairs():
-            errors.error(f"Function {self.name}'s argument tuple consists of non KV_pairs", line = self.position)
+            errors.error(f"Function {self.func_name}'s argument tuple consists of non KV_pairs", line = self.position)
 
         for x in args:
             if not x.keywords:
-                errors.error(f"Function {self.name}'s argument tuple can only consist of Keyword pairs\
-                               \n\t invalid pair \
-                               '{x.key}: {x.value}'", 
+                errors.error(f"Function {self.func_name}'s argument tuple can only consist of Keyword pairs\
+                               \n\t invalid pair:    '{x.key}: {x.value}'\n", 
                                line = self.position)
 
     def pre_eval(self):
+        if self.is_ret_set:
+            self.ret_type.eval(self)
+            self.ret_type = self.ret_type.ret_type
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         global functions
 
-        if self.name not in functions:
-            functions[self.name] = dict()
+        if self.func_name not in functions:
+            functions[self.func_name] = dict()
 
-        name = f"{self.name}.{len(functions[self.name].keys())}" if self.name!="main" else self.name # avoid name collisions by adding a # to the end of the function name
+        if self.func_name!="main":
+            # avoid name collisions by adding a # to the end of the function name
+            name = f"{self.func_name}.{len(functions[self.func_name].keys())}"
+        else:
+            name =  self.func_name 
 
-        self.function_ir = ir.Function(self.module, fnty, name=name)
+        self.function_ir = ir.Function(self.module.module, fnty, name=name)
         
-        functions[self.name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
-                                                          self.name, self.function_ir,
+        functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
+                                                          self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
 
     def eval(self):
         self.block.pre_eval()
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
+        self.function_ir.attributes.add("nounwind")
 
         args = self.function_ir.args
         
@@ -139,6 +154,8 @@ class FunctionDef(ASTNode):
         
         if self.ret_type.is_void():
             self.builder.ret_void()
+        elif not self.has_return:
+            errors.error(f"Function '{self.func_name}' has no guaranteed return! Ensure that at least 1 return statement is reachable!")
 
 class ReturnStatement(ASTNode):
     __slots__ = ('expr')
@@ -153,23 +170,24 @@ class ReturnStatement(ASTNode):
 
     def eval(self, func):
         self.expr.pre_eval()
+        func.has_return = True
         if self.expr.ret_type != func.ret_type:
             errors.error(
-                f"Funtion, \"{func.name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
+                f"Funtion, \"{func.func_name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
                 line = self.position
             )
 
         if func.ret_type.is_void():
             func.builder.ret_void()
             return None
-
         func.builder.ret(self.expr.eval(func))
 class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''
-    __slots__ = ('ir_type', 'paren', 'function', 'args_types')
+    __slots__ = ('ir_type', 'paren', 'function', 'args_types', "func_name")
+    name = "funcCall"
     
     def init(self, name: str, parenth: ParenthBlock):
-        self.name = name
+        self.func_name = name
         self.ret_type = Ast_Types.Void()
 
         self.paren = parenth
@@ -178,13 +196,13 @@ class FunctionCall(ExpressionNode):
         self.paren.pre_eval()
 
         self.args_types = tuple([x.ret_type for x in self.paren])
-        if self.name not in functions \
-            or self.args_types not in functions[self.name]:
-            errors.error(f"function '{self.name}{self.args_types}' was never defined", line = self.position)
+        if self.func_name not in functions \
+            or self.args_types not in functions[self.func_name]:
+            errors.error(f"function '{self.func_name}{self.args_types}' was never defined", line = self.position)
         
-        self.ret_type = functions[self.name][self.args_types].ret_type
+        self.ret_type = functions[self.func_name][self.args_types].ret_type
         self.ir_type = (self.ret_type).ir_type
-        self.function = functions[self.name][self.args_types]
+        self.function = functions[self.func_name][self.args_types]
     
     def eval(self, func):
         x = self.paren.eval(func)

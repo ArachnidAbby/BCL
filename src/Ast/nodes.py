@@ -1,3 +1,6 @@
+'''Define basic classes for nodes. These are the most basic nodes such as the ASTNode baseclass.'''
+
+from collections import deque
 from typing import Any, Iterator, Self, Tuple
 
 from errors import error
@@ -8,30 +11,54 @@ from . import Ast_Types
 
 
 class ASTNode:
-    '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.'''
-    __slots__ = ('name', 'position')
+    '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.
+     
+    Methods required for classes inheriting this class:
+    ====================================================
+    * init -- method run uppon instantiation. This can take any # of args and kwargs
+    * pre_eval -- run before eval(). Often used to validate certain conditions, such as a function or variable existing, return type, etc.
+    * eval -- returns ir.Instruction object or None. This is used when construction final ir code.
+    '''
+    __slots__ = ('_position')
+
     is_operator = False
     type = NodeTypes.DEFAULT
+    name = "AST_NODE"
 
-    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
-        #self.type = ""
-        #self.name = ""
-        self.position = position        # (line#, col#)
+    def __init__(self, position: tuple[int,int, int], *args, **kwargs):
+        self._position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
 
     def is_expression(self):
+        '''check whether or not a node is an expression'''
         return self.type==NodeTypes.EXPRESSION
-    
-    def init(self):
-        pass
+
+    def init(self, *args):
+        '''initialize the node'''
 
     def pre_eval(self):
-        '''pre evaluation step that will likely be to determine ret_type of nodes that don't have a definite return type'''
-        pass
+        '''pre eval step that is usually used to validate the contents of a node'''
 
     def eval(self, func):
-        pass
+        '''eval step, often returns ir.Instruction'''
+    
+    def merge_pos(self, positions: Tuple[Tuple[int, int, int], ...]) -> tuple[int, int, int]:
+        new_pos = list(self._position)
+        for x in positions:
+            current_len = (new_pos[2]+new_pos[1]-1) # len of current position ptr
+            end_pos = (x[1]-current_len)+x[2]
+            new_pos[2] = end_pos
+        
+        return tuple(new_pos)
+    
+    @property
+    def position(self) -> tuple[int, int, int]:
+        return self._position
+
+    @position.setter
+    def position(self, val):
+        self._position = val
 
 
 class ExpressionNode(ASTNode):
@@ -40,29 +67,31 @@ class ExpressionNode(ASTNode):
     type = NodeTypes.EXPRESSION
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
-        #self.name = ""
-        self.ret_type = Ast_Types.AbstractType()
-        self.position = position        # (line#, col#)
+        super().__init__(position, *args, **kwargs)
+        self.ret_type = Ast_Types.Type()
+        self._position = position        # (line#, col#)
 
         self.init(*args, **kwargs)
     
     # todo: implement this functionality
     def __getitem__(self, name):
         '''get functionality from type (example: operators) automatically'''
-        pass
 
 class ContainerNode(ASTNode):
-    '''A node consistening of other nodes. Containers do not directly do operations on these nodes'''
+    '''A node consistening of other nodes.
+    Containers do not directly do operations on these nodes
+    '''
     __slots__ = ("children", )
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
-        self.children = list()
+        self.children = []
         super().__init__(position, *args, **kwargs)
 
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
 
-    def append_child(self, child: ASTNode|Self):
+    def append_child(self, child: ASTNode):
+        '''append child to container.'''
         self.children.append(child)
 
     def append_children(self, child: ASTNode|Self):
@@ -75,77 +104,50 @@ class ContainerNode(ASTNode):
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder')
+    __slots__ = ('variables', 'builder', 'last_instruction', 'ended')
     type = NodeTypes.BLOCK
     name = "Block"
 
+    BLOCK_STACK = deque()
+
     def init(self):
-        self.variables = dict() # {name: VarObj, ...}
+        self.variables = {} # {name: VarObj, ...}
         self.builder = None
+        self.last_instruction = False
+        self.ended = False
     
     def pre_eval(self):
         for x in self.children:
             x.pre_eval()
     
     def eval(self, func):
-        for x in self.children:
+        self.BLOCK_STACK.append(self)
+        for x in self.children[0:-1]:
             x.eval(func)
-
-    # def append_child(self, child: ASTNode):
-    #     self.children.append(child)
+            if func.has_return or self.ended:
+                return
+        self.last_instruction = func.ret_type.name!="void"
+        self.children[-1].eval(func)
+        self.BLOCK_STACK.pop()
 
     def get_variable(self, var_name: str):
         '''get variable by name'''
         return self.variables[var_name]
 
     def validate_variable(self, var_name: str) -> bool:
-        '''Return if a variable already has a ptr'''
-        return self.variables[var_name].ptr!=None
-
-class StatementList(ContainerNode):
-    __slots__ = ('children',)
-    type = NodeTypes.STATEMENTLIST
-    name = "StatementList"
-
-    def init(self):
-        self.children = list()
-
-    # def append_child(self, child: ASTNode):
-    #     if isinstance(child, StatementList):
-    #         self.children+=child.children
-    #     else:
-    #         self.children.append(child)
-
-    def pre_eval(self):
-        for x in self.children:
-            x.pre_eval()
+        '''Return true if a variable already has a ptr'''
+        return self.variables[var_name].ptr is not None
     
-    def eval(self, func):
-        for x in self.children:
-            x.eval(func)
-
-class ExpressionList(ContainerNode):
-    __slots__ = tuple()
-    type = NodeTypes.STATEMENTLIST
-
-    def init(self):
-        self.name = "StatementList"
-
-    def pre_eval(self):
-        for x in self.children:
-            x.pre_eval()
-    
-    def eval(self, func):
-        for x in self.children:
-            x.eval(func)
+    def validate_variable_exists(self, var_name: str) -> bool:
+        return var_name in self.variables.keys()
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ir_type', 'ret_type')
     type = NodeTypes.EXPRESSION
+    name = "Parenth"
 
     def init(self):
-        self.name = "Parenth"
         self.ir_type = Ast_Types.Void()
         
     def pre_eval(self):
@@ -162,6 +164,7 @@ class ParenthBlock(ContainerNode):
     
     def is_key_value_pairs(self) -> bool:
         '''check if all children are `KV_pair`s, this is useful for func definitions'''
+        # print(self.children)
         for x in self.children:
             if not isinstance(x, KeyValuePair):
                 return False
@@ -169,8 +172,6 @@ class ParenthBlock(ContainerNode):
 
     def append_child(self, child: ASTNode):
         self.children.append(child)
-        # if isinstance(child, str):
-        #     error(f"Variable '{child}' not defined.", line = child.position)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
     
     def eval(self, func):
@@ -186,23 +187,30 @@ class ParenthBlock(ContainerNode):
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value', 'keywords')
-    type = 'kv pair'
+    type = NodeTypes.KV_PAIR
+    name = "kv_pair"
 
     def init(self, k, v, keywords = False):
-        self.name = "kv_pair"
         self.keywords = keywords
 
         self.key = k
         self.value = v
     
     def validate_type(self) -> str:        
-        if self.value not in Ast_Types.Type_Base.types_dict:  # type: ignore
-            error(f"unknown type '{self.value}'", line = self.position)
+        # if self.value not in Ast_Types.Type_Base.types_dict:  # type: ignore
+        #     error(f"unknown type '{self.value}'", line = self.position)
+        self.value.eval(None)
         
-        return self.value
+        return self.value.value
 
     def get_type(self) -> Any:
         '''Get and validate type'''
-        return Ast_Types.Type_Base.types_dict[self.validate_type()]() # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
+        self.value.eval(None)
+
+        return self.value.value # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
+
+    @property
+    def position(self) -> tuple[int, int, int]:
+        return self.merge_pos([self.value.position])
         
        

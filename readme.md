@@ -35,7 +35,7 @@ define is_multiple(value: i32, divider: i32) -> bool {
 
 # State of the language
 
-The language is *not* fit for production use. It is missing a very large number of features.
+The language is *not* fit for production use. It is missing a very large number of features. Although, it is turing-complete.
 
 ## Features
 
@@ -49,9 +49,9 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] if and else statements
 - [x] while loops
 - [x] floats
-- [ ] variable type declaration
-- [ ] variable assignment-operators (`+=`, `-=`, etc)
-- [ ] Lists
+- [x] variable type declaration
+- [x] variable assignment-operators (`+=`, `-=`, etc)
+- [x] Arrays
 - [ ] for-loops
 - [ ] pointers/references
 - [ ] `const`ants

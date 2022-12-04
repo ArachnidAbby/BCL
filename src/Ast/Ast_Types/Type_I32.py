@@ -6,7 +6,7 @@ from llvmlite import ir
 from . import Type_Base
 
 
-class Integer_32(Type_Base.AbstractType):
+class Integer_32(Type_Base.Type):
     __slots__ = tuple()
 
     ir_type = ir.IntType(32)
@@ -14,7 +14,7 @@ class Integer_32(Type_Base.AbstractType):
 
     @classmethod
     def convert_from(cls, func, typ, previous):
-        if typ.name in ('f64', 'f128'): return func.builder.fptosi(previous.eval(),Integer_32.ir_type)
+        if typ.name in ('f32', 'f64'): return func.builder.fptosi(previous.eval(),Integer_32.ir_type)
         elif typ.name == 'bool': return func.builder.zext(previous.eval(), Integer_32.ir_type)
         elif typ.name == 'i64': return func.builder.trunc(previous.eval(), Integer_32.ir_type)
         elif typ.name == 'i32': return previous.eval()
@@ -27,8 +27,8 @@ class Integer_32(Type_Base.AbstractType):
             case 'i32': return orig.eval(func)
             case 'bool': return func.builder.trunc(orig.eval(func), ir.IntType(1))
             case 'i64': return func.builder.zext(orig.eval(func), ir.IntType(64))
-            case 'f64': return func.builder.sitofp(orig.eval(func), ir.FloatType())
-            case 'f128': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
+            case 'f32': return func.builder.sitofp(orig.eval(func), ir.FloatType())
+            case 'f64': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
         
         error(f"Cannot convert 'i32' to type '{typ}'", line = orig.position)
 

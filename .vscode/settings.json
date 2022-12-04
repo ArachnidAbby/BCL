@@ -8,6 +8,9 @@
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.lintOnSave": true,
+    "python.linting.pylintArgs": ["--ignore-arguments-differ"],
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.organizeImports": true

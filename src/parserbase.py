@@ -1,7 +1,7 @@
 from typing import Any, Callable, NamedTuple
 
 import Ast
-from errors import error
+import errors
 
 
 class ParserToken(NamedTuple):
@@ -17,7 +17,7 @@ class ParserToken(NamedTuple):
         return self.source_pos
         
 class ParserBase:
-    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min')
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
@@ -29,7 +29,42 @@ class ParserBase:
         self.module   = module
         self.do_move   = True
         self.start_min = 0
+        self.parsing_functions = {}
     
+    def parse(self, close_condition: Callable[[],bool]=lambda: False):
+        '''Parser main'''
+        previous_start_position = self.start
+        self.start = self._cursor   # where to reset cursor after consuming tokens.
+        iters = 0
+        while (not self.isEOF(self._cursor)): # and (not close_condition()):
+            # * code for debugging. Use if needed
+            # print(self._cursor)
+            # print(',\n'.join([f'{x.name}||{x.value}' for x in self._tokens]))
+            # print()
+            # * end of debug code
+            token_name = self.peek(0).name
+            if token_name not in self.parsing_functions.keys(): # skip tokens if possible
+                self.move_cursor()
+                continue
+
+            for func in self.parsing_functions[token_name]:
+                func()
+                if not self.do_move:
+                    break
+            
+
+            self.move_cursor()
+            iters+=1
+
+        errors.developer_info(f"iters: {iters}")
+        self.start = previous_start_position
+
+        self.post_parse()
+
+        return self._tokens
+
+    def post_parse(self):
+        '''steps that happen after parsing has finished. Used to check for syntax errors, give warnings, etc.'''
     
     def isEOF(self, index: int=0) -> bool:
         '''Checks if the End-Of-File has been reached'''
@@ -51,7 +86,6 @@ class ParserBase:
     def _consume(self, index: int=0, amount: int=1):
         '''consume specific amount of tokens but don't reset cursor position'''
         index = self._cursor+index
-
         del self._tokens[index : index+amount]
 
     # todo: make this just use positional arguments for the amount.
@@ -111,8 +145,42 @@ class ParserBase:
         for c,x in enumerate(tokens):
             if not self.check(c+start_index,x):
                 return False
-
+                
         return True
+    
+    def check_group_lookahead(self, start_index: int, wanting: str) -> bool:
+        '''check a group of tokens in a string seperated by spaces. This version has lookahead'''
+        worked = self.check_group(start_index, wanting)
+        if not worked:
+            return False
+
+        tokens = wanting.split(' ')
+        tmp = self._cursor 
+        st_tmp = self.start
+        self._cursor += start_index+len(tokens)-1
+        self.start = self._cursor
+        
+        while not self.isEOF():
+            token_name = self.peek(0).name
+
+            if token_name not in self.parsing_functions.keys(): # skip tokens if possible
+                self.move_cursor()
+                continue
+        
+            if self.peek(1).name=="SEMI_COLON" and token_name=="expr":
+                break
+
+            for func in self.parsing_functions[token_name]:
+                func()
+                if not self.do_move:
+                    break
+            self.move_cursor()
+
+        self._cursor = tmp
+        self.start = st_tmp
+        self.do_move = True
+  
+        return self.check_group(start_index, wanting)
 
     def check_simple_group(self, start_index: int, wanting: str) -> bool:
         '''check a group of tokens in a string seperated by spaces. (unformatted)'''
@@ -126,3 +194,14 @@ class ParserBase:
                 return False
 
         return True
+
+    def match_multiple(self, start: int):
+        end = self._cursor
+        end_node = self.peek(0)
+        self._cursor = start+1
+        
+        while not self.isEOF() and self._tokens[self._cursor]!=end_node:
+            yield
+            self.move_cursor()
+
+        self._cursor = start

@@ -1,7 +1,7 @@
 from Ast import Ast_Types
 from Ast.nodetypes import NodeTypes
 
-from .nodes import ASTNode
+from .nodes import ASTNode, Block
 
 
 class IfStatement(ASTNode):
@@ -9,10 +9,9 @@ class IfStatement(ASTNode):
 
     __slots__ = ('cond', 'block')
     type = NodeTypes.STATEMENT
+    name = "If"
 
     def init(self, cond: ASTNode, block: ASTNode):
-        self.name = "If"
-
         self.cond = cond
         self.block = block
     
@@ -22,17 +21,22 @@ class IfStatement(ASTNode):
     
     def eval(self, func):
         cond = self.cond.eval(func)
+        bfor = func.has_return
+        
         with func.builder.if_then(cond) as if_block:
             self.block.eval(func)
+            func.has_return = bfor
+        
+        if func.block.last_instruction:
+            func.builder.unreachable()
 
 class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
     type = NodeTypes.STATEMENT
+    name = "IfElse"
 
     def init(self, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
-        self.name = "IfElse"
-
         self.cond = cond
         self.if_block = if_block
         self.else_block = else_block
@@ -41,12 +45,35 @@ class IfElseStatement(ASTNode):
         self.cond.pre_eval()
         self.if_block.pre_eval()
         self.else_block.pre_eval()
+    
+    def iter_block_or_stmt(self, obj):
+        if self.if_block.name == "Block":
+            return self.iter_block(obj)
+        
+        return self.iter_stmt(obj)
+
+    def iter_stmt(self, obj):
+        yield obj
+    
+    def iter_block(self, obj):
+        Block.BLOCK_STACK.append(obj)
+        yield from obj.children
+        Block.BLOCK_STACK.pop()
 
     def eval(self, func):
         cond = self.cond.eval(func)
+        bfor = func.has_return
         with func.builder.if_else(cond) as (if_block, else_block):
             with if_block:
-                self.if_block.eval(func)
+                for node in self.iter_block_or_stmt(self.if_block):
+                    node.eval(func)
+                    if node.name == "return":
+                        func.has_return = bfor
             with else_block:
+                if self.else_block.name in ("If", "IfElse"):
+                    func.has_return = bfor
                 self.else_block.eval(func)
+
+        if func.block.last_instruction:
+            func.builder.unreachable()
         

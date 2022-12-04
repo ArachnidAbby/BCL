@@ -1,0 +1,5 @@
+# BCL ignored files
+lib/
+target/
+
+# other files
