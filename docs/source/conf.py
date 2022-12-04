@@ -12,6 +12,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('.'))
 
 
@@ -53,9 +54,21 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_logo = "_static/experimental_BCL_LOGO.png"
 
 from pygments.lexer import RegexLexer
 from pygments.token import *
+
+html_sidebars = {
+    '**': [
+        'globaltoc.html',
+    ]
+}
+
+html_theme_options = {
+    "home_page_in_toc": True
+}
+
 
 class BCLLexer(RegexLexer):
     name = 'bcl'
@@ -63,12 +76,17 @@ class BCLLexer(RegexLexer):
     filenames = ['*.bcl']
     tokens = {
         'root': [
-            (r'[^\S\n]+', Whitespace),
+            (r'[\s\n]+', Whitespace),
             (r'(["\'])(?:(?=(\\?))\2.)*?\1',String.Double),
+            (r'\d+', Number),
             (r'(if)|(elif)|(else)|(define)', Keyword.Reserved),
-            (r'[\{\};\(\)]',Punctuation),
+            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|(char)|(string)|(str)', Keyword.Type),
+            (r'\s+(or)|(and)|(not)|(in)\s+', Operator),
+            (r'(\=)|(\+)|(\-)|(\*)|(\\)|(\%)', Operator),
+            (r'[\{\};\(\)\:\[\]\,]',Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
             (r'//.*$', Comment.Single),
+            (r'\w[\w\d]*', Name.Other)
         ]
     }
 

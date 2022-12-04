@@ -1,24 +1,26 @@
 define main() {
-    x = 6;
-    test = [0,0,0,0];
-    println(test[x]);
-    test[x] = 8;
-    i = 0;
+    // x = 6;
+    // test = [0,0,0,0];
+    // println(test[x]);
+    // test[x] = 8;
+    i: i32 = 0;
     loop_amount = 200;
     while i < loop_amount {
-        i = i+1;
+        i += 1;
         fizz = is_multiple(i, 3);
         buzz = is_multiple(i, 5)*2;
         println(fizz + buzz);
     }
-    exit(1);
-    println(9849494);
+    print(0);
+    println(10);
+    // exit(1);
+    // println(9849494);
 }
 
 define is_multiple(value: i32, divider: i32) -> bool {
     return (value % divider) == 0;
 }
 
-define test(x: i32[3]) -> i32[3] {
-    return x;
-}
+// define test(x: i32[3]) -> i32[3] {
+//     return x;
+// }

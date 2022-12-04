@@ -11,6 +11,7 @@ Welcome to BCL's documentation!
    :caption: Contents:
 
    features/index.rst
+   features/future/index.rst
 
 
 
