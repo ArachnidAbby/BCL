@@ -14,31 +14,7 @@ define main() {
         while x<10 {
             y = 0;
             while y<10 {
-                neighbors = 0;
-                if x>0 {
-                    neighbors+=board[x-1][y];
-                    if y>0 {
-                        neighbors+=board[x-1][y-1];
-                    }
-                    if y<9 {
-                        neighbors+=board[x-1][y+1];
-                    }
-                }
-                if y>0 {
-                    neighbors+=board[x][y-1];
-                }
-                if y<9 {
-                    neighbors+=board[x][y+1];
-                }
-                if x<9 {
-                    neighbors+=board[x+1][y];
-                    if y>0 {
-                        neighbors+=board[x+1][y-1];
-                    }
-                    if y<9 {
-                        neighbors+=board[x+1][y+1];
-                    }
-                }
+                neighbors = check_neighbors(board, x, y);
                 new_board[x][y] = board[x][y];
                 if board[x][y] {
                     if neighbors != 2 and neighbors != 3 {
@@ -58,6 +34,38 @@ define main() {
         i+=1;
     }
 
+}
+
+define check_row_neighbors(board1: bool[10], y: i32) -> i32 {
+    board = board1;
+    neighbors = 0;
+    neighbors+=board[y];
+    if y>0 {
+        neighbors+=board[y-1];
+    }
+    if y<9 {
+        neighbors+=board[y+1];
+    }
+    return neighbors;
+}
+
+define check_neighbors(board1: bool[10][10], x: i32, y:i32) -> i32 {
+    board = board1;
+    neighbors = 0;
+    if x>0 {
+        t = check_row_neighbors(board[x-1], y);
+        neighbors += t;
+    }
+    
+    t = check_row_neighbors(board[x], y) - board[x][y];
+    neighbors += t;
+
+    if x<9 {
+        t = check_row_neighbors(board[x+1], y);
+        neighbors += t;
+    }
+
+    return neighbors;
 }
 
 define draw_row(row1: bool[10]) {
