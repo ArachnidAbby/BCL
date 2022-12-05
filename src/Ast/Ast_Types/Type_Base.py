@@ -71,26 +71,22 @@ class Type:
         func.builder.store(val, ptr.ptr)
 
     def isum(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.sum(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
     
     def isub(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.sub(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
     
     def imul(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.mul(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
     
     def idiv(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.div(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)

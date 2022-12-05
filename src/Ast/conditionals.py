@@ -15,9 +15,9 @@ class IfStatement(ASTNode):
         self.cond = cond
         self.block = block
     
-    def pre_eval(self):
-        self.cond.pre_eval()
-        self.block.pre_eval()
+    def pre_eval(self, func):
+        self.cond.pre_eval(func)
+        self.block.pre_eval(func)
     
     def eval(self, func):
         cond = self.cond.eval(func)
@@ -41,10 +41,10 @@ class IfElseStatement(ASTNode):
         self.if_block = if_block
         self.else_block = else_block
     
-    def pre_eval(self):
-        self.cond.pre_eval()
-        self.if_block.pre_eval()
-        self.else_block.pre_eval()
+    def pre_eval(self, func):
+        self.cond.pre_eval(func)
+        self.if_block.pre_eval(func)
+        self.else_block.pre_eval(func)
     
     def iter_block_or_stmt(self, obj):
         if self.if_block.name == "Block":

@@ -19,6 +19,9 @@ class Literal(ExpressionNode):
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
+    
+    def __str__(self) -> str:
+        return str(self.value)
 
 class TypeRefLiteral(ExpressionNode):
     __slots__ = ('value')
@@ -45,12 +48,12 @@ class ArrayLiteral(ExpressionNode):
     def init(self, value: list[Any]):
         self.value = value
         
-    def pre_eval(self):
-        self.value[0].pre_eval()
+    def pre_eval(self, func):
+        self.value[0].pre_eval(func)
         typ = self.value[0].ret_type
 
         for x in self.value:
-            x.pre_eval()
+            x.pre_eval(func)
             if x.ret_type!=typ:
                 errors.error(f"Invalid type '{x.ret_type}' in a list of type '{typ}'", line = x.position)
             
@@ -75,14 +78,14 @@ class StrLiteral(ExpressionNode):
     def init(self, value: str):
         self.value = value
         
-    def pre_eval(self):
+    def pre_eval(self, func):
         array_size  = Literal((-1,-1,-1), len(self.value), Ast_Types.Integer_32)
         self.ret_type = Ast_Types.StringLiteral(array_size)
         self.ir_type = self.ret_type.ir_type
 
     def eval(self, func) -> ir.Constant:
-        const = ir.Constant(ir.ArrayType(ir.IntType(8), len(self.value)),
-        bytearray(self.value.encode("utf8")))
-        ptr = func.builder.alloca(ir.ArrayType(ir.IntType(8), len(self.value)))
+        const = ir.Constant(ir.ArrayType(ir.IntType(8), len(self.value.encode("utf-8"))),
+        bytearray(self.value.encode("utf-8")))
+        ptr = func.builder.alloca(ir.ArrayType(ir.IntType(8), len(self.value.encode("utf-8"))))
         func.builder.store(const, ptr)
         return ptr

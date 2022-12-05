@@ -37,7 +37,7 @@ class ASTNode:
     def init(self, *args):
         '''initialize the node'''
 
-    def pre_eval(self):
+    def pre_eval(self, func):
         '''pre eval step that is usually used to validate the contents of a node'''
 
     def eval(self, func):
@@ -116,9 +116,9 @@ class Block(ContainerNode):
         self.last_instruction = False
         self.ended = False
     
-    def pre_eval(self):
+    def pre_eval(self, func):
         for x in self.children:
-            x.pre_eval()
+            x.pre_eval(func)
     
     def eval(self, func):
         self.BLOCK_STACK.append(self)
@@ -150,9 +150,9 @@ class ParenthBlock(ContainerNode):
     def init(self):
         self.ir_type = Ast_Types.Void()
         
-    def pre_eval(self):
+    def pre_eval(self, func):
         for x in self.children:
-            x.pre_eval()
+            x.pre_eval(func)
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()

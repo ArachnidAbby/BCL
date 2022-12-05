@@ -74,7 +74,7 @@ def internal_function(name: str, ret_type: Any,
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set',
-                'args_types', 'ret_type', "has_return", "inside_loop", "func_name")
+                'args_types', 'ret_type', "has_return", "inside_loop", "func_name", "variables")
     type = NodeTypes.STATEMENT
     name = "funcDef"
 
@@ -88,6 +88,7 @@ class FunctionDef(ASTNode):
         self.is_ret_set = False
         self.has_return = False
         self.inside_loop = None
+        self.variables: list[tuple] = []
 
         self._validate(args) # validate arguments
 
@@ -138,11 +139,16 @@ class FunctionDef(ASTNode):
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
 
+    def alloc_stack(self):
+        for x in self.variables:
+            x[0].define(self, x[1])
+
     def eval(self):
-        self.block.pre_eval()
+        self.block.pre_eval(self)
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
         self.function_ir.attributes.add("nounwind")
+        self.alloc_stack()
 
         args = self.function_ir.args
         
@@ -165,11 +171,11 @@ class ReturnStatement(ASTNode):
     def init(self, expr):
         self.expr = expr
 
-    def pre_eval(self):
+    def pre_eval(self, func):
         pass
 
     def eval(self, func):
-        self.expr.pre_eval()
+        self.expr.pre_eval(func)
         func.has_return = True
         if self.expr.ret_type != func.ret_type:
             errors.error(
@@ -192,8 +198,8 @@ class FunctionCall(ExpressionNode):
 
         self.paren = parenth
     
-    def pre_eval(self):
-        self.paren.pre_eval()
+    def pre_eval(self, func):
+        self.paren.pre_eval(func)
 
         self.args_types = tuple([x.ret_type for x in self.paren])
         if self.func_name not in functions \

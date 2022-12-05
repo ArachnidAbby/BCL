@@ -11,7 +11,7 @@ ZERO_CONST = ir.Constant(ir.IntType(64), 0)
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
-    __slots__ = ("ptr", "type", "is_constant", "prev_load", "changed")
+    __slots__ = ("ptr", "type", "is_constant")
 
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
@@ -19,8 +19,6 @@ class VariableObj:
         if isinstance(typ, str):
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
-        self.changed = False
-        self.prev_load = None # prevents multiple loads from memory when zero changes have happened
 
     @property
     def ret_type(self):
@@ -33,18 +31,12 @@ class VariableObj:
         return ptr
     
     def store(self, func, value):
-        self.changed = True
         self.type.assign(func, self, value, self.type)
         # func.builder.store(value.eval(func), self.ptr)
     
     def get_value(self, func):
-        if not self.changed and self.prev_load is not None:
-            return self.prev_load
-
-        self.changed = False
         if not self.is_constant: 
-            self.prev_load = func.builder.load(self.ptr) 
-            return self.prev_load
+            return func.builder.load(self.ptr) 
         return self.ptr
         
 
@@ -73,20 +65,21 @@ class VariableAssign(ASTNode):
         if not self.is_declaration and self.explicit_typ:
             error("Cannot declare the type of a variable after initial declaration", line = self.position)
         
-    def pre_eval(self):
-        self.value.pre_eval()
+    def pre_eval(self, func):
+        self.value.pre_eval(func)
 
         if self.block.get_variable(self.var_name).type.is_void():
             self.block.variables[self.var_name].type = self.value.ret_type
-            self.block.variables[self.var_name].changed = True
+        
+        if not self.block.validate_variable(self.var_name):
+            variable = self.block.get_variable(self.var_name)
+            func.variables.append((variable, self.var_name))
     
     def eval(self, func):
-        self.value.pre_eval()
+        self.value.pre_eval(func)
         variable = self.block.get_variable(self.var_name)
-
-        if not self.block.validate_variable(self.var_name):
-            variable.define(func, self.var_name)
-        else:
+            #variable.define(func, self.var_name)
+        if self.block.validate_variable(self.var_name):
             if self.value.ret_type != variable.type:
                 error(
                     f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type '{self.block.variables[self.var_name].type}'",
@@ -105,7 +98,7 @@ class VariableRef(ExpressionNode):
         self.var_name = name
         self.block = block
     
-    def pre_eval(self):
+    def pre_eval(self, func):
         if not self.block.validate_variable_exists(self.var_name):
             error(f"Undefined variable '{self.var_name}'", line = self.position)
 
@@ -127,18 +120,22 @@ class VariableRef(ExpressionNode):
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"
 
+    def __str__(self) -> str:
+        return self.var_name
+
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ('ind', 'varref')
+    __slots__ = ('ind', 'varref', 'var_name')
     name = "varIndRef"
 
     def init(self, varref: VariableRef, ind: ExpressionNode):
         self.varref = varref
         self.ind = ind
+        self.var_name = f"{varref.var_name}[{str(self.ind)}]"
     
-    def pre_eval(self):
-        self.varref.pre_eval()
-        self.ind.pre_eval()
+    def pre_eval(self, func):
+        self.varref.pre_eval(func)
+        self.ind.pre_eval(func)
         if self.varref.ret_type.get_op_return('ind', None, None)!=None:
             self.ret_type = self.varref.ret_type.typ
         else:
@@ -161,6 +158,7 @@ class VariableIndexRef(ExpressionNode):
             cond2 = self.ind.ret_type.gr(func, zero, self.ind)
             condcomb = func.builder.or_(cond, cond2)
             with func.builder.if_then(condcomb) as if_block:
+                # print(self.position)
                 exception.over_index_exception(func, self.varref.var_name, self.ind.eval(func), self.position)
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
@@ -178,9 +176,9 @@ class VariableIndexPutAt(ASTNode):
         self.ref = varindref
         self.value = value
     
-    def pre_eval(self):
-        self.ref.pre_eval()
-        self.value.pre_eval()
+    def pre_eval(self, func):
+        self.ref.pre_eval(func)
+        self.value.pre_eval(func)
     
     def eval(self, func):
         return self.ref.varref.ret_type.put(func, self.ref, self.value)

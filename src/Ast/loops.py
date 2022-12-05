@@ -21,9 +21,9 @@ class WhileStatement(ASTNode):
         self.while_after = None
         self.while_body = None
     
-    def pre_eval(self):
-        self.cond.pre_eval()
-        self.block.pre_eval()
+    def pre_eval(self, func):
+        self.cond.pre_eval(func)
+        self.block.pre_eval(func)
     
     def eval(self, func):
         # cond = self.cond.eval(func)
@@ -36,12 +36,12 @@ class WhileStatement(ASTNode):
 
         func.inside_loop = self
 
-        # alloca outside of the loop body in order to not have a stack overflow!
-        for c,x in enumerate(self.block.children):
-            if isinstance(x, VariableAssign) and x.is_declaration:
-                variable = self.block.get_variable(x.var_name)
-                if not self.block.validate_variable(x.var_name):
-                    variable.define(func, x.var_name)
+        # # alloca outside of the loop body in order to not have a stack overflow!
+        # for c,x in enumerate(self.block.children):
+        #     if isinstance(x, VariableAssign) and x.is_declaration:
+        #         variable = self.block.get_variable(x.var_name)
+        #         if not self.block.validate_variable(x.var_name):
+        #             variable.define(func, x.var_name)
         
         # branching and loop body
 

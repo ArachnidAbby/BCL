@@ -6,7 +6,7 @@ run: env/bin/activate
 	./env/bin/python3.11 src/main.py compile tests/current.bcl
 
 run-dev: env/bin/activate
-	./env/bin/python3.11 src/main.py compile tests/current.bcl --dev
+	./env/bin/python3.11 src/main.py compile tests/game_of_life.bcl --dev
 
 unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py

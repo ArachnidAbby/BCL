@@ -81,7 +81,6 @@ def std_print_str(func, args):
     pistr = func.builder.bitcast(fmt_strings["nonl"]["str"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
 
-print(function.functions)
 
 
 @function.internal_function("exit", Ast_Types.Void(), (Ast_Types.Integer_32(),))

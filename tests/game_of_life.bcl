@@ -1,0 +1,86 @@
+define main() {
+    board = [[false; 10]; 10]; // create a 10x10 array of bools
+    new_board = board;
+    board[2][1] = true;
+    board[3][1] = true;
+    board[4][1] = true;
+    println("Generation: 0");
+    draw_board(board);
+    i = 0;
+    iters = 5;
+    while i<iters {
+        x = 0;
+        y = 0;
+        while x<10 {
+            y = 0;
+            while y<10 {
+                neighbors = 0;
+                if x>0 {
+                    neighbors+=board[x-1][y];
+                    if y>0 {
+                        neighbors+=board[x-1][y-1];
+                    }
+                    if y<9 {
+                        neighbors+=board[x-1][y+1];
+                    }
+                }
+                if y>0 {
+                    neighbors+=board[x][y-1];
+                }
+                if y<9 {
+                    neighbors+=board[x][y+1];
+                }
+                if x<9 {
+                    neighbors+=board[x+1][y];
+                    if y>0 {
+                        neighbors+=board[x+1][y-1];
+                    }
+                    if y<9 {
+                        neighbors+=board[x+1][y+1];
+                    }
+                }
+                new_board[x][y] = board[x][y];
+                if board[x][y] {
+                    if neighbors != 2 and neighbors != 3 {
+                        new_board[x][y] = false;
+                    }
+                } else if neighbors==3{
+                    new_board[x][y] = true;
+                }
+                y+=1;
+            }
+            x+=1;
+        }
+        print("Generation: ");
+        println(i+1);
+        board = new_board;
+        draw_board(board);
+        i+=1;
+    }
+
+}
+
+define draw_row(row1: bool[10]) {
+    row = row1;
+    i = 0;
+    while i < 10 {
+        if row[i] {
+            print("▓▓");
+        }else {
+            print("░░");
+        }
+        i+=1;
+    }
+    println("");
+}
+
+define draw_board(board1: bool[10][10]) {
+    board = board1;
+    i = 0;
+    while i < 10 {
+        draw_row(board[i]);
+        i+=1;
+    }
+
+    println("\n\n\n");
+}
