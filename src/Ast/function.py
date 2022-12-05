@@ -198,7 +198,8 @@ class FunctionCall(ExpressionNode):
         self.args_types = tuple([x.ret_type for x in self.paren])
         if self.func_name not in functions \
             or self.args_types not in functions[self.func_name]:
-            errors.error(f"function '{self.func_name}{self.args_types}' was never defined", line = self.position)
+            args_for_error = ','.join([str(x) for x in self.args_types])
+            errors.error(f"function '{self.func_name}({args_for_error})' was never defined", line = self.position)
         
         self.ret_type = functions[self.func_name][self.args_types].ret_type
         self.ir_type = (self.ret_type).ir_type

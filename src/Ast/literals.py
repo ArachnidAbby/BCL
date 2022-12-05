@@ -38,7 +38,6 @@ class TypeRefLiteral(ExpressionNode):
             self.ret_type = self.value
             self.ir_type = self.value.ir_type
 
-
 class ArrayLiteral(ExpressionNode):
     __slots__ = ('value', 'ir_type')
     name = 'literal'
@@ -68,3 +67,22 @@ class ArrayLiteral(ExpressionNode):
         x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore
         x[2] += 1
         return tuple(x)
+
+class StrLiteral(ExpressionNode):
+    __slots__ = ('value', 'ir_type')
+    name = 'literal'
+
+    def init(self, value: str):
+        self.value = value
+        
+    def pre_eval(self):
+        array_size  = Literal((-1,-1,-1), len(self.value), Ast_Types.Integer_32)
+        self.ret_type = Ast_Types.StringLiteral(array_size)
+        self.ir_type = self.ret_type.ir_type
+
+    def eval(self, func) -> ir.Constant:
+        const = ir.Constant(ir.ArrayType(ir.IntType(8), len(self.value)),
+        bytearray(self.value.encode("utf8")))
+        ptr = func.builder.alloca(ir.ArrayType(ir.IntType(8), len(self.value)))
+        func.builder.store(const, ptr)
+        return ptr

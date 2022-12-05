@@ -13,7 +13,7 @@ def timingContext(text: str):
     start = perf_counter()
     yield
     print(errors.GREEN, end="")
-    _print_text(f'{text} in {perf_counter() - start} seconds')
+    _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
 def compile(src_str: str, output_loc: str):
     start = perf_counter()
@@ -21,7 +21,7 @@ def compile(src_str: str, output_loc: str):
     inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
     _print_raw("")
 
-    _print_raw(f'{errors.GREEN}/------------------------------------------------#')
+    _print_raw(f'{errors.GREEN}/------------------------------------------------#{errors.RESET}')
 
     with timingContext('imports finished'):
         import psutil
@@ -52,7 +52,7 @@ def compile(src_str: str, output_loc: str):
     
     module.save_ir(output_loc)
 
-    _print_raw(f'| IR saved, compilation done | {perf_counter() - start}s')
+    _print_raw(f'{errors.GREEN}| IR saved, compilation done | {perf_counter() - start}s')
     _print_raw(f'\\--------------------------------------------------/{errors.RESET}')
     _print_raw("")
 

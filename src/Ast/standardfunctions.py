@@ -8,37 +8,37 @@ from . import function
 printf = None
 exit_func = None
 
-fmt = "%i \n\0"
-c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
-                    bytearray(fmt.encode("utf8")))
-gpistr = None
-gpistr2 = None
+
+fmt_strings = {"nl":{}, "nonl":{}}
 
 voidptr_ty = ir.IntType(8).as_pointer()
 
+
+def declare_global_str(module, inp: str, name: str):
+    fmt = inp
+    c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
+                        bytearray(fmt.encode("utf8")))
+    out = ir.GlobalVariable(module, c_fmt.type, name=name)
+    out.linkage = 'internal'
+    out.initializer = c_fmt  # type: ignore
+    out.global_constant = True
+    return out
+
 # todo: make this more readable!
 def declare_printf(module):
-    global printf, gpistr, gpistr2
+    global printf, fmt_strings
     
     printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
     printf = ir.Function(module, printf_ty, name="printf")
     function.functions["__printf"] = [printf,'void']
 
-    fmt = "%i\n\0"
-    c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
-                        bytearray(fmt.encode("utf8")))
-    gpistr = ir.GlobalVariable(module, c_fmt.type, name="fstr_int_n")
-    gpistr.linkage = 'internal'
-    gpistr.initializer = c_fmt  # type: ignore
-    gpistr.global_constant = True
 
-    fmt = "%i\0"
-    c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
-                        bytearray(fmt.encode("utf8")))
-    gpistr2 = ir.GlobalVariable(module, c_fmt.type, name="fstr_int")
-    gpistr2.linkage = 'internal'
-    gpistr2.initializer = c_fmt  # type: ignore
-    gpistr2.global_constant = True
+    fmt_strings["nl"]["i32"] = declare_global_str(module, "%i\n\0", "fstr_int_n")
+    fmt_strings["nonl"]["i32"] = declare_global_str(module, "%i\0", "fstr_int")
+    fmt_strings["nl"]["char"] = declare_global_str(module, "%c\n\0", "fstr_char_n")
+    fmt_strings["nonl"]["char"] = declare_global_str(module, "%c\0", "fstr_char")
+    fmt_strings["nl"]["str"] = declare_global_str(module, "%s\n\0", "fstr_str_n")
+    fmt_strings["nonl"]["str"] = declare_global_str(module, "%s\0", "fstr_str")
 
 def declare_exit(module):
     global exit_func
@@ -48,14 +48,41 @@ def declare_exit(module):
 @function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Integer_32(),))
 def std_println_int(func, args):
     x = args[0]
-    pistr = func.builder.bitcast(gpistr, voidptr_ty)
+    pistr = func.builder.bitcast(fmt_strings["nl"]["i32"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
 
 @function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.Integer_32(),))
 def std_print_int(func, args):
     x = args[0]
-    pistr = func.builder.bitcast(gpistr2, voidptr_ty)
+    pistr = func.builder.bitcast(fmt_strings["nonl"]["i32"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Char(),))
+def std_println_char(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nl"]["char"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.Char(),))
+def std_print_char(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nonl"]["char"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.StringLiteral(None),))
+def std_println_str(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nl"]["str"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.StringLiteral(None),))
+def std_print_str(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nonl"]["str"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+print(function.functions)
+
 
 @function.internal_function("exit", Ast_Types.Void(), (Ast_Types.Integer_32(),))
 def std_exit(func, args):

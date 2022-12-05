@@ -7,7 +7,7 @@ from Ast.nodetypes import NodeTypes
 from .Ast_Types import Type_Base, Void
 from .nodes import ASTNode, ExpressionNode
 
-ZERO_CONST = const = ir.Constant(ir.IntType(64), 0)
+ZERO_CONST = ir.Constant(ir.IntType(64), 0)
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
@@ -139,12 +139,15 @@ class VariableIndexRef(ExpressionNode):
     def pre_eval(self):
         self.varref.pre_eval()
         self.ind.pre_eval()
-        self.ret_type = self.varref.ret_type.typ
+        if self.varref.ret_type.get_op_return('ind', None, None)!=None:
+            self.ret_type = self.varref.ret_type.typ
+        else:
+            self.ret_type = self.varref.ret_type
         self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
-        if rhs.name == "literal" and (lhs.ir_type.count-1 < rhs.value or rhs.value < 0): # check inbounds
-            error(f'Array index out range. Max size \'{lhs.ir_type.count}\'', line = rhs.position)
+        if rhs.name == "literal" and (lhs.ret_type.size-1 < rhs.value or rhs.value < 0): # check inbounds
+            error(f'Array index out range. Max size \'{lhs.ret_type.size}\'', line = rhs.position)
         
         if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
             error(f'Array index operation must use an integer index. type used: \'{rhs.ret_type}\'', line = rhs.position)
