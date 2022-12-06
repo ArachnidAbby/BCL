@@ -20,6 +20,7 @@ jobs:
         echo 'Running setup / Installing dependencies'
         sudo apt install llvm-11
         sudo apt install python3.11
+        apt install python3.11-venv
 
     - name: Run tests
       run: |
