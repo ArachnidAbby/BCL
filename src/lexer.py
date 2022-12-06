@@ -1,3 +1,4 @@
+import ast  # python ast module
 from typing import List
 
 from rply import LexerGenerator
@@ -46,8 +47,10 @@ class Lexer():
         self.lexer.add('LEQ', r'\<\=')
         self.lexer.add('GR', r'\>')
         self.lexer.add('LE', r'\<')
+        self.lexer.add('AMP', r'\&')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings
+        self.lexer.add('CHAR',r"\'(\\.|[^'\\])\'")
         self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
@@ -57,6 +60,12 @@ class Lexer():
     def get_lexer(self):
         self._add_tokens()
         return self.lexer.build()
+
+def fix_char(val) -> int:
+    return ord(val.encode('raw_unicode_escape').decode('unicode_escape'))
+
+def fix_str(val) -> int:
+    return ast.literal_eval(val)+'\0'
 
 def get_tokens(src: str) -> List[ParserToken]:
     '''Take source and convert to a list of 'ParserToken' Objects'''
@@ -70,6 +79,12 @@ def get_tokens(src: str) -> List[ParserToken]:
             tok = ParserToken("expr", val, pos, True)
         elif x.name == "NUMBER_F":
             val = Ast.Literal(pos, float(x.value.strip('f')), Ast.Ast_Types.Float_32())
+            tok = ParserToken("expr", val, pos, True)
+        elif x.name == "CHAR":
+            val = Ast.Literal(pos, fix_char(x.value.strip('\'')), Ast.Ast_Types.Char())
+            tok = ParserToken("expr", val, pos, True)
+        elif x.name == "STRING":
+            val = Ast.StrLiteral(pos, fix_str(x.value))
             tok = ParserToken("expr", val, pos, True)
         else: tok = ParserToken(x.name, x.value, pos, False)
         output.append(tok)

@@ -136,17 +136,28 @@ class Parser(ParserBase):
 
     def parse_array_literals(self):
         '''check for all nodes dealing with arrays'''
-        if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "expr|typeref"):
+        if self.check_group(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE") and not self.check(-1, "CLOSE_SQUARE|expr|typeref"):
             if self.simple_check(-1, "KEYWORD") and self.peek(-1).value not in self.keywords:
                 return
             exprs = self.peek(1).value if self.peek(1).name == "expr" else self.peek(1).value.children
             literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
             self.replace(3,"expr", literal)
+        
+        if self.check_group(0, "OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE") and not self.check(-1, "CLOSE_SQUARE|expr|typeref"):
+            if self.simple_check(-1, "KEYWORD") and self.peek(-1).value not in self.keywords:
+                return
+            if self.peek(3).value.name != "literal" or self.peek(3).value.ret_type.name != "i32":
+                errors.error("Array literal size must be an i32", line=self.peek(3).pos)
+            elif self.peek(3).value.value<=0:
+                errors.error("Array literal size must be greater than '0'", line=self.peek(3).pos)
+            exprs = [self.peek(1).value] * self.peek(3).value.value
+            literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+            self.replace(5,"expr", literal)
     
     def parse_array_index(self):
         '''parse indexing of ararys'''
-        if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE") and \
-                (isinstance(self.peek(0).value, Ast.variable.VariableRef) or isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
+        if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE"):# and \
+                #(isinstance(self.peek(0).value, Ast.variable.VariableRef) or isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
             expr = self.peek(2).value
             ref = self.peek(0).value
             fin = Ast.variable.VariableIndexRef(self.peek(0).pos, ref, expr)
@@ -354,7 +365,20 @@ class Parser(ParserBase):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.math.ops.keys():
+        if self.check_group(0, "expr ISUM expr SEMI_COLON"):
+            op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr ISUB expr SEMI_COLON"):
+            op = Ast.math.ops["_ISUB"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr IMUL expr SEMI_COLON"):
+            op = Ast.math.ops["_IMUL"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr IDIV expr SEMI_COLON"):
+            op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+
+        elif self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys():
             op_str =self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)

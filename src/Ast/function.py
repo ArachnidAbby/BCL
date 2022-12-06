@@ -5,6 +5,7 @@ import errors
 from llvmlite import ir
 
 from Ast.nodetypes import NodeTypes
+from Ast.varobject import VariableObj
 
 from . import Ast_Types
 from .nodes import ASTNode, Block, ExpressionNode, ParenthBlock
@@ -37,7 +38,7 @@ class _Function:
     @property
     def args_ir(self) -> tuple[ir.Type]:
         '''Get the `ir.Type` of all args'''
-        return tuple([x.ir_type for x in self.arg_types])
+        return tuple([x.ir_type if x.ret_type.name!="array" else x.ir_type.as_pointer() for x in self.arg_types])
 
     def call(self, func, args: tuple) -> Optional[ir.Instruction]:
         '''Call function'''
@@ -74,7 +75,8 @@ def internal_function(name: str, ret_type: Any,
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set',
-                'args_types', 'ret_type', "has_return", "inside_loop", "func_name")
+                'args_types', 'ret_type', "has_return", "inside_loop", "func_name", "variables", "consts",
+                "ir_entry")
     type = NodeTypes.STATEMENT
     name = "funcDef"
 
@@ -88,6 +90,9 @@ class FunctionDef(ASTNode):
         self.is_ret_set = False
         self.has_return = False
         self.inside_loop = None
+        self.ir_entry = None
+        self.variables: list[tuple] = []
+        self.consts: list[tuple] = []
 
         self._validate(args) # validate arguments
 
@@ -98,7 +103,10 @@ class FunctionDef(ASTNode):
         
         for arg in args:
             self.args[arg.key] = [None, arg.value, True]
-            self.args_ir.append(arg.get_type().ir_type)
+            if arg.get_type().name == "array":
+                self.args_ir.append(arg.get_type().ir_type.as_pointer())
+            else:
+                self.args_ir.append(arg.get_type().ir_type)
             self.args_types.append(arg.get_type())
         
         self.args_ir = tuple(self.args_ir)
@@ -116,21 +124,21 @@ class FunctionDef(ASTNode):
                                line = self.position)
 
     def pre_eval(self):
+        global functions
+
         if self.is_ret_set:
             self.ret_type.eval(self)
             self.ret_type = self.ret_type.ret_type
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
-        global functions
-
         if self.func_name not in functions:
             functions[self.func_name] = dict()
 
+        # avoid name collisions by adding a # to the end of the function name
         if self.func_name!="main":
-            # avoid name collisions by adding a # to the end of the function name
             name = f"{self.func_name}.{len(functions[self.func_name].keys())}"
         else:
-            name =  self.func_name 
+            name = self.func_name 
 
         self.function_ir = ir.Function(self.module.module, fnty, name=name)
         
@@ -138,17 +146,53 @@ class FunctionDef(ASTNode):
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
 
+    def create_const_var(self, typ):
+        current_block = self.builder.block
+        self.builder.position_at_start(self.ir_entry)
+        ptr = self.builder.alloca(typ.ir_type, name = f"--CONST-")
+        self.builder.position_at_end(current_block)
+        return ptr
+
+    def alloc_stack(self):
+        args = self.function_ir.args
+        for c,x in enumerate(self.args.keys()):
+            self.block.variables[x].ptr = args[c]
+            self.variables.append((self.block.variables[x], x))
+
+        for x in self.variables:
+            if x[0].type.pass_as_ptr and x[0].is_constant:
+                val = self.builder.load(x[0].ptr)
+                ptr = self.builder.alloca(x[0].type.ir_type)
+                self.builder.store(val, ptr)
+                x[0].ptr = ptr
+                x[0].is_constant = False
+                continue
+            else:
+                x[0].define(self, x[1])
+                
+        
+        # for x in self.consts:
+        #     var_name = f"--temp-{len(self.consts)}"
+        #     val = x.eval(self)
+        #     ptr = self.builder.alloca(x.ir_type, name = var_name)
+        #     self.builder.store(val, ptr)
+        #     x.ptr = ptr
+
+            
+
     def eval(self):
-        self.block.pre_eval()
+        self.block.pre_eval(self)
         block = self.function_ir.append_basic_block("entry")
+        self.ir_entry =block 
         self.builder = ir.IRBuilder(block)
         self.function_ir.attributes.add("nounwind")
+        self.alloc_stack()
 
         args = self.function_ir.args
         
-        # * add variables into block
-        for c,x in enumerate(self.args.keys()):
-            self.block.variables[x].ptr = args[c]
+        # # * add variables into block
+        # for c,x in enumerate(self.args.keys()):
+        #     self.block.variables[x].ptr = args[c]
         
         self.block.eval(self)
         
@@ -165,11 +209,11 @@ class ReturnStatement(ASTNode):
     def init(self, expr):
         self.expr = expr
 
-    def pre_eval(self):
+    def pre_eval(self, func):
         pass
 
     def eval(self, func):
-        self.expr.pre_eval()
+        self.expr.pre_eval(func)
         func.has_return = True
         if self.expr.ret_type != func.ret_type:
             errors.error(
@@ -192,20 +236,28 @@ class FunctionCall(ExpressionNode):
 
         self.paren = parenth
     
-    def pre_eval(self):
-        self.paren.pre_eval()
+    def pre_eval(self, func):
+        if self.paren.name == "Parenth":
+            self.paren.in_func_call = True
+        self.paren.pre_eval(func)
 
         self.args_types = tuple([x.ret_type for x in self.paren])
         if self.func_name not in functions \
             or self.args_types not in functions[self.func_name]:
-            errors.error(f"function '{self.func_name}{self.args_types}' was never defined", line = self.position)
+            args_for_error = ','.join([str(x) for x in self.args_types])
+            errors.error(f"function '{self.func_name}({args_for_error})' was never defined", line = self.position)
         
         self.ret_type = functions[self.func_name][self.args_types].ret_type
         self.ir_type = (self.ret_type).ir_type
         self.function = functions[self.func_name][self.args_types]
+        
     
     def eval(self, func):
         x = self.paren.eval(func)
-        args = self.paren.children if x==None else [x]
+        if x==None:
+            args = self.paren.children
+        else:
+            args = [x]
+        args = self.paren.children  
         
         return self.function.call(func, args)

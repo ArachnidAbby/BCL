@@ -11,6 +11,7 @@ class Float_32(Type_Base.Type):
 
     ir_type = ir.FloatType()
     name = 'f32'
+    pass_as_ptr = False
 
     @classmethod
     def convert_from(cls, func, typ, previous):
@@ -24,8 +25,8 @@ class Float_32(Type_Base.Type):
     def convert_to(self, func, orig, typ):
         match typ.name:
             case 'f32': return orig.eval(func)
-            case 'i32': return func.builder.sitofp(orig.eval(func), ir.IntType(32))
-            case 'i64': return func.builder.sitofp(orig.eval(func), ir.IntType(64))
+            case 'i32': return func.builder.fptosi(orig.eval(func), ir.IntType(32))
+            case 'i64': return func.builder.fptosi(orig.eval(func), ir.IntType(64))
             case 'f64': return func.builder.fpext(orig.eval(func), ir.DoubleType())
             case _: error(f"Cannot convert 'f32' to type '{typ}'", line = orig.position)
 

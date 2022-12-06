@@ -35,13 +35,15 @@ class OperationNode(ExpressionNode):
     def operator_precendence(self):
         return self.op.operator_precendence
 
-    def pre_eval(self):
-        self.lhs.pre_eval()
-        self.rhs.pre_eval()
+    def pre_eval(self, func):
+        self.lhs.pre_eval(func)
+        self.rhs.pre_eval(func)
         
+        # print(self.lhs.ret_type, self)
         self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
         if self.ret_type!=None:
             self.ir_type = self.ret_type.ir_type
+        # print(self.lhs.ret_type, self)
     
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -50,8 +52,11 @@ class OperationNode(ExpressionNode):
         if not self.shunted:
             return RPN_to_node(shunt(self)).eval(func)
         else:
-            self.pre_eval()
+            self.pre_eval(func)
             return self.eval_math(func, self.lhs, self.rhs)
+    
+    def __str__(self) -> str:
+        return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
 
 # To any future programmers:
 #   I am sorry for this shunt() function.
@@ -78,7 +83,7 @@ def shunt(node: OperationNode) -> deque:
             elif item in active_node:
                 while op_stack:
                     op = op_stack.pop()
-                    if op[1] > item.operator_precendence:
+                    if op[1] >= item.operator_precendence:
                         output_queue.append(op[0])
                     else:
                         op_stack.append(op)
@@ -86,6 +91,7 @@ def shunt(node: OperationNode) -> deque:
                 op_stack.append((item.op_type, item.operator_precendence))
     
     # * put remaining operators onto the output queue
+    op_stack.reverse()
     for op in op_stack:
         output_queue.append(op[0])
 
@@ -198,22 +204,22 @@ def check_valid_inplace(lhs) -> bool:
     return lhs.name == "varRef" or \
       errors.error("Left-hand-side of inplace operation must be a variable!", line = lhs.position) # only runs if false!
 
-@operator(-100, "isum")
+@operator(-100, "_isum")
 def isum(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).isum(func, lhs, rhs)
 
-@operator(-100, "isub")
+@operator(-100, "_isub")
 def isub(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).isub(func, lhs, rhs)
 
-@operator(-100, "imul")
+@operator(-100, "_imul")
 def imul(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).imul(func, lhs, rhs)
 
-@operator(-100, "idiv")
+@operator(-100, "_idiv")
 def idiv(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).idiv(func, lhs, rhs)

@@ -11,6 +11,7 @@ class Type:
 
     __slots__ = ('ir_type')
     name = "UNKNOWN"
+    pass_as_ptr = False
 
     def __init__(self):
         pass
@@ -63,7 +64,7 @@ class Type:
     def _or  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator 'or' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     
-    def index  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operation 'index' is not supported for type '{lhs.ret_type}'", line = lhs.position)
+    def index  (self, func, lhs) -> ir.Instruction: error(f"Operation 'index' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     def put(self, func, lhs, value): error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     def assign(self, func, ptr, value, typ: Self):
@@ -71,26 +72,22 @@ class Type:
         func.builder.store(val, ptr.ptr)
 
     def isum(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.sum(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
     
     def isub(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.sub(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
     
     def imul(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.mul(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
     
     def idiv(self, func, ptr, rhs):
-        ptr.get_var(func).changed = True
         final_value = self.div(func, ptr, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
@@ -112,23 +109,28 @@ class Type:
 
 
 from .Type_Bool import Integer_1
+from .Type_Char import Char
 from .Type_F32 import Float_32
 from .Type_I32 import Integer_32
+from .Type_StrLit import StringLiteral
 from .Type_Void import Void
 
 types_dict = {
     'void': Void,
     'bool': Integer_1,
+    'char': Char,
     "i32": Integer_32,
     "int": Integer_32,
     'f32': Float_32,
-    'float': Float_32
+    'float': Float_32,
+    'strlit': StringLiteral
 }
 
 # todo: replace strings in the future
 conversion_priority_raw = [
     Type(),
     Integer_1(),
+    Char(),
     Integer_32(),
     'i64',
     Float_32(),

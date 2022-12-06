@@ -1,12 +1,14 @@
+override FILE = game_of_life.bcl
+
 env/bin/activate: requirements.txt
 	python3.11 -m venv env 
 	./env/bin/pip3.11 install -r requirements.txt
 
 run: env/bin/activate
-	./env/bin/python3.11 src/main.py compile tests/current.bcl
+	./env/bin/python3.11 src/main.py compile tests/$(FILE)
 
 run-dev: env/bin/activate
-	./env/bin/python3.11 src/main.py compile tests/current.bcl --dev
+	./env/bin/python3.11 src/main.py compile tests/$(FILE) --dev
 
 unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py
