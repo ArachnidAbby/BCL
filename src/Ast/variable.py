@@ -3,45 +3,12 @@ from llvmlite import ir
 
 from Ast import Ast_Types, Literal, exception
 from Ast.nodetypes import NodeTypes
+from Ast.varobject import VariableObj
 
-from .Ast_Types import Type_Base, Void
+from .Ast_Types import Void
 from .nodes import ASTNode, ExpressionNode
 
 ZERO_CONST = ir.Constant(ir.IntType(64), 0)
-
-class VariableObj:
-    '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
-    __slots__ = ("ptr", "type", "is_constant")
-
-    def __init__(self, ptr, typ, is_constant):
-        self.ptr = ptr
-        self.type = typ
-        if isinstance(typ, str):
-            self.type = Type_Base.types_dict[typ]()
-        self.is_constant = is_constant
-
-    @property
-    def ret_type(self):
-        return self.type
-    
-    def define(self, func, name):
-        '''alloca memory for the variable'''
-        ptr = func.builder.alloca(self.type.ir_type, name=name)
-        self.ptr = ptr
-        return ptr
-    
-    def store(self, func, value):
-        self.type.assign(func, self, value, self.type)
-        # func.builder.store(value.eval(func), self.ptr)
-    
-    def get_value(self, func):
-        if not self.is_constant: 
-            return func.builder.load(self.ptr) 
-        return self.ptr
-        
-
-    def __repr__(self) -> str:
-        return f'VAR: |{self.ptr}, {self.type}|'
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
@@ -123,6 +90,40 @@ class VariableRef(ExpressionNode):
     def __str__(self) -> str:
         return self.var_name
 
+class Ref(ExpressionNode):
+    '''Variable Reference that acts like other `expr` nodes. It returns a ptr uppon `eval`'''
+    __slots__ = ('block', 'var_name')
+    name = "ref"
+
+    def init(self, name: str, block):
+        self.var_name = name
+        self.block = block
+    
+    def pre_eval(self, func):
+        if not self.block.validate_variable_exists(self.var_name):
+            error(f"Undefined variable '{self.var_name}'", line = self.position)
+
+        self.ret_type = self.block.get_variable(self.var_name).type
+        if self.block.get_variable(self.var_name).type.name=="UNKNOWN":
+            error(f"Unknown variable '{self.var_name}'", line = self.position)
+
+        self.ir_type = self.ret_type.ir_type
+    
+    def eval(self, func):
+        return self.block.get_variable(self.var_name).ptr
+    
+    def get_var(self, func):
+        return self.block.get_variable(self.var_name)
+    
+    def as_varref(self):
+        return VariableRef(self.position, self.var_name, self.block)
+
+    def __repr__(self) -> str:
+        return f"<Ref to '{self.var_name}'>"
+
+    def __str__(self) -> str:
+        return self.var_name
+
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
     __slots__ = ('ind', 'varref', 'var_name')
@@ -160,6 +161,8 @@ class VariableIndexRef(ExpressionNode):
             with func.builder.if_then(condcomb) as if_block:
                 # print(self.position)
                 exception.over_index_exception(func, self.varref.var_name, self.ind.eval(func), self.position)
+        # if self.varref.name == "varRef" and self.varref.get_var(func).is_constant:
+        #     return func.builder.gep(self.varref.get_ptr(func) , [self.ind.eval(func),])
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
     def eval(self, func):

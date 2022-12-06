@@ -9,6 +9,7 @@ from . import Type_Base
 class Array(Type_Base.Type):
     __slots__ = ('size', 'typ')
     name = "array"
+    pass_as_ptr = True
 
     def __init__(self, size, typ):
         self.typ = typ

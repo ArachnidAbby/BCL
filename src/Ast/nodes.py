@@ -143,16 +143,19 @@ class Block(ContainerNode):
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'ret_type')
+    __slots__ = ('ir_type', 'ret_type', 'in_func_call')
     type = NodeTypes.EXPRESSION
     name = "Parenth"
 
     def init(self):
         self.ir_type = Ast_Types.Void()
+        self.in_func_call = False
         
     def pre_eval(self, func):
-        for x in self.children:
-            x.pre_eval(func)
+        for c, child in enumerate(self.children):
+            child.pre_eval(func)
+            if child.name == "literal" and child.ret_type.pass_as_ptr and self.in_func_call:
+                func.create_const_var(child)
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
@@ -176,6 +179,11 @@ class ParenthBlock(ContainerNode):
     
     def eval(self, func):
         for c, child in enumerate(self.children):
+            if self.in_func_call and child.ret_type.pass_as_ptr:
+                ptr = child.get_ptr(func)
+                # func.builder.store(child.eval(func), ptr)
+                self.children[c] = ptr
+                continue
             self.children[c] = child.eval(func)
         
         if len(self.children)==1:

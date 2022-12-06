@@ -365,7 +365,20 @@ class Parser(ParserBase):
         # todo: add more operations
 
         # * Parse expressions
-        if self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys():
+        if self.check_group(0, "expr ISUM expr SEMI_COLON"):
+            op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr ISUB expr SEMI_COLON"):
+            op = Ast.math.ops["_ISUB"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr IMUL expr SEMI_COLON"):
+            op = Ast.math.ops["_IMUL"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+        elif self.check_group(0, "expr IDIV expr SEMI_COLON"):
+            op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(4,"statement",op)
+
+        elif self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys():
             op_str =self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)

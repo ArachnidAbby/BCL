@@ -204,22 +204,22 @@ def check_valid_inplace(lhs) -> bool:
     return lhs.name == "varRef" or \
       errors.error("Left-hand-side of inplace operation must be a variable!", line = lhs.position) # only runs if false!
 
-@operator(-100, "isum")
+@operator(-100, "_isum")
 def isum(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).isum(func, lhs, rhs)
 
-@operator(-100, "isub")
+@operator(-100, "_isub")
 def isub(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).isub(func, lhs, rhs)
 
-@operator(-100, "imul")
+@operator(-100, "_imul")
 def imul(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).imul(func, lhs, rhs)
 
-@operator(-100, "idiv")
+@operator(-100, "_idiv")
 def idiv(self, func, lhs, rhs):
     check_valid_inplace(lhs)
     return (lhs.ret_type).idiv(func, lhs, rhs)

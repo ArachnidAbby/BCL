@@ -11,6 +11,7 @@ class Integer_32(Type_Base.Type):
 
     ir_type = ir.IntType(32)
     name = 'i32'
+    pass_as_ptr = False
 
     @classmethod
     def convert_from(cls, func, typ, previous):

@@ -36,8 +36,8 @@ define main() {
 
 }
 
-define check_row_neighbors(board1: bool[10], y: i32) -> i32 {
-    board = board1;
+define check_row_neighbors(board: bool[10], y: i32) -> i32 {
+    // board = board1;
     neighbors = 0;
     neighbors+=board[y];
     if y>0 {
@@ -49,27 +49,26 @@ define check_row_neighbors(board1: bool[10], y: i32) -> i32 {
     return neighbors;
 }
 
-define check_neighbors(board1: bool[10][10], x: i32, y:i32) -> i32 {
-    board = board1;
+define check_neighbors(board: bool[10][10], x: i32, y:i32) -> i32 {
+    // board = board1;
     neighbors = 0;
     if x>0 {
-        t = check_row_neighbors(board[x-1], y);
-        neighbors += t;
+        neighbors += check_row_neighbors(board[x-1], y);
     }
     
-    t = check_row_neighbors(board[x], y) - board[x][y];
-    neighbors += t;
+    // t = check_row_neighbors(board[x], y) - board[x][y];
+    neighbors += check_row_neighbors(board[x], y) - board[x][y];
 
     if x<9 {
-        t = check_row_neighbors(board[x+1], y);
-        neighbors += t;
+        // t = check_row_neighbors(board[x+1], y);
+        neighbors += check_row_neighbors(board[x+1], y);
     }
 
     return neighbors;
 }
 
-define draw_row(row1: bool[10]) {
-    row = row1;
+define draw_row(row: bool[10]) {
+    // row = row1;
     i = 0;
     while i < 10 {
         if row[i] {
@@ -82,8 +81,8 @@ define draw_row(row1: bool[10]) {
     println("");
 }
 
-define draw_board(board1: bool[10][10]) {
-    board = board1;
+define draw_board(board: bool[10][10]) {
+    // board = board1;
     i = 0;
     while i < 10 {
         draw_row(board[i]);

@@ -11,6 +11,7 @@ class Char(Type_Base.Type):
 
     ir_type = ir.IntType(8)
     name = 'char'
+    pass_as_ptr = False
 
     @classmethod
     def convert_from(cls, func, typ, previous):

@@ -8,7 +8,7 @@ from Ast.nodes import ExpressionNode
 
 
 class Literal(ExpressionNode):
-    __slots__ = ('value', 'ir_type')
+    __slots__ = ('value', 'ir_type', 'ptr')
     name = 'literal'
 
     def init(self, value: Any, typ: Ast_Types.Type):
@@ -42,11 +42,12 @@ class TypeRefLiteral(ExpressionNode):
             self.ir_type = self.value.ir_type
 
 class ArrayLiteral(ExpressionNode):
-    __slots__ = ('value', 'ir_type')
+    __slots__ = ('value', 'ir_type', 'ptr')
     name = 'literal'
 
     def init(self, value: list[Any]):
         self.value = value
+        self.ptr = None
         
     def pre_eval(self, func):
         self.value[0].pre_eval(func)
@@ -62,7 +63,7 @@ class ArrayLiteral(ExpressionNode):
         self.ret_type = Ast_Types.Array(array_size, typ)
         self.ir_type = self.ret_type.ir_type
 
-    def eval(self, func) -> ir.Constant:
+    def eval(self, func):
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
     
     @property
@@ -70,6 +71,9 @@ class ArrayLiteral(ExpressionNode):
         x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore
         x[2] += 1
         return tuple(x)
+
+    def get_ptr(self, func):
+        return self.ptr
 
 class StrLiteral(ExpressionNode):
     __slots__ = ('value', 'ir_type')
