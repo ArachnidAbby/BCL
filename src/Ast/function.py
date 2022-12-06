@@ -163,7 +163,9 @@ class FunctionDef(ASTNode):
                 x[0].ptr = ptr
                 x[0].is_constant = False
                 continue
-            x[0].define(self, x[1])
+            else:
+                x[0].define(self, x[1])
+                
         
         for x in self.consts:
             var_name = f"--temp-{len(self.consts)}"

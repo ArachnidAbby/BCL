@@ -38,7 +38,7 @@ class VariableAssign(ASTNode):
         if self.block.get_variable(self.var_name).type.is_void():
             self.block.variables[self.var_name].type = self.value.ret_type
         
-        if not self.block.validate_variable(self.var_name):
+        if (self.block.get_variable(self.var_name), self.var_name) not in func.variables:
             variable = self.block.get_variable(self.var_name)
             func.variables.append((variable, self.var_name))
     
