@@ -132,7 +132,6 @@ class VariableIndexRef(ExpressionNode):
     def init(self, varref: VariableRef, ind: ExpressionNode):
         self.varref = varref
         self.ind = ind
-        self.var_name = f"{varref.var_name}[{str(self.ind)}]"
     
     def pre_eval(self, func):
         self.varref.pre_eval(func)
@@ -160,7 +159,7 @@ class VariableIndexRef(ExpressionNode):
             condcomb = func.builder.or_(cond, cond2)
             with func.builder.if_then(condcomb) as if_block:
                 # print(self.position)
-                exception.over_index_exception(func, self.varref.var_name, self.ind.eval(func), self.position)
+                exception.over_index_exception(func, self.varref, self.ind.eval(func), self.position)
         # if self.varref.name == "varRef" and self.varref.get_var(func).is_constant:
         #     return func.builder.gep(self.varref.get_ptr(func) , [self.ind.eval(func),])
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])

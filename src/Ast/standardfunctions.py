@@ -39,6 +39,8 @@ def declare_printf(module):
     fmt_strings["nonl"]["char"] = declare_global_str(module, "%c\0", "fstr_char")
     fmt_strings["nl"]["str"] = declare_global_str(module, "%s\n\0", "fstr_str_n")
     fmt_strings["nonl"]["str"] = declare_global_str(module, "%s\0", "fstr_str")
+    fmt_strings["nl"]["bool"] = declare_global_str(module, "%d\n\0", "fstr_bool_n")
+    fmt_strings["nonl"]["bool"] = declare_global_str(module, "%d\0", "fstr_bool")
 
 def declare_exit(module):
     global exit_func
@@ -79,6 +81,18 @@ def std_println_str(func, args):
 def std_print_str(func, args):
     x = args[0]
     pistr = func.builder.bitcast(fmt_strings["nonl"]["str"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Integer_1(),))
+def std_println_str(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nl"]["bool"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.Integer_1(),))
+def std_print_str(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nonl"]["bool"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
 
 

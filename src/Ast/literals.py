@@ -42,7 +42,7 @@ class TypeRefLiteral(ExpressionNode):
             self.ir_type = self.value.ir_type
 
 class ArrayLiteral(ExpressionNode):
-    __slots__ = ('value', 'ir_type', 'ptr')
+    __slots__ = ('value', 'ir_type')
     name = 'literal'
 
     def init(self, value: list[Any]):
@@ -72,8 +72,6 @@ class ArrayLiteral(ExpressionNode):
         x[2] += 1
         return tuple(x)
 
-    def get_ptr(self, func):
-        return self.ptr
 
 class StrLiteral(ExpressionNode):
     __slots__ = ('value', 'ir_type')

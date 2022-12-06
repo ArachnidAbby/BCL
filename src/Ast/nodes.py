@@ -63,19 +63,28 @@ class ASTNode:
 
 class ExpressionNode(ASTNode):
     '''Acts as an Expression in the AST. This means it has a value and return type'''
-    __slots__ = ("ret_type", "ir_type")
+    __slots__ = ("ret_type", "ir_type", "ptr")
     type = NodeTypes.EXPRESSION
 
     def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
         super().__init__(position, *args, **kwargs)
         self.ret_type = Ast_Types.Type()
         self._position = position        # (line#, col#)
+        self.ptr = None
 
         self.init(*args, **kwargs)
     
     # todo: implement this functionality
     def __getitem__(self, name):
         '''get functionality from type (example: operators) automatically'''
+
+    def get_ptr(self, func):
+        '''allocate to stack and get a ptr'''
+        if self.ptr is None:
+            self.ptr = func.create_const_var(self.ret_type)
+            val = self.eval(func)
+            func.builder.store(val, self.ptr)
+        return self.ptr
 
 class ContainerNode(ASTNode):
     '''A node consistening of other nodes.
@@ -154,8 +163,8 @@ class ParenthBlock(ContainerNode):
     def pre_eval(self, func):
         for c, child in enumerate(self.children):
             child.pre_eval(func)
-            if child.name == "literal" and child.ret_type.pass_as_ptr and self.in_func_call:
-                func.create_const_var(child)
+            # if child.name == "literal" and child.ret_type.pass_as_ptr and self.in_func_call:
+            #     func.create_const_var(child)
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()

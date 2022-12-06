@@ -124,6 +124,34 @@ class basictests(unittest.TestCase):
 
         compile.compile(test_code, f'{p}/random/test_arrays.ll')
 
+    def test_arrays_index_literals(self):
+        test_code = """
+        define main() { 
+            println([true; 12][10]);
+            println(test()[2]);
+        }
+
+        define test() -> i32[5] {
+            return [12; 5];
+        }
+        """
+
+        compile.compile(test_code, f'{p}/random/test_arrays_indLit.ll')
+
+    def test_arrays_index_math(self):
+        test_code = """
+        define main() {
+            x = [1, 2, 4, 8, 16];
+            println(x[0]+x[2]);
+        }
+
+        define test() -> i32[5] {
+            return [12; 5];
+        }
+        """
+
+        compile.compile(test_code, f'{p}/random/test_arrays_indmath.ll')
+
     @unittest.expectedFailure
     def test_array_fail(self):
         test_code = """

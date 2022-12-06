@@ -156,8 +156,8 @@ class Parser(ParserBase):
     
     def parse_array_index(self):
         '''parse indexing of ararys'''
-        if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE") and \
-                (isinstance(self.peek(0).value, Ast.variable.VariableRef) or isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
+        if self.check_simple_group(0, "expr OPEN_SQUARE expr CLOSE_SQUARE"):# and \
+                #(isinstance(self.peek(0).value, Ast.variable.VariableRef) or isinstance(self.peek(0).value, Ast.variable.VariableIndexRef)):
             expr = self.peek(2).value
             ref = self.peek(0).value
             fin = Ast.variable.VariableIndexRef(self.peek(0).pos, ref, expr)

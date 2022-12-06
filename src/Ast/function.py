@@ -75,7 +75,8 @@ def internal_function(name: str, ret_type: Any,
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir', 'module','is_ret_set',
-                'args_types', 'ret_type', "has_return", "inside_loop", "func_name", "variables", "consts")
+                'args_types', 'ret_type', "has_return", "inside_loop", "func_name", "variables", "consts",
+                "ir_entry")
     type = NodeTypes.STATEMENT
     name = "funcDef"
 
@@ -89,6 +90,7 @@ class FunctionDef(ASTNode):
         self.is_ret_set = False
         self.has_return = False
         self.inside_loop = None
+        self.ir_entry = None
         self.variables: list[tuple] = []
         self.consts: list[tuple] = []
 
@@ -144,10 +146,12 @@ class FunctionDef(ASTNode):
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
 
-    def create_const_var(self, lit):
-        if lit in self.consts:
-            return
-        self.consts.append(lit)
+    def create_const_var(self, typ):
+        current_block = self.builder.block
+        self.builder.position_at_start(self.ir_entry)
+        ptr = self.builder.alloca(typ.ir_type, name = f"--CONST-")
+        self.builder.position_at_end(current_block)
+        return ptr
 
     def alloc_stack(self):
         args = self.function_ir.args
@@ -167,18 +171,19 @@ class FunctionDef(ASTNode):
                 x[0].define(self, x[1])
                 
         
-        for x in self.consts:
-            var_name = f"--temp-{len(self.consts)}"
-            val = x.eval(self)
-            ptr = self.builder.alloca(x.ir_type, name = var_name)
-            self.builder.store(val, ptr)
-            x.ptr = ptr
+        # for x in self.consts:
+        #     var_name = f"--temp-{len(self.consts)}"
+        #     val = x.eval(self)
+        #     ptr = self.builder.alloca(x.ir_type, name = var_name)
+        #     self.builder.store(val, ptr)
+        #     x.ptr = ptr
 
             
 
     def eval(self):
         self.block.pre_eval(self)
         block = self.function_ir.append_basic_block("entry")
+        self.ir_entry =block 
         self.builder = ir.IRBuilder(block)
         self.function_ir.attributes.add("nounwind")
         self.alloc_stack()

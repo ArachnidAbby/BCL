@@ -47,6 +47,7 @@ class Lexer():
         self.lexer.add('LEQ', r'\<\=')
         self.lexer.add('GR', r'\>')
         self.lexer.add('LE', r'\<')
+        self.lexer.add('AMP', r'\&')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings
         self.lexer.add('CHAR',r"\'(\\.|[^'\\])\'")
