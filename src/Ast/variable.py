@@ -69,8 +69,8 @@ class VariableRef(ExpressionNode):
             error(f"Undefined variable '{self.var_name}'", line = self.position)
 
         self.ret_type = self.block.get_variable(self.var_name).type
-        if self.block.get_variable(self.var_name).type.name=="UNKNOWN":
-            error(f"Unknown variable '{self.var_name}'", line = self.position)
+        if self.block.get_variable(self.var_name).type.is_void():
+            error(f"undefined variable '{self.var_name}'", line = self.position)
 
         self.ir_type = self.ret_type.ir_type
     
