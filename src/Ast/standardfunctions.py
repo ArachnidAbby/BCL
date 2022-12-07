@@ -43,8 +43,8 @@ def declare_printf(module):
     fmt_strings["nonl"]["str"] = declare_global_str(module, "%s\0", "fstr_str")
     fmt_strings["nl"]["bool"] = declare_global_str(module, "%d\n\0", "fstr_bool_n")
     fmt_strings["nonl"]["bool"] = declare_global_str(module, "%d\0", "fstr_bool")
-    fmt_strings["nl"]["f32"] = declare_global_str(module, "%d\n\0", "fstr_float_n")
-    fmt_strings["nonl"]["f32"] = declare_global_str(module, "%d\0", "fstr_float")
+    fmt_strings["nl"]["f32"] = declare_global_str(module, "%f\n\0", "fstr_float_n")
+    fmt_strings["nonl"]["f32"] = declare_global_str(module, "%f\0", "fstr_float")
 
 def declare_exit(module):
     global exit_func

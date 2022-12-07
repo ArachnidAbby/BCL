@@ -160,8 +160,11 @@ class FunctionDef(ASTNode):
             self.variables.append((self.block.variables[x], x))
 
         for x in self.variables:
-            if x[0].type.pass_as_ptr and x[0].is_constant:
-                val = self.builder.load(x[0].ptr)
+            if x[0].is_constant:
+                if x[0].type.pass_as_ptr:
+                    val = self.builder.load(x[0].ptr)
+                else:
+                    val = x[0].ptr
                 ptr = self.builder.alloca(x[0].type.ir_type)
                 self.builder.store(val, ptr)
                 x[0].ptr = ptr
