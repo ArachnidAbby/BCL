@@ -205,6 +205,12 @@ class Parser(ParserBase):
             init_typ = self.peek(0).value
             typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ))
             self.replace(4,"typeref", typ)
+    
+    def parse_rangelit(self):
+        if self.check_simple_group(0, "expr DOUBLE_DOT expr"):
+            start = self.peek(0).value
+            end  = self.peek(2).value
+            self.replace(4, "range_lit", Ast.literals.RangeLiteral(self.peek(0).pos, start, end))
 
     
     def parse_control_flow(self):
@@ -274,7 +280,6 @@ class Parser(ParserBase):
             self.peek(0).value.block = self.peek(1).value
             self.start_min = self._cursor
             self.replace(2,"func_def", self.peek(0).value)
-            
     
     def parse_func_call(self):
         # * Function Calls
@@ -389,7 +394,7 @@ class Parser(ParserBase):
             self.replace(2,"expr",op)
 
 
-        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT"):
+        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT", "paren"):
             return
         # todo: add more operations
 
@@ -426,7 +431,7 @@ class Parser(ParserBase):
     
     def parse_expr_list(self):
         # * parse expression lists
-        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair") and self.peek_safe(3).name not in ("COLON", "OPEN_PAREN", "expr"):
+        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair") and self.peek_safe(3).name not in ("COLON", "OPEN_PAREN", "expr", "paren"):
             expr = self.peek(0)
             out = None
             if expr.name == "expr_list":
