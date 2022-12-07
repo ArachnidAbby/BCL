@@ -47,8 +47,8 @@ class Integer_32(Type_Base.Type):
         lhs = (lhs.ret_type).convert_to(func, lhs, typ)
         rhs = (rhs.ret_type).convert_to(func, rhs, typ)
         return (lhs, rhs)
-
-
+    
+    
     
     def sum(self, func, lhs, rhs): 
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
@@ -79,25 +79,43 @@ class Integer_32(Type_Base.Type):
     
     
     def eq(self, func, lhs, rhs): 
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.eq(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('==', lhs, rhs)
     
     def neq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.neq(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('!=', lhs, rhs)
     
     def geq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.geq(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>=', lhs, rhs)
     
     def leq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.leq(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('<=', lhs, rhs)
     
     def le(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.le(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('<', lhs, rhs)
     
     def gr(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.gr(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>', lhs, rhs)

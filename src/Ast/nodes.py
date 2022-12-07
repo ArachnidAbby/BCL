@@ -130,6 +130,8 @@ class Block(ContainerNode):
             x.pre_eval(func)
     
     def eval(self, func):
+        if len(self.children) == 0:
+            return
         self.BLOCK_STACK.append(self)
         for x in self.children[0:-1]:
             x.eval(func)

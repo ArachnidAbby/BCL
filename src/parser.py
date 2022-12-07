@@ -89,7 +89,15 @@ class Parser(ParserBase):
 
     def parse_blocks(self):
         '''Parses blocks of Curly-braces'''
-        if self.simple_check(0, "OPEN_CURLY"):
+        if self.check_simple_group(0, "OPEN_CURLY CLOSE_CURLY"):
+            if self.parens[-1][0] is not None:
+                tok = self._tokens[self.parens[-1][1]]
+                errors.developer_info(f'{self._tokens}')
+                errors.error("Unclosed '('", line=tok.pos)
+
+            self.replace(2, "statement", Ast.Block(self.peek(0).pos))
+
+        elif self.simple_check(0, "OPEN_CURLY"):
             output = Ast.Block(self.peek(0).pos)
 
             # * check for function declaration before the block.

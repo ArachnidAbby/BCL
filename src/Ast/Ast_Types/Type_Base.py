@@ -43,6 +43,8 @@ class Type:
     
     def mod  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '%' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
 
+    def pow (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '**' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+
     
     def eq   (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '==' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     

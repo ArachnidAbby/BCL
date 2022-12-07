@@ -70,25 +70,43 @@ class Float_32(Type_Base.Type):
 
     
     def eq(self, func, lhs, rhs): 
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.eq(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('==', lhs, rhs)
 
     def neq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.neq(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('!=', lhs, rhs)
 
     def geq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.geq(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('>=', lhs, rhs)
 
     def leq(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.leq(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('<=', lhs, rhs)
 
     def le(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.le(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('<', lhs, rhs)
 
     def gr(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.gr(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('>', lhs, rhs)
