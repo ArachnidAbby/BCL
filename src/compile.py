@@ -42,8 +42,7 @@ def compile(src_str: str, output_loc: str):
     
     with timingContext('parsing finished'):
         module = Ast.module.Module((-1,-1,-1), "main", src_str, tokens)
-        Ast.standardfunctions.declare_printf(module.module)
-        Ast.standardfunctions.declare_exit(module.module)
+        Ast.standardfunctions.declare_all(module.module)
         module.parse()
         
     with timingContext('module created'):

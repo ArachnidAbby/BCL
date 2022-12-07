@@ -7,6 +7,8 @@ from . import function
 
 printf = None
 exit_func = None
+sleep_func = None
+usleep_func = None
 
 
 fmt_strings = {"nl":{}, "nonl":{}}
@@ -41,11 +43,31 @@ def declare_printf(module):
     fmt_strings["nonl"]["str"] = declare_global_str(module, "%s\0", "fstr_str")
     fmt_strings["nl"]["bool"] = declare_global_str(module, "%d\n\0", "fstr_bool_n")
     fmt_strings["nonl"]["bool"] = declare_global_str(module, "%d\0", "fstr_bool")
+    fmt_strings["nl"]["f32"] = declare_global_str(module, "%d\n\0", "fstr_float_n")
+    fmt_strings["nonl"]["f32"] = declare_global_str(module, "%d\0", "fstr_float")
 
 def declare_exit(module):
     global exit_func
     exit_ty = ir.FunctionType(ir.VoidType(), [ir.IntType(32)])
     exit_func = ir.Function(module, exit_ty, name="exit")
+
+def declare_sleep(module):
+    global sleep_func
+    sleep_ty = ir.FunctionType(ir.VoidType(), [ir.IntType(32)])
+    sleep_func = ir.Function(module, sleep_ty, name="sleep")
+
+def declare_usleep(module):
+    global usleep_func
+    usleep_ty = ir.FunctionType(ir.VoidType(), [ir.IntType(32)])
+    usleep_func = ir.Function(module, usleep_ty, name="usleep")
+
+
+def declare_all(module):
+    declare_printf(module)
+    declare_exit(module)
+    declare_sleep(module)
+    declare_usleep(module)
+
 
 @function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Integer_32(),))
 def std_println_int(func, args):
@@ -95,11 +117,31 @@ def std_print_bool(func, args):
     pistr = func.builder.bitcast(fmt_strings["nonl"]["bool"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
 
+@function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Float_32(),))
+def std_println_f32(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nl"]["f32"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
+@function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.Float_32(),))
+def std_print_f32(func, args):
+    x = args[0]
+    pistr = func.builder.bitcast(fmt_strings["nonl"]["f32"], voidptr_ty)
+    return func.builder.call(printf, [pistr, x])
+
 
 
 @function.internal_function("exit", Ast_Types.Void(), (Ast_Types.Integer_32(),))
 def std_exit(func, args):
     return func.builder.call(exit_func, args)
+
+@function.internal_function("sleep", Ast_Types.Void(), (Ast_Types.Integer_32(),))
+def std_sleep(func, args):
+    return func.builder.call(sleep_func, args)
+
+@function.internal_function("usleep", Ast_Types.Void(), (Ast_Types.Integer_32(),))
+def std_usleep(func, args):
+    return func.builder.call(usleep_func, args)
 
 
 # LLVM functions made accessible to users below
