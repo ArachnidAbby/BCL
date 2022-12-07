@@ -389,7 +389,7 @@ class Parser(ParserBase):
             self.replace(2,"expr",op)
 
 
-        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE"):
+        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT"):
             return
         # todo: add more operations
 
@@ -426,7 +426,7 @@ class Parser(ParserBase):
     
     def parse_expr_list(self):
         # * parse expression lists
-        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair !COLON"):
+        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair") and self.peek_safe(3).name not in ("COLON", "OPEN_PAREN", "expr"):
             expr = self.peek(0)
             out = None
             if expr.name == "expr_list":
