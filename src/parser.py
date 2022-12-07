@@ -27,7 +27,7 @@ class Parser(ParserBase):
         super().__init__(*args, **kwargs)
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
-            'if', 'while', 'else', 'break', 'continue'
+            'if', 'while', 'else', 'break', 'continue', 'as'
         )
 
         self.parsing_functions = {
@@ -181,7 +181,7 @@ class Parser(ParserBase):
 
     def parse_type_names(self):
         '''checks for type refs'''
-        if self.check_group(-1, "COLON|RIGHT_ARROW KEYWORD"):# and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
+        if self.check_group(-1, "COLON|RIGHT_ARROW|$as KEYWORD"):# and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
             val = Ast.TypeRefLiteral(self.peek(0).pos, self.peek(0).value)
             self.replace(1,"typeref", val)
         
@@ -370,6 +370,13 @@ class Parser(ParserBase):
     def parse_math(self):
         '''Parse mathematical expressions'''
 
+        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE"):
+            op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
+            self.replace(2,"expr",op)
+
+
+        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE"):
+            return
         # todo: add more operations
 
         # * Parse expressions
@@ -386,8 +393,7 @@ class Parser(ParserBase):
             op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(4,"statement",op)
 
-        elif self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys() and \
-                    self.peek(3).name not in ("OPEN_PAREN", "DOT", "KEYWORD", "expr"):
+        elif self.check_group(0,'expr _ expr') and self.peek(1).name in Ast.math.ops.keys():
             op_str =self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)
@@ -400,9 +406,9 @@ class Parser(ParserBase):
             op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)
         
-        elif self.check_group(0,'$not expr'):
-            op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
-            self.replace(2,"expr",op)
+        elif self.check_group(0,'expr $as typeref'):
+            op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            self.replace(3,"expr",op)
     
     def parse_expr_list(self):
         # * parse expression lists

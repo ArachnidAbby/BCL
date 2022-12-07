@@ -45,7 +45,6 @@ class VariableAssign(ASTNode):
     def eval(self, func):
         self.value.pre_eval(func)
         variable = self.block.get_variable(self.var_name)
-            #variable.define(func, self.var_name)
         if self.block.validate_variable(self.var_name):
             # if self.value.ret_type != variable.type:
             #     error(

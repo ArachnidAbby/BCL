@@ -131,6 +131,7 @@ class Block(ContainerNode):
     
     def eval(self, func):
         if len(self.children) == 0:
+            self.last_instruction = func.ret_type.name!="void"
             return
         self.BLOCK_STACK.append(self)
         for x in self.children[0:-1]:
@@ -165,8 +166,6 @@ class ParenthBlock(ContainerNode):
     def pre_eval(self, func):
         for c, child in enumerate(self.children):
             child.pre_eval(func)
-            # if child.name == "literal" and child.ret_type.pass_as_ptr and self.in_func_call:
-            #     func.create_const_var(child)
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
@@ -178,7 +177,6 @@ class ParenthBlock(ContainerNode):
     
     def is_key_value_pairs(self) -> bool:
         '''check if all children are `KV_pair`s, this is useful for func definitions'''
-        # print(self.children)
         for x in self.children:
             if not isinstance(x, KeyValuePair):
                 return False
@@ -192,7 +190,6 @@ class ParenthBlock(ContainerNode):
         for c, child in enumerate(self.children):
             if self.in_func_call and child.ret_type.pass_as_ptr:
                 ptr = child.get_ptr(func)
-                # func.builder.store(child.eval(func), ptr)
                 self.children[c] = ptr
                 continue
             self.children[c] = child.eval(func)
@@ -216,8 +213,6 @@ class KeyValuePair(ASTNode):
         self.value = v
     
     def validate_type(self) -> str:        
-        # if self.value not in Ast_Types.Type_Base.types_dict:  # type: ignore
-        #     error(f"unknown type '{self.value}'", line = self.position)
         self.value.eval(None)
         
         return self.value.value
@@ -226,7 +221,7 @@ class KeyValuePair(ASTNode):
         '''Get and validate type'''
         self.value.eval(None)
 
-        return self.value.value # type: ignore # The types_dict returns an class that needs instantiated. Hence the extra ()
+        return self.value.value
 
     @property
     def position(self) -> tuple[int, int, int]:

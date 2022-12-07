@@ -18,7 +18,7 @@ class Float_32(Type_Base.Type):
         if typ.name in ('i32', 'i64'): return func.builder.sitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'bool': return func.builder.uitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'f64': return func.builder.fptrunc(previous.eval(), Float_32.ir_type)
-        elif typ == 'f32': return previous.eval()
+        elif typ == 'f32': return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to type 'float'",line = previous.position)
 

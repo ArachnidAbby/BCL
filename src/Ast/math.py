@@ -11,6 +11,7 @@ ops = dict()
 class Operation(NamedTuple):
     operator_precendence: int
     name: str
+    right_asso: bool
     function: Callable[[ASTNode, ASTNode, Any, Any], ir.Instruction|None]
 
     def __call__(self, pos, lhs, rhs, shunted=False):
@@ -34,16 +35,22 @@ class OperationNode(ExpressionNode):
     @property
     def operator_precendence(self):
         return self.op.operator_precendence
+    
+    @property
+    def right_asso(self) -> bool:
+        return self.op.right_asso
 
     def pre_eval(self, func):
         self.lhs.pre_eval(func)
         self.rhs.pre_eval(func)
         
-        # print(self.lhs.ret_type, self)
-        self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
+        if self.op.name=="as":
+            self.rhs.eval(func)
+            self.ret_type = self.rhs.ret_type
+        else:
+            self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type, self.lhs, self.rhs)
         if self.ret_type!=None:
             self.ir_type = self.ret_type.ir_type
-        # print(self.lhs.ret_type, self)
     
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -83,7 +90,9 @@ def shunt(node: OperationNode) -> deque:
             elif item in active_node:
                 while op_stack:
                     op = op_stack.pop()
-                    if op[1] >= item.operator_precendence:
+                    if not item.right_asso and op[1] >= item.operator_precendence:
+                        output_queue.append(op[0])
+                    elif item.right_asso and op[1] > item.operator_precendence: # right associativity
                         output_queue.append(op[0])
                     else:
                         op_stack.append(op)
@@ -123,10 +132,10 @@ def RPN_to_node(shunted_data: deque) -> OperationNode:
 
     return shunted_data[0]
 
-def operator(precedence: int, name: str):
+def operator(precedence: int, name: str, right = False):
     def wrapper(func):
         global ops
-        op = Operation(precedence, name.lower(), func)
+        op = Operation(precedence, name.lower(), right, func)
         ops[name.upper()] = op
         ops[name.lower()] = op
 
@@ -136,6 +145,16 @@ def operator(precedence: int, name: str):
 
         return new_func
     return wrapper
+
+@operator(10, "as")
+def _as(self, func, lhs, rhs):
+    rhs.eval(func)
+    return (lhs.ret_type).convert_to(func, lhs, rhs.ret_type)
+
+# todo: get this working (it seems llvm doesn't have a basic `pow` operation, it is a function)
+@operator(10, "Pow")
+def pow(self, func, lhs, rhs):
+    pass
 
 @operator(1, "Sum")
 def sum(self, func, lhs, rhs):

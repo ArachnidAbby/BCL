@@ -169,16 +169,6 @@ class FunctionDef(ASTNode):
                 continue
             else:
                 x[0].define(self, x[1])
-                
-        
-        # for x in self.consts:
-        #     var_name = f"--temp-{len(self.consts)}"
-        #     val = x.eval(self)
-        #     ptr = self.builder.alloca(x.ir_type, name = var_name)
-        #     self.builder.store(val, ptr)
-        #     x.ptr = ptr
-
-            
 
     def eval(self):
         self.block.pre_eval(self)
@@ -189,10 +179,6 @@ class FunctionDef(ASTNode):
         self.alloc_stack()
 
         args = self.function_ir.args
-        
-        # # * add variables into block
-        # for c,x in enumerate(self.args.keys()):
-        #     self.block.variables[x].ptr = args[c]
         
         self.block.eval(self)
         

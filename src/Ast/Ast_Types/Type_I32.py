@@ -18,7 +18,7 @@ class Integer_32(Type_Base.Type):
         if typ.name in ('f32', 'f64'): return func.builder.fptosi(previous.eval(),Integer_32.ir_type)
         elif typ.name == 'bool': return func.builder.zext(previous.eval(), Integer_32.ir_type)
         elif typ.name == 'i64': return func.builder.trunc(previous.eval(), Integer_32.ir_type)
-        elif typ.name == 'i32': return previous.eval()
+        elif typ.name == 'i32': return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to type 'i32'",line = previous.position)
 

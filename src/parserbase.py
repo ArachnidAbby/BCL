@@ -81,6 +81,13 @@ class ParserBase:
     def peek(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token'''
         return self._tokens[self._cursor+index]
+
+    def peek_safe(self, index: int) -> ParserToken:
+        '''peek into the token list and fetch a token if overindexing the token list, it will return an empty token'''
+        if (self._cursor+index) > len(self._tokens)-1:
+            return ParserToken("EOF", "EOF", (-1,-1,-1), False)
+
+        return self._tokens[self._cursor+index]
     
     
     def _consume(self, index: int=0, amount: int=1):
