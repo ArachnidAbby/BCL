@@ -47,28 +47,43 @@ class Integer_1(Type_Base.Type):
 
 
     
-    def sum(self, func, lhs, rhs): 
-        lhs, rhs = Integer_1.convert_args(func, lhs, rhs, True)
+    def sum(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sum(func, lhs, rhs)
+        lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.add(lhs, rhs)
 
     
-    def sub(self, func, lhs, rhs): 
-        lhs, rhs = Integer_1.convert_args(func, lhs, rhs, True)
+    def sub(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sub(func, lhs, rhs)
+        lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.sub(lhs, rhs)
 
     
-    def mul(self, func, lhs, rhs): 
-        lhs, rhs = Integer_1.convert_args(func, lhs, rhs, True)
+    def mul(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mul(func, lhs, rhs)
+        lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.mul(lhs, rhs)
 
     
-    def div(self, func, lhs, rhs): 
-        lhs, rhs = Integer_1.convert_args(func, lhs, rhs, True)
+    def div(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.div(func, lhs, rhs)
+        lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
 
     
-    def mod(self, func, lhs, rhs): 
-        lhs, rhs = Integer_1.convert_args(func, lhs, rhs, True)
+    def mod(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mod(func, lhs, rhs)
+        lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.srem(lhs, rhs)
 
 
@@ -77,14 +92,14 @@ class Integer_1(Type_Base.Type):
     
     def eq(self, func, lhs, rhs): 
         typ = Type_Base.get_std_ret_type(lhs, rhs)
-        if typ != self:
+        if Type_Base.get_std_ret_type(lhs, rhs) != self:
             return typ.eq(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('==', lhs, rhs)
     
     def neq(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
-        if typ != self:
+        if Type_Base.get_std_ret_type(lhs, rhs) != self:
             return typ.neq(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('!=', lhs, rhs)

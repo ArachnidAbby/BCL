@@ -46,23 +46,38 @@ class Float_32(Type_Base.Type):
         return (lhs, rhs)
 
 
-    def sum(self, func, lhs, rhs): 
+    def sum(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sum(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fadd(lhs, rhs)
 
     def sub(self, func, lhs, rhs): 
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sub(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fsub(lhs, rhs)
 
-    def mul(self, func, lhs, rhs): 
+    def mul(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mul(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fmul(lhs, rhs)
 
     def div(self, func, lhs, rhs): 
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.div(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fdiv(lhs, rhs)
 
-    def mod(self, func, lhs, rhs): 
+    def mod(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mod(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.frem(lhs, rhs)
 

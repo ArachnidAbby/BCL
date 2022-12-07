@@ -51,27 +51,42 @@ class Char(Type_Base.Type):
 
 
     
-    def sum(self, func, lhs, rhs): 
+    def sum(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sum(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.add(lhs, rhs)
 
     
-    def sub(self, func, lhs, rhs): 
+    def sub(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.sub(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.sub(lhs, rhs)
 
     
-    def mul(self, func, lhs, rhs): 
+    def mul(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mul(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.mul(lhs, rhs)
 
     
-    def div(self, func, lhs, rhs): 
+    def div(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.div(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
 
     
-    def mod(self, func, lhs, rhs): 
+    def mod(self, func, lhs, rhs):
+        typ = Type_Base.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.mod(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.srem(lhs, rhs)
 
