@@ -84,13 +84,13 @@ def std_print_str(func, args):
     return func.builder.call(printf, [pistr, x])
 
 @function.internal_function("println", Ast_Types.Integer_32(), (Ast_Types.Integer_1(),))
-def std_println_str(func, args):
+def std_println_bool(func, args):
     x = args[0]
     pistr = func.builder.bitcast(fmt_strings["nl"]["bool"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
 
 @function.internal_function("print", Ast_Types.Integer_32(), (Ast_Types.Integer_1(),))
-def std_print_str(func, args):
+def std_print_bool(func, args):
     x = args[0]
     pistr = func.builder.bitcast(fmt_strings["nonl"]["bool"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
