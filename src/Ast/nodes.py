@@ -225,6 +225,6 @@ class KeyValuePair(ASTNode):
 
     @property
     def position(self) -> tuple[int, int, int]:
-        return self.merge_pos([self.value.position])
+        return self.merge_pos((self.value.position, ))
         
        

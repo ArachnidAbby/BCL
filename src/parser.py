@@ -27,20 +27,21 @@ class Parser(ParserBase):
         super().__init__(*args, **kwargs)
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
-            'if', 'while', 'else', 'break', 'continue', 'as'
+            'if', 'while', 'else', 'break', 'continue', 
+            'as', 'for', 'in'
         )
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, ),
             "OPEN_CURLY_USED": (self.parse_finished_blocks,),
             "expr": (self.parse_array_index, self.parse_KV_pairs, self.parse_statement, self.parse_math, self.parse_func_call,
-                     self.parse_expr_list, self.parse_array_putat),
+                     self.parse_expr_list, self.parse_array_putat, self.parse_rangelit),
             "statement": (self.parse_statement, ),
             "statement_list": (self.parse_statement, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
             "KEYWORD": (self.parse_type_names, self.parse_return_statement, self.parse_math, self.parse_keyword_literals,
-                        self.parse_control_flow, self.parse_functions, self.parse_vars, self.parse_KV_pairs),
+                        self.parse_control_flow, self.parse_vars, self.parse_functions, self.parse_KV_pairs),
             "func_def_portion": (self.parse_functions, ),
             "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit),
             "expr_list": (self.parse_expr_list, ),
@@ -210,7 +211,7 @@ class Parser(ParserBase):
         if self.check_simple_group(0, "expr DOUBLE_DOT expr"):
             start = self.peek(0).value
             end  = self.peek(2).value
-            self.replace(4, "range_lit", Ast.literals.RangeLiteral(self.peek(0).pos, start, end))
+            self.replace(3, "range_lit", Ast.literals.RangeLiteral(self.peek(0).pos, start, end))
 
     
     def parse_control_flow(self):
@@ -235,6 +236,15 @@ class Parser(ParserBase):
             block = self.peek(2).value
             x = Ast.loops.WhileStatement(self.peek(0).pos, expr, block)
             self.replace(3,"statement", x)
+        
+        elif self.check_group(0, "$for expr $in range_lit statement"):
+            if self.peek(1).value.name!="varRef":
+                errors.error("'for loop' variable must be a variable name, not an expression. ex: 'for x in 0..12 {}'", line = self.peek(1).pos)
+            expr = self.peek(1).value
+            rang = self.peek(3).value
+            block = self.peek(4).value
+            x = Ast.loops.ForLoop(self.peek(0).pos, expr, rang, block)
+            self.replace(5,"statement", x)
         
         elif self.check_group(0, "$continue SEMI_COLON"):
             x = Ast.loops.ContinueStatement(self.peek(0).pos)

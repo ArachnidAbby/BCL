@@ -5,9 +5,9 @@ define main() {
     test[x] = 8;
     // x = "helloworld";
     // println(x);
-    i: i32 = 0;
-    loop_amount = 20;
-    while i < loop_amount {
+    // i: i32 = 0;
+    loop_amount = 2;
+    for i in 0..loop_amount {
         i += 1;
         fizz = is_multiple(i, 3);
         buzz = is_multiple(i, 5)*2;
