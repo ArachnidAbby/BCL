@@ -80,11 +80,14 @@ class basictests(unittest.TestCase):
         test_code = """
         define main() { 
             8+2*8-292/15==9;
+            12 * test(15);
             not true;
             true and true;
             true and not true;
             true or true and not true;
         }
+
+        define test(x: i32) -> i32 { return 12;}
         """
 
         compile.compile(test_code, f'{p}/random/test_ops.ll')

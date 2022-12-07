@@ -378,7 +378,8 @@ class Parser(ParserBase):
             op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(4,"statement",op)
 
-        elif self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys():
+        elif self.check_group(0,'expr _ expr !OPEN_SQUARE') and self.peek(1).name in Ast.math.ops.keys() and \
+                    self.peek(3).name not in ("OPEN_PAREN", "DOT", "KEYWORD", "expr"):
             op_str =self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"expr",op)

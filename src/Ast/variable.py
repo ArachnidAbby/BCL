@@ -47,11 +47,11 @@ class VariableAssign(ASTNode):
         variable = self.block.get_variable(self.var_name)
             #variable.define(func, self.var_name)
         if self.block.validate_variable(self.var_name):
-            if self.value.ret_type != variable.type:
-                error(
-                    f"Cannot store type '{self.value.ret_type}' in variable '{self.name}' of type '{self.block.variables[self.var_name].type}'",
-                    line = self.value.position
-                )
+            # if self.value.ret_type != variable.type:
+            #     error(
+            #         f"Cannot store type '{self.value.ret_type}' in variable '{self.var_name}' of type '{self.block.variables[self.var_name].type}'",
+            #         line = self.value.position
+            #     )
             self.block.variables[self.var_name].is_constant = False
 
         variable.store(func, self.value)
