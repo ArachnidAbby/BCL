@@ -57,11 +57,8 @@ class Module(ASTNode):
 
     def pre_eval(self):
         for c, child in enumerate(self.children):
-            if not child.completed:
-                if child.name in ["OPEN_CURLY_USED", "OPEN_PAREN_USED"] and self.children[c+1].completed:
-                    continue
+            if not child.completed:                    
                 self.syntax_error_information(child, c)
-
             child.value.pre_eval()
 
     def eval(self):
@@ -84,10 +81,11 @@ class Module(ASTNode):
         reached_semicolon = False
         last_pos = (-1,-1,-1)
         for err in self.children[c:]:
-            if err.completed: break
+            if err.name=="CLOSE_CURLY":
+                break
             if err.name == "SEMI_COLON":
                 reached_semicolon = True
-            last_pos = child.pos
+            if err.pos!= (-1,-1,-1): last_pos = err.pos
         
         if not reached_semicolon:
             errors.error(f"""

@@ -61,12 +61,26 @@ class Parser(ParserBase):
         #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
 
         if len(self.blocks) > 1: # check for unclosed blocks
-            errors.developer_info(f"{self._tokens}")
-            errors.error("Unclosed '{'", line = self.blocks[-1][0].position)
+            found = False
+            for x in self._tokens[self.blocks[-1][1]:]:
+                if x.name == "CLOSE_CURLY":
+                    found = True
+                    break
+
+            if not found:
+                errors.developer_info(f"{self._tokens}")
+                errors.error("Unclosed '{'", line = self.blocks[-1][0].position)
         
-        elif len(self.parens) > 1: # check for unclosed blocks
-            errors.developer_info(f"{self._tokens}")
-            errors.error("Unclosed '('", line = self.parens[-1][0].position)
+        elif len(self.parens) > 1: # check for unclosed parens
+            found = False
+            for x in self._tokens[self.parens[-1][1]:]:
+                if x.name == "CLOSE_PAREN":
+                    found = True
+                    break
+
+            if not found:
+                errors.developer_info(f"{self._tokens}")
+                errors.error("Unclosed '('", line = self.parens[-1][0].position)
 
     
     def parse_finished_blocks(self):
