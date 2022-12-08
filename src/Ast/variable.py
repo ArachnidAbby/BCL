@@ -167,7 +167,7 @@ class VariableIndexRef(ExpressionNode):
         return self.varref.ret_type.index(func, self)
 
     def __repr__(self) -> str:
-        return f"<index of `{self.varref.name}`>"
+        return f"<index of `{self.varref}`>"
 
 class VariableIndexPutAt(ASTNode):
     __slots__ = ('value', 'ref')
@@ -185,4 +185,4 @@ class VariableIndexPutAt(ASTNode):
         return self.ref.varref.ret_type.put(func, self.ref, self.value)
 
     def __repr__(self) -> str:
-        return f"<putat for `{self.ref.varref.var_name}`>"
+        return f"<putat for `{self.ref}`>"

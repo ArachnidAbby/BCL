@@ -21,7 +21,7 @@ class Parser(ParserBase):
     
     '''
 
-    __slots__ = ('keywords', 'blocks', 'parens')
+    __slots__ = ('keywords', 'blocks', 'parens', "standard_expr_checks", "op_node_names")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,6 +30,9 @@ class Parser(ParserBase):
             'if', 'while', 'else', 'break', 'continue', 
             'as', 'for', 'in'
         )
+
+        self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT", "paren")
+        self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, ),
@@ -208,7 +211,7 @@ class Parser(ParserBase):
             self.replace(4,"typeref", typ)
     
     def parse_rangelit(self):
-        if self.check_simple_group(0, "expr DOUBLE_DOT expr"):
+        if self.check_simple_group(0, "expr DOUBLE_DOT expr") and self.peek(2).name not in self.standard_expr_checks:
             start = self.peek(0).value
             end  = self.peek(2).value
             self.replace(3, "range_lit", Ast.literals.RangeLiteral(self.peek(0).pos, start, end))
@@ -388,23 +391,30 @@ class Parser(ParserBase):
     def parse_numbers(self):
         '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
-        if self.check_group(-1,'!expr SUB|SUM expr') and isinstance(self.peek(1).value, Ast.Literal) and \
+        if self.check_group(-1,'!expr SUB|SUM expr'):
+            if isinstance(self.peek(1).value, Ast.Literal) and \
                 self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32, Ast.Ast_Types.Integer_32):
-            if self.check(0,"SUB"):
-                self.peek(1).value.value *= -1
-                self.replace(2, "expr", self.peek(1).value)
-            elif self.check(0,"SUM"):
+                if self.check(0,"SUB"):
+                    self.peek(1).value.value *= -1
+                    self.replace(2, "expr", self.peek(1).value)
+                elif self.check(0,"SUM"):
+                    self.replace(2, "expr", self.peek(1).value)
+            elif self.check(0, "SUB"):
+                multiplier = Ast.literals.Literal(self.peek(0).pos, -1, Ast.Ast_Types.Integer_32())
+                self.replace(2, "expr", Ast.math.ops["MUL"](self.peek(0).pos, multiplier, self.peek(1).value))
+            
+            elif self.check(0, "SUM"):
                 self.replace(2, "expr", self.peek(1).value)
     
     def parse_math(self):
         '''Parse mathematical expressions'''
 
-        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE"):
+        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in self.standard_expr_checks:
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
             self.replace(2,"expr",op)
 
 
-        if self.peek_safe(3).name in ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT", "paren"):
+        if self.peek_safe(3).name in self.standard_expr_checks:
             return
         # todo: add more operations
 
@@ -441,7 +451,7 @@ class Parser(ParserBase):
     
     def parse_expr_list(self):
         # * parse expression lists
-        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair") and self.peek_safe(3).name not in ("COLON", "OPEN_PAREN", "expr", "paren"):
+        if self.check_group(0, "expr|expr_list|kv_pair COMMA expr|kv_pair") and self.peek_safe(3).name not in (*self.standard_expr_checks, *self.op_node_names):
             expr = self.peek(0)
             out = None
             if expr.name == "expr_list":
