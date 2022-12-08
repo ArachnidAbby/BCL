@@ -105,7 +105,7 @@ class ForLoop(ASTNode):
         
         # branching and loop body
 
-        self.branch_logic(func)
+        func.builder.branch(self.for_body)
         func.builder.position_at_start(self.for_body)
 
         self.block.eval(func)
