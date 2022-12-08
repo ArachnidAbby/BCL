@@ -1,6 +1,6 @@
 define main() {
     x = 6;
-    test = [0; 10];
+    test = [x; 10];
     println(test[x]);
     test[x] = 8;
     // x = "helloworld";

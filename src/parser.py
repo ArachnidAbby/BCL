@@ -31,8 +31,8 @@ class Parser(ParserBase):
             'as', 'for', 'in'
         )
 
-        self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "DOUBLE_DOT", "paren")
-        self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD")
+        self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "paren")
+        self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD", "COLON", "DOUBLE_DOT")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_blocks, ),
@@ -211,7 +211,7 @@ class Parser(ParserBase):
             self.replace(4,"typeref", typ)
     
     def parse_rangelit(self):
-        if self.check_simple_group(0, "expr DOUBLE_DOT expr") and self.peek(2).name not in self.standard_expr_checks:
+        if self.check_simple_group(0, "expr DOUBLE_DOT expr") and self.peek_safe(3).name not in (*self.standard_expr_checks, *self.op_node_names):
             start = self.peek(0).value
             end  = self.peek(2).value
             self.replace(3, "range_lit", Ast.literals.RangeLiteral(self.peek(0).pos, start, end))
@@ -409,7 +409,7 @@ class Parser(ParserBase):
     def parse_math(self):
         '''Parse mathematical expressions'''
 
-        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in self.standard_expr_checks:
+        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in (*self.standard_expr_checks, "DOUBLE_DOT"):
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
             self.replace(2,"expr",op)
 
