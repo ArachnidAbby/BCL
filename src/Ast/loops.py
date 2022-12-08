@@ -84,6 +84,7 @@ class ForLoop(ASTNode):
         self.for_body = None
     
     def pre_eval(self, func):
+        self.varptr = func.create_const_var(Ast_Types.Integer_32())
         self.block.variables[self.var.var_name] = VariableObj(self.varptr, Ast_Types.Integer_32(), False)
         self.rang.pre_eval(func)
         self.block.pre_eval(func)
@@ -100,8 +101,6 @@ class ForLoop(ASTNode):
 
         # create cond
         self.rang.eval(func)
-        self.varptr = func.create_const_var(Ast_Types.Integer_32())
-        self.block.variables[self.var.var_name].ptr = self.varptr
         func.builder.store(ir.Constant(ir.IntType(32), 0), self.varptr)
         
         # branching and loop body

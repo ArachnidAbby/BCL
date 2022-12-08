@@ -124,9 +124,9 @@ class Parser(ParserBase):
                 for x in self.peek(-1).value.args.keys():
                     arg = self.peek(-1).value.args[x]
                     output.variables[x] = Ast.variable.VariableObj(arg[0], arg[1].value, True)
-            if self.blocks[-1][0]!=None and isinstance(self.blocks[-1][0], Ast.nodes.Block):
-                for x in self.blocks[-1][0].variables.keys():
-                    output.variables[x] = self.blocks[-1][0].variables[x]
+            # if self.blocks[-1][0]!=None and isinstance(self.blocks[-1][0], Ast.nodes.Block): #keep this just in case
+            #     for x in self.blocks[-1][0].variables.keys():
+            #         output.variables[x] = self.blocks[-1][0].variables[x]
 
             # * main implementation
             self.blocks.append((output, self._cursor))

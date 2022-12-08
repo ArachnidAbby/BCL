@@ -1,4 +1,4 @@
-override FILE = current.bcl
+override FILE = game_of_life.bcl
 
 env/bin/activate: requirements.txt
 	python3.11 -m venv env 

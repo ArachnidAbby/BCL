@@ -125,9 +125,17 @@ class Block(ContainerNode):
         self.last_instruction = False
         self.ended = False
     
+    def append_nested_vars(self):
+        '''append vars for nested blocks'''
+        if len(self.BLOCK_STACK)!=0:
+            self.variables = {**self.variables, **self.BLOCK_STACK[-1].variables}
+    
     def pre_eval(self, func):
+        self.append_nested_vars()
+        self.BLOCK_STACK.append(self)
         for x in self.children:
             x.pre_eval(func)
+        self.BLOCK_STACK.pop()
     
     def eval(self, func):
         if len(self.children) == 0:

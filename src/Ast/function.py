@@ -146,6 +146,10 @@ class FunctionDef(ASTNode):
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
 
+        block = self.function_ir.append_basic_block("entry")
+        self.builder = ir.IRBuilder(block)
+        self.ir_entry = block 
+
     def create_const_var(self, typ):
         current_block = self.builder.block
         self.builder.position_at_start(self.ir_entry)
@@ -175,9 +179,6 @@ class FunctionDef(ASTNode):
 
     def eval(self):
         self.block.pre_eval(self)
-        block = self.function_ir.append_basic_block("entry")
-        self.ir_entry =block 
-        self.builder = ir.IRBuilder(block)
         self.function_ir.attributes.add("nounwind")
         self.alloc_stack()
 
