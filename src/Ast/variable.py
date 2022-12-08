@@ -135,7 +135,7 @@ class VariableIndexRef(ExpressionNode):
     def pre_eval(self, func):
         self.varref.pre_eval(func)
         self.ind.pre_eval(func)
-        if self.varref.ret_type.get_op_return('ind', None, None)!=None:
+        if self.varref.ret_type.get_op_return('ind', None, None) is not None:
             self.ret_type = self.varref.ret_type.typ
         else:
             self.ret_type = self.varref.ret_type
