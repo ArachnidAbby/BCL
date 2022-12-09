@@ -31,8 +31,7 @@ define main() {
 
 define check_row_neighbors(board: bool[10], y: i32) -> i32 {
     // board = board1;
-    neighbors = 0;
-    neighbors+=board[y];
+    neighbors: i32 = board[y];
     if y>0 {
         neighbors+=board[y-1];
     }

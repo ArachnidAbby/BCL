@@ -15,7 +15,7 @@ def timingContext(text: str):
     print(errors.GREEN, end="")
     _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
-def compile(src_str: str, output_loc: str):
+def compile(src_str: str, output_loc: str, create_object_file):
     start = perf_counter()
 
     inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
@@ -49,7 +49,8 @@ def compile(src_str: str, output_loc: str):
         module.pre_eval()
         module.eval()
     
-    module.save_ir(output_loc)
+    module.save_ir(output_loc, create_object_file = create_object_file)
+    codegen.shutdown()
 
     _print_raw(f'{errors.GREEN}| IR saved, compilation done | {perf_counter() - start}s')
     _print_raw(f'\\--------------------------------------------------/{errors.RESET}')
@@ -61,7 +62,8 @@ def compile(src_str: str, output_loc: str):
 
     _print_raw('\n\n\n')
 
-def compile_file(file: Path):
+def compile_file(file: Path, args):
     errors.FILE = file
     with file.open() as f:
-        compile(f.read(), str(file.absolute().parents[0] / "output.ll"))
+        create_object_file = "--emit-object" in args
+        compile(f.read(), str(file.absolute().parents[0] / "output"), create_object_file)

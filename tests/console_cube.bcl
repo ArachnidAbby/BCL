@@ -217,7 +217,7 @@ define cos(x : f32) -> f32 {
 
 define fmod(x : f32, y : f32) -> f32 {
     quotient : f32 = x / y;
-    iquotient : i32 = quotient as f32;
+    iquotient : i32 = quotient;
     
     remainder : f32 = fabs(x) - fabs(y * iquotient);
     if x < 0 {

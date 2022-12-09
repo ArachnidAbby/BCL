@@ -10,7 +10,7 @@ class CodeGen():
     def __init__(self):
         binding.initialize()
         binding.initialize_native_target()
-        # binding.initialize_native_asmprinter()
+        binding.initialize_native_asmprinter()
         self._config_llvm()
 
     def _config_llvm(self):
@@ -18,5 +18,8 @@ class CodeGen():
         self.module.triple = binding.get_default_triple()
 
     def save_ir(self, filename):
-        with open(filename, 'w') as output_file:
-            output_file.write(str(self.module))
+        with open(filename, 'wb') as output_file:
+            output_file.write(binding.ModuleRef(str(self.module), self.module.context).as_bitcode())
+
+    def shutdown(self):
+        binding.shutdown()

@@ -22,7 +22,7 @@ class basictests(unittest.TestCase):
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions.ll')
+        compile.compile(test_code, f'{p}/random/test_functions.ll', False)
 
     def test_function_overloading(self):
         test_code = """
@@ -38,7 +38,7 @@ class basictests(unittest.TestCase):
         define test_func(x: f32, y: f32) -> f32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions_2.ll')
+        compile.compile(test_code, f'{p}/random/test_functions_2.ll', False)
     
     @unittest.expectedFailure
     def test_variables_1(self):
@@ -49,7 +49,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_1.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_1.ll', False)
     
     @unittest.expectedFailure
     def test_variables_2(self):
@@ -62,7 +62,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_2.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_2.ll', False)
     
     def test_variables_3(self):
         test_code = """
@@ -74,7 +74,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_3.ll')
+        compile.compile(test_code, f'{p}/random/test_variables_3.ll', False)
 
     def test_ops(self):
         test_code = """
@@ -90,7 +90,7 @@ class basictests(unittest.TestCase):
         define test(x: i32) -> i32 { return 12;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_ops.ll')
+        compile.compile(test_code, f'{p}/random/test_ops.ll', False)
     
     def test_if_else_if(self):
         test_code = """
@@ -107,7 +107,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_ifs.ll')
+        compile.compile(test_code, f'{p}/random/test_ifs.ll', False)
     
     def test_arrays(self):
         test_code = """
@@ -125,7 +125,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_arrays.ll')
+        compile.compile(test_code, f'{p}/random/test_arrays.ll', False)
 
     def test_arrays_index_literals(self):
         test_code = """
@@ -139,7 +139,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_arrays_indLit.ll')
+        compile.compile(test_code, f'{p}/random/test_arrays_indLit.ll', False)
 
     def test_arrays_index_math(self):
         test_code = """
@@ -153,7 +153,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_arrays_indmath.ll')
+        compile.compile(test_code, f'{p}/random/test_arrays_indmath.ll', False)
 
     @unittest.expectedFailure
     def test_array_fail(self):
@@ -164,7 +164,7 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_array_fail.ll')
+        compile.compile(test_code, f'{p}/random/test_array_fail.ll', False)
 
 
 if __name__ == '__main__':

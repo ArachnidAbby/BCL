@@ -44,7 +44,7 @@ if __name__ == "__main__":
         make_project(args)
 
     elif args[1] == "compile":
-        compile.compile_file(Path(args[2]))
+        compile.compile_file(Path(args[2]), args)
 
     else:
         print(f"Invalid sub-command: {args[1]}")

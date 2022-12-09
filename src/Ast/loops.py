@@ -101,7 +101,7 @@ class ForLoop(ASTNode):
 
         # create cond
         self.rang.eval(func)
-        func.builder.store(ir.Constant(ir.IntType(32), 0), self.varptr)
+        func.builder.store(self.rang.start, self.varptr)
         
         # branching and loop body
 

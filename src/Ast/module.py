@@ -8,7 +8,7 @@ from Ast.nodes import ASTNode
 global_functions = {} #! this will likely be later deprecated once `import <name>` is added
 
 class Module(ASTNode):
-    __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module', 'mod_name')
+    __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module', 'mod_name', 'target')
 
     def init(self, name, location, tokens):
         self.mod_name      = name
@@ -18,6 +18,7 @@ class Module(ASTNode):
         self.imports   = {}
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
+        self.target = binding.Target.from_triple(self.module.triple)
 
         self.children  = tokens
 
@@ -65,9 +66,40 @@ class Module(ASTNode):
         for child in self.children:
             child.value.eval()
 
-    def save_ir(self, loc):
-        with open(loc, 'w') as output_file:
-            output_file.write(str(self.module))
+    def save_ir(self, loc, create_object_file = False):
+        target = self.target.create_target_machine()
+        module_pass = binding.ModulePassManager()
+        pass_manager = binding.PassManagerBuilder()
+        # pass_manager.loop_vectorize = True
+        # pass_manager.opt_level = 1
+        module_pass.add_memcpy_optimization_pass()
+        module_pass.add_reassociate_expressions_pass()
+        
+
+        # module_pass.add_refprune_pass()
+        module_pass.add_dead_code_elimination_pass()
+        # module_pass.add_instruction_combining_pass()
+        module_pass.add_arg_promotion_pass()
+        # module_pass.add_sink_pass()
+        
+        
+        module_pass.add_constant_merge_pass()
+        # module_pass.add_dead_store_elimination_pass()
+        module_pass.add_cfg_simplification_pass()
+        # module_pass.add_merge_returns_pass()
+        
+        llir = str(self.module)
+        mod = binding.parse_assembly(llir)
+
+        # pass_manager.populate(module_pass)
+        module_pass.run(mod)
+
+        with open(f"{loc}.ll", 'w') as output_file:
+            output_file.write(str(mod))
+        if not create_object_file:
+            return
+        with open(f"{loc}.o", 'wb') as output_file:            
+            output_file.write(target.emit_object(mod))
 
     def syntax_error_information(self, child, c: int):
         '''more useful syntax error messages'''
