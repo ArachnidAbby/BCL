@@ -19,8 +19,7 @@ class Reference(Type_Base.Type):
         self.typ = typ
         if typ.name == "literal":
             typ.eval(None)
-            self.typ = \
-                typ.value # elements' type
+            self.typ = typ.value # elements' type
 
         self.ir_type = typ.ir_type.as_pointer()
 
@@ -29,6 +28,9 @@ class Reference(Type_Base.Type):
     
     def __neq__(self, other):
         return self.name != other.name or self.typ != other.typ
+    
+    def __str__(self) -> str:
+        return f'&{str(self.typ)}'
     
     def __hash__(self):
         return hash(f"&{self.typ}")

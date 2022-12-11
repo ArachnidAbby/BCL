@@ -129,16 +129,24 @@ class Ref(ExpressionNode):
 
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
-    __slots__ = ('ind', 'varref', 'var_name')
+    __slots__ = ('ind', 'varref', 'var_name', 'size')
     name = "varIndRef"
 
     def init(self, varref: VariableRef, ind: ExpressionNode):
         self.varref = varref
         self.ind = ind
+        self.size = 0
     
     def pre_eval(self, func):
         self.varref.pre_eval(func)
+        if self.varref.ret_type.name == "ref":
+            old = self.varref
+            self.varref = self.varref.get_value(func)
+            # self.varref.ret_type = old.ret_type
+            self.varref.ir_type = self.varref.ret_type.ir_type
         self.ind.pre_eval(func)
+        if self.ind.ret_type.name == "ref":
+            self.ind = self.ind.get_value(func)
         if self.varref.ret_type.get_op_return('ind', None, None) is not None:
             self.ret_type = self.varref.ret_type.typ
         else:
@@ -170,6 +178,9 @@ class VariableIndexRef(ExpressionNode):
         # if self.varref.name == "varRef" and self.varref.get_var(func).is_constant:
         #     return func.builder.gep(self.varref.get_ptr(func) , [self.ind.eval(func),])
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
+
+    def get_value(self, func):
+        return self.get_ptr(func)
 
     def eval(self, func):
         return self.varref.ret_type.index(func, self)

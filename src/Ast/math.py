@@ -41,9 +41,9 @@ class OperationNode(ExpressionNode):
         return self.op.right_asso
 
     def deref(self, func):
-        if self.rhs.ret_type.name=="ref":
+        if self.rhs.ret_type is not None and self.rhs.ret_type.name=="ref":
             self.rhs = self.rhs.get_value(func)
-        if self.lhs.ret_type.name=="ref":
+        if self.lhs.ret_type is not None and self.lhs.ret_type.name=="ref":
             self.lhs = self.lhs.get_value(func)
 
     def pre_eval(self, func):

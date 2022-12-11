@@ -384,7 +384,7 @@ class Parser(ParserBase):
                 self.replace(1,"expr", var)
 
     def parse_varref(self):
-        if self.check_group(0, "AMP expr !OPEN_SQUARE"):# and self.peek(1).name in ("varRef", "varIndRef"):
+        if self.check_group(0, "AMP expr !OPEN_SQUARE") and self.peek(1).value.name in ("varRef", "varIndRef"):
             var = self.peek(1).value
             typ = Ast.variable.Ref(self.peek(0).pos, var)
             self.replace(2,"expr", typ)
