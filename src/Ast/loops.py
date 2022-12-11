@@ -17,11 +17,11 @@ class WhileStatement(ASTNode):
     type = NodeTypes.STATEMENT
 
     def init(self, cond: ASTNode, block: Block):
-        self.cond = cond
-        self.block = block
+        self.cond        = cond
+        self.block       = block
         self.loop_before = None
         self.while_after = None
-        self.while_body = None
+        self.while_body  = None
     
     def pre_eval(self, func):
         self.cond.pre_eval(func)
@@ -29,21 +29,14 @@ class WhileStatement(ASTNode):
     
     def eval(self, func):
         # cond = self.cond.eval(func)
-        orig_block_name = func.builder.block._name
-        self.while_body = func.builder.append_basic_block(f'{orig_block_name}.while')
+        orig_block_name  = func.builder.block._name
+        self.while_body  = func.builder.append_basic_block(f'{orig_block_name}.while')
         self.while_after = func.builder.append_basic_block(f'{orig_block_name}.endwhile')
-        ret_bfor = func.has_return
-        loop_bfor = func.inside_loop
+        ret_bfor         = func.has_return
+        loop_bfor        = func.inside_loop
         self.loop_before = loop_bfor
 
         func.inside_loop = self
-
-        # # alloca outside of the loop body in order to not have a stack overflow!
-        # for c,x in enumerate(self.block.children):
-        #     if isinstance(x, VariableAssign) and x.is_declaration:
-        #         variable = self.block.get_variable(x.var_name)
-        #         if not self.block.validate_variable(x.var_name):
-        #             variable.define(func, x.var_name)
         
         # branching and loop body
 
@@ -62,7 +55,6 @@ class WhileStatement(ASTNode):
         if func.block.last_instruction:
             func.builder.unreachable()
         
-    
     def branch_logic(self, func):
         cond = self.cond.eval(func)
         func.builder.cbranch(cond, self.while_body, self.while_after)
@@ -75,19 +67,21 @@ class ForLoop(ASTNode):
     type = NodeTypes.STATEMENT
 
     def init(self, var: ASTNode, rang, block: Block):
-        self.var = var
-        self.varptr = None
-        self.rang = rang
-        self.block = block
+        self.var         = var
+        self.varptr      = None
+        self.rang        = rang
+        self.block       = block
         self.loop_before = None
-        self.for_after = None
-        self.for_body = None
+        self.for_after   = None
+        self.for_body    = None
     
     def pre_eval(self, func):
         self.varptr = func.create_const_var(Ast_Types.Integer_32())
         self.block.variables[self.var.var_name] = VariableObj(self.varptr, Ast_Types.Integer_32(), False)
+
         if self.rang.start.name == "literal" and self.rang.end.name=="literal":
             self.block.variables[self.var.var_name].range = (self.rang.start.value, self.rang.end.value)
+
         self.rang.pre_eval(func)
         self.block.pre_eval(func)
     
@@ -106,7 +100,6 @@ class ForLoop(ASTNode):
         func.builder.store(self.rang.start, self.varptr)
         
         # branching and loop body
-
         func.builder.branch(self.for_body)
         func.builder.position_at_start(self.for_body)
 

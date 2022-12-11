@@ -81,26 +81,30 @@ class FunctionDef(ASTNode):
     name = "funcDef"
 
     def init(self, name: str, args: ParenthBlock, block: Block, module):
-        self.func_name = name
-        self.ret_type = Ast_Types.Void()
+        self.func_name   = name
+        self.ret_type    = Ast_Types.Void() # Can also be a TypeRef. In which case, it should be evaled
 
-        self.builder = None
-        self.block = block
-        self.module = module
-        self.is_ret_set = False
-        self.has_return = False
-        self.inside_loop = None
-        self.ir_entry = None
+        self.builder     = None # llvmlite.ir.IRBuilder object once created
+        self.block       = block  # body of the function Ast.Block
+        self.module      = module # Module the object is contained in
+        self.is_ret_set  = False  # is the return value set?
+        self.has_return  = False  # Not to be confused with "is_ret_set", this is used for ensuring that a `return` always accessible
+        self.inside_loop = None   # Whether or not the IRBuilder is currently inside a loop block, set to the loop node
+        self.ir_entry    = None   # Entry section of the function. Used when declaring "invisible" variables
         self.variables: list[tuple] = []
         self.consts: list[tuple] = []
 
-        self._validate(args) # validate arguments
+        self._validate_args(args) # validate arguments
 
         # construct args lists
-        self.args = dict()
-        self.args_ir = list()
-        self.args_types = list()
+        self.args       = dict()
+        self.args_ir    = list() # list of all the args' ir types
+        self.args_types = list() # list of all the args' Ast_Types.Type return types
+        self._construct_args(args)
         
+    
+    def _construct_args(self, args):
+        '''Construct the lists of args required when building this function'''
         for arg in args:
             self.args[arg.key] = [None, arg.value, True]
             if arg.get_type().pass_as_ptr:
@@ -112,20 +116,13 @@ class FunctionDef(ASTNode):
         self.args_ir = tuple(self.args_ir)
         self.args_types = tuple(self.args_types)
 
-    def _validate(self, args):
+
+    def _validate_args(self, args):
         '''Validate that all args are syntactically valid'''
         if not args.is_key_value_pairs():
             errors.error(f"Function {self.func_name}'s argument tuple consists of non KV_pairs", line = self.position)
 
-        for x in args:
-            if not x.keywords:
-                errors.error(f"Function {self.func_name}'s argument tuple can only consist of Keyword pairs\
-                               \n\t invalid pair:    '{x.key}: {x.value}'\n", 
-                               line = self.position)
-
-    def pre_eval(self):
-        global functions
-
+    def _validate_return(self):
         ret_line = (-1,-1,-1)
         if self.is_ret_set:
             self.ret_type.eval(self)
@@ -133,33 +130,42 @@ class FunctionDef(ASTNode):
             self.ret_type = self.ret_type.ret_type
         if self.ret_type.name == "ref":
             errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line = ret_line)
+
+    def _mangle_name(self) -> str:
+        '''add an ID to the end of a name if the function has a body and is NOT named "main"'''
+        if self.func_name!="main" and self.block is not None:
+            return f"{self.func_name}.{len(functions[self.func_name].keys())}"
+        return self.func_name
+
+    def _append_args(self):
+        '''append all args as variables usable inside the function body'''
+        args = self.function_ir.args
+        for c,x in enumerate(self.args.keys()):
+            self.block.variables[x].ptr = args[c]
+            self.variables.append((self.block.variables[x], x))
+    
+    def pre_eval(self):
+        global functions
+
+        self._validate_return()
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         if self.func_name not in functions:
             functions[self.func_name] = dict()
 
-        # avoid name collisions by adding a # to the end of the function name
-        if self.func_name!="main" and self.block is not None:
-            name = f"{self.func_name}.{len(functions[self.func_name].keys())}"
-        else:
-            name = self.func_name 
 
-        self.function_ir = ir.Function(self.module.module, fnty, name=name)
-        
+        self.function_ir = ir.Function(self.module.module, fnty, name=self._mangle_name())
         functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.func_name, self.function_ir,
-                                                          self.ret_type, self.args_types) # type: ignore
+                                                          self.ret_type, self.args_types) 
+        # Early return if the function has no body.
         if self.block is None:
             return
 
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
         self.ir_entry = block
-
-        args = self.function_ir.args
-        for c,x in enumerate(self.args.keys()):
-            self.block.variables[x].ptr = args[c]
-            self.variables.append((self.block.variables[x], x))
+        self._append_args()
 
     def create_const_var(self, typ):
         current_block = self.builder.block
@@ -209,21 +215,22 @@ class ReturnStatement(ASTNode):
         self.expr = expr
 
     def pre_eval(self, func):
-        pass
+        self.expr.pre_eval(func)
+
+    def _check_valid_type(self, func):
+        if self.expr.ret_type != func.ret_type:
+            errors.error(f"Funtion, \"{func.func_name}\", has a return type of '{func.ret_type}'. \
+                            Return statement returned '{self.expr.ret_type}'",
+                            line = self.position)
 
     def eval(self, func):
-        self.expr.pre_eval(func)
         func.has_return = True
-        if self.expr.ret_type != func.ret_type:
-            errors.error(
-                f"Funtion, \"{func.func_name}\", has a return type of '{func.ret_type}'. Return statement returned '{self.expr.ret_type}'",
-                line = self.position
-            )
+        self._check_valid_type(func)
 
         if func.ret_type.is_void():
             func.builder.ret_void()
-            return None
-        func.builder.ret(self.expr.eval(func))
+        else:
+            func.builder.ret(self.expr.eval(func))
 class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''
     __slots__ = ('ir_type', 'paren', 'function', 'args_types', "func_name")
@@ -231,20 +238,23 @@ class FunctionCall(ExpressionNode):
     
     def init(self, name: str, parenth: ParenthBlock):
         self.func_name = name
-        self.ret_type = Ast_Types.Void()
-
-        self.paren = parenth
+        self.ret_type  = Ast_Types.Void()
+        self.paren     = parenth
     
+    def _check_function_exists(self):
+        '''ensure a function exists and the correct form of it exists'''
+        if self.func_name not in functions \
+            or self.args_types not in functions[self.func_name]:
+            args_for_error = ','.join([str(x) for x in self.args_types])
+            errors.error(f"function '{self.func_name}({args_for_error})' was never defined", line = self.position)
+
     def pre_eval(self, func):
         if self.paren.name == "Parenth":
             self.paren.in_func_call = True
         self.paren.pre_eval(func)
 
         self.args_types = tuple([x.ret_type for x in self.paren])
-        if self.func_name not in functions \
-            or self.args_types not in functions[self.func_name]:
-            args_for_error = ','.join([str(x) for x in self.args_types])
-            errors.error(f"function '{self.func_name}({args_for_error})' was never defined", line = self.position)
+        self._check_function_exists()
         
         self.ret_type = functions[self.func_name][self.args_types].ret_type
         self.ir_type = (self.ret_type).ir_type
@@ -253,10 +263,8 @@ class FunctionCall(ExpressionNode):
     
     def eval(self, func):
         x = self.paren.eval(func)
-        if x==None:
+        if self.paren.name=="Parenth":
             args = self.paren.children
         else:
             args = [x]
-        args = self.paren.children  
-        print(args)
         return self.function.call(func, args)

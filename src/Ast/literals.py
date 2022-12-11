@@ -108,9 +108,7 @@ class StrLiteral(ExpressionNode):
         return ptr
     
     def get_ptr(self, func):
-        val = self.eval(func)
-        print(val)
-        return func.builder.bitcast(val, ir.IntType(8).as_pointer())
+        return func.builder.bitcast(self.eval(func), ir.IntType(8).as_pointer())
 
 class RangeLiteral(ExpressionNode):
     __slots__ = ('start', 'end')

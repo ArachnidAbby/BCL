@@ -140,10 +140,9 @@ class VariableIndexRef(ExpressionNode):
     def pre_eval(self, func):
         self.varref.pre_eval(func)
         if self.varref.ret_type.name == "ref":
-            old = self.varref
             self.varref = self.varref.get_value(func)
-            # self.varref.ret_type = old.ret_type
             self.varref.ir_type = self.varref.ret_type.ir_type
+        
         self.ind.pre_eval(func)
         if self.ind.ret_type.name == "ref":
             self.ind = self.ind.get_value(func)
@@ -160,23 +159,27 @@ class VariableIndexRef(ExpressionNode):
         if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
             error(f'Array index operation must use an integer index. type used: \'{rhs.ret_type}\'', line = rhs.position)
     
+    def _out_of_bounds(self, func):
+        '''creates the code for runtime bounds checking'''
+        size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
+        zero = Literal((-1,-1,-1), 0, Ast_Types.Integer_32())
+        cond = self.ind.ret_type.le(func, size, self.ind)
+        cond2 = self.ind.ret_type.gr(func, zero, self.ind)
+        condcomb = func.builder.or_(cond, cond2)
+        with func.builder.if_then(condcomb) as if_block:
+            exception.over_index_exception(func, self.varref, self.ind.eval(func), self.position)
+    
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
         if self.ind.name != "literal":#* error checking at runtime
-            if self.ind.name == "varRef" and self.ind.get_var(func).range is not None:
-                if self.ind.get_var(func).range[0]>=0 and self.ind.get_var(func).range[1]<=self.varref.ir_type.count: 
+            if self.ind.get_var(func).range is not None:
+                rang = self.ind.get_var(func).rang
+                arrayrang = range(0, self.varref.ir_type.count)
+                if self.ind.name == "varRef" and rang[0] in arrayrang and rang[1] in arrayrang: 
                     return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
-            size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
-            zero = Literal((-1,-1,-1), 0, Ast_Types.Integer_32())
-            cond = self.ind.ret_type.le(func, size, self.ind)
-            cond2 = self.ind.ret_type.gr(func, zero, self.ind)
-            condcomb = func.builder.or_(cond, cond2)
-            with func.builder.if_then(condcomb) as if_block:
-                # print(self.position)
-                exception.over_index_exception(func, self.varref, self.ind.eval(func), self.position)
-        # if self.varref.name == "varRef" and self.varref.get_var(func).is_constant:
-        #     return func.builder.gep(self.varref.get_ptr(func) , [self.ind.eval(func),])
+            self._out_of_bounds(func)
+            
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
     def get_value(self, func):

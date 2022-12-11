@@ -194,14 +194,17 @@ class ParenthBlock(ContainerNode):
         self.children.append(child)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
     
-    def eval(self, func):
+    def _pass_as_pointer_changes(self, func):
+        '''changes child elements to be passed as pointers if needed'''
         for c, child in enumerate(self.children):
             if self.in_func_call and (child.ret_type.pass_as_ptr or child.ret_type.name=='strlit'):
                 ptr = child.get_ptr(func)
                 self.children[c] = ptr
                 continue
             self.children[c] = child.eval(func)
-        
+
+    def eval(self, func):
+        self._pass_as_pointer_changes(func)
         if len(self.children)==1:
             return self.children[0]
 
@@ -210,15 +213,13 @@ class ParenthBlock(ContainerNode):
 
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
-    __slots__ = ('key', 'value', 'keywords')
+    __slots__ = ('key', 'value')
     type = NodeTypes.KV_PAIR
     name = "kv_pair"
 
-    def init(self, k, v, keywords = False):
-        self.keywords = keywords
-
-        self.key = k
-        self.value = v
+    def init(self, k, v):
+        self.key      = k
+        self.value    = v
     
     def validate_type(self) -> str:        
         self.value.eval(None)

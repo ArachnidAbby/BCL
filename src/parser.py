@@ -340,15 +340,11 @@ class Parser(ParserBase):
 
         # * KV pairs
         if self.check_group(0, 'KEYWORD COLON typeref !OPEN_SQUARE'):# and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
-            keywords = self.check_simple_group(0, 'KEYWORD COLON typeref')
-                # error(f"A Key-Value pair cannot be created for token {self.peek(0)['name']}", line = self.peek(0).pos)
-            kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value, keywords = keywords)
+            kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"kv_pair", kv)
         
         if self.check_group(0, 'expr COLON typeref !OPEN_SQUARE') and (isinstance(self.peek(0).value, Ast.variable.VariableRef)):
-            keywords = self.check_simple_group(0, 'expr COLON typeref')
-                # error(f"A Key-Value pair cannot be created for token {self.peek(0)['name']}", line = self.peek(0).pos)
-            kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value, keywords = keywords)
+            kv = Ast.nodes.KeyValuePair(self.peek(0).pos, self.peek(0).value, self.peek(2).value)
             self.replace(3,"kv_pair", kv)
     
     def parse_keyword_literals(self):

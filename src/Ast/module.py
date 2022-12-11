@@ -69,29 +69,25 @@ class Module(ASTNode):
     def save_ir(self, loc, create_object_file = False):
         target = self.target.create_target_machine()
         module_pass = binding.ModulePassManager()
+        # * commented out optimizations may be readded later
         pass_manager = binding.PassManagerBuilder()
         # pass_manager.loop_vectorize = True
         # pass_manager.opt_level = 1
         module_pass.add_memcpy_optimization_pass()
         module_pass.add_reassociate_expressions_pass()
-        
-
         # module_pass.add_refprune_pass()
         module_pass.add_dead_code_elimination_pass()
         # module_pass.add_instruction_combining_pass()
         module_pass.add_arg_promotion_pass()
         # module_pass.add_sink_pass()
-        
-        
         module_pass.add_constant_merge_pass()
         # module_pass.add_dead_store_elimination_pass()
         module_pass.add_cfg_simplification_pass()
         # module_pass.add_merge_returns_pass()
-        
+        # pass_manager.populate(module_pass)
+
         llir = str(self.module)
         mod = binding.parse_assembly(llir)
-
-        # pass_manager.populate(module_pass)
         module_pass.run(mod)
 
         with open(f"{loc}.ll", 'w') as output_file:

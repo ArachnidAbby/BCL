@@ -35,17 +35,17 @@ class Type:
 
 
     
-    def sum  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '+' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def sum  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '+' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
-    def sub  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '-' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def sub  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '-' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
-    def mul  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '*' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def mul  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '*' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
-    def div  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '/' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def div  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '/' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
-    def mod  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '%' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def mod  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '%' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
-    def pow (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '**' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def pow (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '**' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     
     def eq   (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '==' is not supported for type '{lhs.ret_type}'", line = lhs.position)
@@ -61,9 +61,9 @@ class Type:
     def gr   (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
     
-    def _not (self, func, rhs) -> ir.Instruction: error(f"Operator 'not' is not supported for type '{rhs.ret_type}'",line = rhs.position)
+    def _not (self, func, rhs) -> ir.Instruction: error(f"Operator 'not' is not supported for type '{rhs.ret_type}'", line = rhs.position)
     
-    def _and (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator 'and' is not supported for type '{lhs.ret_type}'",line = lhs.position)
+    def _and (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator 'and' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
     def _or  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator 'or' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
@@ -142,7 +142,7 @@ conversion_priority_raw = [
 ] # the further down the list this is, the higher priority
 conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
 
-def get_std_ret_type(self: ExpressionNode,  other: ExpressionNode):
+def get_std_ret_type(self: ExpressionNode, other: ExpressionNode):
     '''When a math operation happens between types, we need to know what the final return type will be.'''
     largest_priority = max(
         conversion_priority[self.ret_type],

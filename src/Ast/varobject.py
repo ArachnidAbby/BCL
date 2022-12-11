@@ -23,13 +23,11 @@ class VariableObj:
         '''alloca memory for the variable'''
         if self.is_constant:
             return self.ptr
-        ptr = func.builder.alloca(self.type.ir_type, name=name)
-        self.ptr = ptr
-        return ptr
+        self.ptr = func.builder.alloca(self.type.ir_type, name=name)
+        return self.ptr
     
     def store(self, func, value):
         self.type.assign(func, self, value, self.type)
-        # func.builder.store(value.eval(func), self.ptr)
     
     def get_value(self, func):
         if not self.is_constant: 

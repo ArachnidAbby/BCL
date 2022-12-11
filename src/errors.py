@@ -15,12 +15,11 @@ CODE125 = "\u001b[38;5;125m"
 CODE202 = "\u001b[38;5;202m"
 CODE177 = "\u001b[38;5;177m"
 
-
 SILENT_MODE = False
 PROFILING = False
 FILE = ""
 
-USES_FEATURE = {"array": False}
+USES_FEATURE = {} #give warning about used features
 
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
