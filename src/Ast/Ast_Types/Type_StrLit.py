@@ -15,7 +15,7 @@ class StringLiteral(Type_Base.Type):
     pass_as_ptr = False
     no_load = False
 
-    def __init__(self, size):
+    def __init__(self, size = None):
         self.typ = Type_Char.Char()
 
         if size is not None and size.name != "literal":

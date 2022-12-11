@@ -196,7 +196,7 @@ class ParenthBlock(ContainerNode):
     
     def eval(self, func):
         for c, child in enumerate(self.children):
-            if self.in_func_call and child.ret_type.pass_as_ptr:
+            if self.in_func_call and (child.ret_type.pass_as_ptr or child.ret_type.name=='strlit'):
                 ptr = child.get_ptr(func)
                 self.children[c] = ptr
                 continue

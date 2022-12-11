@@ -275,8 +275,8 @@ class Parser(ParserBase):
         if self.check_group(0,"KEYWORD KEYWORD expr|paren !RIGHT_ARROW"):
             if self.check(0, '$define'):
                 func_name = self.peek(1).value
-                block = self.peek(2).value
-                func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, block, self.module)
+                # block = self.peek(2).value
+                func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
                 self.start_min = self._cursor
                 self.replace(3,"func_def_portion", func)
             elif self.peek(0).value not in self.keywords:
@@ -286,8 +286,8 @@ class Parser(ParserBase):
         elif self.check_group(0,"KEYWORD KEYWORD expr|paren RIGHT_ARROW typeref !OPEN_SQUARE"):
             if self.check(0, '$define'):
                 func_name = self.peek(1).value
-                block = self.peek(2).value
-                func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, block, self.module)
+                # block = self.peek(2).value
+                func = Ast.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
                 func.ret_type = self.peek(4).value
                 func.is_ret_set = True
                 self.start_min = self._cursor
@@ -302,6 +302,10 @@ class Parser(ParserBase):
         # * complete function definition.
         elif self.check_simple_group(0,"func_def_portion statement"):
             self.peek(0).value.block = self.peek(1).value
+            self.start_min = self._cursor
+            self.replace(2,"func_def", self.peek(0).value)
+        
+        elif self.check_simple_group(0,"func_def_portion SEMI_COLON"):
             self.start_min = self._cursor
             self.replace(2,"func_def", self.peek(0).value)
     

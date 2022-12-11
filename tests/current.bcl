@@ -1,4 +1,8 @@
+define pause() -> i32;
+define puts(x: strlit);
+
 define main() {
+    puts("testing");
     x = 6;
     test = [0; 10];
     println(test[x]);
@@ -13,8 +17,8 @@ define main() {
     }
 }
 
-define is_multiple(value: &i32, divider: i32) -> &bool {
-    value += 2;
+define is_multiple(value: &i32, divider: i32) -> bool {
+    // value += 2;
     return (value % divider) == 0;
 }
 

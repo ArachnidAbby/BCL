@@ -81,7 +81,7 @@
             "name": "keyword.operator.assignment.bcl"
           },
           {
-            "match": "[\\+\\-\\*\\/\\%]",
+            "match": "[\\+\\-\\*\\/\\%\\&]",
             "name": "keyword.operator.arithmetic.bcl"
           },
           

@@ -34,6 +34,8 @@ class TypeRefLiteral(ExpressionNode):
     def eval(self, func):
         #print(self.value, Ast_Types.types_dict)
         if isinstance(self.value, str):
+            if self.value not in Ast_Types.types_dict.keys():
+                errors.error(f"Undeclared type: '{self.value}'", line = self.position)
             self.value = Ast_Types.types_dict[self.value]()
             self.ret_type = self.value
             self.ir_type = self.value.ir_type
@@ -104,6 +106,11 @@ class StrLiteral(ExpressionNode):
         ptr = func.builder.alloca(ir.ArrayType(ir.IntType(8), len(self.value.encode("utf-8"))))
         func.builder.store(const, ptr)
         return ptr
+    
+    def get_ptr(self, func):
+        val = self.eval(func)
+        print(val)
+        return func.builder.bitcast(val, ir.IntType(8).as_pointer())
 
 class RangeLiteral(ExpressionNode):
     __slots__ = ('start', 'end')

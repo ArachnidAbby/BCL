@@ -52,8 +52,8 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] variable type declaration
 - [x] variable assignment-operators (`+=`, `-=`, etc)
 - [x] Arrays
-- [ ] for-loops
-- [ ] pointers/references
+- [x] for-loops (only with range literals rignt now)
+- [x] references
 - [ ] `const`ants
 - [ ] structs
 - [ ] struct functions
@@ -67,7 +67,8 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] some access to llvm function directly. (notice: more can, and will, be added)
 - [ ] access to cpu registers.
 - [ ] standard math library
-- [ ] strings
+- [x] string (literal)
+- [ ] strings (mutable)
 - [ ] vectors
 - [ ] stdio library
 - [ ] run-time errors

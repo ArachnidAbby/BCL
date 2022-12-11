@@ -139,7 +139,7 @@ class FunctionDef(ASTNode):
             functions[self.func_name] = dict()
 
         # avoid name collisions by adding a # to the end of the function name
-        if self.func_name!="main":
+        if self.func_name!="main" and self.block is not None:
             name = f"{self.func_name}.{len(functions[self.func_name].keys())}"
         else:
             name = self.func_name 
@@ -149,6 +149,8 @@ class FunctionDef(ASTNode):
         functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) # type: ignore
+        if self.block is None:
+            return
 
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
@@ -183,8 +185,10 @@ class FunctionDef(ASTNode):
                 x[0].define(self, x[1])
 
     def eval(self):
-        self.block.pre_eval(self)
+        if self.block is None:
+            return
         self.function_ir.attributes.add("nounwind")
+        self.block.pre_eval(self)
         self.alloc_stack()
 
         args = self.function_ir.args
@@ -254,5 +258,5 @@ class FunctionCall(ExpressionNode):
         else:
             args = [x]
         args = self.paren.children  
-        
+        print(args)
         return self.function.call(func, args)
