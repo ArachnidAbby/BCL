@@ -52,7 +52,8 @@ class Parser(ParserBase):
             "OPEN_PAREN_USED": (self.parse_parenth, ),
             "paren": (self.parse_func_call,),
             "OPEN_SQUARE": (self.parse_array_literals,),
-            "typeref": (self.parse_array_types,)
+            "typeref": (self.parse_array_types, ),
+            "AMP": (self.parse_ref_types, self.parse_varref, )
         }
 
         self.blocks = deque(((None, 0),))
@@ -202,6 +203,9 @@ class Parser(ParserBase):
         if self.check_group(-1, "COLON|RIGHT_ARROW|$as KEYWORD"):# and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
             val = Ast.TypeRefLiteral(self.peek(0).pos, self.peek(0).value)
             self.replace(1,"typeref", val)
+        elif self.check_group(-2, "COLON|RIGHT_ARROW|$as AMP KEYWORD"):# and self.peek(0).value in Ast.Ast_Types.types_dict.keys():
+            val = Ast.TypeRefLiteral(self.peek(0).pos, self.peek(0).value)
+            self.replace(1,"typeref", val)
         
     def parse_array_types(self):
         '''parse typerefs with array types'''
@@ -209,6 +213,13 @@ class Parser(ParserBase):
             init_typ = self.peek(0).value
             typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Array(self.peek(2).value, init_typ))
             self.replace(4,"typeref", typ)
+    
+    def parse_ref_types(self):
+        '''parse typerefs with ref types'''
+        if self.check_group(0, "AMP typeref !OPEN_SQUARE"):
+            init_typ = self.peek(1).value
+            typ = Ast.TypeRefLiteral(self.peek(0).pos, Ast.Ast_Types.Reference(init_typ))
+            self.replace(2,"typeref", typ)
     
     def parse_rangelit(self):
         if self.check_simple_group(0, "expr DOUBLE_DOT expr") and self.peek_safe(3).name not in (*self.standard_expr_checks, *self.op_node_names):
@@ -371,6 +382,12 @@ class Parser(ParserBase):
             if self.peek(0).value not in self.keywords:
                 var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.blocks[-1][0])
                 self.replace(1,"expr", var)
+
+    def parse_varref(self):
+        if self.check_group(0, "AMP expr !OPEN_SQUARE"):# and self.peek(1).name in ("varRef", "varIndRef"):
+            var = self.peek(1).value
+            typ = Ast.variable.Ref(self.peek(0).pos, var)
+            self.replace(2,"expr", typ)
 
     def parse_vardecl_explicit(self):
         '''variable declarations with explicit typing'''

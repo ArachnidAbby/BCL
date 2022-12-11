@@ -82,6 +82,11 @@ class VariableRef(ExpressionNode):
     
     def get_var(self, func):
         return self.block.get_variable(self.var_name)
+    
+    def get_value(self, func):
+        '''only important in references'''
+        self.ret_type = self.ret_type.typ
+        return self
 
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"
@@ -91,37 +96,36 @@ class VariableRef(ExpressionNode):
 
 class Ref(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a ptr uppon `eval`'''
-    __slots__ = ('block', 'var_name')
+    __slots__ = ('var', )
     name = "ref"
 
-    def init(self, name: str, block):
-        self.var_name = name
-        self.block = block
+    def init(self, var):
+        self.var = var
+        
     
     def pre_eval(self, func):
-        if not self.block.validate_variable_exists(self.var_name):
-            error(f"Undefined variable '{self.var_name}'", line = self.position)
-
-        self.ret_type = self.block.get_variable(self.var_name).type
-        if self.block.get_variable(self.var_name).type.name=="UNKNOWN":
-            error(f"Unknown variable '{self.var_name}'", line = self.position)
+        self.var.pre_eval(func)
+        self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
         self.ir_type = self.ret_type.ir_type
     
     def eval(self, func):
-        return self.block.get_variable(self.var_name).ptr
+        return self.var.get_ptr(func)
     
     def get_var(self, func):
-        return self.block.get_variable(self.var_name)
-    
-    def as_varref(self):
-        return VariableRef(self.position, self.var_name, self.block)
+        return self.var.get_var(func)
+
+    def get_value(self, func):
+        return self.var
+
+    def get_ptr(self, func):
+        return self.var.get_ptr(func)
 
     def __repr__(self) -> str:
-        return f"<Ref to '{self.var_name}'>"
+        return f"<Ref to '{self.var}'>"
 
     def __str__(self) -> str:
-        return self.var_name
+        return self.var
 
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
@@ -150,7 +154,11 @@ class VariableIndexRef(ExpressionNode):
     
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
-        if self.ind.name != "literal": #* error checking at runtime
+        if self.ind.name != "literal":#* error checking at runtime
+            if self.ind.name == "varRef" and self.ind.get_var(func).range is not None:
+                if self.ind.get_var(func).range[0]>=0 and self.ind.get_var(func).range[1]<=self.varref.ir_type.count: 
+                    return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
+
             size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
             zero = Literal((-1,-1,-1), 0, Ast_Types.Integer_32())
             cond = self.ind.ret_type.le(func, size, self.ind)

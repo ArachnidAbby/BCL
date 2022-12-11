@@ -40,9 +40,17 @@ class OperationNode(ExpressionNode):
     def right_asso(self) -> bool:
         return self.op.right_asso
 
+    def deref(self, func):
+        if self.rhs.ret_type.name=="ref":
+            self.rhs = self.rhs.get_value(func)
+        if self.lhs.ret_type.name=="ref":
+            self.lhs = self.lhs.get_value(func)
+
     def pre_eval(self, func):
         self.lhs.pre_eval(func)
         self.rhs.pre_eval(func)
+
+        self.deref(func)
         
         if self.op.name=="as":
             self.rhs.eval(func)
@@ -63,8 +71,8 @@ class OperationNode(ExpressionNode):
             return self.eval_math(func, self.lhs, self.rhs)
     
     def __str__(self) -> str:
-        return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
-
+        return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>" 
+    
 # To any future programmers:
 #   I am sorry for this shunt() function.
 def shunt(node: OperationNode) -> deque:

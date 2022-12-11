@@ -10,6 +10,7 @@ class Array(Type_Base.Type):
     __slots__ = ('size', 'typ')
     name = "array"
     pass_as_ptr = True
+    no_load = False
 
     def __init__(self, size, typ):
         self.typ = typ

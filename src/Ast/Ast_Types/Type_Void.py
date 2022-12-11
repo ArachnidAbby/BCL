@@ -12,6 +12,7 @@ class Void(Type_Base.Type):
     ir_type = ir.VoidType()
     name = 'void'
     pass_as_ptr = False
+    no_load = False
 
     @classmethod
     def convert_from(cls, func, typ: str, previous):

@@ -103,7 +103,7 @@ class FunctionDef(ASTNode):
         
         for arg in args:
             self.args[arg.key] = [None, arg.value, True]
-            if arg.get_type().name == "array":
+            if arg.get_type().pass_as_ptr:
                 self.args_ir.append(arg.get_type().ir_type.as_pointer())
             else:
                 self.args_ir.append(arg.get_type().ir_type)
@@ -126,9 +126,13 @@ class FunctionDef(ASTNode):
     def pre_eval(self):
         global functions
 
+        ret_line = (-1,-1,-1)
         if self.is_ret_set:
             self.ret_type.eval(self)
+            ret_line = self.ret_type.position
             self.ret_type = self.ret_type.ret_type
+        if self.ret_type.name == "ref":
+            errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line = ret_line)
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         if self.func_name not in functions:
@@ -148,7 +152,12 @@ class FunctionDef(ASTNode):
 
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
-        self.ir_entry = block 
+        self.ir_entry = block
+
+        args = self.function_ir.args
+        for c,x in enumerate(self.args.keys()):
+            self.block.variables[x].ptr = args[c]
+            self.variables.append((self.block.variables[x], x))
 
     def create_const_var(self, typ):
         current_block = self.builder.block
@@ -158,20 +167,16 @@ class FunctionDef(ASTNode):
         return ptr
 
     def alloc_stack(self):
-        args = self.function_ir.args
-        for c,x in enumerate(self.args.keys()):
-            self.block.variables[x].ptr = args[c]
-            self.variables.append((self.block.variables[x], x))
-
         for x in self.variables:
             if x[0].is_constant:
                 if x[0].type.pass_as_ptr:
                     val = self.builder.load(x[0].ptr)
                 else:
                     val = x[0].ptr
-                ptr = self.builder.alloca(x[0].type.ir_type)
-                self.builder.store(val, ptr)
-                x[0].ptr = ptr
+                if not x[0].type.no_load:
+                    ptr = self.builder.alloca(x[0].type.ir_type)
+                    self.builder.store(val, ptr)
+                    x[0].ptr = ptr
                 x[0].is_constant = False
                 continue
             else:

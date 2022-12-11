@@ -12,6 +12,8 @@ class Integer_32(Type_Base.Type):
     ir_type = ir.IntType(32)
     name = 'i32'
     pass_as_ptr = False
+    no_load = False
+    rang = (-2147483648, 2147483647)
 
     @classmethod
     def convert_from(cls, func, typ, previous):

@@ -1,4 +1,4 @@
-override FILE = console_cube.bcl
+override FILE = current.bcl
 
 env/bin/activate: requirements.txt
 	python3.11 -m venv env 
@@ -14,7 +14,7 @@ unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py
 
 compile: env/bin/activate
-	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python311 src/main.py
+	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python3.11 src/main.py
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/; \

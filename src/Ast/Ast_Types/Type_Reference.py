@@ -1,3 +1,5 @@
+from typing import Self
+
 from Ast import Ast_Types
 from Ast.nodetypes import NodeTypes
 from errors import error
@@ -7,15 +9,35 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = tuple("typ")
+    __slots__ = ("typ", )
     
     name = 'ref'
     pass_as_ptr = False
+    no_load = True
 
     def __init__(self, typ: Type_Base.Type):
         self.typ = typ
+        if typ.name == "literal":
+            typ.eval(None)
+            self.typ = \
+                typ.value # elements' type
+
         self.ir_type = typ.ir_type.as_pointer()
+
+    def __eq__(self, other):
+        return self.name == other.name and self.typ == other.typ
     
+    def __neq__(self, other):
+        return self.name != other.name or self.typ != other.typ
+    
+    def __hash__(self):
+        return hash(f"&{self.typ}")
+    
+    def convert_from(self, func, typ, previous):
+        if typ.name == "ref":
+            error(f"Pointer conversions are not supported due to unsafe behavior", line = previous.position)
+        return self.typ.convert_from(func, typ, previous)
+
     def convert_to(self, func, orig, typ):
         error(f"Pointer conversions are not supported due to unsafe behavior", line = orig.position)
 
@@ -60,3 +82,7 @@ class Reference(Type_Base.Type):
     
     def gr(self, func, lhs, rhs):
         return lhs.typ.gr(func, lhs.as_varref(), rhs)
+
+    def assign(self, func, ptr, value, typ: Ast_Types.Type):
+        val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
+        func.builder.store(val, ptr.ptr)

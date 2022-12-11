@@ -86,6 +86,8 @@ class ForLoop(ASTNode):
     def pre_eval(self, func):
         self.varptr = func.create_const_var(Ast_Types.Integer_32())
         self.block.variables[self.var.var_name] = VariableObj(self.varptr, Ast_Types.Integer_32(), False)
+        if self.rang.start.name == "literal" and self.rang.end.name=="literal":
+            self.block.variables[self.var.var_name].range = (self.rang.start.value, self.rang.end.value)
         self.rang.pre_eval(func)
         self.block.pre_eval(func)
     

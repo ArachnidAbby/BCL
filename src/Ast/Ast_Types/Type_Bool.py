@@ -12,6 +12,8 @@ class Integer_1(Type_Base.Type):
     ir_type = ir.IntType(1)
     name = 'bool'
     pass_as_ptr = False
+    rang = (0, 1)
+    no_load = False
 
     @classmethod
     def convert_from(cls, func, typ: str, previous):

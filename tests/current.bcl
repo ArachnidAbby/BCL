@@ -1,25 +1,20 @@
 define main() {
     x = 6;
-    test = [x; 10];
+    test = [0; 10];
     println(test[x]);
     test[x] = 8;
     // x = "helloworld";
     // println(x);
-    // i: i32 = 0;
-    loop_amount = 2;
+    loop_amount = 20;
     for i in 0..loop_amount {
-        i += 1;
-        fizz = is_multiple(i, 3);
-        buzz = is_multiple(i, 5)*2;
+        fizz = is_multiple(&i, 3);
+        buzz = is_multiple(&i, 5)*2;
         println(fizz + buzz);
     }
-    print(0);
-    println(10);
-    exit(0);
-    // println(9849494);
 }
 
-define is_multiple(value: i32, divider: i32) -> bool {
+define is_multiple(value: &i32, divider: i32) -> &bool {
+    value += 2;
     return (value % divider) == 0;
 }
 

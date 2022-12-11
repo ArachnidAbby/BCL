@@ -12,6 +12,7 @@ class Float_32(Type_Base.Type):
     ir_type = ir.FloatType()
     name = 'f32'
     pass_as_ptr = False
+    no_load = False
 
     @classmethod
     def convert_from(cls, func, typ, previous):

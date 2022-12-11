@@ -5,7 +5,7 @@ from .Ast_Types import Type_Base
 
 class VariableObj:
     '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
-    __slots__ = ("ptr", "type", "is_constant")
+    __slots__ = ("ptr", "type", "is_constant", "range")
 
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
@@ -13,6 +13,7 @@ class VariableObj:
         if isinstance(typ, str):
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
+        self.range = self.type.rang
 
     @property
     def ret_type(self):

@@ -13,6 +13,7 @@ class StringLiteral(Type_Base.Type):
     __slots__ = ('size', 'typ')
     name = "strlit"
     pass_as_ptr = False
+    no_load = False
 
     def __init__(self, size):
         self.typ = Type_Char.Char()

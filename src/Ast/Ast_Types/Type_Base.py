@@ -12,6 +12,8 @@ class Type:
     __slots__ = ('ir_type')
     name = "UNKNOWN"
     pass_as_ptr = False
+    rang = None
+    no_load = False
 
     def __init__(self):
         pass
