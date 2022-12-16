@@ -12,7 +12,7 @@ ZERO_CONST = ir.Constant(ir.IntType(64), 0)
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
-    __slots__ = ('value', 'block', 'is_declaration', 'var_name', 'explicit_typ')
+    __slots__ = ('value', 'block', 'is_declaration', 'var_name', 'explicit_typ', 'typ')
     type = NodeTypes.EXPRESSION
     name = "varAssign"
 
@@ -22,18 +22,20 @@ class VariableAssign(ASTNode):
         self.value = value
         self.block = block
         self.explicit_typ = typ!=Void
-
-        if block!=None and self.var_name not in block.variables.keys():
-            if typ.name == "literal":
-                typ.eval(None)
-                typ = typ.value
-            block.variables[self.var_name] = VariableObj(None, typ, False)
-            self.is_declaration = True
-        if not self.is_declaration and self.explicit_typ:
-            error("Cannot declare the type of a variable after initial declaration", line = self.position)
+        self.typ = typ
+        
         
     def pre_eval(self, func):
         self.value.pre_eval(func)
+
+        if self.block!=None and self.var_name not in self.block.variables.keys():
+            if self.typ.name == "literal":
+                self.typ.eval(None)
+                typ = self.typ.value
+            self.block.variables[self.var_name] = VariableObj(None, self.typ, False)
+            self.is_declaration = True
+        if not self.is_declaration and self.explicit_typ:
+            error("Cannot declare the type of a variable after initial declaration", line = self.position)
 
         if self.block.get_variable(self.var_name).type.is_void():
             self.block.variables[self.var_name].type = self.value.ret_type
@@ -46,11 +48,6 @@ class VariableAssign(ASTNode):
         self.value.pre_eval(func)
         variable = self.block.get_variable(self.var_name)
         if self.block.validate_variable(self.var_name):
-            # if self.value.ret_type != variable.type:
-            #     error(
-            #         f"Cannot store type '{self.value.ret_type}' in variable '{self.var_name}' of type '{self.block.variables[self.var_name].type}'",
-            #         line = self.value.position
-            #     )
             self.block.variables[self.var_name].is_constant = False
 
         variable.store(func, self.value)

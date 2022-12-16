@@ -145,6 +145,7 @@ class Block(ContainerNode):
         for x in self.children[0:-1]:
             x.eval(func)
             if func.has_return or self.ended:
+                self.BLOCK_STACK.pop()
                 return
         self.last_instruction = func.ret_type.name!="void"
         self.children[-1].eval(func)
