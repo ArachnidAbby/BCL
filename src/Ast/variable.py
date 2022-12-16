@@ -31,7 +31,7 @@ class VariableAssign(ASTNode):
         if self.block!=None and self.var_name not in self.block.variables.keys():
             if self.typ.name == "literal":
                 self.typ.eval(None)
-                typ = self.typ.value
+                self.typ = self.typ.value
             self.block.variables[self.var_name] = VariableObj(None, self.typ, False)
             self.is_declaration = True
         if not self.is_declaration and self.explicit_typ:
@@ -170,7 +170,7 @@ class VariableIndexRef(ExpressionNode):
         self.check_valid_literal(self.varref, self.ind)
         if self.ind.name != "literal":#* error checking at runtime
             if self.ind.get_var(func).range is not None:
-                rang = self.ind.get_var(func).rang
+                rang = self.ind.get_var(func).range
                 arrayrang = range(0, self.varref.ir_type.count)
                 if self.ind.name == "varRef" and rang[0] in arrayrang and rang[1] in arrayrang: 
                     return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
@@ -181,6 +181,9 @@ class VariableIndexRef(ExpressionNode):
 
     def get_value(self, func):
         return self.get_ptr(func)
+
+    def get_var(self, func):
+        return self.varref.get_var(func)
 
     def eval(self, func):
         return self.varref.ret_type.index(func, self)
