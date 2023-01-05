@@ -4,14 +4,15 @@ import errors
 from llvmlite import ir
 
 from Ast import Ast_Types
-from Ast.nodes import ExpressionNode
+from Ast.nodes import ExpressionNode, SrcPosition
 
 
 class Literal(ExpressionNode):
     __slots__ = ('value', 'ir_type', 'ptr')
     name = 'literal'
 
-    def init(self, value: Any, typ: Ast_Types.Type):
+    def __init__(self, pos: SrcPosition, value: Any, typ: Ast_Types.Type):
+        super().__init__(pos)
         self.value = value
         self.ret_type = typ
 
@@ -27,12 +28,12 @@ class TypeRefLiteral(ExpressionNode):
     __slots__ = ('value')
     name = 'literal'
 
-    def init(self, value: Any):
+    def __init__(self, pos: SrcPosition, value: Any):
+        super().__init__(pos)
         self.value = value
         self.ret_type = value
     
     def eval(self, func):
-        #print(self.value, Ast_Types.types_dict)
         if isinstance(self.value, str):
             if self.value not in Ast_Types.types_dict.keys():
                 errors.error(f"Undeclared type: '{self.value}'", line = self.position)
@@ -47,7 +48,8 @@ class ArrayLiteral(ExpressionNode):
     __slots__ = ('value', 'ir_type', 'literal')
     name = 'literal'
 
-    def init(self, value: list[Any]):
+    def __init__(self, pos: SrcPosition, value: list[Any]):
+        super().__init__(pos)
         self.value = value
         self.ptr = None
         self.literal = True # whether or not this array is only full of literals
@@ -84,15 +86,15 @@ class ArrayLiteral(ExpressionNode):
     @property
     def position(self) -> tuple[int, int, int]:
         x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore
-        x[2] += 1
-        return tuple(x)
+        return (x[0], x[1], x[2]+1)
 
 
 class StrLiteral(ExpressionNode):
     __slots__ = ('value', 'ir_type')
     name = 'literal'
 
-    def init(self, value: str):
+    def __init__(self, pos: SrcPosition, value: str):
+        super().__init__(pos)
         self.value = value
         
     def pre_eval(self, func):
@@ -114,7 +116,8 @@ class RangeLiteral(ExpressionNode):
     __slots__ = ('start', 'end')
     name = 'literal'
 
-    def init(self, start: Any, end: Any):
+    def __init__(self, pos: SrcPosition, start: Any, end: Any):
+        super().__init__(pos)
         self.start = start
         self.end = end
     

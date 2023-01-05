@@ -1,17 +1,18 @@
 
+from typing import Final
+
 from llvmlite import ir
 
 from Ast import Ast_Types
 
 from . import function
 
-printf = None
-exit_func = None
-sleep_func = None
-usleep_func = None
+printf: ir.Function|None = None
+exit_func: ir.Function|None = None
+sleep_func: ir.Function|None = None
+usleep_func: ir.Function|None = None
 
-
-fmt_strings = {"nl":{}, "nonl":{}}
+fmt_strings: dict[str, dict[str, ir.GlobalVariable]] = {"nl":{}, "nonl":{}}
 
 voidptr_ty = ir.IntType(8).as_pointer()
 
@@ -26,14 +27,13 @@ def declare_global_str(module, inp: str, name: str):
     out.global_constant = True
     return out
 
-# todo: make this more readable!
+# TODO: make this more readable!
 def declare_printf(module):
     global printf, fmt_strings
     
     printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
     printf = ir.Function(module, printf_ty, name="printf")
     function.functions["__printf"] = [printf,'void']
-
 
     fmt_strings["nl"]["i32"] = declare_global_str(module, "%i\n\0", "fstr_int_n")
     fmt_strings["nonl"]["i32"] = declare_global_str(module, "%i\0", "fstr_int")
@@ -63,6 +63,7 @@ def declare_usleep(module):
 
 
 def declare_all(module):
+    '''declares all the builtins'''
     declare_printf(module)
     declare_exit(module)
     declare_sleep(module)

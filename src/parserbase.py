@@ -17,7 +17,7 @@ class ParserToken(NamedTuple):
         return self.source_pos
         
 class ParserBase:
-    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions')
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions' ,'standard_expr_checks', 'op_node_names')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
@@ -30,6 +30,8 @@ class ParserBase:
         self.do_move   = True
         self.start_min = 0
         self.parsing_functions = {}
+        self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "paren")
+        self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD", "COLON", "DOUBLE_DOT")
     
     def parse(self, close_condition: Callable[[],bool]=lambda: False):
         '''Parser main'''
@@ -155,39 +157,16 @@ class ParserBase:
                 
         return True
     
-    def check_group_lookahead(self, start_index: int, wanting: str) -> bool:
+    def check_group_lookahead(self, start_index: int, wanting: str, include_ops = False) -> bool:
         '''check a group of tokens in a string seperated by spaces. This version has lookahead'''
         worked = self.check_group(start_index, wanting)
         if not worked:
             return False
 
-        tokens = wanting.split(' ')
-        tmp = self._cursor 
-        st_tmp = self.start
-        self._cursor += start_index+len(tokens)-1
-        self.start = self._cursor
-        
-        while not self.isEOF():
-            token_name = self.peek(0).name
-
-            if token_name not in self.parsing_functions.keys(): # skip tokens if possible
-                self.move_cursor()
-                continue
-        
-            if self.peek(1).name=="SEMI_COLON" and token_name=="expr":
-                break
-
-            for func in self.parsing_functions[token_name]:
-                func()
-                if not self.do_move:
-                    break
-            self.move_cursor()
-
-        self._cursor = tmp
-        self.start = st_tmp
-        self.do_move = True
-  
-        return self.check_group(start_index, wanting)
+        items = wanting.split(" ")
+        if include_ops:
+            return self.peek(len(items)+start_index).name not in (*self.op_node_names, *self.standard_expr_checks)
+        return self.peek(len(items)+start_index).name not in self.standard_expr_checks
 
     def check_simple_group(self, start_index: int, wanting: str) -> bool:
         '''check a group of tokens in a string seperated by spaces. (unformatted)'''

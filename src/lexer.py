@@ -65,7 +65,7 @@ class Lexer():
 def fix_char(val) -> int:
     return ord(val.encode('raw_unicode_escape').decode('unicode_escape'))
 
-def fix_str(val) -> int:
+def fix_str(val) -> str:
     return ast.literal_eval(val)+'\0'
 
 def get_tokens(src: str) -> List[ParserToken]:
@@ -85,7 +85,7 @@ def get_tokens(src: str) -> List[ParserToken]:
             val = Ast.Literal(pos, fix_char(x.value.strip('\'')), Ast.Ast_Types.Char())
             tok = ParserToken("expr", val, pos, True)
         elif x.name == "STRING":
-            val = Ast.StrLiteral(pos, fix_str(x.value))
+            val = Ast.StrLiteral(pos, fix_str(x.value)) # type: ignore
             tok = ParserToken("expr", val, pos, True)
         else: tok = ParserToken(x.name, x.value, pos, False)
         output.append(tok)

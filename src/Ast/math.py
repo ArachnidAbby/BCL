@@ -6,7 +6,7 @@ from llvmlite import ir
 
 from .nodes import *
 
-ops = dict()
+ops: dict[str, 'Operation'] = dict()
 
 class Operation(NamedTuple):
     operator_precendence: int
@@ -22,7 +22,8 @@ class OperationNode(ExpressionNode):
     __slots__ = ("op", "shunted", "lhs", "rhs")
     is_operator = True
 
-    def init(self, op, lhs, rhs, shunted = False):
+    def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted = False):
+        super().__init__(pos)
         self.lhs     = lhs
         self.rhs     = rhs
         self.shunted = shunted
@@ -77,9 +78,8 @@ class OperationNode(ExpressionNode):
 #   I am sorry for this shunt() function.
 def shunt(node: OperationNode) -> deque:
     # * create stack and queue
-    
-    op_stack = deque()
-    output_queue = deque()
+    op_stack: deque[tuple[ExpressionNode|OperationNode, int]] = deque()
+    output_queue: deque[ExpressionNode|OperationNode]  = deque()
     
     input_queue = deque([node.rhs, node, node.lhs])
     active_node = [node]
@@ -117,11 +117,10 @@ def shunt(node: OperationNode) -> deque:
 
 def RPN_to_node(shunted_data: deque) -> OperationNode:
     '''take RPN from shunt function and convert them into new nodes'''
-
-    op_stack = deque()
+    op_stack: deque[ExpressionNode|OperationNode] = deque()
 
     while len(shunted_data) > 1:
-        stack = deque()
+        stack: deque[tuple[ExpressionNode|OperationNode, int]] = deque()
         for c,x in enumerate(shunted_data):
             if isinstance(x, str):
                 r,l = stack.pop(), stack.pop()

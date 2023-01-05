@@ -1,21 +1,24 @@
 import parser
+from typing import Self
 
 import errors
 from llvmlite import binding, ir
 
-from Ast.nodes import ASTNode
+from Ast.function import _Function
+from Ast.nodes import ASTNode, SrcPosition
 
-global_functions = {} #! this will likely be later deprecated once `import <name>` is added
+# global_functions  = {} #! this will likely be later deprecated once `import <name>` is added
 
 class Module(ASTNode):
     __slots__ = ('location', 'functions', 'globals', 'imports', 'children', 'module', 'mod_name', 'target')
 
-    def init(self, name, location, tokens):
+    def __init__(self, pos: SrcPosition, name, location, tokens):
+        super().__init__(pos)
         self.mod_name      = name
         self.location  = location
-        self.functions = {} # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
-        self.globals   = {}
-        self.imports   = {}
+        self.functions: dict[str, dict[tuple, _Function]] = {} # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
+        self.globals: dict[str, object]   = {} # TODO: object is a placeholder for when this feature is properly added 
+        self.imports: dict[str, Self]   = {}
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.target = binding.Target.from_triple(self.module.triple)
@@ -69,7 +72,7 @@ class Module(ASTNode):
     def save_ir(self, loc, create_object_file = False):
         target = self.target.create_target_machine()
         module_pass = binding.ModulePassManager()
-        # * commented out optimizations may be readded later
+        # * commented out optimizations may be re-added later on
         pass_manager = binding.PassManagerBuilder()
         # pass_manager.loop_vectorize = True
         # pass_manager.opt_level = 1

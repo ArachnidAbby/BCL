@@ -30,7 +30,7 @@ def compile(src_str: str, output_loc: str, create_object_file):
         tmp = imports_mem = process.memory_info().rss
         import codegen
 
-        codegen = codegen.CodeGen()
+        code_gen = codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
 
         import Ast.module
@@ -50,7 +50,7 @@ def compile(src_str: str, output_loc: str, create_object_file):
         module.eval()
     
     module.save_ir(output_loc, create_object_file = create_object_file)
-    codegen.shutdown()
+    code_gen.shutdown()
 
     _print_raw(f'{errors.GREEN}| IR saved, compilation done | {perf_counter() - start}s')
     _print_raw(f'\\--------------------------------------------------/{errors.RESET}')
@@ -63,7 +63,7 @@ def compile(src_str: str, output_loc: str, create_object_file):
     _print_raw('\n\n\n')
 
 def compile_file(file: Path, args):
-    errors.FILE = file
+    errors.FILE = str(file)
     with file.open() as f:
         create_object_file = "--emit-object" in args
         compile(f.read(), str(file.absolute().parents[0] / "output"), create_object_file)

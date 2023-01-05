@@ -6,7 +6,7 @@ from Ast.variable import VariableAssign
 from Ast.varobject import VariableObj
 
 from . import Ast_Types
-from .nodes import ASTNode, Block
+from .nodes import ASTNode, Block, SrcPosition
 
 
 class WhileStatement(ASTNode):
@@ -16,7 +16,8 @@ class WhileStatement(ASTNode):
     name = "While"
     type = NodeTypes.STATEMENT
 
-    def init(self, cond: ASTNode, block: Block):
+    def __init__(self, pos: SrcPosition, cond: ASTNode, block: Block):
+        super().__init__(pos)
         self.cond        = cond
         self.block       = block
         self.loop_before = None
@@ -35,11 +36,9 @@ class WhileStatement(ASTNode):
         ret_bfor         = func.has_return
         loop_bfor        = func.inside_loop
         self.loop_before = loop_bfor
-
         func.inside_loop = self
         
         # branching and loop body
-
         self.branch_logic(func)
         func.builder.position_at_start(self.while_body)
 
@@ -66,7 +65,8 @@ class ForLoop(ASTNode):
     name = "While"
     type = NodeTypes.STATEMENT
 
-    def init(self, var: ASTNode, rang, block: Block):
+    def __init__(self, pos: SrcPosition, var: ASTNode, rang, block: Block):
+        super().__init__(pos)
         self.var         = var
         self.varptr      = None
         self.rang        = rang
@@ -92,7 +92,6 @@ class ForLoop(ASTNode):
         self.for_after = func.builder.append_basic_block(f'{orig_block_name}.endfor')
         loop_bfor = func.inside_loop
         self.loop_before = loop_bfor
-
         func.inside_loop = self
 
         # create cond
@@ -108,7 +107,6 @@ class ForLoop(ASTNode):
             self.branch_logic(func)
 
         func.inside_loop = loop_bfor
-
         func.builder.position_at_start(self.for_after)
 
         if func.block.last_instruction:

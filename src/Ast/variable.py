@@ -1,3 +1,5 @@
+from typing import Final
+
 from errors import error, inline_warning
 from llvmlite import ir
 
@@ -6,9 +8,9 @@ from Ast.nodetypes import NodeTypes
 from Ast.varobject import VariableObj
 
 from .Ast_Types import Void
-from .nodes import ASTNode, ExpressionNode
+from .nodes import ASTNode, ExpressionNode, SrcPosition
 
-ZERO_CONST = ir.Constant(ir.IntType(64), 0)
+ZERO_CONST: Final = ir.Constant(ir.IntType(64), 0)
 
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
@@ -16,7 +18,8 @@ class VariableAssign(ASTNode):
     type = NodeTypes.EXPRESSION
     name = "varAssign"
 
-    def init(self, name: str, value, block, typ = Void()):
+    def __init__(self, pos: SrcPosition, name: str, value, block, typ = Void()):
+        self._position = pos
         self.var_name = name
         self.is_declaration = False
         self.value = value
@@ -57,7 +60,8 @@ class VariableRef(ExpressionNode):
     __slots__ = ('block', 'var_name')
     name = "varRef"
 
-    def init(self, name: str, block):
+    def __init__(self, pos: SrcPosition, name: str, block):
+        self._position = pos
         self.var_name = name
         self.block = block
     
@@ -96,7 +100,8 @@ class Ref(ExpressionNode):
     __slots__ = ('var', )
     name = "ref"
 
-    def init(self, var):
+    def __init__(self, pos: SrcPosition, var):
+        super().__init__(pos)
         self.var = var
         
     
@@ -129,7 +134,8 @@ class VariableIndexRef(ExpressionNode):
     __slots__ = ('ind', 'varref', 'var_name', 'size')
     name = "varIndRef"
 
-    def init(self, varref: VariableRef, ind: ExpressionNode):
+    def __init__(self, pos: SrcPosition, varref: VariableRef, ind: ExpressionNode):
+        self._position = pos
         self.varref = varref
         self.ind = ind
         self.size = 0
@@ -141,7 +147,7 @@ class VariableIndexRef(ExpressionNode):
             self.varref.ir_type = self.varref.ret_type.ir_type
         
         self.ind.pre_eval(func)
-        if self.ind.ret_type.name == "ref":
+        if isinstance(self.ind.ret_type.name, Ref):
             self.ind = self.ind.get_value(func)
         if self.varref.ret_type.get_op_return('ind', None, None) is not None:
             self.ret_type = self.varref.ret_type.typ
@@ -195,7 +201,8 @@ class VariableIndexPutAt(ASTNode):
     __slots__ = ('value', 'ref')
     name = "varIndPutAt"
 
-    def init(self, varindref: VariableIndexRef, value: ExpressionNode):
+    def __init__(self, pos: SrcPosition, varindref: VariableIndexRef, value: ExpressionNode):
+        self._position = pos
         self.ref = varindref
         self.value = value
     

@@ -7,7 +7,7 @@ from . import Type_Base
 
 
 class Float_32(Type_Base.Type):
-    __slots__ = tuple()
+    __slots__ = ()
 
     ir_type = ir.FloatType()
     name = 'f32'

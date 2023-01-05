@@ -19,7 +19,7 @@ SILENT_MODE = False
 PROFILING = False
 FILE = ""
 
-USES_FEATURE = {} #give warning about used features
+USES_FEATURE: dict[str, bool] = {} #give warning about used features
 
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''

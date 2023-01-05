@@ -7,7 +7,7 @@ from . import Type_Base
 
 
 class Void(Type_Base.Type):
-    __slots__ = tuple()
+    __slots__ = ()
 
     ir_type = ir.VoidType()
     name = 'void'

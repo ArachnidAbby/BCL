@@ -353,6 +353,12 @@ class Parser(ParserBase):
             self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 1, Ast.Ast_Types.Type_Bool.Integer_1())) #type: ignore
         elif self.check(0, '$false'):
             self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 0, Ast.Ast_Types.Type_Bool.Integer_1())) #type: ignore
+        elif self.check(0, '$PI'):
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 3.14159265358979323846, Ast.Ast_Types.Type_F32.Float_32())) #type: ignore
+        elif self.check(0, '$TWO_PI'):
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 6.28318545718, Ast.Ast_Types.Type_F32.Float_32())) #type: ignore
+        elif self.check(0, '$HALF_PI'):
+            self.replace(1,"expr", Ast.Literal(self.peek(0).pos, 1.57079632679489661923, Ast.Ast_Types.Type_F32.Float_32())) #type: ignore
 
     def parse_return_statement(self):
         if self.check_group(0, "$return expr SEMI_COLON"):
@@ -426,7 +432,7 @@ class Parser(ParserBase):
     def parse_math(self):
         '''Parse mathematical expressions'''
 
-        if self.check_group(0,'$not expr') and self.peek_safe(2).name not in (*self.standard_expr_checks, "DOUBLE_DOT"):
+        if self.check_group_lookahead(0,'$not expr') and self.peek_safe(2).name !="DOUBLE_DOT":
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
             self.replace(2,"expr",op)
 

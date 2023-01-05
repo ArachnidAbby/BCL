@@ -7,7 +7,7 @@ from . import Type_Base
 
 
 class Char(Type_Base.Type):
-    __slots__ = tuple()
+    __slots__ = ()
 
     ir_type = ir.IntType(8)
     name = 'char'

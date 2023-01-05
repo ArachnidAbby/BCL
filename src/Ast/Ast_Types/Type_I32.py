@@ -7,7 +7,7 @@ from . import Type_Base
 
 
 class Integer_32(Type_Base.Type):
-    __slots__ = tuple()
+    __slots__ = ()
 
     ir_type = ir.IntType(32)
     name = 'i32'

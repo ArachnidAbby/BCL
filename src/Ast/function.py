@@ -1,16 +1,19 @@
 '''All AST nodes related to functions.'''
+from ast import Module
 from typing import Any, Callable, Optional
 
 import errors
 from llvmlite import ir
 
+from Ast.literals import TypeRefLiteral
 from Ast.nodetypes import NodeTypes
 from Ast.varobject import VariableObj
 
 from . import Ast_Types
-from .nodes import ASTNode, Block, ExpressionNode, ParenthBlock
+from .nodes import (ASTNode, Block, ExpressionNode, KeyValuePair, ParenthBlock,
+                    SrcPosition)
 
-functions = {}
+functions: dict[str, dict[tuple[Ast_Types.Type, ...], '_Function']] = {}
 
 
 class _Function:
@@ -36,7 +39,7 @@ class _Function:
         return f'{self.name}({", ".join(self.arg_types)})'
 
     @property
-    def args_ir(self) -> tuple[ir.Type]:
+    def args_ir(self) -> tuple[ir.Type, ...]:
         '''Get the `ir.Type` of all args'''
         return tuple([x.ir_type if x.ret_type.name!="array" else x.ir_type.as_pointer() for x in self.arg_types])
 
@@ -80,9 +83,10 @@ class FunctionDef(ASTNode):
     type = NodeTypes.STATEMENT
     name = "funcDef"
 
-    def init(self, name: str, args: ParenthBlock, block: Block, module):
+    def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock, block: Block, module: Module):
+        self._position   = pos
         self.func_name   = name
-        self.ret_type    = Ast_Types.Void() # Can also be a TypeRef. In which case, it should be evaled
+        self.ret_type: Ast_Types.Type|TypeRefLiteral = Ast_Types.Void() # Can also be a TypeRef. In which case, it should be evaled
 
         self.builder     = None # llvmlite.ir.IRBuilder object once created
         self.block       = block  # body of the function Ast.Block
@@ -97,27 +101,29 @@ class FunctionDef(ASTNode):
         self._validate_args(args) # validate arguments
 
         # construct args lists
-        self.args       = dict()
-        self.args_ir    = list() # list of all the args' ir types
-        self.args_types = list() # list of all the args' Ast_Types.Type return types
+        self.args: dict[str, ExpressionNode] = dict()
+        self.args_ir: tuple[ir.Type, ...] = () # list of all the args' ir types
+        self.args_types: tuple[Ast_Types.Type, ...] = () # list of all the args' Ast_Types.Type return types
         self._construct_args(args)
         
     
-    def _construct_args(self, args):
+    def _construct_args(self, args: ParenthBlock):
         '''Construct the lists of args required when building this function'''
+        args_ir    = []
+        args_types = []
         for arg in args:
-            self.args[arg.key] = [None, arg.value, True]
+            self.args[arg.key] = [None, arg.value, True] #type: ignore
             if arg.get_type().pass_as_ptr:
-                self.args_ir.append(arg.get_type().ir_type.as_pointer())
+                args_ir.append(arg.get_type().ir_type.as_pointer())
             else:
-                self.args_ir.append(arg.get_type().ir_type)
-            self.args_types.append(arg.get_type())
+                args_ir.append(arg.get_type().ir_type)
+            args_types.append(arg.get_type())
         
-        self.args_ir = tuple(self.args_ir)
-        self.args_types = tuple(self.args_types)
+        self.args_ir = tuple(args_ir)
+        self.args_types = tuple(args_types)
 
 
-    def _validate_args(self, args):
+    def _validate_args(self, args: ParenthBlock):
         '''Validate that all args are syntactically valid'''
         if not args.is_key_value_pairs():
             errors.error(f"Function {self.func_name}'s argument tuple consists of non KV_pairs", line = self.position)
@@ -211,7 +217,8 @@ class ReturnStatement(ASTNode):
     type = NodeTypes.STATEMENT
     name = "return"
 
-    def init(self, expr):
+    def __init__(self, pos: SrcPosition, expr: ExpressionNode):
+        self._position = pos
         self.expr = expr
 
     def pre_eval(self, func):
@@ -236,10 +243,12 @@ class FunctionCall(ExpressionNode):
     __slots__ = ('ir_type', 'paren', 'function', 'args_types', "func_name")
     name = "funcCall"
     
-    def init(self, name: str, parenth: ParenthBlock):
+    def __init__(self, pos: SrcPosition,name: str, parenth: ParenthBlock):
+        super().__init__(pos)
         self.func_name = name
         self.ret_type  = Ast_Types.Void()
         self.paren     = parenth
+        
     
     def _check_function_exists(self):
         '''ensure a function exists and the correct form of it exists'''
@@ -263,7 +272,7 @@ class FunctionCall(ExpressionNode):
     
     def eval(self, func):
         x = self.paren.eval(func)
-        if self.paren.name=="Parenth":
+        if isinstance(self.paren, ParenthBlock):
             args = self.paren.children
         else:
             args = [x]

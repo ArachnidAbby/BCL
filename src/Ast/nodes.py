@@ -1,7 +1,7 @@
 '''Define basic classes for nodes. These are the most basic nodes such as the ASTNode baseclass.'''
 
 from collections import deque
-from typing import Any, Iterator, Self, Tuple
+from typing import Any, Iterator, Protocol, Self, Tuple, Union
 
 from errors import error
 
@@ -9,6 +9,8 @@ from Ast.nodetypes import NodeTypes
 
 from . import Ast_Types
 
+SrcPosition = tuple[int,int, int]
+GenericNode = Union['ASTNode', 'ExpressionNode']
 
 class ASTNode:
     '''Most basic Ast-Node that all others inherit from. This just provides standardization between Ast-Nodes.
@@ -21,21 +23,21 @@ class ASTNode:
     '''
     __slots__ = ('_position')
 
-    is_operator = False
-    type = NodeTypes.DEFAULT
-    name = "AST_NODE"
+    is_operator: bool = False
+    type: NodeTypes = NodeTypes.DEFAULT
+    name: str = "AST_NODE"
 
-    def __init__(self, position: tuple[int,int, int], *args, **kwargs):
-        self._position = position        # (line#, col#)
+    def __init__(self, position: SrcPosition, *args, **kwargs):
+        self._position = position        # (line#, col#, len)
 
-        self.init(*args, **kwargs)
+        # self.init(*args, **kwargs)
 
     def is_expression(self):
         '''check whether or not a node is an expression'''
         return self.type==NodeTypes.EXPRESSION
 
-    def init(self, *args):
-        '''initialize the node'''
+    # def init(self, *args):
+    #     '''initialize the node'''
 
     def pre_eval(self, func):
         '''pre eval step that is usually used to validate the contents of a node'''
@@ -43,17 +45,17 @@ class ASTNode:
     def eval(self, func):
         '''eval step, often returns ir.Instruction'''
     
-    def merge_pos(self, positions: Tuple[Tuple[int, int, int], ...]) -> tuple[int, int, int]:
+    def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         new_pos = list(self._position)
         for x in positions:
             current_len = (new_pos[2]+new_pos[1]-1) # len of current position ptr
             end_pos = (x[1]-current_len)+x[2]
             new_pos[2] = end_pos
         
-        return tuple(new_pos)
+        return tuple(new_pos) # type: ignore
     
     @property
-    def position(self) -> tuple[int, int, int]:
+    def position(self) -> SrcPosition:
         return self._position
 
     @position.setter
@@ -66,13 +68,13 @@ class ExpressionNode(ASTNode):
     __slots__ = ("ret_type", "ir_type", "ptr")
     type = NodeTypes.EXPRESSION
 
-    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
-        super().__init__(position, *args, **kwargs)
+    def __init__(self, position: SrcPosition, *args, **kwargs):
         self.ret_type = Ast_Types.Type()
-        self._position = position        # (line#, col#)
+        self._position = position
         self.ptr = None
+        super().__init__(position, *args, **kwargs)
 
-        self.init(*args, **kwargs)
+        # self.init(*args, **kwargs) # Info: this was running twice, keeping it just incase it was for a reason.
     
     # todo: implement this functionality
     def __getitem__(self, name):
@@ -92,18 +94,18 @@ class ContainerNode(ASTNode):
     '''
     __slots__ = ("children", )
 
-    def __init__(self, position: Tuple[int,int, int], *args, **kwargs):
-        self.children = []
+    def __init__(self, position: SrcPosition, *args, **kwargs):
+        self.children: list = []
         super().__init__(position, *args, **kwargs)
 
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
 
-    def append_child(self, child: ASTNode):
+    def append_child(self, child: GenericNode):
         '''append child to container.'''
         self.children.append(child)
 
-    def append_children(self, child: ASTNode|Self):
+    def append_children(self, child: GenericNode|Self):
         '''possible to append 1 or more children'''
         if isinstance(child, ContainerNode):
             self.children += child.children
@@ -117,10 +119,11 @@ class Block(ContainerNode):
     type = NodeTypes.BLOCK
     name = "Block"
 
-    BLOCK_STACK = deque()
+    BLOCK_STACK: deque[Self] = deque()
 
-    def init(self):
-        self.variables = {} # {name: VarObj, ...}
+    def __init__(self, pos: SrcPosition, *args, **kwargs):
+        super().__init__(pos, *args, **kwargs)
+        self.variables: dict[str, object] = {} # {name: VarObj, ...} -- recursive import uppon proper type annotation
         self.builder = None
         self.last_instruction = False
         self.ended = False
@@ -157,7 +160,7 @@ class Block(ContainerNode):
 
     def validate_variable(self, var_name: str) -> bool:
         '''Return true if a variable already has a ptr'''
-        return self.variables[var_name].ptr is not None
+        return self.variables[var_name].ptr is not None # type: ignore
     
     def validate_variable_exists(self, var_name: str) -> bool:
         return var_name in self.variables.keys()
@@ -168,7 +171,8 @@ class ParenthBlock(ContainerNode):
     type = NodeTypes.EXPRESSION
     name = "Parenth"
 
-    def init(self):
+    def __init__(self, pos: SrcPosition, *args, **kwargs):
+        super().__init__(pos, *args, **kwargs)
         self.ir_type = Ast_Types.Void()
         self.in_func_call = False
         
@@ -191,7 +195,7 @@ class ParenthBlock(ContainerNode):
                 return False
         return True     
 
-    def append_child(self, child: ASTNode):
+    def append_child(self, child: GenericNode):
         self.children.append(child)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
     
@@ -218,7 +222,8 @@ class KeyValuePair(ASTNode):
     type = NodeTypes.KV_PAIR
     name = "kv_pair"
 
-    def init(self, k, v):
+    def __init__(self, pos: SrcPosition, k, v):
+        super().__init__(pos)
         self.key      = k
         self.value    = v
     
@@ -234,7 +239,7 @@ class KeyValuePair(ASTNode):
         return self.value.value
 
     @property
-    def position(self) -> tuple[int, int, int]:
+    def position(self) -> SrcPosition:
         return self.merge_pos((self.value.position, ))
         
        

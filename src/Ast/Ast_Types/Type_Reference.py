@@ -1,6 +1,7 @@
 from typing import Self
 
 from Ast import Ast_Types
+from Ast.literals import TypeRefLiteral
 from Ast.nodetypes import NodeTypes
 from errors import error
 from llvmlite import ir
@@ -15,9 +16,9 @@ class Reference(Type_Base.Type):
     pass_as_ptr = False
     no_load = True
 
-    def __init__(self, typ: Type_Base.Type):
+    def __init__(self, typ: TypeRefLiteral):
         self.typ = typ
-        if typ.name == "literal":
+        if isinstance(typ, TypeRefLiteral):
             typ.eval(None)
             self.typ = typ.value # elements' type
 

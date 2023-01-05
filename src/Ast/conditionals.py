@@ -1,7 +1,7 @@
 from Ast import Ast_Types
 from Ast.nodetypes import NodeTypes
 
-from .nodes import ASTNode, Block
+from .nodes import ASTNode, Block, SrcPosition
 
 
 class IfStatement(ASTNode):
@@ -11,7 +11,8 @@ class IfStatement(ASTNode):
     type = NodeTypes.STATEMENT
     name = "If"
 
-    def init(self, cond: ASTNode, block: ASTNode):
+    def __init__(self, pos: SrcPosition, cond: ASTNode, block: ASTNode):
+        self._position = pos
         self.cond = cond
         self.block = block
     
@@ -36,7 +37,8 @@ class IfElseStatement(ASTNode):
     type = NodeTypes.STATEMENT
     name = "IfElse"
 
-    def init(self, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
+    def __init__(self, pos: SrcPosition, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
+        self._position = pos
         self.cond = cond
         self.if_block = if_block
         self.else_block = else_block
