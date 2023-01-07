@@ -29,6 +29,9 @@ class Module(ASTNode):
         pg = parser.Parser(self.children, self)
         self.children = pg.parse()
     
+    def get_unique_name(self, name: str):
+        return self.module.get_unique_name(name)
+    
     def add_child(self, item):
         self.children.append(item)
 

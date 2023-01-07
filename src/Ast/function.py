@@ -137,11 +137,9 @@ class FunctionDef(ASTNode):
         if self.ret_type.name == "ref":
             errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line = ret_line)
 
-    def _mangle_name(self) -> str:
+    def _mangle_name(self, name) -> str:
         '''add an ID to the end of a name if the function has a body and is NOT named "main"'''
-        if self.func_name!="main" and self.block is not None:
-            return f"{self.func_name}.{len(functions[self.func_name].keys())}"
-        return self.func_name
+        return self.module.get_unique_name(name)
 
     def _append_args(self):
         '''append all args as variables usable inside the function body'''
@@ -160,7 +158,7 @@ class FunctionDef(ASTNode):
             functions[self.func_name] = dict()
 
 
-        self.function_ir = ir.Function(self.module.module, fnty, name=self._mangle_name())
+        self.function_ir = ir.Function(self.module.module, fnty, name=self._mangle_name(self.func_name))
         functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.func_name, self.function_ir,
                                                           self.ret_type, self.args_types) 
@@ -176,7 +174,7 @@ class FunctionDef(ASTNode):
     def create_const_var(self, typ):
         current_block = self.builder.block
         self.builder.position_at_start(self.ir_entry)
-        ptr = self.builder.alloca(typ.ir_type, name = f"--CONST-")
+        ptr = self.builder.alloca(typ.ir_type, name = self._mangle_name("CONST"))
         self.builder.position_at_end(current_block)
         return ptr
 
