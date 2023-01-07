@@ -1,4 +1,4 @@
-from typing import Any, Callable, NamedTuple
+from typing import Any, Callable, NamedTuple, Self
 
 import Ast
 import errors
@@ -17,7 +17,7 @@ class ParserToken(NamedTuple):
         return self.source_pos
         
 class ParserBase:
-    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions' ,'standard_expr_checks', 'op_node_names')
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions' ,'standard_expr_checks', 'op_node_names', 'compiled_rules')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
@@ -32,6 +32,33 @@ class ParserBase:
         self.parsing_functions = {}
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "paren")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD", "COLON", "DOUBLE_DOT")
+        self.compiled_rules: dict[str, Callable[Self, bool]] = {}
+
+    def single_compile(self, wanting: str, pos: int) -> str:
+        if wanting == '_': # allow any
+            return 'True'
+        if wanting == '__': # allow any with "complete" == True
+            return f'input[{pos}].completed'
+        elif wanting.startswith('!'): # `not` operation
+            return f'(not {self.single_compile(wanting[1:], pos)})'
+        elif wanting.startswith('$'): # `match value` operation
+            return f'input[{pos}].value=="{wanting[1:]}"'
+        elif '|' in wanting: # `or` operation
+            return "("+(' or '.join([self.single_compile(y, pos) for y in wanting.split('|')]))+")"
+        else:
+            return f'input[{pos}].name=="{wanting}"'
+
+    def compile_rule(self, rule: str, pos: int) -> tuple[Callable[[list[ParserToken]], bool], int]:
+        output_stmts: list[str] = []
+        for c,wanting in enumerate(rule.split(' ')):
+            if wanting == '_': # allow any
+                continue
+            output_stmts.append(self.single_compile(wanting, c))
+        
+        output_str = (" and ".join(output_stmts))
+
+        return (compile(output_str, 'COMPILED RULE', 'eval'), len(rule.split(' ')))
+
     
     def parse(self, close_condition: Callable[[],bool]=lambda: False):
         '''Parser main'''
@@ -114,22 +141,11 @@ class ParserBase:
     
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
-        x = self.peek(index=index)
-
-        if wanting == '_': # allow any
-            return True
-        elif wanting == '__': # allow any with "complete" == True
-            return x.completed
-        elif wanting.startswith('!'): # `not` operation
-            return not self.check(index, wanting[1:])
-        elif wanting.startswith('$'): # `match value` operation
-            return x.value==wanting[1:]
-        elif '|' in wanting: # `or` operation
-            for y in wanting.split('|'):
-                if self.check(index,y): return True
-            return False
-        else:
-            return x.name==wanting
+        if wanting not in self.compiled_rules.keys():
+            self.compiled_rules[wanting] = (compile(self.single_compile(wanting, 0), '', 'eval'), index)
+            # print(self.single_compile(wanting, 0))
+        
+        return eval(self.compiled_rules[wanting][0], {}, {"input": [self.peek(index)]})
 
     def simple_check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (without formatting)'''
@@ -148,14 +164,13 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        if (len(tokens)+self._cursor+start_index) > len(self._tokens):
+        if (len(tokens)+self._cursor+start_index) > len(self._tokens) or (self._cursor+start_index)<0:
             return False
 
-        for c,x in enumerate(tokens):
-            if not self.check(c+start_index,x):
-                return False
-                
-        return True
+        if wanting not in self.compiled_rules.keys():
+            self.compiled_rules[wanting] = self.compile_rule(wanting, start_index)
+        
+        return eval(self.compiled_rules[wanting][0], {}, {"input": self._tokens[start_index+self._cursor:self.compiled_rules[wanting][1]+start_index+self._cursor]})
     
     def check_group_lookahead(self, start_index: int, wanting: str, include_ops = False) -> bool:
         '''check a group of tokens in a string seperated by spaces. This version has lookahead'''

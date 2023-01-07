@@ -20,6 +20,7 @@ PROFILING = False
 FILE = ""
 
 USES_FEATURE: dict[str, bool] = {} #give warning about used features
+SrcPosition = tuple[int, int, int]
 
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
@@ -106,7 +107,7 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
 
-def show_error_spot(file_loc, position: tuple[int, int, int], use_full_line: bool) -> str:
+def show_error_spot(file_loc, position: SrcPosition, use_full_line: bool) -> str:
     if position == (-1,-1,-1):
         return ""
     full_line = ""
