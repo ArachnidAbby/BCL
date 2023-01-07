@@ -4,6 +4,7 @@ from errors import error, inline_warning
 from llvmlite import ir
 
 from Ast import Ast_Types, Literal, exception
+from Ast.math import OperationNode
 from Ast.nodetypes import NodeTypes
 from Ast.varobject import VariableObj
 
@@ -175,7 +176,13 @@ class VariableIndexRef(ExpressionNode):
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
         if self.ind.name != "literal":#* error checking at runtime
-            if self.ind.get_var(func).range is not None:
+            if isinstance(self.ind, OperationNode) and self.ind.ret_type.rang is not None:
+                rang = self.ind.ret_type.rang
+                arrayrang = range(0, self.varref.ir_type.count)
+                if rang[0] in arrayrang and rang[1] in arrayrang: 
+                    return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
+
+            elif self.ind.get_var(func).range is not None:
                 rang = self.ind.get_var(func).range
                 arrayrang = range(0, self.varref.ir_type.count)
                 if self.ind.name == "varRef" and rang[0] in arrayrang and rang[1] in arrayrang: 
