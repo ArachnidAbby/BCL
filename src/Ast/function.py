@@ -134,7 +134,7 @@ class FunctionDef(ASTNode):
             self.ret_type.eval(self)
             ret_line = self.ret_type.position
             self.ret_type = self.ret_type.ret_type
-        if self.ret_type.name == "ref":
+        if self.ret_type.name == "ref" and self.block is not None :
             errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line = ret_line)
 
     def _mangle_name(self, name) -> str:

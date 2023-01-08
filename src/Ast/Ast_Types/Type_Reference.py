@@ -37,11 +37,13 @@ class Reference(Type_Base.Type):
         return hash(f"&{self.typ}")
     
     def convert_from(self, func, typ, previous):
-        if typ.name == "ref":
+        if typ.name == "ref" and previous.ret_type.name!="ref":
             error(f"Pointer conversions are not supported due to unsafe behavior", line = previous.position)
         return self.typ.convert_from(func, typ, previous)
 
     def convert_to(self, func, orig, typ):
+        if typ.name == "ref" or typ == self.typ:
+            return orig.eval(func)
         error(f"Pointer conversions are not supported due to unsafe behavior", line = orig.position)
 
     def get_op_return(self, op: str, lhs, rhs):

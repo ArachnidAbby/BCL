@@ -1,43 +1,100 @@
 define pause() -> i32;
 define puts(x: strlit);
+
+struct SDL_Rect {
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32;
+}
+
+struct SDL_DisplayMode {
+    w: i32, h: i32,
+    refresh_rate: i32,
+    driverdata: &char;
+}
+
+struct SDL_WindowShaperMode {
+    mode: i32,
+    parameters: i32;
+}
+
+struct SDL_WindowShaper {
+    window: &char,
+    userx: i32, usery: i32,
+    mode: SDL_WindowShaperMode;
+}
+
+struct SDL_WindowUserData {
+    name: strlit,
+    data: &char,
+    next: &char;
+}
+
+struct SDL_Surface {
+    flags: i32,
+    format: char[4],
+    w: i32, h: i32,
+    pitch: i32,
+    pixels: &char,
+    userdata: &char,
+    locked: i32,
+    lock_data: &char,
+    clip_rect: SDL_Rect,
+    map: &char,
+    refcount: i32;
+}
+
+struct SDL_Window {
+    magic: &char,
+    id: i32,
+    title: &char,
+    icon: &SDL_Surface,
+    x: i32, y: i32,
+    w: i32, h: i32,
+    min_w: i32, min_y: i32,
+    max_w: i32, max_h: i32,
+    flags: i32,
+    last_fullscreen_flags: i32,
+
+    windowed: SDL_Rect,
+    fullscreen_mode: SDL_DisplayMode,
+    brightness: f32,
+    gamma: &char[2], // in place of &i16
+    saved_gamma: &char[2],
+    
+    surface: &SDL_Surface,
+    is_hiding: i32, // in place of SDL_bool
+    is_destroying: i32, // in place of SDL_bool
+    shaper: &SDL_WindowShaper,
+    data: &SDL_WindowUserData,
+    driverdata: &char,
+    prev: &char,
+    next: &char;
+}
+
 define SDL_Init(flags: i32) -> i32;
+define SDL_CreateWindow(name: strlit, x: i32, y: i32, w: i32, h: i32, idk: i32) -> &SDL_Window;
+define SDL_GetWindowSurface(window: &SDL_Window) -> &SDL_Surface;
+define SDL_UpdateWindowSurface(window: &SDL_Window) -> i32;
+define SDL_Delay(ms: i32);
 
-struct test {
-   x: i32,
-   y: i32; 
-}
-
-define testingus(x: test) {
-    j = x[0];
-    println(j);
-}
-
-define main() {
-    puts("testing");
-    x = 6;
-    test = [0; 10];
-    println(test[x]);
-    println(SDL_Init(3));
-    test[x] = 8;
-    // x = "helloworld";
-    // println(x);
-    loop_amount = 20;
-    for i in 0..loop_amount {
-        fizz = is_multiple(&i, 3);
-        buzz = is_multiple(&i, 5)*2;
-        println(fizz + buzz);
+define main() -> i32 {
+    if SDL_Init(32) < 0 {
+        println("Failed to initialize sdl2");
+        return -1;
     }
-}
 
-define is_multiple(value: &i32, divider: i32) -> bool {
-    // value += 2;
-    return (value % divider) == 0;
-}
+    window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
+                                          805240832,
+                                          805240832,
+                                          680, 480,
+                                          0);
 
-define is_multiple(value: i32, divider: i32) -> bool {
-    return (value % divider) == 0;
-}
+    window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
 
-// define test(x: i32[3]) -> i32[3] {
-//     return x;
-// }
+    SDL_UpdateWindowSurface(window);
+
+    SDL_Delay(10000);
+    return 0;
+}
