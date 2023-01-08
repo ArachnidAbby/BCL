@@ -23,7 +23,6 @@ class Char(Type_Base.Type):
         elif typ.name == 'char': return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to 'i32'",line = previous.position)
-
     
     def convert_to(self, func, orig, typ):
         match typ.name:
@@ -33,7 +32,6 @@ class Char(Type_Base.Type):
             case 'i64': return func.builder.zext(orig.eval(func), ir.IntType(64))
             case 'f32': return func.builder.sitofp(orig.eval(func), ir.FloatType())
             case 'f64': return func.builder.sitofp(orig.eval(func), ir.DoubleType())
-        
         error(f"Cannot convert 'bool' to '{typ}'", line = orig.position)
 
     @classmethod
@@ -50,8 +48,6 @@ class Char(Type_Base.Type):
         lhs = (lhs.ret_type).convert_to(func, lhs, typ)
         rhs = (rhs.ret_type).convert_to(func, rhs, typ)
         return (lhs, rhs)
-
-
     
     def sum(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -60,7 +56,6 @@ class Char(Type_Base.Type):
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.add(lhs, rhs)
 
-    
     def sub(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if typ != self:
@@ -68,7 +63,6 @@ class Char(Type_Base.Type):
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.sub(lhs, rhs)
 
-    
     def mul(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if typ != self:
@@ -76,7 +70,6 @@ class Char(Type_Base.Type):
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.mul(lhs, rhs)
 
-    
     def div(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if typ != self:
@@ -84,16 +77,12 @@ class Char(Type_Base.Type):
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
 
-    
     def mod(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if typ != self:
             return typ.mod(func, lhs, rhs)
         lhs, rhs = Char.convert_args(func, lhs, rhs)
         return func.builder.srem(lhs, rhs)
-
-
-
     
     
     def eq(self, func, lhs, rhs): 

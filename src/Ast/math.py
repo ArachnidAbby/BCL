@@ -153,12 +153,24 @@ def operator(precedence: int, name: str, right = False):
         return new_func
     return wrapper
 
+
+# # TODO: have functions be variables that way function-types and callables can be added.
+# @operator(11, "call")
+# def call(self, func, lhs: VariableRef, rhs):
+#     func.module.functions[lhs.name]
+#     return (lhs.ret_type).convert_to(func, lhs, rhs.ret_type)
+
+@operator(11, "access_member")
+def member_access(self, func, lhs, rhs):
+    
+    return (lhs.ret_type).get_member(func, lhs, rhs.name)
+
 @operator(10, "as")
 def _as(self, func, lhs, rhs):
     rhs.eval(func)
     return (lhs.ret_type).convert_to(func, lhs, rhs.ret_type)
 
-# todo: get this working (it seems llvm doesn't have a basic `pow` operation, it is a function)
+# TODO: get this working (it seems llvm doesn't have a basic `pow` operation, it is a function)
 @operator(10, "Pow")
 def pow(self, func, lhs, rhs):
     pass

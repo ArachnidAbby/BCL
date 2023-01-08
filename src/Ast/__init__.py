@@ -11,4 +11,5 @@ from .loops import *
 from .math import *
 from .nodes import *
 from .standardfunctions import *
+from .structs import *
 from .variable import *

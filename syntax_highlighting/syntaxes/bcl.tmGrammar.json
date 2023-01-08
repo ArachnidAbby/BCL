@@ -28,11 +28,15 @@
             "name": "storage.type.function"
           },
           {
+            "match": "(struct)",
+            "name": "storage.type.structure"
+          },
+          {
             "match": "((or)|(and)|(not)|(in))",
             "name": "keyword.operator.bcl"
           },
           {
-            "match": "((i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|(char)|(string)|(str))",
+            "match": "((i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|(char)|(string)|(strlit)|(str))",
             "name": "storage.type.bcl"
           },
           {

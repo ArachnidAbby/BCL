@@ -88,7 +88,7 @@ class FunctionDef(ASTNode):
         self.func_name   = name
         self.ret_type: Ast_Types.Type|TypeRefLiteral = Ast_Types.Void() # Can also be a TypeRef. In which case, it should be evaled
 
-        self.builder     = None # llvmlite.ir.IRBuilder object once created
+        self.builder     = None   # llvmlite.ir.IRBuilder object once created
         self.block       = block  # body of the function Ast.Block
         self.module      = module # Module the object is contained in
         self.is_ret_set  = False  # is the return value set?

@@ -28,7 +28,7 @@ class Parser(ParserBase):
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue', 
-            'as', 'for', 'in'
+            'as', 'for', 'in', 'struct'
         )
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "paren")
@@ -44,10 +44,10 @@ class Parser(ParserBase):
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
             "KEYWORD": (self.parse_type_names, self.parse_return_statement, self.parse_math, self.parse_keyword_literals,
-                        self.parse_control_flow, self.parse_vars, self.parse_functions, self.parse_KV_pairs),
+                        self.parse_control_flow, self.parse_vars, self.parse_functions, self.parse_structs,  self.parse_KV_pairs),
             "func_def_portion": (self.parse_functions, ),
             "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit),
-            "expr_list": (self.parse_expr_list, ),
+            "expr_list": (self.parse_expr_list, self.parse_statement),
             "OPEN_PAREN": (self.parse_parenth, ),
             "OPEN_PAREN_USED": (self.parse_parenth, ),
             "paren": (self.parse_func_call,),
@@ -138,7 +138,7 @@ class Parser(ParserBase):
     def parse_statement(self):
         '''Parsing statements and statement lists'''
 
-        if self.check_group(-1, "__|OPEN_CURLY_USED expr|statement SEMI_COLON"):
+        if self.check_group(-1, "__|OPEN_CURLY_USED expr|expr_list|statement SEMI_COLON"):
             self.replace(2, "statement", self.peek(0).value)
 
         elif self.check_group(0, "statement statement !SEMI_COLON"):
@@ -156,8 +156,15 @@ class Parser(ParserBase):
                 if self.check(2,"!CLOSE_CURLY"):
                     self.start = self._cursor
                 else:
-                    self.start-=1
+                    self.start=0
             self.replace(2, "statement_list", stmt_list)
+
+    def parse_structs(self):
+        if self.check_group(0, "$struct KEYWORD statement"):
+            # if not isinstance(self.peek(1).value:
+            #     errors.error(f"Invalid struct name", line=self.peek(1).pos)
+            struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1), self.peek(2).value, self.module)
+            self.replace(3, "structdef", struct)
     
     # * arrays
 

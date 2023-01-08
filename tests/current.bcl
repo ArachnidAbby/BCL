@@ -1,11 +1,23 @@
 define pause() -> i32;
 define puts(x: strlit);
+define SDL_Init(flags: i32) -> i32;
+
+struct test {
+   x: i32,
+   y: i32; 
+}
+
+define testingus(x: test) {
+    j = x[0];
+    println(j);
+}
 
 define main() {
     puts("testing");
     x = 6;
     test = [0; 10];
     println(test[x]);
+    println(SDL_Init(3));
     test[x] = 8;
     // x = "helloworld";
     // println(x);
@@ -19,6 +31,10 @@ define main() {
 
 define is_multiple(value: &i32, divider: i32) -> bool {
     // value += 2;
+    return (value % divider) == 0;
+}
+
+define is_multiple(value: i32, divider: i32) -> bool {
     return (value % divider) == 0;
 }
 

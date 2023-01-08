@@ -62,7 +62,7 @@ class VariableRef(ExpressionNode):
     name = "varRef"
 
     def __init__(self, pos: SrcPosition, name: str, block):
-        self._position = pos
+        super().__init__(pos)
         self.var_name = name
         self.block = block
     
@@ -150,8 +150,8 @@ class VariableIndexRef(ExpressionNode):
         self.ind.pre_eval(func)
         if isinstance(self.ind.ret_type.name, Ref):
             self.ind = self.ind.get_value(func)
-        if self.varref.ret_type.get_op_return('ind', None, None) is not None:
-            self.ret_type = self.varref.ret_type.typ
+        if self.varref.ret_type.get_op_return('ind', None, self.ind) is not None:
+            self.ret_type = self.varref.ret_type.get_op_return('ind', None, self.ind)
         else:
             self.ret_type = self.varref.ret_type
         self.ir_type = self.ret_type.ir_type
@@ -173,6 +173,8 @@ class VariableIndexRef(ExpressionNode):
         with func.builder.if_then(condcomb) as if_block:
             exception.over_index_exception(func, self.varref, self.ind.eval(func), self.position)
     
+
+    # TODO: fix this painful code. It is so ugly.
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
         if self.ind.name != "literal":#* error checking at runtime
@@ -189,7 +191,6 @@ class VariableIndexRef(ExpressionNode):
                     return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
             self._out_of_bounds(func)
-            
         return func.builder.gep(self.varref.get_ptr(func) , [ZERO_CONST, self.ind.eval(func),])
 
     def get_value(self, func):

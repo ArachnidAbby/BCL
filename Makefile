@@ -1,4 +1,4 @@
-override FILE = current.bcl
+override FILE = console_cube.bcl
 
 env/bin/activate: requirements.txt
 	python3.11 -m venv env 

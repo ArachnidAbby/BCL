@@ -1,0 +1,23 @@
+(* ---------=========BCL LANGUAGE OFFICIAL GRAMMAR=========---------
+
+    This document describes the languages official grammar. As 
+updates are released, this document could fall behind by
+1 or more version, but this is unlikely. But, keep in mind,
+that there is no garuntee that this document is correct. The
+best way to get the latest grammer, is to manually look thru the
+parser.py file.
+
+    The parser is custom written and does not follow any
+convention that I am aware of. The parser is somewhat crude
+in nature but gets the job done. The parser does not use EBNF
+syntax to describe grammar, but instead uses custom rule strings
+that are compiled uppon first use and then stored. This speeds
+up runtime by roughly 22% (Run on the Console_Cube.bcl example).
+
+For further information and implementation details, look at
+`src/parser.py` and `src/parserbase.py` these contain the main
+BCL parser as well as the parent class of the parser that
+contains basic functionality such as `peek(k)` and `consume(k)`
+---------===============================================--------- *)
+
+

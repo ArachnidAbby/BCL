@@ -49,24 +49,18 @@ class Reference(Type_Base.Type):
     
     def sum(self, func, lhs, rhs): 
         return lhs.typ.sum(func, lhs.as_varref(), rhs)
-
     
     def sub(self, func, lhs, rhs): 
         return lhs.typ.sub(func, lhs.as_varref(), rhs)
-
     
     def mul(self, func, lhs, rhs): 
         return lhs.typ.mul(func, lhs.as_varref(), rhs)
 
-    
     def div(self, func, lhs, rhs): 
         return lhs.typ.div(func, lhs.as_varref(), rhs)
 
-    
     def mod(self, func, lhs, rhs): 
         return lhs.typ.mod(func, lhs.as_varref(), rhs)
-
-    
     
     def eq(self, func, lhs, rhs): 
         return lhs.typ.eq(func, lhs.as_varref(), rhs)

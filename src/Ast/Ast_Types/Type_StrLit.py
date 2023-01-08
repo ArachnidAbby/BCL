@@ -23,7 +23,6 @@ class StringLiteral(Type_Base.Type):
         
         if size is not None:
             self.size = size.value
-            
             if self.size <= 0:
                 error(f"Array size must be > 0", line = size.position)
             elif size.ret_type != Type_I32.Integer_32:

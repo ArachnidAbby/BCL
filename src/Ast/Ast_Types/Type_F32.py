@@ -83,8 +83,6 @@ class Float_32(Type_Base.Type):
         return func.builder.frem(lhs, rhs)
 
 
-
-    
     def eq(self, func, lhs, rhs): 
         typ = Type_Base.get_std_ret_type(lhs, rhs)
         if typ != self:

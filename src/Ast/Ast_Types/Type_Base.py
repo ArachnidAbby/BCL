@@ -12,8 +12,8 @@ class Type:
     __slots__ = ('ir_type')
     name = "UNKNOWN"
     pass_as_ptr = False
-    rang: tuple[int, int]|None = None
-    no_load = False
+    rang: tuple[int, int]|None = None # Used for optimizations in array indexing. This is pretty epic.
+    no_load = False # when allocating arguments as local vars on the stack this is checked -- False: Do allocated and load, True: Don't
 
     def __init__(self):
         pass
@@ -25,6 +25,9 @@ class Type:
 
     def is_void(self) -> bool:
         return self.name == "void"
+    
+    def get_member(self, func, lhs, name) -> tuple[ir.Instruction, Self]|None:
+        return None
 
     def __eq__(self, other):
         return (other is not None) and self.name == other.name
@@ -33,8 +36,6 @@ class Type:
     
     def get_op_return(self, op, lhs, rhs): pass
 
-
-    
     def sum  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '+' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     
     def sub  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '-' is not supported for type '{lhs.ret_type}'", line = lhs.position)
@@ -106,7 +107,7 @@ class Type:
     def __str__(self) -> str:
         return self.name
 
-    def eval(self, foo):
+    def eval(self, foo): #? Why is this here
         '''Does nothing'''
         pass
 

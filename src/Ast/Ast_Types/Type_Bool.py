@@ -47,7 +47,6 @@ class Integer_1(Type_Base.Type):
         rhs = (rhs.ret_type).convert_to(func, rhs, typ)
         return (lhs, rhs)
 
-
     
     def sum(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -55,7 +54,6 @@ class Integer_1(Type_Base.Type):
             return typ.sum(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.add(lhs, rhs)
-
     
     def sub(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -63,7 +61,6 @@ class Integer_1(Type_Base.Type):
             return typ.sub(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.sub(lhs, rhs)
-
     
     def mul(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -71,7 +68,6 @@ class Integer_1(Type_Base.Type):
             return typ.mul(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.mul(lhs, rhs)
-
     
     def div(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -79,7 +75,6 @@ class Integer_1(Type_Base.Type):
             return typ.div(func, lhs, rhs)
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
-
     
     def mod(self, func, lhs, rhs):
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -88,9 +83,6 @@ class Integer_1(Type_Base.Type):
         lhs, rhs = Integer_1.convert_args(func, lhs, rhs)
         return func.builder.srem(lhs, rhs)
 
-
-
-    
     
     def eq(self, func, lhs, rhs): 
         typ = Type_Base.get_std_ret_type(lhs, rhs)
@@ -138,7 +130,6 @@ class Integer_1(Type_Base.Type):
     def err_if_not_bool(rhs):
         if rhs.ret_type.name != 'bool':
             error('rhs of boolean operation must be of boolean type.', line = rhs.position)
-
     
     def _and(self, func, lhs, rhs):
         Integer_1.err_if_not_bool(rhs)

@@ -8,3 +8,4 @@ from .Type_Char import *
 from .Type_I32 import *
 from .Type_Reference import *
 from .Type_StrLit import *
+from .Type_Struct import *
