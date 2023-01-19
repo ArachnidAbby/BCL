@@ -94,7 +94,7 @@ class VariableRef(ExpressionNode):
         return f"<VariableRef to '{self.var_name}'>"
 
     def __str__(self) -> str:
-        return self.var_name
+        return str(self.var_name)
 
 class Ref(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a ptr uppon `eval`'''
@@ -128,7 +128,7 @@ class Ref(ExpressionNode):
         return f"<Ref to '{self.var}'>"
 
     def __str__(self) -> str:
-        return self.var
+        return str(self.var)
 
 class VariableIndexRef(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
