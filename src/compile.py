@@ -15,6 +15,7 @@ def timingContext(text: str):
     print(errors.GREEN, end="")
     _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
+
 def compile(src_str: str, output_loc: str, create_object_file):
     start = perf_counter()
 
@@ -38,7 +39,7 @@ def compile(src_str: str, output_loc: str, create_object_file):
         import lexer as lex
 
     with timingContext('lexing finished'):
-        tokens = lex.get_tokens(src_str)
+        tokens = lex.Lexer().get_lexer().lex(src_str)
     
     with timingContext('parsing finished'):
         module = Ast.module.Module((-1,-1,-1), "main", src_str, tokens)

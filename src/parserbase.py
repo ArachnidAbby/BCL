@@ -1,8 +1,15 @@
+import ast  # python ast module
 from typing import Any, Callable, NamedTuple, Self
 
 import Ast
 import errors
 
+
+def fix_char(val) -> int:
+    return ord(val.encode('raw_unicode_escape').decode('unicode_escape'))
+
+def fix_str(val) -> str:
+    return ast.literal_eval(val)+'\0'
 
 class ParserToken(NamedTuple):
     # __slots__ = ('name', 'value', 'source_pos', 'completed')
@@ -15,19 +22,25 @@ class ParserToken(NamedTuple):
     @property
     def pos(self):
         return self.source_pos
-        
+
+MAX_SIZE = 8 # TODO: move this into the ParserBase class
+
 class ParserBase:
-    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min', 'parsing_functions' ,'standard_expr_checks', 'op_node_names', 'compiled_rules')
+    __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min',
+                'parsing_functions' ,'standard_expr_checks', 'op_node_names', 'compiled_rules',
+                'lex_stream', 'EOS')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual parse for the language.
     '''
 
-    def __init__(self, text, module):
-        self._tokens  = text
+    def __init__(self, lex_stream, module):
+        self._tokens  = []
+        self.lex_stream = lex_stream
         self._cursor  = 0
         self.start    = 0
         self.module   = module
         self.do_move   = True
+        self.EOS = False
         self.start_min = 0
         self.parsing_functions = {}
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD", "expr", "OPEN_SQUARE", "paren")
@@ -65,6 +78,7 @@ class ParserBase:
         previous_start_position = self.start
         self.start = self._cursor   # where to reset cursor after consuming tokens.
         iters = 0
+        self.gen_ahead(MAX_SIZE)
         while (not self.isEOF(self._cursor)): # and (not close_condition()):
             # * code for debugging. Use if needed
             # print(self._cursor)
@@ -94,29 +108,56 @@ class ParserBase:
 
     def post_parse(self):
         '''steps that happen after parsing has finished. Used to check for syntax errors, give warnings, etc.'''
+
     
-    def isEOF(self, index: int=0) -> bool:
+    def isEOF(self, index) -> bool:
         '''Checks if the End-Of-File has been reached'''
-        return index>=len(self._tokens)
+        return self.EOS and index>=(len(self._tokens))
     
     
     def move_cursor(self,index: int=1):
         '''Moves the cursor unless `!self.doMove` '''
-        
-        self._cursor += index if self.do_move else 0
+        if self.do_move:
+            tokens_left = (len(self._tokens)-self._cursor)
+            if tokens_left<MAX_SIZE:
+                self.gen_ahead(tokens_left%MAX_SIZE)
+            self._cursor += index
         self.do_move  = True
 
     
     def peek(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token'''
         return self._tokens[self._cursor+index]
+    
+    def gen_ahead(self, amount):
+        for c, tok in enumerate(self.lex_stream):
+            pos = (tok.source_pos.lineno, tok.source_pos.colno, len(tok.value))
+            if tok.name == "NUMBER":
+                val = Ast.Literal(pos, int(tok.value), Ast.Ast_Types.Integer_32())
+                fintok = ParserToken("expr", val, pos, True)
+            elif tok.name == "NUMBER_F":
+                val = Ast.Literal(pos, float(tok.value.strip('f')), Ast.Ast_Types.Float_32())
+                fintok = ParserToken("expr", val, pos, True)
+            elif tok.name == "CHAR":
+                val = Ast.Literal(pos, fix_char(tok.value.strip('\'')), Ast.Ast_Types.Char())
+                fintok = ParserToken("expr", val, pos, True)
+            elif tok.name == "STRING":
+                val = Ast.StrLiteral(pos, fix_str(tok.value)) # type: ignore
+                fintok = ParserToken("expr", val, pos, True)
+            else:
+                fintok = ParserToken(tok.name, tok.value, pos, False)
+            self._tokens.append(fintok)
+            if c==amount-1:
+                return True # true means all tokens generated successfully
+        self.EOS = True
+        return False # not all tokens generated successfuly, do not expect all tokens to exist
 
     def peek_safe(self, index: int) -> ParserToken:
         '''peek into the token list and fetch a token if overindexing the token list, it will return an empty token'''
-        if (self._cursor+index) > len(self._tokens)-1:
+        if self.isEOF(self._cursor+index):
             return ParserToken("EOF", "EOF", (-1,-1,-1), False)
 
-        return self._tokens[self._cursor+index]
+        return self.peek(index)
     
     
     def _consume(self, index: int=0, amount: int=1):
@@ -143,7 +184,6 @@ class ParserBase:
         '''check the value of a token (with formatting)'''
         if wanting not in self.compiled_rules.keys():
             self.compiled_rules[wanting] = (compile(self.single_compile(wanting, 0), '', 'eval'), index)
-            # print(self.single_compile(wanting, 0))
         
         return eval(self.compiled_rules[wanting][0], {}, {"input": [self.peek(index)]})
 
@@ -164,8 +204,9 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        if (len(tokens)+self._cursor+start_index) > len(self._tokens) or (self._cursor+start_index)<0:
+        if (self._cursor+start_index)<0 or self.isEOF(len(tokens)+self._cursor+start_index-1):
             return False
+            
 
         if wanting not in self.compiled_rules.keys():
             self.compiled_rules[wanting] = self.compile_rule(wanting, start_index)
