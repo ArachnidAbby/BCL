@@ -3,6 +3,7 @@
     "version": "1.1.0",
     "publisher": "Benjamin A.",
     "description": "syntax highlighting for BCL",
+    "icon": "images/experimental_BCL_LOGO.png",
     "repository": "https://github.com/spidertyler2005/BCL",
     "engines": {
         "vscode":"*"
