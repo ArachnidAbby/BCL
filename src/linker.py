@@ -5,6 +5,22 @@ from llvmlite import binding
 
 import errors
 
+#* Example of what the lld command *should* look like (linux)
+#* ===========================================================
+# binding.lld.lld_linux(f"{loc}",
+#     [
+#         "/usr/lib64/crt1.o", "/usr/lib64/crti.o",
+#         "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtbegin.o", f"{loc}.o",
+#         "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtend.o",
+#         "/usr/lib64/crtn.o"
+#     ], 
+#     [
+#         "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",
+#         "/lib64/ld-linux-x86-64.so.2", "-L/usr/lib/gcc/x86_64-pc-linux-gnu/12.2.1/",
+#         "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
+#     ]
+# )
+
 
 def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
