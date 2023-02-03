@@ -37,21 +37,22 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
 
 def get_gcc_dir(lib_dir = 'lib') -> str:
     '''get the gcc directory'''
-    if not os.path.exists(f"/usr/{lib_dir}/gcc/"):
-        errors.error(f"Directory '/usr/{lib_dir}/gcc/' does not exist. Aborting linking process")
+    gcc_base = f"/usr/{lib_dir}/gcc/"
+    if not os.path.exists(gcc_base):
+        errors.error(f"Directory '{gcc_base}' does not exist. Aborting linking process")
     
-    gcc_targets = os.listdir(f"/usr/{lib_dir}/gcc/")
+    gcc_targets = os.listdir(gcc_base)
     if len(gcc_targets) > 1:
-        errors.inline_warning(f"Found more than one directory inside '/usr/{lib_dir}/gcc' \
+        errors.inline_warning(f"Found more than one directory inside '{gcc_base}' \
                               defaulting to the first one: {gcc_targets[0]}")
     gcc_target = gcc_targets[0]
-    gcc_versions = os.listdir(f"/usr/{lib_dir}/gcc/{gcc_target}")
+    gcc_versions = os.listdir(f"{gcc_base}/{gcc_target}")
     if len(gcc_versions) > 1:
-        errors.inline_warning(f"Found more than one directory inside '/usr/{lib_dir}/gcc/{gcc_target}' \
+        errors.inline_warning(f"Found more than one directory inside '{gcc_base}/{gcc_target}' \
                               defaulting to the first one: {gcc_versions[0]}")
     
     gcc_version = gcc_versions[0]
-    return f"/usr/lib/gcc/{gcc_target}/{gcc_version}"
+    return f"{gcc_base}/{gcc_target}/{gcc_version}"
 
 def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
@@ -68,7 +69,6 @@ def get_linuxcrt() -> list[str]:
         if ext!='o': # skip non .o files
             continue
         if name.startswith('crt') and name not in exclude:
-            
             output.append(f'{gcc_dir}/{file}')
 
     all_libs = os.listdir('/lib/')
