@@ -4,6 +4,7 @@ from typing import Self
 from llvmlite import binding, ir
 
 import errors
+import linker
 from Ast.function import _Function
 from Ast.nodes import ASTNode, SrcPosition
 
@@ -104,20 +105,21 @@ class Module(ASTNode):
             output_file.write(target.emit_object(mod))
         if not args["--emit-binary"]:
             return
-        import os
-        binding.lld.lld_linux(f"{loc}",
-            [
-                "/usr/lib64/crt1.o", "/usr/lib64/crti.o",
-                "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtbegin.o", f"{loc}.o",
-                "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtend.o",
-                "/usr/lib64/crtn.o"
-            ], 
-            [
-                "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",
-                "/lib64/ld-linux-x86-64.so.2", "-L/usr/lib/gcc/x86_64-pc-linux-gnu/12.2.1/",
-                "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
-            ]
-        )
+
+        linker.link_all(loc, [f"{loc}.o"])
+        # binding.lld.lld_linux(f"{loc}",
+        #     [
+        #         "/usr/lib64/crt1.o", "/usr/lib64/crti.o",
+        #         "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtbegin.o", f"{loc}.o",
+        #         "/usr/lib64/gcc/x86_64-pc-linux-gnu/12.2.1/crtend.o",
+        #         "/usr/lib64/crtn.o"
+        #     ], 
+        #     [
+        #         "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",
+        #         "/lib64/ld-linux-x86-64.so.2", "-L/usr/lib/gcc/x86_64-pc-linux-gnu/12.2.1/",
+        #         "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
+        #     ]
+        # )
 
     def syntax_error_information(self, child, c: int):
         '''more useful syntax error messages'''

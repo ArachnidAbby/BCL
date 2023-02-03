@@ -68,7 +68,8 @@ def create_args_dict(args: list[str]) -> dict[str, bool|str]:
     '''creates a dictionary of command-line arguments.'''
     args_dict: dict[str, bool|str] = { # contains all valid command line arguments
             "--emit-object": False,
-            "--emit-binary": False
+            "--emit-binary": False,
+            "--dev": False
         }
     for arg in args:
         if not arg.startswith('-'):
