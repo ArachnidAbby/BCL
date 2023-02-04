@@ -1,0 +1,10 @@
+#!/bin/bash
+# Linux executable script
+
+if [ ! -e ./env/bin/activate ]
+then
+    python3.11 -m venv env 
+	./env/bin/pip3.11 install -r requirements.txt
+fi
+
+./env/bin/python3.11 src/main.py $@
