@@ -3,59 +3,39 @@ from typing import Self
 from llvmlite import ir
 
 from Ast import Ast_Types
+from Ast.function import _Function
 from Ast.nodes import KeyValuePair
 from errors import error
 
 
-class Struct(Ast_Types.Type):
+class Function(Ast_Types.Type):
     '''abstract type class that outlines the necessary features of a type class.'''
 
-    __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size', 'rang', 'member_index_search', 'returnable', 'raw_members')
+    __slots__ = ('func_name', 'module', 'versions')
     name = "STRUCT"
-    pass_as_ptr = True
+    pass_as_ptr = False
     no_load = False
-    has_members = True
+    read_only = True
 
     # TODO: implement struct methods
-    def __init__(self, name: str, members: list[KeyValuePair], module):
-        self.struct_name = name
-        self.raw_members = members
-        self.members = {}
-        self.member_indexs = []
-        self.member_index_search = {}
-        self.returnable = True
-        for c, member in enumerate(members):
-            
-            # populate member lists
-            member_name = member.key.var_name
-            self.member_indexs.append(member_name)
-            self.member_index_search[member_name] = c
-
-        self.ir_type = ir.global_context.get_identified_type(f"struct.{name}")
-        self.size = len(self.member_indexs)-1
-        self.rang = None
-
-    def declare(self):
-        for member in self.raw_members:
-            # when encountering an unreturnable type, make this struct unreturnable
-            if not member.get_type().returnable:
-                self.returnable = False
-
-            member_name = member.key.var_name
-            self.members[member_name] = member.get_type()
-        self.ir_type.set_body(*[x.ir_type for x in self.members.values()])
+    def __init__(self, name: str, module):
+        self.func_name = name
+        self.module = module
+        self.versions: dict[tuple, _Function] = {}
+        module.globals[name] = self
+    
+    def create(self, args: tuple, func_ir):
+        '''create a function with that name'''
+        self.version[args] = func_ir
+        
 
     # TODO: allow casting overloads
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
-        if typ == previous.ret_type:
-            return typ
-        error(f"Struct type has no conversions",  line = previous.position)
+        error(f"Function type has no conversions",  line = previous.position)
     
     def convert_to(self, func, orig, typ) -> ir.Instruction:
-        if typ == orig.ret_type:
-            return orig.eval(func)
-        error(f"{self.struct_name} has no conversions",  line = orig.position)
+        error(f"Function type has no conversions",  line = orig.position)
 
     def __eq__(self, other):
         return super().__eq__(other) and other.struct_name==self.struct_name
@@ -64,20 +44,11 @@ class Struct(Ast_Types.Type):
     
     # TODO: implement this
     def get_op_return(self, op, lhs, rhs):
-        if op == "access_member":
-            if rhs.var_name not in self.members.keys():
-                error("member not found!", line = rhs.position)
-            return self.members[rhs.var_name]
+        if op == "call": #! Temporary !
+            pass
 
-    def get_member(self, func, lhs, member_name_in: "Ast.variable.VariableRef"):
-        member_name = member_name_in.var_name
-        member_index = self.member_index_search[member_name]
-        # ^ no need to check if it exists.
-        # We do this when getting the return type
-        zero_const = ir.Constant(ir.IntType(64), 0)
-        idx = ir.Constant(ir.IntType(32), member_index)
-        ptr = func.builder.gep(lhs.get_ptr(func), [zero_const, idx])
-        return func.builder.load(ptr)
+    def get_member(self):
+        pass
 
     # def sum  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '+' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     

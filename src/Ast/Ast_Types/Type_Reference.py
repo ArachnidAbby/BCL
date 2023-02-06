@@ -1,10 +1,11 @@
 from typing import Self
 
+from llvmlite import ir
+
 from Ast import Ast_Types
 from Ast.literals import TypeRefLiteral
 from Ast.nodetypes import NodeTypes
 from errors import error
-from llvmlite import ir
 
 from . import Type_Base
 
@@ -15,12 +16,10 @@ class Reference(Type_Base.Type):
     name = 'ref'
     pass_as_ptr = False
     no_load = True
+    returnable = False
 
     def __init__(self, typ: TypeRefLiteral):
-        self.typ = typ
-        if isinstance(typ, TypeRefLiteral):
-            typ.eval(None)
-            self.typ = typ.value # elements' type
+        self.typ = typ.as_type_reference()
 
         self.ir_type = typ.ir_type.as_pointer()
 

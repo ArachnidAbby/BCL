@@ -1,5 +1,6 @@
-import errors
 from llvmlite import ir
+
+import errors
 
 from .nodes import *
 
@@ -12,14 +13,14 @@ class StructDef(ASTNode):
         if name.value in Ast_Types.types_dict.keys():
             errors.error(f"Type name already in use: {name.value}", line = name.pos, full_line=True)
 
-        self.struct_name = name.value
+        self.struct_name = name.value.var_name
         self.block = block
         members = self.block.children[0].children
         self.struct_type = Ast_Types.Struct(self.struct_name, members, module)
         Ast_Types.types_dict[self.struct_name] = self.struct_type
         
     def pre_eval(self):
-        pass
+        self.struct_type.declare()
 
     def eval(self):
         pass

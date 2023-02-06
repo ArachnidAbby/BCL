@@ -1,12 +1,12 @@
 from typing import Final
 
-from errors import error, inline_warning
 from llvmlite import ir
 
 from Ast import Ast_Types, Literal, exception
 from Ast.math import OperationNode
 from Ast.nodetypes import NodeTypes
 from Ast.varobject import VariableObj
+from errors import error, inline_warning
 
 from .Ast_Types import Void
 from .nodes import ASTNode, ExpressionNode, SrcPosition
@@ -33,9 +33,7 @@ class VariableAssign(ASTNode):
         self.value.pre_eval(func)
 
         if self.block!=None and self.var_name not in self.block.variables.keys():
-            if self.typ.name == "literal":
-                self.typ.eval(None)
-                self.typ = self.typ.value
+            self.typ = self.typ.as_type_reference()
             self.block.variables[self.var_name] = VariableObj(None, self.typ, False)
             self.is_declaration = True
         if not self.is_declaration and self.explicit_typ:
@@ -71,7 +69,7 @@ class VariableRef(ExpressionNode):
             error(f"Undefined variable '{self.var_name}'", line = self.position)
 
         self.ret_type = self.block.get_variable(self.var_name).type
-        if self.block.get_variable(self.var_name).type.is_void():
+        if self.ret_type.is_void():
             error(f"undefined variable '{self.var_name}'", line = self.position)
 
         self.ir_type = self.ret_type.ir_type
@@ -89,12 +87,44 @@ class VariableRef(ExpressionNode):
         '''only important in references'''
         self.ret_type = self.ret_type.typ
         return self
+    
+    def as_name_reference(self):
+        '''If this variable represents a function name, 
+        Type name, etc then return what the name refers to.
+        '''
+        if self.var_name in function.functions.keys():
+            return function.functions[self.var_name]
+        if self.var_name in Ast_Types.types_dict:
+            return Ast_Types.types_dict[self.var_name]()
+        else:
+            error(f"Could not find symbol: {self.var_name}", line = self.position)
+
+    def as_type_reference(self):
+        '''If this variable represents a function name, 
+        Type name, etc then return what the name refers to.
+        ''' # TODO FIX ^
+        if self.var_name in Ast_Types.types_dict:
+            return Ast_Types.types_dict[self.var_name]()
+        else:
+            error(f"Could not find type: {self.var_name}", line = self.position)
+    
+    def as_func_reference(self):
+        '''If this variable represents a function name, 
+        Type name, etc then return what the name refers to.
+        ''' # TODO FIX ^
+        if self.var_name in function.functions.keys():
+            return function.functions[self.var_name]
+        else:
+            error(f"Could not find function: {self.var_name}", line = self.position)
 
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"
 
     def __str__(self) -> str:
         return str(self.var_name)
+    
+    def __hash__(self):
+        return hash(self.var_name)
 
 class Ref(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes. It returns a ptr uppon `eval`'''
@@ -109,7 +139,6 @@ class Ref(ExpressionNode):
     def pre_eval(self, func):
         self.var.pre_eval(func)
         self.ret_type = Ast_Types.Reference(self.var.ret_type)
-
         self.ir_type = self.ret_type.ir_type
     
     def eval(self, func):
@@ -129,9 +158,12 @@ class Ref(ExpressionNode):
 
     def __str__(self) -> str:
         return str(self.var)
+    
+    def as_type_reference(self):
+        return Ast_Types.Reference(self.var.as_type_reference())
 
 class VariableIndexRef(ExpressionNode):
-    '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`'''
+    '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`''' # TODO: add correct doc
     __slots__ = ('ind', 'varref', 'var_name', 'size')
     name = "varIndRef"
 
@@ -204,6 +236,9 @@ class VariableIndexRef(ExpressionNode):
 
     def __repr__(self) -> str:
         return f"<index of `{self.varref}`>"
+    
+    def as_type_reference(self):
+        return Ast_Types.Array(self.ind, self.varref.as_type_reference())
 
 class VariableIndexPutAt(ASTNode):
     __slots__ = ('value', 'ref')

@@ -1,7 +1,8 @@
+from llvmlite import ir
+
 from Ast.Ast_Types import Type_I32
 from Ast.nodetypes import NodeTypes
 from errors import error, inline_warning
-from llvmlite import ir
 
 from . import Type_Base
 
@@ -13,10 +14,7 @@ class Array(Type_Base.Type):
     no_load = False
 
     def __init__(self, size, typ):
-        self.typ = typ
-        if typ.name == "literal":
-            typ.eval(None)
-            self.typ = typ.value # elements' type
+        self.typ = typ.as_type_reference()
 
         if size.name != "literal":
             error(f"size of array type must be a int-literal", line = size.position)\

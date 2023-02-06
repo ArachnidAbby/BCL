@@ -1,9 +1,10 @@
 from enum import Enum
 from typing import Self
 
+from llvmlite import ir
+
 from Ast.nodes import ASTNode, ExpressionNode
 from errors import error
-from llvmlite import ir
 
 
 class Type:
@@ -14,6 +15,9 @@ class Type:
     pass_as_ptr = False
     rang: tuple[int, int]|None = None # Used for optimizations in array indexing. This is pretty epic.
     no_load = False # when allocating arguments as local vars on the stack this is checked -- False: Do allocated and load, True: Don't
+    read_only = False # useful for things like function types. 
+    has_members = False
+    returnable = True # is this type allowed to be the return type of a function
 
     def __init__(self):
         pass
@@ -72,7 +76,13 @@ class Type:
     def index  (self, func, lhs) -> ir.Instruction: error(f"Operation 'index' is not supported for type '{lhs.ret_type}'", line = lhs.position)
     def put(self, func, lhs, value): error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 
+
+    def call(self, func, lhs, args) -> ir.Instruction: error(f"type '{lhs.ret_type}' is not Callable", line = lhs.position)
+
+
     def assign(self, func, ptr, value, typ: Self):
+        if self.read_only:
+            error("This type is read_only", line=value.position, full_line=True)
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
         func.builder.store(val, ptr.ptr)
 
@@ -111,6 +121,14 @@ class Type:
         '''Does nothing'''
         pass
 
+    def as_type_reference(self):
+        return self
+    
+    def get_members(self):
+        '''Gets all the member names. 
+           Must check `typ.has_members` or an Exception will occur
+        '''
+        return self.members.keys() # members should always be a dict!
 
 
 from .Type_Bool import Integer_1

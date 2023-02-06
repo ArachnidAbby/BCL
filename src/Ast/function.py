@@ -2,9 +2,9 @@
 from ast import Module
 from typing import Any, Callable, Optional
 
-import errors
 from llvmlite import ir
 
+import errors
 from Ast.literals import TypeRefLiteral
 from Ast.nodetypes import NodeTypes
 from Ast.varobject import VariableObj
@@ -112,7 +112,7 @@ class FunctionDef(ASTNode):
         args_ir    = []
         args_types = []
         for arg in args:
-            self.args[arg.key] = [None, arg.value, True] #type: ignore
+            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(), True] #type: ignore
             if arg.get_type().pass_as_ptr:
                 args_ir.append(arg.get_type().ir_type.as_pointer())
             else:
@@ -131,10 +131,10 @@ class FunctionDef(ASTNode):
     def _validate_return(self):
         ret_line = (-1,-1,-1)
         if self.is_ret_set:
-            self.ret_type.eval(self)
+            # self.ret_type.eval(self)
             ret_line = self.ret_type.position
-            self.ret_type = self.ret_type.ret_type
-        if self.ret_type.name == "ref" and self.block is not None :
+            self.ret_type = self.ret_type.as_type_reference()
+        if (not self.ret_type.returnable) and self.block is not None :
             errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line = ret_line)
 
     def _mangle_name(self, name) -> str:
@@ -155,13 +155,15 @@ class FunctionDef(ASTNode):
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         if self.func_name not in functions:
+            # Ast_Types.Type_Function.Function(self.func_name, self.module)
             functions[self.func_name] = dict()
 
 
         self.function_ir = ir.Function(self.module.module, fnty, name=self._mangle_name(self.func_name))
         functions[self.func_name][self.args_types] = _Function(_Function.BEHAVIOR_DEFINED,
                                                           self.func_name, self.function_ir,
-                                                          self.ret_type, self.args_types) 
+                                                          self.ret_type, self.args_types) # TODO: REMOVE
+        
         # Early return if the function has no body.
         if self.block is None:
             return

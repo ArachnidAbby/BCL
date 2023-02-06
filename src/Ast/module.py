@@ -105,7 +105,8 @@ class Module(ASTNode):
         with open(f"{loc}.o", 'wb') as output_file:            
             output_file.write(target.emit_object(mod))
         if args["--emit-binary"]:
-            linker.link_all(loc, [f"{loc}.o"])        
+            extra_args = [f"-l{x}" for x in args["--libs"]]
+            linker.link_all(loc, [f"{loc}.o"], extra_args)        
 
     def syntax_error_information(self, child, c: int):
         '''more useful syntax error messages'''

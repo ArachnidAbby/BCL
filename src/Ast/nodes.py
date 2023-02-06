@@ -3,9 +3,8 @@
 from collections import deque
 from typing import Any, Iterator, Protocol, Self, Tuple, Union
 
-from errors import error
-
 from Ast.nodetypes import NodeTypes
+from errors import error
 
 from . import Ast_Types
 
@@ -87,6 +86,10 @@ class ExpressionNode(ASTNode):
             val = self.eval(func)
             func.builder.store(val, self.ptr)
         return self.ptr
+    
+    def as_type_reference(self):
+        '''Get this expresion as the reference to a type'''
+        error(f"invalid type: {str(self)}", line = self.position)
 
 class ContainerNode(ASTNode):
     '''A node consistening of other nodes.
@@ -127,7 +130,7 @@ class Block(ContainerNode):
         self.builder = None
         self.last_instruction = False
         self.ended = False
-    
+
     def append_nested_vars(self):
         '''append vars for nested blocks'''
         if len(self.BLOCK_STACK)!=0:
@@ -167,14 +170,16 @@ class Block(ContainerNode):
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'ret_type', 'in_func_call')
+    __slots__ = ('ir_type', 'ret_type', 'in_func_call' , 'ptr')
     type = NodeTypes.EXPRESSION
     name = "Parenth"
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
-        self.ir_type = Ast_Types.Void()
+        self.ir_type = Ast_Types.Void().ir_type
         self.in_func_call = False
+        self.ptr = None
+        self.ret_type = Ast_Types.Void()
         
     def pre_eval(self, func):
         for c, child in enumerate(self.children):
@@ -182,8 +187,7 @@ class ParenthBlock(ContainerNode):
         
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
-        if self.ret_type!=Ast_Types.Void():
-            self.ir_type = self.children[0].ir_type
+        self.ir_type = self.ret_type.ir_type
 
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
@@ -198,6 +202,7 @@ class ParenthBlock(ContainerNode):
     def append_child(self, child: GenericNode):
         self.children.append(child)
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
+        
     
     def _pass_as_pointer_changes(self, func):
         '''changes child elements to be passed as pointers if needed'''
@@ -216,6 +221,17 @@ class ParenthBlock(ContainerNode):
     def __repr__(self) -> str:
         return f'<Parenth Block: \'({", ".join((repr(x) for x in self.children))})\'>'
 
+    def get_ptr(self, func):
+        '''allocate to stack and get a ptr'''
+        if self.type != NodeTypes.EXPRESSION:
+            error("Cannot get a ptr to a set of parentheses with more than one value", line = self.position)
+        # print(self.ret_type)
+        if self.ptr is None:
+            self.ptr = func.create_const_var(self.ret_type)
+            val = self.eval(func)
+            
+            func.builder.store(val, self.ptr)
+        return self.ptr
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value')
@@ -227,16 +243,12 @@ class KeyValuePair(ASTNode):
         self.key      = k
         self.value    = v
     
-    def validate_type(self) -> str:        
-        self.value.eval(None)
-        
-        return self.value.value
+    def validate_type(self): # TODO: REMOVE, DUPLICATE
+        return self.value.as_type_reference()
 
     def get_type(self) -> Any:
         '''Get and validate type'''
-        self.value.eval(None)
-
-        return self.value.value
+        return self.value.as_type_reference()
 
     @property
     def position(self) -> SrcPosition:

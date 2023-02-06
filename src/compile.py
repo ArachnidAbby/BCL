@@ -8,6 +8,13 @@ from typing import Union
 import errors
 from errors import _print_raw, _print_text, inline_warning
 
+DEFAULT_ARGS: dict[str, bool|str|list] = { # contains all valid command line arguments
+    "--emit-object": False,
+    "--emit-binary": False,
+    "--dev": False,
+    "--libs": []
+}
+
 
 @contextmanager
 def timingContext(text: str):
@@ -64,13 +71,9 @@ def compile(src_str: str, output_loc: str, args):
 
     _print_raw('\n\n\n')
 
-def create_args_dict(args: list[str]) -> dict[str, bool|str]:
+def create_args_dict(args: list[str]) -> dict[str, bool|str|list]:
     '''creates a dictionary of command-line arguments.'''
-    args_dict: dict[str, bool|str] = { # contains all valid command line arguments
-            "--emit-object": False,
-            "--emit-binary": False,
-            "--dev": False
-        }
+    args_dict: dict[str, bool|str|list] = DEFAULT_ARGS
     for arg in args:
         if not arg.startswith('-'):
             continue
@@ -78,11 +81,20 @@ def create_args_dict(args: list[str]) -> dict[str, bool|str]:
             args_dict[arg] = not args_dict[arg] # invert current value
         else:
             name, value = arg.split('=')
-            args_dict[name] = value
+            if "," in value:
+                args_dict[name] = value.split(",")
+            elif isinstance(args_dict[name], list):
+                args_dict[name] = [value]
+            else:
+                args_dict[name] = value
     return args_dict
 
 def compile_file(file: Path, args):
     errors.FILE = str(file)
+    
+    if not os.path.exists(file):
+        errors.error(f"No Such file \"{file}\"")
+
     with file.open() as f:
         args = create_args_dict(args)
         compile(f.read(), str(file.absolute().parents[0] / "output"), args)

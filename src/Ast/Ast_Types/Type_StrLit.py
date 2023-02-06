@@ -1,10 +1,11 @@
 # from Ast import Ast_Types
 from typing import Self
 
+from llvmlite import ir
+
 from Ast.Ast_Types import Type_Char, Type_I32
 from Ast.nodetypes import NodeTypes
 from errors import error
-from llvmlite import ir
 
 from . import Type_Base
 
@@ -14,6 +15,7 @@ class StringLiteral(Type_Base.Type):
     name = "strlit"
     pass_as_ptr = False
     no_load = False
+    returnable = False
 
     def __init__(self, size = None):
         self.typ = Type_Char.Char()

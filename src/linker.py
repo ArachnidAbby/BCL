@@ -26,7 +26,9 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
     binding.lld.lld_linux(file,
             [
-                *get_linuxcrt(), *objects,
+                *get_linuxcrt(),
+                # *["tests/crt.o"],
+                *objects,
             ], 
             [
                 "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",

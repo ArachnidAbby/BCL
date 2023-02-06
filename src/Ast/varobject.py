@@ -4,7 +4,7 @@ from .Ast_Types import Type_Base
 
 
 class VariableObj:
-    '''allows variables to be stored on the heap. This lets me pass them around by reference.'''
+    '''Represents a variable.'''
     __slots__ = ("ptr", "type", "is_constant", "range")
 
     def __init__(self, ptr, typ, is_constant):
@@ -33,7 +33,6 @@ class VariableObj:
         if not self.is_constant: 
             return func.builder.load(self.ptr) 
         return self.ptr
-        
 
     def __repr__(self) -> str:
         return f'VAR: |{self.ptr}, {self.type}, {self.is_constant}|'
