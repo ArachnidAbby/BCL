@@ -1,6 +1,7 @@
 '''
 The Command-Line/Terminal interface for BCL.
 '''
+# TODO: REMOVE OR FINISH
 
 from dataclasses import dataclass
 from typing import Callable, Union

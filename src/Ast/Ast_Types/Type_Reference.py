@@ -18,7 +18,7 @@ class Reference(Type_Base.Type):
     no_load = True
     returnable = False
 
-    def __init__(self, typ: TypeRefLiteral):
+    def __init__(self, typ):
         self.typ = typ.as_type_reference()
 
         self.ir_type = typ.ir_type.as_pointer()

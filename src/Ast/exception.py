@@ -1,9 +1,10 @@
-import errors
 from llvmlite import ir
 
+import errors
 from Ast import Ast_Types, standardfunctions
 
 
+# TODO: MAKE BETTER
 def over_index_exception(func, name, index, pos):
     over_index_fmt = f"{errors.RED}Invalid index '%i' for array '{str(name)}' \n\tLine: {pos[0]}{errors.RESET} \n\0"
     c_over_index_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(over_index_fmt)),

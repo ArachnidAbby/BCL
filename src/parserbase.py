@@ -8,22 +8,24 @@ import errors
 def fix_char(val) -> int:
     return ord(val.encode('raw_unicode_escape').decode('unicode_escape'))
 
+
 def fix_str(val) -> str:
     return ast.literal_eval(val)+'\0'
+
 
 class ParserToken(NamedTuple):
     # __slots__ = ('name', 'value', 'source_pos', 'completed')
 
     name: str
     value: Any
-    source_pos: tuple[int, int, int]
+    source_pos: tuple[int, int, int, str] # TODO: Make into named tuple
     completed: bool
 
     @property
     def pos(self):
         return self.source_pos
 
-MAX_SIZE = 8 # TODO: move this into the ParserBase class
+MAX_SIZE = 8  # TODO: move this into the ParserBase class
 
 class ParserBase:
     __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move', 'start_min',
@@ -34,12 +36,12 @@ class ParserBase:
     '''
 
     def __init__(self, lex_stream, module):
-        self._tokens  = []
+        self._tokens = []
         self.lex_stream = lex_stream
-        self._cursor  = 0
-        self.start    = 0
-        self.module   = module
-        self.do_move   = True
+        self._cursor = 0
+        self.start = 0
+        self.module = module
+        self.do_move = True
         self.EOS = False
         self.start_min = 0
         self.parsing_functions = {}
@@ -48,7 +50,7 @@ class ParserBase:
         self.compiled_rules: dict[str, Callable[Self, bool]] = {}
 
     def single_compile(self, wanting: str, pos: int) -> str:
-        if wanting == '_': # allow any
+        if wanting == '_': # allow any 
             return 'True'
         if wanting == '__': # allow any with "complete" == True
             return f'input[{pos}].completed'
@@ -63,7 +65,7 @@ class ParserBase:
 
     def compile_rule(self, rule: str, pos: int) -> tuple[Callable[[list[ParserToken]], bool], int]:
         output_stmts: list[str] = []
-        for c,wanting in enumerate(rule.split(' ')):
+        for c, wanting in enumerate(rule.split(' ')):
             if wanting == '_': # allow any
                 continue
             output_stmts.append(self.single_compile(wanting, c))
@@ -94,7 +96,6 @@ class ParserBase:
                 func()
                 if not self.do_move:
                     break
-            
 
             self.move_cursor()
             iters+=1

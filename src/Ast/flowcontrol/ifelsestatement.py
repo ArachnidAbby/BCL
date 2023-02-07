@@ -1,36 +1,3 @@
-from Ast import Ast_Types
-from Ast.nodetypes import NodeTypes
-
-from .nodes import ASTNode, Block, SrcPosition
-
-
-class IfStatement(ASTNode):
-    '''Code for an If-Statement'''
-
-    __slots__ = ('cond', 'block')
-    type = NodeTypes.STATEMENT
-    name = "If"
-
-    def __init__(self, pos: SrcPosition, cond: ASTNode, block: ASTNode):
-        self._position = pos
-        self.cond = cond
-        self.block = block
-    
-    def pre_eval(self, func):
-        self.cond.pre_eval(func)
-        self.block.pre_eval(func)
-    
-    def eval(self, func):
-        cond = self.cond.eval(func)
-        bfor = func.has_return
-        
-        with func.builder.if_then(cond) as if_block:
-            self.block.eval(func)
-            func.has_return = bfor
-        
-        if func.block.last_instruction:
-            func.builder.unreachable()
-
 class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
@@ -42,21 +9,21 @@ class IfElseStatement(ASTNode):
         self.cond = cond
         self.if_block = if_block
         self.else_block = else_block
-    
+
     def pre_eval(self, func):
         self.cond.pre_eval(func)
         self.if_block.pre_eval(func)
         self.else_block.pre_eval(func)
-    
+
     def iter_block_or_stmt(self, obj):
         if self.if_block.name == "Block":
             return self.iter_block(obj)
-        
+
         return self.iter_stmt(obj)
 
     def iter_stmt(self, obj):
         yield obj
-    
+
     def iter_block(self, obj):
         Block.BLOCK_STACK.append(obj)
         yield from obj.children
@@ -78,4 +45,3 @@ class IfElseStatement(ASTNode):
 
         if func.block.last_instruction:
             func.builder.unreachable()
-        

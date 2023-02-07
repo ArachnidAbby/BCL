@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "aaron-bond.better-comments",
-        "matangover.mypy"
+        "matangover.mypy",
+        "ms-python.flake8"
     ]
 }

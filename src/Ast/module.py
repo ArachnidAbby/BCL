@@ -15,16 +15,15 @@ class Module(ASTNode):
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
-        self.mod_name      = name
-        self.location  = location
-        self.functions: dict[str, dict[tuple, _Function]] = {} # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
-        self.globals: dict[str, object]   = {} # TODO: object is a placeholder for when this feature is properly added 
-        self.imports: dict[str, Self]   = {}
+        self.mod_name = name
+        self.location = location
+        self.functions: dict[str, dict[tuple, _Function]] = {}  # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
+        self.globals: dict[str, object] = {}  # TODO: object is a placeholder for when this feature is properly added 
+        self.imports: dict[str, Self] = {}
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.target = binding.Target.from_triple(self.module.triple)
-
-        self.children  = tokens
+        self.children = tokens
 
     def parse(self):
         pg = parser.Parser(self.children, self)

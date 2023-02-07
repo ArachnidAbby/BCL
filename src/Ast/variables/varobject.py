@@ -1,6 +1,6 @@
 '''This module exists to avoid circular imports, its annoying'''
 
-from .Ast_Types import Type_Base
+from ..Ast_Types import Type_Base
 
 
 class VariableObj:
