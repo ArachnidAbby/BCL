@@ -2,7 +2,7 @@
 such as `SrcPosition` named tuple
 '''
 
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 
 class SrcPosition(NamedTuple):
@@ -10,3 +10,6 @@ class SrcPosition(NamedTuple):
     col: int
     length: int
     source_name: str
+
+
+GenericNode = Union["ASTNode", "ExpressionNode"]

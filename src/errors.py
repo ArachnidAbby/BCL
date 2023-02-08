@@ -19,8 +19,9 @@ SILENT_MODE = False
 PROFILING = False
 FILE = ""
 
-USES_FEATURE: dict[str, bool] = {} #give warning about used features
+USES_FEATURE: dict[str, bool] = {}  # give warning about used features
 SrcPosition = tuple[int, int, int]
+
 
 def _print_text(text):
     '''print text with preceeding '|' regardless of line count'''
@@ -30,6 +31,7 @@ def _print_text(text):
     for line in text.split('\n'):
         print(f'| {line}')
 
+
 def _print_raw(text):
     '''print text unless SILENT_MODE is active'''
     if SILENT_MODE:
@@ -38,7 +40,7 @@ def _print_raw(text):
     print(text)
 
 
-def error(text: str, line = (-1,-1,-1), full_line=False):
+def error(text: str, line=(-1, -1, -1), full_line=False):
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
@@ -53,7 +55,7 @@ def error(text: str, line = (-1,-1,-1), full_line=False):
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
-    if line!= (-1,-1,-1):
+    if line != (-1, -1, -1):
         print(f'|    Line: {line[0]}')
         print("#"+"-"*len(code_line.split('\n')[0]))
         print(f"{RESET}{code_line}")
@@ -61,16 +63,18 @@ def error(text: str, line = (-1,-1,-1), full_line=False):
     print("\n\n\n\n")
     sys.exit(1)
 
-def inline_warning(text: str, line = (-1,-1,-1)):
+
+def inline_warning(text: str, line=(-1, -1, -1)):
     '''displays a warning without any special formatting encasing it.'''
     if SILENT_MODE:
         return
 
     print(ORANGE, end='')
     _print_text(text)
-    if line!= (-1,-1,-1):
+    if line != (-1, -1, -1):
         print(f'|    Line: {line[0]}')
     print(RESET, end='')
+
 
 def developer_warning(text: str):
     '''give warnings to developers of the language that unsupported behavior is being used.'''
@@ -79,11 +83,12 @@ def developer_warning(text: str):
 
     print(CODE125, end='')
 
-    if (frame:=currentframe()) is not None:
+    if (frame := currentframe()) is not None:
         frameinfo = getframeinfo(frame)
         _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
 
     print(RESET, end='')
+
 
 def developer_info(text):
     '''print info directed at the developer. This is profiling infomation used \
@@ -94,6 +99,7 @@ def developer_info(text):
     print(CODE125, end='')
     print(f"| {text}")
     print(RESET, end='')
+
 
 def experimental_warning(text: str, possible_bugs: Sequence[str]):
     '''gives a warning about the use of experimental features and risks involved.'''
@@ -106,6 +112,7 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  POSSIBLE BUGS INCLUDE:\n{bugs}")
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
+
 
 def show_error_spot(file_loc, position: SrcPosition, use_full_line: bool) -> str:
     if position == (-1,-1,-1):
@@ -123,6 +130,5 @@ def show_error_spot(file_loc, position: SrcPosition, use_full_line: bool) -> str
     full_line_len = len(full_line)
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
-    
-    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}{RESET}"
 
+    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}{RESET}"

@@ -1,10 +1,12 @@
+from typing import Tuple
+
 from Ast.nodes.commontypes import SrcPosition
 
 
 class ASTNode:
     '''Most basic Ast-Node that all others inherit from.
     This just provides standardization between Ast-Nodes.
-     
+
     Methods required for classes inheriting this class:
     ====================================================
     * init -- method run uppon instantiation.
@@ -18,6 +20,7 @@ class ASTNode:
 
     is_operator: bool = False
     assignable: bool = False  # TODO: IMPLEMENT
+    constant: bool = False  # TODO: USE THIS FOR ARRAY INDEXING. THIS SHOULD BE TRUE FOR LITERALS
     # type: NodeTypes = NodeTypes.DEFAULT # TODO: REMOVE
     # name: str = "AST_NODE"
 
@@ -38,16 +41,16 @@ class ASTNode:
 
     def eval(self, func):
         '''eval step, often returns ir.Instruction'''
-    
+
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         new_pos = list(self._position)
         for x in positions:
-            current_len = (new_pos[2]+new_pos[1]-1) # len of current position ptr
+            current_len = (new_pos[2]+new_pos[1]-1)  # len of current position ptr
             end_pos = (x[1]-current_len)+x[2]
             new_pos[2] = end_pos
-        
-        return tuple(new_pos) # type: ignore
-    
+
+        return tuple(new_pos)  # type: ignore
+
     @property
     def position(self) -> SrcPosition:
         return self._position

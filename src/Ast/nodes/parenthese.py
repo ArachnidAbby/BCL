@@ -1,10 +1,16 @@
-from Ast.nodes.commontypes import SrcPosition
+from typing import Any, Iterator
+
+import Ast.Ast_Types as Ast_Types
+from Ast.nodes import ContainerNode
+from Ast.nodes.commontypes import GenericNode, SrcPosition
+from Ast.nodes.keyvaluepair import KeyValuePair
+from errors import error
 
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'ret_type', 'in_func_call' , 'ptr')
-    type = NodeTypes.EXPRESSION
+    __slots__ = ('ir_type', 'ret_type', 'in_func_call', 'ptr')
+    # type = NodeTypes.EXPRESSION
     # name = "Parenth"
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
@@ -17,7 +23,7 @@ class ParenthBlock(ContainerNode):
     def pre_eval(self, func):
         for c, child in enumerate(self.children):
             child.pre_eval(func)
-            
+
         # * tuples return `void` but an expr returns the same data as its child
         self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
         self.ir_type = self.ret_type.ir_type
@@ -46,8 +52,8 @@ class ParenthBlock(ContainerNode):
             self.children[c] = child.eval(func)
 
     def eval(self, func):
-        self._pass_as_pointer_changes(func)
-        if len(self.children)==1:
+        self._pass_as_pointer_changes(func)  # TODO: THIS SHOULD NOT MODIFY THE ORIGINAL
+        if len(self.children) == 1:
             return self.children[0]
 
     def __repr__(self) -> str:
@@ -55,12 +61,12 @@ class ParenthBlock(ContainerNode):
 
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
-        if self.type != NodeTypes.EXPRESSION:
-            error("Cannot get a ptr to a set of parentheses with more than one value", line = self.position)
-        # print(self.ret_type)
+        if len(self.children) > 1:
+            error("Cannot get a ptr to a set of parentheses with more than one value", line=self.position)
+
         if self.ptr is None:
             self.ptr = func.create_const_var(self.ret_type)
             val = self.eval(func)
-            
+
             func.builder.store(val, self.ptr)
         return self.ptr

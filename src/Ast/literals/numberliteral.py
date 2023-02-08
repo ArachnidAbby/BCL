@@ -1,8 +1,16 @@
+from typing import Any
+
+from llvmlite import ir
+
+from Ast.nodes import ExpressionNode
+from Ast.nodes.commontypes import SrcPosition
+
+
 class Literal(ExpressionNode):
     __slots__ = ('value', 'ir_type', 'ptr')
-    # name = 'literal'
+    constant = True
 
-    def __init__(self, pos: SrcPosition, value: Any, typ: Ast_Types.Type):
+    def __init__(self, pos: SrcPosition, value: Any, typ):
         super().__init__(pos)
         self.value = value
         self.ret_type = typ
@@ -11,6 +19,6 @@ class Literal(ExpressionNode):
 
     def eval(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
-    
+
     def __str__(self) -> str:
         return str(self.value)

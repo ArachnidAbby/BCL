@@ -1,6 +1,7 @@
+import Ast.Ast_Types as Ast_Types
+from Ast.nodes.astnode import ASTNode
 from Ast.nodes.commontypes import SrcPosition
-
-from .nodes.astnode import ASTNode
+from errors import error
 
 
 class ExpressionNode(ASTNode):
@@ -26,4 +27,4 @@ class ExpressionNode(ASTNode):
 
     def as_type_reference(self):
         '''Get this expresion as the reference to a type'''
-        error(f"invalid type: {str(self)}", line = self.position)
+        error(f"invalid type: {str(self)}", line=self.position)

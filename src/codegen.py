@@ -3,7 +3,7 @@ from llvmlite import binding
 from llvmlite.ir import Module
 
 
-#todo: defer this functionality to a simple function, not a class
+# TODO: defer this functionality to a simple function, not a class
 class CodeGen():
     __slots__ = ("module")
 

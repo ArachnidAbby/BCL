@@ -1,3 +1,8 @@
+from Ast import Ast_Types
+from Ast.nodes import ASTNode, Block
+from Ast.nodes.commontypes import SrcPosition
+
+
 class WhileStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'block', 'loop_before', 'while_after', 'while_body')
@@ -7,11 +12,11 @@ class WhileStatement(ASTNode):
 
     def __init__(self, pos: SrcPosition, cond: ASTNode, block: Block):
         super().__init__(pos)
-        self.cond        = cond
-        self.block       = block
+        self.cond = cond
+        self.block = block
         self.loop_before = None
         self.while_after = None
-        self.while_body  = None
+        self.while_body = None
 
     def pre_eval(self, func):
         self.cond.pre_eval(func)
@@ -19,11 +24,11 @@ class WhileStatement(ASTNode):
 
     def eval(self, func):
         # cond = self.cond.eval(func)
-        orig_block_name  = func.builder.block._name
-        self.while_body  = func.builder.append_basic_block(f'{orig_block_name}.while')
+        orig_block_name = func.builder.block._name
+        self.while_body = func.builder.append_basic_block(f'{orig_block_name}.while')
         self.while_after = func.builder.append_basic_block(f'{orig_block_name}.endwhile')
-        ret_bfor         = func.has_return
-        loop_bfor        = func.inside_loop
+        ret_bfor = func.has_return  # TODO: FIX VAR NAMES
+        loop_bfor = func.inside_loop
         self.loop_before = loop_bfor
         func.inside_loop = self
 

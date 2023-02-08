@@ -1,4 +1,7 @@
-from Ast.nodes.commontypes import SrcPosition
+from typing import Any, Iterator, Self
+
+from Ast.nodes import ASTNode
+from Ast.nodes.commontypes import GenericNode, SrcPosition
 
 
 class ContainerNode(ASTNode):
@@ -18,7 +21,7 @@ class ContainerNode(ASTNode):
         '''append child to container.'''
         self.children.append(child)
 
-    def append_children(self, child: GenericNode|Self):
+    def append_children(self, child: GenericNode | Self):
         '''possible to append 1 or more children'''
         if isinstance(child, ContainerNode):
             self.children += child.children

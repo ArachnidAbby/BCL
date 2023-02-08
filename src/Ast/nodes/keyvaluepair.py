@@ -1,3 +1,6 @@
+from typing import Any
+
+from Ast.nodes import ASTNode
 from Ast.nodes.commontypes import SrcPosition
 
 
@@ -11,8 +14,8 @@ class KeyValuePair(ASTNode):
         super().__init__(pos)
         self.key = k
         self.value = v
-    
-    def validate_type(self): # TODO: REMOVE, DUPLICATE
+
+    def validate_type(self):  # TODO: REMOVE, DUPLICATE
         return self.value.as_type_reference()
 
     def get_type(self) -> Any:

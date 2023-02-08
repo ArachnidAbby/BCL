@@ -1,26 +1,38 @@
-class ArrayLiteral(ExpressionNode): # TODO: REFACTOR
+
+from typing import Any
+
+from llvmlite import ir
+
+import errors
+from Ast import Ast_Types
+from Ast.literals.numberliteral import Literal
+from Ast.nodes import ExpressionNode
+from Ast.nodes.commontypes import SrcPosition
+
+
+class ArrayLiteral(ExpressionNode):  # TODO: REFACTOR
     __slots__ = ('value', 'ir_type', 'literal')
-    # name = 'literal'
+    constant = True
 
     def __init__(self, pos: SrcPosition, value: list[Any]):
         super().__init__(pos)
         self.value = value
         self.ptr = None
-        self.literal = True # whether or not this array is only full of literals
-        
+        self.literal = True  # whether or not this array is only full of literals
+
     def pre_eval(self, func):
         self.value[0].pre_eval(func)
         typ = self.value[0].ret_type
 
         for x in self.value:
             x.pre_eval(func)
-            if x.ret_type!=typ:
-                errors.error(f"Invalid type '{x.ret_type}' in a list of type '{typ}'", line = x.position)
-            if x.name!='literal':
+            if x.ret_type != typ:
+                errors.error(f"Invalid type '{x.ret_type}' in a list of type \
+                             '{typ}'", line=x.position)
+            if not x.constant:
                 self.literal = False
-            
 
-        array_size  = Literal((-1,-1,-1), len(self.value), Ast_Types.Integer_32)
+        array_size = Literal((-1, -1, -1), len(self.value), Ast_Types.Integer_32)
         self.ret_type = Ast_Types.Array(array_size, typ)
         self.ir_type = self.ret_type.ir_type
 
@@ -30,13 +42,13 @@ class ArrayLiteral(ExpressionNode): # TODO: REFACTOR
             zero_const = ir.Constant(ir.IntType(64), 0)
             for c, item in enumerate(self.value):
                 index = ir.Constant(ir.IntType(32), c)
-                item_ptr = func.builder.gep(ptr , [zero_const, index])
+                item_ptr = func.builder.gep(ptr, [zero_const, index])
                 func.builder.store(item.eval(func), item_ptr)
             self.ptr = ptr
             return func.builder.load(ptr)
-        
+
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
-    
+
     @property
     def position(self) -> tuple[int, int, int]:
         x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore

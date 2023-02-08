@@ -10,12 +10,13 @@ import errors
 
 errors.SILENT_MODE = True
 
+
 class basictests(unittest.TestCase):
     def test_functions(self):
         test_code = """
-        define main() { 
+        define main() {
             println 2;
-            println(test_func(2, 10)); 
+            println(test_func(2, 10));
             2.test_func(10);
             (2, 10).test_func();
         }
@@ -26,9 +27,9 @@ class basictests(unittest.TestCase):
 
     def test_function_overloading(self):
         test_code = """
-        define main() { 
+        define main() {
             println 2;
-            println(test_func(2, 10)); 
+            println(test_func(2, 10));
             2.test_func(10);
             (2, 10).test_func();
 
@@ -39,22 +40,22 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile(test_code, f'{p}/random/test_functions_2.ll', compile.DEFAULT_ARGS)
-    
+
     @unittest.expectedFailure
     def test_variables_1(self):
         test_code = """
-        define main() { 
+        define main() {
             println(test);
             test = 10;
         }
         """
 
         compile.compile(test_code, f'{p}/random/test_variables_1.ll', compile.DEFAULT_ARGS)
-    
+
     @unittest.expectedFailure
     def test_variables_2(self):
         test_code = """
-        define main() { 
+        define main() {
             {
                 x = 22;
             }
@@ -63,10 +64,10 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile(test_code, f'{p}/random/test_variables_2.ll', compile.DEFAULT_ARGS)
-    
+
     def test_variables_3(self):
         test_code = """
-        define main() { 
+        define main() {
             x = 22;
             {
                 x = x+4;
@@ -78,7 +79,7 @@ class basictests(unittest.TestCase):
 
     def test_ops(self):
         test_code = """
-        define main() { 
+        define main() {
             8+2*8-292/15==9;
             12 * test(15);
             not true;
@@ -91,10 +92,10 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile(test_code, f'{p}/random/test_ops.ll', compile.DEFAULT_ARGS)
-    
+
     def test_if_else_if(self):
         test_code = """
-        define main() { 
+        define main() {
             if true {
                 println(9);
             }
@@ -108,10 +109,10 @@ class basictests(unittest.TestCase):
         """
 
         compile.compile(test_code, f'{p}/random/test_ifs.ll', compile.DEFAULT_ARGS)
-    
+
     def test_arrays(self):
         test_code = """
-        define main() { 
+        define main() {
             x = 6;
             test = [0,0,0,0];
             jest = [[1,2], [3,4]];
@@ -129,7 +130,7 @@ class basictests(unittest.TestCase):
 
     def test_arrays_index_literals(self):
         test_code = """
-        define main() { 
+        define main() {
             println([true; 12][10]);
             println(test()[2]);
         }
@@ -158,7 +159,7 @@ class basictests(unittest.TestCase):
     @unittest.expectedFailure
     def test_array_fail(self):
         test_code = """
-        define main() { 
+        define main() {
             test = [0,0,0];
             test[4]; // over-index
         }

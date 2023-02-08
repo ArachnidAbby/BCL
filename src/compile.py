@@ -8,7 +8,7 @@ from typing import Union
 import errors
 from errors import _print_raw, _print_text, inline_warning
 
-DEFAULT_ARGS: dict[str, bool|str|list] = { # contains all valid command line arguments
+DEFAULT_ARGS: dict[str, bool|str|list] = {  # contains all valid command line arguments
     "--emit-object": False,
     "--emit-binary": False,
     "--dev": False,
@@ -42,16 +42,16 @@ def compile(src_str: str, output_loc: str, args):
         code_gen = codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
 
+        import Ast.functions.standardfunctions
         import Ast.module
-        import Ast.standardfunctions
         import lexer as lex
 
     with timingContext('lexing finished'):
         tokens = lex.Lexer().get_lexer().lex(src_str)
 
     with timingContext('parsing finished'):
-        module = Ast.module.Module((-1,-1,-1), "main", src_str, tokens)
-        Ast.standardfunctions.declare_all(module.module)
+        module = Ast.module.Module((-1, -1, -1), "main", src_str, tokens)
+        Ast.functions.standardfunctions.declare_all(module.module)
         module.parse()
 
     with timingContext('module created'):
@@ -66,10 +66,10 @@ def compile(src_str: str, output_loc: str, args):
     _print_raw("")
 
     usage = process.memory_info().rss
-    errors.inline_warning(f'{(usage - imports_mem)/1000:,.1f}KB of memory used for this operation.')  # in bytes 
-
+    errors.inline_warning(f'{(usage - imports_mem)/1000:,.1f}KB of memory used for this operation.')  # in bytes
 
     _print_raw('\n\n\n')
+
 
 def create_args_dict(args: list[str]) -> dict[str, bool|str|list]:
     '''creates a dictionary of command-line arguments.'''
@@ -89,9 +89,10 @@ def create_args_dict(args: list[str]) -> dict[str, bool|str|list]:
                 args_dict[name] = value
     return args_dict
 
+
 def compile_file(file: Path, args):
     errors.FILE = str(file)
-    
+
     if not os.path.exists(file):
         errors.error(f"No Such file \"{file}\"")
 

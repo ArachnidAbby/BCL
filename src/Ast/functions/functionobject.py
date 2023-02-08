@@ -1,13 +1,11 @@
-'''All AST nodes related to functions.'''
 from typing import Any, Callable, Optional
 
 from llvmlite import ir
 
 import errors
+from Ast import Ast_Types
 
-from . import Ast_Types
-
-functions: dict[str, dict[tuple[Ast_Types.Type, ...], '_Function']] = {}
+functionsdict: dict[str, dict[tuple[Ast_Types.Type, ...], '_Function']] = {}
 
 
 # TODO: REMOVE FOR REAL FUNCTION TYPE
@@ -52,7 +50,7 @@ def internal_function(name: str, ret_type: Any,
                       container=None):
     '''decorator to create internal functions'''
     if container is None:
-        container = functions
+        container = functionsdict
 
     def wrapper(func):
         if name not in container:

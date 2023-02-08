@@ -1,15 +1,9 @@
-
-from typing import List, Tuple
-
-from llvmlite import ir
-
-from .Ast_Types import *
-from .conditionals import *
-from .function import *
-from .literals import *
-from .loops import *
-from .math import *
-from .nodes import *
-from .standardfunctions import *
-from .structs import *
-from .variable import *
+from Ast.arrays import *
+from Ast.Ast_Types import *
+from Ast.flowcontrol import *
+# from Ast.functions import *
+from Ast.literals import *
+from Ast.math import *
+from Ast.nodes import *
+from Ast.structs import *
+from Ast.variables import *
