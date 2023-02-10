@@ -8,10 +8,11 @@ class ContainerNode(ASTNode):
     '''A node consistening of other nodes.
     Containers do not directly do operations on these nodes
     '''
-    __slots__ = ("children", )
+    __slots__ = ("children", "end_pos")
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self.children: list = []
+        self.end_pos = position
         super().__init__(position, *args, **kwargs)
 
     def __iter__(self) -> Iterator[Any]:
@@ -27,3 +28,10 @@ class ContainerNode(ASTNode):
             self.children += child.children
             return
         self.append_child(child)
+
+    def set_end_pos(self, pos: SrcPosition):
+        self.end_pos = pos
+
+    @property
+    def position(self) -> SrcPosition:
+        return self.merge_pos((self._position, self.end_pos))

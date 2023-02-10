@@ -1,10 +1,4 @@
-import ast  # python ast module
-from typing import List
-
 from rply import LexerGenerator
-
-import Ast
-from parserbase import ParserToken
 
 
 class Lexer():
@@ -41,7 +35,7 @@ class Lexer():
         self.lexer.add('MUL', r'\*')
         self.lexer.add('DIV', r'/{1,}')
         self.lexer.add('SUB', r'\-')
-        self.lexer.add('MOD', r'\%') 
+        self.lexer.add('MOD', r'\%')
         self.lexer.add('EQ', r'\=\=')
         self.lexer.add('NEQ', r'\!\=')
         self.lexer.add('GEQ', r'\>\=')
@@ -51,8 +45,8 @@ class Lexer():
         self.lexer.add('AMP', r'\&')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings
-        self.lexer.add('CHAR',r"\'(\\.|[^'\\])\'")
-        self.lexer.add('STRING',r'\"(\\.|[^"\\])*\"')
+        self.lexer.add('CHAR', r"\'(\\.|[^'\\])\'")
+        self.lexer.add('STRING', r'\"(\\.|[^"\\])*\"')
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
         self.lexer.ignore(r'\s+')

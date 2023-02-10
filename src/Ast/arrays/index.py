@@ -8,7 +8,7 @@ from Ast.math import OperationNode
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
 from Ast.reference import Ref
-from Ast.variables.variablereference import VariableRef
+from Ast.variables.reference import VariableRef
 from errors import error
 
 ZERO_CONST: Final = ir.Constant(ir.IntType(64), 0)
@@ -17,7 +17,7 @@ ZERO_CONST: Final = ir.Constant(ir.IntType(64), 0)
 class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESSION
     '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`''' # TODO: add correct doc
     __slots__ = ('ind', 'varref', 'var_name', 'size')
-    name = "varIndRef"
+    assignable = True
 
     def __init__(self, pos: SrcPosition, varref: VariableRef, ind: ExpressionNode):
         self._position = pos
@@ -41,13 +41,13 @@ class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESS
         self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
-        if rhs.constant and (lhs.ret_type.size-1 < rhs.value or rhs.value < 0):  # check inbounds
+        if rhs.isconstant and (lhs.ret_type.size-1 < rhs.value or rhs.value < 0):  # check inbounds
             error(f'Array index out range. Max size \'{lhs.ret_type.size}\'',
                   line=rhs.position)
 
         if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
-            error(f'Array index operation must use an integer index. \
-                  type used: \'{rhs.ret_type}\'', line=rhs.position)
+            error("Array index operation must use an integer index." +
+                  f"type used: '{rhs.ret_type}'", line=rhs.position)
 
     def _out_of_bounds(self, func):
         '''creates the code for runtime bounds checking'''
@@ -62,7 +62,7 @@ class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESS
     # TODO: fix this painful code. It is so ugly.
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
-        if not self.ind.constant:  #* error checking at runtime
+        if not self.ind.isconstant:  # * error checking at runtime
             if isinstance(self.ind, OperationNode) and self.ind.ret_type.rang is not None:
                 rang = self.ind.ret_type.rang
                 arrayrang = range(0, self.varref.ir_type.count)

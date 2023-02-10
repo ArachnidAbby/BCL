@@ -78,8 +78,7 @@ class Struct(Ast_Types.Type):
         # We do this when getting the return type
         zero_const = ir.Constant(ir.IntType(64), 0)
         idx = ir.Constant(ir.IntType(32), member_index)
-        ptr = func.builder.gep(lhs.get_ptr(func), [zero_const, idx])
-        return func.builder.load(ptr)
+        return func.builder.gep(lhs.get_ptr(func), [zero_const, idx])
 
     # def sum  (self, func, lhs, rhs) -> ir.Instruction: error(f"Operator '+' is not supported for type '{lhs.ret_type}'", line = lhs.position)
 

@@ -118,7 +118,7 @@ class Type:
             error("This type is read_only",
                   line=value.position, full_line=True)
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
-        func.builder.store(val, ptr.ptr)
+        func.builder.store(val, ptr)
 
     def isum(self, func, ptr, rhs):
         final_value = self.sum(func, ptr, rhs)

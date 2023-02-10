@@ -8,7 +8,7 @@ from Ast.nodes.commontypes import SrcPosition
 
 class Literal(ExpressionNode):
     __slots__ = ('value', 'ir_type', 'ptr')
-    constant = True
+    isconstant = True
 
     def __init__(self, pos: SrcPosition, value: Any, typ):
         super().__init__(pos)

@@ -1,5 +1,7 @@
-'''This module is used to print errors, warning etc. It does all the proper formatting.'''
+'''This module is used to print errors, warning etc.
+It does all the proper formatting.'''
 
+import collections
 import sys
 from inspect import currentframe, getframeinfo
 from typing import Sequence
@@ -17,10 +19,12 @@ CODE177 = "\u001b[38;5;177m"
 
 SILENT_MODE = False
 PROFILING = False
-FILE = ""
 
 USES_FEATURE: dict[str, bool] = {}  # give warning about used features
-SrcPosition = tuple[int, int, int]
+
+SrcPosition = collections.namedtuple('SrcPosition',
+                                     ['line', 'col', 'length', 'source_name'])
+invalid_pos = (-1, -1, -1, "")
 
 
 def _print_text(text):
@@ -40,23 +44,24 @@ def _print_raw(text):
     print(text)
 
 
-def error(text: str, line=(-1, -1, -1), full_line=False):
+def error(text: str, line=invalid_pos, full_line=False):
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
 
-    code_line = show_error_spot(FILE, line, full_line)
+    code_line = show_error_spot(line, full_line)
 
     largest = max(
-        [len(x) for x in f"| {text}".split('\n')]+
-        [len(f"|    Line: {line[0]}")]+
+        [len(x) for x in f"| {text}".split('\n')] +
+        [len(f"|    Line: {line[0]}")] +
         [len(code_line.split('\n')[0])]
     )
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
-    if line != (-1, -1, -1):
+    if line != invalid_pos:
         print(f'|    Line: {line[0]}')
+        print(f'|    File: {line.source_name}')
         print("#"+"-"*len(code_line.split('\n')[0]))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
@@ -64,20 +69,22 @@ def error(text: str, line=(-1, -1, -1), full_line=False):
     sys.exit(1)
 
 
-def inline_warning(text: str, line=(-1, -1, -1)):
+def inline_warning(text: str, line=invalid_pos):
     '''displays a warning without any special formatting encasing it.'''
     if SILENT_MODE:
         return
 
     print(ORANGE, end='')
     _print_text(text)
-    if line != (-1, -1, -1):
-        print(f'|    Line: {line[0]}')
+    if line != invalid_pos:
+        print(f'|    Line: {line.line}')
+        print(f'|    File: {line.source_name}')
     print(RESET, end='')
 
 
 def developer_warning(text: str):
-    '''give warnings to developers of the language that unsupported behavior is being used.'''
+    '''give warnings to developers of the language that unsupported behavior
+    is being used.'''
     if SILENT_MODE:
         return
 
@@ -91,7 +98,7 @@ def developer_warning(text: str):
 
 
 def developer_info(text):
-    '''print info directed at the developer. This is profiling infomation used \
+    '''print info directed at the developer. This is profiling infomation used
     for debugging purposes'''
     if SILENT_MODE or not PROFILING:
         return
@@ -102,23 +109,26 @@ def developer_info(text):
 
 
 def experimental_warning(text: str, possible_bugs: Sequence[str]):
-    '''gives a warning about the use of experimental features and risks involved.'''
+    '''gives a warning about the use of experimental features
+    and risks involved.'''
     if SILENT_MODE:
         return
     line_size = 35
     print(CODE202, end='')
     print(f'#{"-"*(line_size)}')
     bugs = '\n'.join(('\t- '+bug for bug in possible_bugs))
-    _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  POSSIBLE BUGS INCLUDE:\n{bugs}")
+    _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  \
+                POSSIBLE BUGS INCLUDE:\n{bugs}")
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
 
 
-def show_error_spot(file_loc, position: SrcPosition, use_full_line: bool) -> str:
-    if position == (-1,-1,-1):
+def show_error_spot(position: SrcPosition,
+                    use_full_line: bool) -> str:
+    if position == invalid_pos:
         return ""
     full_line = ""
-    with open(file_loc, 'r') as fp:
+    with open(position.source_name, 'r') as fp:
         for i, line in enumerate(fp):
             if i == position[0]-1:
                 full_line = line.strip('\n')
@@ -131,4 +141,5 @@ def show_error_spot(file_loc, position: SrcPosition, use_full_line: bool) -> str
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
 
-    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}{RESET}"
+    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}\
+            {RESET}"

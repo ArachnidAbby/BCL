@@ -5,6 +5,7 @@ import Ast
 import errors
 from Ast.literals.numberliteral import Literal
 from Ast.literals.stringliteral import StrLiteral
+from Ast.nodes.commontypes import SrcPosition
 
 
 def fix_char(val) -> int:
@@ -85,7 +86,7 @@ class ParserBase:
     def parse(self, close_condition: Callable[[], bool] = lambda: False):
         '''Parser main'''
         previous_start_position = self.start
-        self.start = self._cursor   # where to reset cursor after consuming tokens.
+        self.start = self._cursor   # where to reset cursor after consuming
         iters = 0
         self.gen_ahead(MAX_SIZE)
         while (not self.isEOF(self._cursor)):  # and (not close_condition()):
@@ -95,7 +96,8 @@ class ParserBase:
             # print()
             # * end of debug code
             token_name = self.peek(0).name
-            if token_name not in self.parsing_functions.keys():  # skip tokens if possible
+            # skip tokens if possible
+            if token_name not in self.parsing_functions.keys():
                 self.move_cursor()
                 continue
 
@@ -115,7 +117,8 @@ class ParserBase:
         return self._tokens
 
     def post_parse(self):
-        '''steps that happen after parsing has finished. Used to check for syntax errors, give warnings, etc.'''
+        '''steps that happen after parsing has finished.
+        Used to check for syntax errors, give warnings, etc.'''
 
     def isEOF(self, index) -> bool:
         '''Checks if the End-Of-File has been reached'''
@@ -134,33 +137,41 @@ class ParserBase:
         '''peek into the token list and fetch a token'''
         return self._tokens[self._cursor+index]
 
-    def gen_ahead(self, amount):
+    def gen_ahead(self, amount) -> bool:
+        '''Tells the lexer to tokenize the next tokens.
+        If True is returned, all tokens were successfully fetched.
+        If False is returned, all tokens were not sucessfully fetched
+        '''
         for c, tok in enumerate(self.lex_stream):
-            pos = (tok.source_pos.lineno, tok.source_pos.colno, len(tok.value))
+            pos = SrcPosition(tok.source_pos.lineno, tok.source_pos.colno,
+                              len(tok.value), self.module.location)
             if tok.name == "NUMBER":
                 val = Literal(pos, int(tok.value), Ast.Ast_Types.Integer_32())
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "NUMBER_F":
-                val = Literal(pos, float(tok.value.strip('f')), Ast.Ast_Types.Float_32())
+                val = Literal(pos, float(tok.value.strip('f')),
+                              Ast.Ast_Types.Float_32())
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "CHAR":
-                val = Literal(pos, fix_char(tok.value.strip('\'')), Ast.Ast_Types.Char())
+                val = Literal(pos, fix_char(tok.value.strip('\'')),
+                              Ast.Ast_Types.Char())
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "STRING":
-                val = StrLiteral(pos, fix_str(tok.value)) # type: ignore
+                val = StrLiteral(pos, fix_str(tok.value))  # type: ignore
                 fintok = ParserToken("expr", val, pos, True)
             else:
                 fintok = ParserToken(tok.name, tok.value, pos, False)
             self._tokens.append(fintok)
             if c == amount-1:
-                return True  # true means all tokens generated successfully
+                return True
         self.EOS = True
-        return False  # not all tokens generated successfuly, do not expect all tokens to exist
+        return False
 
     def peek_safe(self, index: int) -> ParserToken:
-        '''peek into the token list and fetch a token if overindexing the token list, it will return an empty token'''
+        '''peek into the token list and fetch a token if
+        overindexing the token list, it will return an empty token'''
         if self.isEOF(self._cursor+index):
-            return ParserToken("EOF", "EOF", (-1, -1, -1), False)
+            return ParserToken("EOF", "EOF", SrcPosition.invalid(), False)
 
         return self.peek(index)
 
@@ -178,22 +189,27 @@ class ParserBase:
         self._cursor = max(self.start, self.start_min)
         self.do_move = False
 
-    def insert(self, index: int, name: str, value: Ast.nodes.ASTNode, completed=True):
+    def insert(self, index: int, name: str, value: Ast.nodes.ASTNode,
+               completed=True):
         '''insert tokens at a specific location'''
-        self._tokens.insert(index+self._cursor, ParserToken(name, value, value.position, completed))
+        self._tokens.insert(index+self._cursor, ParserToken(name, value,
+                                                            value.position,
+                                                            completed))
 
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
         if wanting not in self.compiled_rules.keys():
             self.compiled_rules[wanting] = (compile(self.single_compile(wanting, 0), '', 'eval'), index)
 
-        return eval(self.compiled_rules[wanting][0], {}, {"input": [self.peek(index)]})
+        return eval(self.compiled_rules[wanting][0], {},
+                    {"input": [self.peek(index)]})
 
     def simple_check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (without formatting)'''
         return self.peek(index=index).name == wanting
 
-    def replace(self, leng: int, name: str, value, i: int = 0, completed: bool = True):
+    def replace(self, leng: int, name: str, value, i: int = 0,
+                completed: bool = True):
         '''replace a group of tokens with a single token.'''
         self._consume(amount=leng, index=-i)
         self.insert(i, name, value, completed=completed)
@@ -205,27 +221,36 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        if (self._cursor+start_index) < 0 or self.isEOF(len(tokens)+self._cursor + start_index-1):
+        if (self._cursor+start_index) < 0 or self.isEOF(len(tokens) + self._cursor + start_index-1):
             return False
 
         if wanting not in self.compiled_rules.keys():
-            self.compiled_rules[wanting] = self.compile_rule(wanting, start_index)
+            self.compiled_rules[wanting] = self.compile_rule(wanting,
+                                                             start_index)
+        tokens_start = start_index + self._cursor
+        tokens_end = self.compiled_rules[wanting][1] + start_index+self._cursor
+        input_tokens = self._tokens[tokens_start:tokens_end]
+        return eval(self.compiled_rules[wanting][0], {},
+                    {"input": input_tokens})
 
-        return eval(self.compiled_rules[wanting][0], {}, {"input": self._tokens[start_index+self._cursor:self.compiled_rules[wanting][1]+start_index+self._cursor]})
-
-    def check_group_lookahead(self, start_index: int, wanting: str, include_ops=False) -> bool:
-        '''check a group of tokens in a string seperated by spaces. This version has lookahead'''
+    def check_group_lookahead(self, start_index: int, wanting: str,
+                              include_ops=False) -> bool:
+        '''check a group of tokens in a string seperated by spaces.
+        This version has lookahead'''
         worked = self.check_group(start_index, wanting)
         if not worked:
             return False
 
         items = wanting.split(" ")
         if include_ops:
-            return self.peek(len(items)+start_index).name not in (*self.op_node_names, *self.standard_expr_checks)
-        return self.peek(len(items)+start_index).name not in self.standard_expr_checks
+            return self.peek(len(items)+start_index).name not in \
+                (*self.op_node_names, *self.standard_expr_checks)
+        return self.peek(len(items)+start_index).name not in \
+            self.standard_expr_checks
 
     def check_simple_group(self, start_index: int, wanting: str) -> bool:
-        '''check a group of tokens in a string seperated by spaces. (unformatted)'''
+        '''check a group of tokens in a string seperated by spaces.
+        (unformatted)'''
         tokens = wanting.split(' ')
 
         if (len(tokens)+self._cursor+start_index) > len(self._tokens):
@@ -236,13 +261,3 @@ class ParserBase:
                 return False
 
         return True
-
-    def match_multiple(self, start: int):
-        end_node = self.peek(0)
-        self._cursor = start+1
-
-        while not self.isEOF() and self._tokens[self._cursor] != end_node:
-            yield
-            self.move_cursor()
-
-        self._cursor = start

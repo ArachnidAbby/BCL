@@ -12,13 +12,14 @@ from Ast.nodes.commontypes import SrcPosition
 
 class ArrayLiteral(ExpressionNode):  # TODO: REFACTOR
     __slots__ = ('value', 'ir_type', 'literal')
-    constant = True
+    isconstant = True
 
     def __init__(self, pos: SrcPosition, value: list[Any]):
         super().__init__(pos)
         self.value = value
         self.ptr = None
-        self.literal = True  # whether or not this array is only full of literals
+        # whether or not this array is only full of literals
+        self.literal = True
 
     def pre_eval(self, func):
         self.value[0].pre_eval(func)
@@ -27,12 +28,12 @@ class ArrayLiteral(ExpressionNode):  # TODO: REFACTOR
         for x in self.value:
             x.pre_eval(func)
             if x.ret_type != typ:
-                errors.error(f"Invalid type '{x.ret_type}' in a list of type \
-                             '{typ}'", line=x.position)
-            if not x.constant:
+                errors.error(f"Invalid type '{x.ret_type}' in a list of type" +
+                             f" '{typ}'", line=x.position)
+            if not x.isconstant:
                 self.literal = False
 
-        array_size = Literal((-1, -1, -1), len(self.value), Ast_Types.Integer_32)
+        array_size = Literal(SrcPosition.invalid(), len(self.value), Ast_Types.Integer_32)
         self.ret_type = Ast_Types.Array(array_size, typ)
         self.ir_type = self.ret_type.ir_type
 
@@ -50,6 +51,6 @@ class ArrayLiteral(ExpressionNode):  # TODO: REFACTOR
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
 
     @property
-    def position(self) -> tuple[int, int, int]:
-        x = list(self.merge_pos([x.position for x in self.value]))  # type: ignore
-        return (x[0], x[1], x[2]+1)
+    def position(self) -> SrcPosition:
+        x = self.merge_pos([x.position for x in self.value])  # type: ignore
+        return SrcPosition(x.line, x.col, x.length+1, x.source_name)

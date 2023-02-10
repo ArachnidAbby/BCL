@@ -16,18 +16,25 @@ class FunctionDef(ASTNode):
     # type = NodeTypes.STATEMENT
     # name = "funcDef"
 
-    def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock, block: Block, module: "Module"):
+    def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
+                 block: Block, module: "Module"):
         self._position = pos
         self.func_name = name
-        self.ret_type: Ast_Types.Type = Ast_Types.Void()  # Can also be a TypeRef. In which case, it should be evaled
+        self.ret_type: Ast_Types.Type = Ast_Types.Void()
 
         self.builder = None   # llvmlite.ir.IRBuilder object once created
         self.block = block  # body of the function Ast.Block
         self.module = module  # Module the object is contained in
         self.is_ret_set = False  # is the return value set?
-        self.has_return = False  # Not to be confused with "is_ret_set", this is used for ensuring that a `return` always accessible
-        self.inside_loop = None   # Whether or not the IRBuilder is currently inside a loop block, set to the loop node
-        self.ir_entry = None   # Entry section of the function. Used when declaring "invisible" variables
+        # Not to be confused with "is_ret_set",
+        # this is used for ensuring that a `return` always accessible
+        self.has_return = False
+        # Whether or not the IRBuilder is currently inside a loop block,
+        # set to the loop node
+        self.inside_loop = None
+        # Entry section of the function. Used when declaring
+        # "invisible" variables
+        self.ir_entry = None
         self.variables: list[tuple] = []
         self.consts: list[tuple] = []
 
@@ -35,8 +42,10 @@ class FunctionDef(ASTNode):
 
         # construct args lists
         self.args: dict[str, ExpressionNode] = dict()
-        self.args_ir: tuple[ir.Type, ...] = ()  # list of all the args' ir types
-        self.args_types: tuple[Ast_Types.Type, ...] = ()  # list of all the args' Ast_Types.Type return types
+        # list of all the args' ir types
+        self.args_ir: tuple[ir.Type, ...] = ()
+        # list of all the args' Ast_Types.Type return types
+        self.args_types: tuple[Ast_Types.Type, ...] = ()
         self._construct_args(args)
 
     def _construct_args(self, args: ParenthBlock):
@@ -44,7 +53,8 @@ class FunctionDef(ASTNode):
         args_ir = []
         args_types = []
         for arg in args:
-            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(), True]  #type: ignore
+            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(),
+                                           True]  # type: ignore
             if arg.get_type().pass_as_ptr:
                 args_ir.append(arg.get_type().ir_type.as_pointer())
             else:
@@ -57,19 +67,23 @@ class FunctionDef(ASTNode):
     def _validate_args(self, args: ParenthBlock):
         '''Validate that all args are syntactically valid'''
         if not args.is_key_value_pairs():
-            errors.error(f"Function {self.func_name}'s argument tuple consists of non KV_pairs", line=self.position)
+            errors.error(f"Function {self.func_name}'s argument tuple " +
+                         "consists of non KV_pairs", line=self.position)
 
     def _validate_return(self):
-        ret_line = (-1, -1, -1)
+        ret_line = SrcPosition.invalid()
         if self.is_ret_set:
             # self.ret_type.eval(self)
             ret_line = self.ret_type.position
             self.ret_type = self.ret_type.as_type_reference()
         if (not self.ret_type.returnable) and self.block is not None:
-            errors.error(f"Function {self.func_name} cannot return a reference to a local variable or value.", line=ret_line)
+            errors.error(f"Function {self.func_name} cannot return a " +
+                         "reference to a local variable or value.",
+                         line=ret_line)
 
     def _mangle_name(self, name) -> str:
-        '''add an ID to the end of a name if the function has a body and is NOT named "main"'''
+        '''add an ID to the end of a name if the function has a body and
+        is NOT named "main"'''
         return self.module.get_unique_name(name)
 
     def _append_args(self):
@@ -80,8 +94,6 @@ class FunctionDef(ASTNode):
             self.variables.append((self.block.variables[x], x))
 
     def pre_eval(self):
-        global functionsdict
-
         self._validate_return()
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
@@ -89,12 +101,12 @@ class FunctionDef(ASTNode):
             # Ast_Types.Type_Function.Function(self.func_name, self.module)
             functionsdict[self.func_name] = dict()
 
-
-        self.function_ir = ir.Function(self.module.module, fnty, name=self._mangle_name(self.func_name))
+        self.function_ir = ir.Function(self.module.module, fnty,
+                                       name=self._mangle_name(self.func_name))
         functionsdict[self.func_name][self.args_types] = \
-                _Function(_Function.BEHAVIOR_DEFINED,
-                        self.func_name, self.function_ir,
-                        self.ret_type, self.args_types)  # TODO: REMOVE
+            _Function(_Function.BEHAVIOR_DEFINED,
+                      self.func_name, self.function_ir,
+                      self.ret_type, self.args_types)  # TODO: REMOVE
 
         # Early return if the function has no body.
         if self.block is None:
@@ -140,4 +152,6 @@ class FunctionDef(ASTNode):
         if self.ret_type.is_void():
             self.builder.ret_void()
         elif not self.has_return:
-            errors.error(f"Function '{self.func_name}' has no guaranteed return! Ensure that at least 1 return statement is reachable!")
+            errors.error(f"Function '{self.func_name}' has no guaranteed " +
+                         "return! Ensure that at least 1 return statement is" +
+                         " reachable!")

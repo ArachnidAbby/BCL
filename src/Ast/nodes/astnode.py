@@ -20,36 +20,33 @@ class ASTNode:
 
     is_operator: bool = False
     assignable: bool = False  # TODO: IMPLEMENT
-    constant: bool = False  # TODO: USE THIS FOR ARRAY INDEXING. THIS SHOULD BE TRUE FOR LITERALS
-    # type: NodeTypes = NodeTypes.DEFAULT # TODO: REMOVE
-    # name: str = "AST_NODE"
+    isconstant: bool = False
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self._position = position        # (line#, col#, len)
-
-        # self.init(*args, **kwargs)
 
     def is_expression(self):
         '''check whether or not a node is an expression'''
         return False
 
-    # def init(self, *args):
-    #     '''initialize the node'''
-
     def pre_eval(self, func):
-        '''pre eval step that is usually used to validate the contents of a node'''
+        '''pre eval step that is usually used to validate
+        the contents of a node
+        '''
 
     def eval(self, func):
         '''eval step, often returns ir.Instruction'''
 
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
+        current_pos = self._position
         new_pos = list(self._position)
         for x in positions:
-            current_len = (new_pos[2]+new_pos[1]-1)  # len of current position ptr
-            end_pos = (x[1]-current_len)+x[2]
+            # len of current position ptr VV
+            current_len = (current_pos.length + current_pos.col-1)
+            end_pos = (x.col-current_len)+x.length
             new_pos[2] = end_pos
 
-        return tuple(new_pos)  # type: ignore
+        return SrcPosition(*new_pos)  # type: ignore
 
     @property
     def position(self) -> SrcPosition:

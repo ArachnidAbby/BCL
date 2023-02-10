@@ -8,14 +8,14 @@ from Ast.nodes.container import ContainerNode
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
     __slots__ = ('variables', 'builder', 'last_instruction', 'ended')
-    # type = NodeTypes.BLOCK
-    # name = "Block"
 
-    BLOCK_STACK: deque[Self] = deque()  # TODO: Move global state to centralized location
+    # TODO: Move global state to centralized location
+    BLOCK_STACK: deque[Self] = deque()
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
-        self.variables: dict[str, object] = {}  # {name: VarObj, ...} -- recursive import uppon proper type annotation
+        self.variables: dict[str, object] = {}
+        # {name: VarObj, ...} -- recursive import uppon proper type annotation
         self.builder = None
         self.last_instruction = False
         self.ended = False

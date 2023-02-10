@@ -32,7 +32,8 @@ class ParenthBlock(ContainerNode):
         yield from self.children
 
     def is_key_value_pairs(self) -> bool:
-        '''check if all children are `KV_pair`s, this is useful for func definitions'''
+        '''check if all children are `KV_pair`s,
+        this is useful for func definitions'''
         for x in self.children:
             if not isinstance(x, KeyValuePair):
                 return False
@@ -45,6 +46,7 @@ class ParenthBlock(ContainerNode):
     def _pass_as_pointer_changes(self, func):
         '''changes child elements to be passed as pointers if needed'''
         for c, child in enumerate(self.children):
+            # TODO: THIS IS SHIT
             if self.in_func_call and (child.ret_type.pass_as_ptr or child.ret_type.name=='strlit'):
                 ptr = child.get_ptr(func)
                 self.children[c] = ptr

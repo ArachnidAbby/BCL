@@ -6,7 +6,7 @@ from Ast.nodes.commontypes import SrcPosition
 
 class RangeLiteral(ExpressionNode):
     __slots__ = ('start', 'end')
-    constant = True
+    isconstant = True
 
     def __init__(self, pos: SrcPosition, start: Any, end: Any):
         super().__init__(pos)
@@ -22,5 +22,5 @@ class RangeLiteral(ExpressionNode):
         self.end = self.end.eval(func)
 
     @property
-    def position(self) -> tuple[int, int, int]:
+    def position(self) -> SrcPosition:
         return self.merge_pos((self.start.position, self.end.position))

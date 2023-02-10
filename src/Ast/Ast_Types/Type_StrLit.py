@@ -20,7 +20,7 @@ class StringLiteral(Type_Base.Type):
     def __init__(self, size=None):
         self.typ = Type_Char.Char()
 
-        if size is not None and not size.constant:
+        if size is not None and not size.isconstant:
             error("size of array type must be a int-literal",
                   line=size.position)
 
@@ -45,8 +45,8 @@ class StringLiteral(Type_Base.Type):
 
     def convert_to(self, func, orig, typ):
         if typ != self:
-            error(f"Cannot convert 'Array<{orig.ir_type.element}>' \
-                  to type '{typ}'", line=orig.position)
+            error(f"Cannot convert 'Array<{orig.ir_type.element}>'" +
+                  f"to type '{typ}'", line=orig.position)
         return orig.eval(func)
 
     def get_op_return(self, op, lhs, rhs):

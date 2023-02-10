@@ -2,7 +2,7 @@
 // Author: FuzzyCat444 on Github.com
 // Date: 12/08/2022 (M/D/Y)
 // Link: https://github.com/FuzzyCat444/BCL-Cube/blob/main/cube.bcl
-// ==================================================================  
+// ==================================================================
 
 
 define main() {
@@ -15,7 +15,7 @@ define main() {
         [1.0, -1.0, 1.0],
         [-1.0, -1.0, 1.0],
         [-1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0] 
+        [1.0, 1.0, 1.0]
     ];
     edges : i32[2][12] = [
         [0, 1],
@@ -127,7 +127,7 @@ define line(screen : bool[60][45], x1 : i32, y1 : i32, x2 : i32, y2 : i32) -> bo
             b -= b_max;
         }
     }
-    
+
     return new_screen;
 }
 
@@ -158,7 +158,7 @@ define rotate_y(point : f32[3], amount : f32) -> f32[3] {
 
 define project(point : f32[3], p : f32) -> f32[2] {
     pd : f32 = 1.0 / (-1 * point[2] * p);
-    x : f32 = point[0] * pd; 
+    x : f32 = point[0] * pd;
     y : f32 = point[1] * pd;
     return [x, y];
 }
@@ -204,7 +204,7 @@ define sin(x_ : f32) -> f32 {
     x5 : f32 = x2 * x3;
     x7 : f32 = x2 * x5;
     y : f32 = x - x3 / 6 + x5 / 120 - x7 / 5060;
-    
+
     if quadrant < 2 {
         return y;
     }
@@ -218,7 +218,7 @@ define cos(x : f32) -> f32 {
 define fmod(x : f32, y : f32) -> f32 {
     quotient : f32 = x / y;
     iquotient : i32 = quotient;
-    
+
     remainder : f32 = fabs(x) - fabs(y * iquotient);
     if x < 0 {
         remainder = fabs(y) - remainder;

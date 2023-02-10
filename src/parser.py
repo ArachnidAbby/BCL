@@ -3,6 +3,7 @@ from collections import deque
 import Ast
 import Ast.literals.numberliteral
 import errors
+from Ast.nodes.commontypes import SrcPosition
 from errors import error
 from parserbase import ParserBase, ParserToken
 
@@ -46,9 +47,8 @@ class Parser(ParserBase):
             "expr": (self.parse_vars, self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
-                     self.parse_expr_list, self.parse_array_putat,
-                     self.parse_rangelit, self.parse_struct_literal,
-                     self.parse_member_access),
+                     self.parse_expr_list, self.parse_rangelit,
+                     self.parse_struct_literal, self.parse_member_access),
             "statement": (self.parse_statement, ),
             "statement_list": (self.parse_statement, ),
             "SUB": (self.parse_numbers, ),
@@ -160,7 +160,7 @@ class Parser(ParserBase):
             self.replace(2, "statement", self.peek(0).value)
 
         elif self.check_group(0, "statement statement !SEMI_COLON"):
-            stmt_list = Ast.ContainerNode((-1, -1, -1))
+            stmt_list = Ast.ContainerNode(SrcPosition.invalid())
 
             stmt_list.append_child(self.peek(0).value)
             stmt_list.append_child(self.peek(1).value)
@@ -217,12 +217,6 @@ class Parser(ParserBase):
             fin = Ast.variables.VariableIndexRef(self.peek(0).pos, ref, expr)
             self.replace(4, "expr", fin)
 
-    def parse_array_putat(self):
-        if self.check_group(0, "expr SET_VALUE expr SEMI_COLON") and (isinstance(self.peek(0).value, Ast.variables.VariableIndexRef)):
-            ref = self.peek(0).value
-            val = self.peek(2).value
-            self.replace(4, "statement", Ast.variables.VariableIndexPutAt(self.peek(0).pos, ref, val))
-
     def parse_rangelit(self):
         if self.check_simple_group(0, "expr DOUBLE_DOT expr") and self.peek_safe(3).name not in (*self.standard_expr_checks, *self.op_node_names):
             start = self.peek(0).value
@@ -254,7 +248,9 @@ class Parser(ParserBase):
 
         elif self.check_group(0, "$for expr $in range_lit statement"):
             if not isinstance(self.peek(1).value, Ast.variables.VariableRef):
-                errors.error("'for loop' variable must be a variable name, not an expression. ex: 'for x in 0..12 {}'", line = self.peek(1).pos)
+                errors.error("'for loop' variable must be a variable name," +
+                             " not an expression. ex:\nfor x in 0..12 {\n\n}",
+                             line=self.peek(1).pos)
             expr = self.peek(1).value
             rang = self.peek(3).value
             block = self.peek(4).value
@@ -276,7 +272,7 @@ class Parser(ParserBase):
             if self.check(0, '$define'):
                 func_name = self.peek(1).value
                 # block = self.peek(2).value
-                func = Ast.functions.functiondefinition.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
+                func = Ast.functions.definition.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
                 self.start_min = self._cursor
                 self.replace(3, "func_def_portion", func)
             elif self.peek(0).value not in self.keywords:
@@ -287,7 +283,7 @@ class Parser(ParserBase):
             if self.check(0, '$define'):
                 func_name = self.peek(1).value
                 # block = self.peek(2).value
-                func = Ast.functions.functiondefinition.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
+                func = Ast.functions.definition.FunctionDef(self.peek(0).pos, func_name, self.peek(2).value, None, self.module)
                 func.ret_type = self.peek(4).value
                 func.is_ret_set = True
                 self.start_min = self._cursor
@@ -319,7 +315,7 @@ class Parser(ParserBase):
                 args = Ast.nodes.ParenthBlock(self.peek(1).pos)
                 args.children.append(self.peek(1).value)
 
-            func = Ast.functions.functioncall.FunctionCall(self.peek(0).pos, func_name, args)
+            func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name, args)
             self.replace(2, "expr", func)
 
         # * different func calls "9.to_string()" as an example
@@ -331,7 +327,7 @@ class Parser(ParserBase):
             args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) else [args2]  # wrap in a list if not already done
             args = Ast.nodes.ParenthBlock(self.peek(0).pos)
             args.children = args1+args2
-            func = Ast.functions.functioncall.FunctionCall(self.peek(2).pos, func_name, args)
+            func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name, args)
             self.replace(4, "expr", func)
 
     def parse_KV_pairs(self):
@@ -360,19 +356,18 @@ class Parser(ParserBase):
             self.replace(3, 'statement', Ast.functions.returnstatement.ReturnStatement(self.peek(0).pos, value))
 
     def parse_vars(self):
-        '''Parses everything involving Variables. References, Instantiation, value changes, etc.'''
+        '''Parses everything involving Variables. References,
+        Instantiation, value changes, etc.'''
         # * Variable Assignment
-        if self.check_group(-1, "!COLON expr SET_VALUE expr|statement SEMI_COLON") and isinstance(self.peek(0).value, Ast.VariableRef):
+        if self.check_group(-1, "!COLON expr SET_VALUE expr|statement SEMI_COLON"):
             # validate value
             if self.blocks[-1][0] is None:
-                error("Variables cannot currently be defined outside of a block", line=self.peek(0).pos)
+                error("Variables cannot currently be defined in the global scope", line=self.peek(0).pos)
             elif self.simple_check(2, "statement"):
                 error("A variable's value cannot be set as a statement", line=self.peek(0).pos)
-            elif self.peek(0).value.var_name in self.keywords:
-                error("A variable's name can NOT be a language keyword", line=self.peek(0).pos)
-            var_name = self.peek(0).value.var_name
+            var_name = self.peek(0).value
             value = self.peek(2).value
-            var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0])
+            var = Ast.variables.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0])
             self.replace(4, "statement", var)
 
         # * Variable References
@@ -393,7 +388,7 @@ class Parser(ParserBase):
         '''variable declarations with explicit typing'''
         if self.check_group(0, "kv_pair SET_VALUE expr|statement SEMI_COLON"):
             # validate value
-            var_name = self.peek(0).value.key.var_name
+            var_name = self.peek(0).value.key
             var_typ = self.peek(0).value.value
             if self.blocks[-1][0] is None:
                 error("Variables cannot currently be defined outside of a block", line=self.peek(0).pos)
@@ -402,7 +397,7 @@ class Parser(ParserBase):
             elif var_name in self.keywords:
                 error("A variable's name cannot be a language keyword", line=self.peek(0).pos)
             value = self.peek(2).value
-            var = Ast.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0], typ=var_typ)
+            var = Ast.variables.VariableAssign(self.peek(0).pos, var_name, value, self.blocks[-1][0], typ=var_typ)
             self.replace(4, "statement", var)
 
     def parse_numbers(self):
@@ -426,7 +421,9 @@ class Parser(ParserBase):
     def parse_math(self):
         '''Parse mathematical expressions'''
         if self.check_group_lookahead(0, '$not expr') and self.peek_safe(2).name != "DOUBLE_DOT":
-            op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1, -1, -1)))
+            op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value,
+                                     Ast.nodes.ExpressionNode(
+                                        SrcPosition.invalid()))
             self.replace(2, "expr", op)
 
         if self.peek_safe(3).name in self.standard_expr_checks:
@@ -472,7 +469,7 @@ class Parser(ParserBase):
                 expr.value.append_children(self.peek(2).value)
                 out = expr.value
             else:
-                out = Ast.nodes.ContainerNode((-1, -1, -1))
+                out = Ast.nodes.ContainerNode(SrcPosition.invalid())
                 out.append_child(expr.value)
                 out.append_child(self.peek(2).value)
 
@@ -482,7 +479,9 @@ class Parser(ParserBase):
         '''Parses blocks of parenthises'''
         # * parse empty paren blocks
         if self.check_simple_group(0, "OPEN_PAREN CLOSE_PAREN"):
-            self.replace(2, "paren", Ast.ParenthBlock(self.peek(0).pos))
+            node = Ast.ParenthBlock(self.peek(0).pos)
+            node.set_end_pos(self.peek(1).pos)
+            self.replace(2, "paren", node)
 
         # * parse paren start
         elif self.simple_check(0, "OPEN_PAREN"):
@@ -505,6 +504,7 @@ class Parser(ParserBase):
                 self.parens[-1][0].children = [self.peek(1).value]
 
             block = self.parens.pop()
+            block[0].set_end_pos(self.peek(2).pos)
 
             self.start = self.parens[-1][1]
 

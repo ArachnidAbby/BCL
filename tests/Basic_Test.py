@@ -5,8 +5,8 @@ import unittest
 p = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{p}/../src')
 
-import compile
-import errors
+import compile  # NOQA: E402
+import errors  # NOQA: E402
 
 errors.SILENT_MODE = True
 
@@ -23,7 +23,8 @@ class basictests(unittest.TestCase):
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_functions.ll',
+                        compile.DEFAULT_ARGS)
 
     def test_function_overloading(self):
         test_code = """
@@ -39,7 +40,8 @@ class basictests(unittest.TestCase):
         define test_func(x: f32, y: f32) -> f32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions_2.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_functions_2.ll',
+                        compile.DEFAULT_ARGS)
 
     @unittest.expectedFailure
     def test_variables_1(self):
@@ -50,7 +52,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_1.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_variables_1.ll',
+                        compile.DEFAULT_ARGS)
 
     @unittest.expectedFailure
     def test_variables_2(self):
@@ -63,7 +66,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_2.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_variables_2.ll',
+                        compile.DEFAULT_ARGS)
 
     def test_variables_3(self):
         test_code = """
@@ -75,7 +79,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_3.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_variables_3.ll',
+                        compile.DEFAULT_ARGS)
 
     def test_ops(self):
         test_code = """
@@ -91,7 +96,8 @@ class basictests(unittest.TestCase):
         define test(x: i32) -> i32 { return 12;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_ops.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_ops.ll',
+                        compile.DEFAULT_ARGS)
 
     def test_if_else_if(self):
         test_code = """
@@ -108,64 +114,39 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_ifs.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_ifs.ll',
+                        compile.DEFAULT_ARGS)
 
-    def test_arrays(self):
+    def test_named_constants(self):
         test_code = """
         define main() {
-            x = 6;
-            test = [0,0,0,0];
-            jest = [[1,2], [3,4]];
-
-            println(jest[0][0]);
-            jest[0][0] = 9;
-            println(jest[0][0]);
-            println(test[x]);
-            test[x] = 8;
-            println(test[x]);
+            radius = 12;
+            println((radius*radius)*PI);
+            println((radius*radius)*HALF_PI);
+            println((radius*radius)*TWO_PI);
+            println(true);
+            println(false);
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_arrays.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_named_consts.ll',
+                        compile.DEFAULT_ARGS)
 
-    def test_arrays_index_literals(self):
+    def test_struct(self):
         test_code = """
-        define main() {
-            println([true; 12][10]);
-            println(test()[2]);
+        struct example {
+            x: i32,
+            y: i32;
         }
 
-        define test() -> i32[5] {
-            return [12; 5];
+        define main() {
+            j: example = example {x: 8, y: 2};
+            println(j.x);
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_arrays_indLit.ll', compile.DEFAULT_ARGS)
-
-    def test_arrays_index_math(self):
-        test_code = """
-        define main() {
-            x = [1, 2, 4, 8, 16];
-            println(x[0]+x[2]);
-        }
-
-        define test() -> i32[5] {
-            return [12; 5];
-        }
-        """
-
-        compile.compile(test_code, f'{p}/random/test_arrays_indmath.ll', compile.DEFAULT_ARGS)
-
-    @unittest.expectedFailure
-    def test_array_fail(self):
-        test_code = """
-        define main() {
-            test = [0,0,0];
-            test[4]; // over-index
-        }
-        """
-
-        compile.compile(test_code, f'{p}/random/test_array_fail.ll', compile.DEFAULT_ARGS)
+        compile.compile(test_code, f'{p}/random/test_struct_usage.ll',
+                        compile.DEFAULT_ARGS)
 
 
 if __name__ == '__main__':

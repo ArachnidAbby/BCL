@@ -32,8 +32,8 @@ class Reference(Type_Base.Type):
 
     def convert_from(self, func, typ, previous):
         if typ.name == "ref" and isinstance(previous.ret_type, Ref):
-            error("Pointer conversions are not supported due to unsafe \
-                  behavior", line=previous.position)
+            error("Pointer conversions are not supported due to unsafe " +
+                  "behavior", line=previous.position)
         return self.typ.convert_from(func, typ, previous)
 
     def convert_to(self, func, orig, typ):

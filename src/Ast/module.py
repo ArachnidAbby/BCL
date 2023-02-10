@@ -5,7 +5,7 @@ from llvmlite import binding, ir
 
 import errors
 import linker
-from Ast.function import _Function
+from Ast.functions.functionobject import _Function
 from Ast.nodes import ASTNode, SrcPosition
 
 # global_functions  = {} #! this will likely be later deprecated once `import <name>` is added
@@ -56,16 +56,16 @@ class Module(ASTNode):
         if name in self.globals:
             return self.globals[name]
 
-        errors.error(f"Cannot find global '{name}' in module \
-                     '{self.mod_name}'",line=position)
+        errors.error(f"Cannot find global '{name}' in module" +
+                     "'{self.mod_name}'", line=position)
 
     def get_function(self, name: str, position: tuple[int, int, int]):
         '''get a function defined in module'''
         if name in self.functions:
             return self.functions[name]
 
-        errors.error(f"Cannot find function '{name}' in module \
-                     '{self.mod_name}'", line=position)
+        errors.error(f"Cannot find function '{name}' in module" +
+                     "'{self.mod_name}'", line=position)
 
     def pre_eval(self):
         for c, child in enumerate(self.children):
@@ -123,13 +123,13 @@ class Module(ASTNode):
             """.strip(), line=child.pos)
 
         reached_semicolon = False
-        last_pos = (-1, -1, -1)
+        last_pos = SrcPosition.invalid()
         for err in self.children[c:]:
             if err.name == "CLOSE_CURLY":
                 break
             if err.name == "SEMI_COLON":
                 reached_semicolon = True
-            if err.pos != (-1, -1, -1):
+            if err.pos != SrcPosition.invalid():
                 last_pos = err.pos
 
         if not reached_semicolon:
@@ -138,7 +138,7 @@ class Module(ASTNode):
             """.strip(), line=last_pos, full_line=True)
 
         errors.error("""
-        Syntax error or compiler bug. If you have questions, ask on the \
-        github issues page.\
+        Syntax error or compiler bug. If you have questions, ask on the
+        github issues page.
         (or use '--dev' when compiling to see the remaining tokens)
         """.strip(), line=child.pos, full_line=True)

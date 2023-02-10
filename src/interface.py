@@ -11,9 +11,10 @@ import errors
 argTypes = Union[list,bool,str]
 argsDict = dict[str, argTypes]
 
+
 def parse_compile(args: list[str]) -> argsDict:
     import compile
-    
+
     compile.compile_file(args[1], args[1:])
 
 
@@ -26,11 +27,13 @@ valid_args = {
     "--libs": []
 }
 
+
 def parse_command(args: list[str]) -> Any:
     if args[0] not in MODES.keys():
         errors.error(f"Invalid Command Line Arguments.\n  No sub-command: {args[0]}")
-    
+
     MODES[args[0]](args)
+
 
 def parse_args(args: list[str]) -> argsDict:
     '''creates a dictionary of command-line arguments.'''
@@ -43,7 +46,7 @@ def parse_args(args: list[str]) -> argsDict:
         if not arg.startswith('-'):
             continue
         if '=' not in arg:
-            args_dict[arg] = not args_dict[arg] # invert current value
+            args_dict[arg] = not args_dict[arg]  # invert current value
         else:
             name, value = arg.split('=')
             if "," in value:

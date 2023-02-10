@@ -5,9 +5,9 @@ from Ast.nodes import Block, ExpressionNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
 
 
-class StructLiteral(ExpressionNode):  # TODO REMOVE UNUSED CODE IN COMMENTS
+class StructLiteral(ExpressionNode):
     __slots__ = ('members',)
-    constant = True
+    isconstant = False
 
     def __init__(self, pos: SrcPosition, name, members: Block):
         super().__init__(pos)
@@ -15,8 +15,6 @@ class StructLiteral(ExpressionNode):  # TODO REMOVE UNUSED CODE IN COMMENTS
         self.ret_type = name.as_type_reference()
 
     def pre_eval(self, func):
-        # if not isinstance(self.members.children[0], ContainerNode):
-        #     errors.error("Invalid Syntax:", line = self.members.position)
         self.members.pre_eval(func)
         for child in self.members:
             if not isinstance(child, KeyValuePair):
@@ -26,7 +24,8 @@ class StructLiteral(ExpressionNode):  # TODO REMOVE UNUSED CODE IN COMMENTS
     def eval(self, func):
         ptr = func.create_const_var(self.ret_type)
         zero_const = ir.Constant(ir.IntType(64), 0)
-        idx_lookup = {name: idx for idx, name in enumerate(self.ret_type.member_indexs)}
+        idx_lookup = {name: idx for idx, name in
+                      enumerate(self.ret_type.member_indexs)}
         for child in self.members:
             index = ir.Constant(ir.IntType(32), idx_lookup[child.key.var_name])
             item_ptr = func.builder.gep(ptr, [zero_const, index])
@@ -34,6 +33,7 @@ class StructLiteral(ExpressionNode):  # TODO REMOVE UNUSED CODE IN COMMENTS
         self.ptr = ptr
         return func.builder.load(ptr)
 
-    # @property
-    # def position(self) -> tuple[int, int, int]:
-    #     return self.merge_pos((self.start.position, self.end.position))
+    @property
+    def position(self) -> SrcPosition:
+        return self.merge_pos((self._position,
+                               *[x.position for x in self.members.children]))

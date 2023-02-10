@@ -1,7 +1,7 @@
 from llvmlite import ir
 
 from Ast import Ast_Types
-from Ast.literals.numberliteral import Literal
+# from Ast.literals.numberliteral import Literal
 from Ast.nodes import ASTNode, Block
 from Ast.nodes.commontypes import SrcPosition
 from Ast.variables.varobject import VariableObj
@@ -27,10 +27,12 @@ class ForLoop(ASTNode):
 
     def pre_eval(self, func):
         self.varptr = func.create_const_var(Ast_Types.Integer_32())
-        self.block.variables[self.var.var_name] = VariableObj(self.varptr, Ast_Types.Integer_32(), False)
+        self.block.variables[self.var.var_name] = \
+            VariableObj(self.varptr, Ast_Types.Integer_32(), False)
 
-        if self.rang.start.constant and self.rang.end.constant:
-            self.block.variables[self.var.var_name].range = (self.rang.start.value, self.rang.end.value)
+        if self.rang.start.isconstant and self.rang.end.isconstant:
+            self.block.variables[self.var.var_name].range = \
+                (self.rang.start.value, self.rang.end.value)
 
         self.rang.pre_eval(func)
         self.block.pre_eval(func)
@@ -38,8 +40,12 @@ class ForLoop(ASTNode):
     def eval(self, func):
         # cond = self.cond.eval(func)
         orig_block_name = func.builder.block._name
-        self.for_body = func.builder.append_basic_block(f'{orig_block_name}.for')
-        self.for_after = func.builder.append_basic_block(f'{orig_block_name}.endfor')
+        self.for_body = func.builder.append_basic_block(
+                f'{orig_block_name}.for'
+            )
+        self.for_after = func.builder.append_basic_block(
+                f'{orig_block_name}.endfor'
+            )
         loop_bfor = func.inside_loop
         self.loop_before = loop_bfor
         func.inside_loop = self
