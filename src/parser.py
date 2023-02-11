@@ -104,9 +104,6 @@ class Parser(ParserBase):
 
     def post_parse(self):
         '''definition inside parserbase, essentially just runs after parsing'''
-        # * give warnings about experimental features
-        # if errors.USES_FEATURE["array"]:
-        #     errors.experimental_warning("Arrays are an experimental feature that is not complete", ("Seg-faults","compilation errors","other memory related errors"))
 
         if len(self.blocks) > 1:  # check for unclosed blocks
             found = False
@@ -160,7 +157,8 @@ class Parser(ParserBase):
         if self.simple_check(-1, "func_def_portion"):
             for x in self.peek(-1).value.args.keys():
                 arg = self.peek(-1).value.args[x]
-                output.variables[x] = Ast.variables.VariableObj(arg[0], arg[1], True)
+                output.variables[x] = Ast.variables.VariableObj(arg[0], arg[1],
+                                                                True)
 
         self.replace(2, "statement", output)
 
@@ -188,7 +186,9 @@ class Parser(ParserBase):
     @rule(-1, "!KEYWORD expr statement")
     def parse_struct_literal(self):
         if isinstance(self.peek(1).value, Ast.Block):
-            struct_literal = Ast.StructLiteral(self.peek(0).pos, self.peek(0).value, self.peek(1).value)
+            struct_literal = Ast.StructLiteral(self.peek(0).pos,
+                                               self.peek(0).value,
+                                               self.peek(1).value)
             self.replace(2, "expr", struct_literal)
 
     @rule(-1, "__|OPEN_CURLY_USED expr|expr_list|statement SEMI_COLON")
@@ -224,7 +224,9 @@ class Parser(ParserBase):
 
     @rule(0, "expr DOT expr !expr|paren|OPEN_PAREN|OPEN_PAREN_USED")
     def parse_member_access(self):
-        op = Ast.math.ops['access_member'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+        op = Ast.math.ops['access_member'](self.peek(0).pos,
+                                           self.peek(0).value,
+                                           self.peek(2).value)
         self.replace(3, "expr", op)
 
     # * arrays
@@ -233,9 +235,14 @@ class Parser(ParserBase):
         '''check for all nodes dealing with arrays'''
         if self.check(-1, "CLOSE_SQUARE|expr"):
             return
-        if self.simple_check(-1, "KEYWORD") and self.peek(-1).value not in self.keywords:
+        if self.simple_check(-1, "KEYWORD") and \
+                self.peek(-1).value not in self.keywords:
             return
-        exprs = self.peek(1).value if self.peek(1).name == "expr" else self.peek(1).value.children
+
+        if self.peek(1).name == "expr":
+            exprs = self.peek(1).value
+        else:
+            exprs = self.peek(1).value.children
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
         self.replace(3, "expr", literal)
 
@@ -243,15 +250,18 @@ class Parser(ParserBase):
     def parse_array_literal(self):
         if self.check(-1, "CLOSE_SQUARE|expr"):
             return
-        if self.simple_check(-1, "KEYWORD") and self.peek(-1).value not in self.keywords:
+        if self.simple_check(-1, "KEYWORD") and \
+                self.peek(-1).value not in self.keywords:
             return
-        if not isinstance(self.peek(3).value, Ast.literals.numberliteral.Literal) or self.peek(3).value.ret_type.name != "i32":
+        amount = self.peek(3).value
+        if not isinstance(amount, Ast.literals.numberliteral.Literal) or \
+                self.peek(3).value.ret_type.name != "i32":
             errors.error("Array literal size must be an i32",
                          line=self.peek(3).pos)
-        if self.peek(3).value.value <= 0:
+        if amount.value <= 0:
             errors.error("Array literal size must be greater than '0'",
                          line=self.peek(3).pos)
-        exprs = [self.peek(1).value] * self.peek(3).value.value
+        exprs = [self.peek(1).value] * amount.value
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
         self.replace(5, "expr", literal)
 
@@ -265,7 +275,8 @@ class Parser(ParserBase):
 
     @rule(0, "expr DOUBLE_DOT expr")
     def parse_rangelit(self):
-        if self.peek_safe(3).name not in (*self.standard_expr_checks, *self.op_node_names):
+        if self.peek_safe(3).name not in (*self.standard_expr_checks,
+                                          *self.op_node_names):
             start = self.peek(0).value
             end = self.peek(2).value
             literal = Ast.literals.RangeLiteral(self.peek(0).pos, start, end)
@@ -283,7 +294,8 @@ class Parser(ParserBase):
         expr = self.peek(1).value
         block_if = self.peek(2).value
         block_else = self.peek(4).value
-        x = Ast.flowcontrol.IfElseStatement(self.peek(0).pos, expr, block_if, block_else)
+        x = Ast.flowcontrol.IfElseStatement(self.peek(0).pos, expr, block_if,
+                                            block_else)
         self.replace(5, "statement", x)
 
     @rule(0, "$while expr statement")
@@ -331,7 +343,8 @@ class Parser(ParserBase):
             error(f"invalid syntax '{self.peek(0).value}'",
                   line=self.peek(0).pos)
 
-    @rule(0, "KEYWORD KEYWORD expr|paren RIGHT_ARROW expr OPEN_CURLY|SEMI_COLON")
+    @rule(0, "KEYWORD KEYWORD expr|paren RIGHT_ARROW expr " +
+             "OPEN_CURLY|SEMI_COLON")
     def parse_func_with_return(self):
         # * create function with return
         if self.check(0, '$define'):
@@ -351,7 +364,8 @@ class Parser(ParserBase):
     @rule(0, "func_def_portion RIGHT_ARROW expr OPEN_CURLY|SEMI_COLON")
     def parse_func_double_return(self):
         # * bug check
-        error(f"Function, '{self.peek(0).value.name}', cannot have it's return-type set twice.", line=self.peek(1).pos)
+        error(f"Function, '{self.peek(0).value.name}', " +
+              "cannot have it's return-type set twice.", line=self.peek(1).pos)
 
     @rule(0, "func_def_portion statement")
     def parse_funcdef_with_body(self):
@@ -376,7 +390,8 @@ class Parser(ParserBase):
                 args = Ast.nodes.ParenthBlock(self.peek(1).pos)
                 args.children.append(self.peek(1).value)
 
-            func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name, args)
+            func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name,
+                                                   args)
             self.replace(2, "expr", func)
 
     @rule(0, "expr|paren DOT expr expr|paren")
@@ -386,8 +401,10 @@ class Parser(ParserBase):
         func_name = self.peek(2).value.var_name
         args1 = self.peek(0).value
         args2 = self.peek(3).value
-        args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) else [args1]  # wrap in a list if not already done
-        args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) else [args2]  # wrap in a list if not already done
+        args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) \
+            else [args1]  # wrap in a list if not already done
+        args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) \
+            else [args2]  # wrap in a list if not already done
         args = Ast.nodes.ParenthBlock(self.peek(0).pos)
         args.children = args1+args2
         func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name,
@@ -409,15 +426,30 @@ class Parser(ParserBase):
     def parse_keyword_literals(self):
         '''literals like `true` and `false`, later `none`'''
         if self.check(0, '$true'):
-            self.replace(1, "expr", Ast.literals.numberliteral.Literal(self.peek(0).pos, 1, Ast.Ast_Types.Type_Bool.Integer_1()))
+            self.replace(1, "expr", Ast.literals.numberliteral.Literal(
+                self.peek(0).pos, 1,
+                Ast.Ast_Types.Type_Bool.Integer_1())
+            )
         elif self.check(0, '$false'):
-            self.replace(1, "expr", Ast.literals.numberliteral.Literal(self.peek(0).pos, 0, Ast.Ast_Types.Type_Bool.Integer_1()))
+            self.replace(1, "expr", Ast.literals.numberliteral.Literal(
+                self.peek(0).pos, 0,
+                Ast.Ast_Types.Type_Bool.Integer_1())
+            )
         elif self.check(0, '$PI'):
-            self.replace(1, "expr", Ast.literals.numberliteral.Literal(self.peek(0).pos, 3.14159265358979323846, Ast.Ast_Types.Type_F32.Float_32()))
+            self.replace(1, "expr", Ast.literals.numberliteral.Literal(
+                self.peek(0).pos, 3.14159265358979323846,
+                Ast.Ast_Types.Type_F32.Float_32())
+            )
         elif self.check(0, '$TWO_PI'):
-            self.replace(1, "expr", Ast.literals.numberliteral.Literal(self.peek(0).pos, 6.28318545718, Ast.Ast_Types.Type_F32.Float_32()))
+            self.replace(1, "expr", Ast.literals.numberliteral.Literal(
+                self.peek(0).pos, 6.28318545718,
+                Ast.Ast_Types.Type_F32.Float_32())
+            )
         elif self.check(0, '$HALF_PI'):
-            self.replace(1, "expr", Ast.literals.numberliteral.Literal(self.peek(0).pos, 1.57079632679489661923, Ast.Ast_Types.Type_F32.Float_32())) #type: ignore
+            self.replace(1, "expr", Ast.literals.numberliteral.Literal(
+                self.peek(0).pos, 1.57079632679489661923,
+                Ast.Ast_Types.Type_F32.Float_32())
+            )  # type: ignore
             # ^ Removing the previous comment some how kills the entire IDE
 
     @rule(0, "$return expr SEMI_COLON")
@@ -448,7 +480,8 @@ class Parser(ParserBase):
     def parse_var_usage(self):
         if self.peek(0).value in self.keywords:
             return
-        var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value, self.blocks[-1][0])
+        var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value,
+                              self.blocks[-1][0])
         self.replace(1, "expr", var)
 
     @rule(0, "AMP expr !OPEN_SQUARE")
@@ -456,7 +489,8 @@ class Parser(ParserBase):
         var = self.peek(1).value
         typ = Ast.reference.Ref(self.peek(0).pos, var)
         self.replace(2, "expr", typ)
-        # op = Ast.math.ops['ref'](self.peek(0).pos, self.peek(1).value, Ast.nodes.ExpressionNode((-1,-1,-1)))
+        # op = Ast.math.ops['ref'](self.peek(0).pos, self.peek(1).value,
+        #                          Ast.nodes.ExpressionNode((-1,-1,-1)))
         # self.replace(2,"expr",op)
 
     @rule(0, "kv_pair SET_VALUE expr|statement SEMI_COLON")
@@ -484,7 +518,8 @@ class Parser(ParserBase):
         '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
         if isinstance(self.peek(1).value, Ast.Literal) and \
-                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32, Ast.Ast_Types.Integer_32):
+                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32,
+                                                Ast.Ast_Types.Integer_32):
             if self.check(0, "SUB"):
                 self.peek(1).value.value *= -1
                 self.replace(2, "expr", self.peek(1).value)
@@ -502,7 +537,8 @@ class Parser(ParserBase):
 
     def parse_math(self):
         '''Parse mathematical expressions'''
-        if self.check_group_lookahead(0, '$not expr') and self.peek_safe(2).name != "DOUBLE_DOT":
+        if self.check_group_lookahead(0, '$not expr') and \
+                self.peek_safe(2).name != "DOUBLE_DOT":
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value,
                                      Ast.nodes.ExpressionNode(
                                         SrcPosition.invalid()))
@@ -513,39 +549,49 @@ class Parser(ParserBase):
         # todo: add more operations
         # * Parse expressions
         if self.check_group(0, "expr ISUM expr SEMI_COLON"):
-            op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,
+                                       self.peek(2).value)
             self.replace(4, "statement", op)
         elif self.check_group(0, "expr ISUB expr SEMI_COLON"):
-            op = Ast.math.ops["_ISUB"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops["_ISUB"](self.peek(0).pos, self.peek(0).value,
+                                       self.peek(2).value)
             self.replace(4, "statement", op)
         elif self.check_group(0, "expr IMUL expr SEMI_COLON"):
-            op = Ast.math.ops["_IMUL"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops["_IMUL"](self.peek(0).pos, self.peek(0).value,
+                                       self.peek(2).value)
             self.replace(4, "statement", op)
         elif self.check_group(0, "expr IDIV expr SEMI_COLON"):
-            op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value,
+                                       self.peek(2).value)
             self.replace(4, "statement", op)
 
-        elif self.check_group(0, 'expr _ expr') and self.peek(1).name in Ast.math.ops.keys():
+        elif self.check_group(0, 'expr _ expr') and \
+                self.peek(1).name in Ast.math.ops.keys():
             op_str = self.peek(1).name
-            op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value,
+                                      self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $and expr'):
-            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
+                                     self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $or expr'):
-            op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $as expr'):
-            op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value, self.peek(2).value)
+            op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
             self.replace(3, "expr", op)
 
     @rule(0, "expr|expr_list|kv_pair COMMA expr|kv_pair")
     def parse_expr_list(self):
         # * parse expression lists
-        if self.peek_safe(3).name in (*self.standard_expr_checks, *self.op_node_names):
+        if self.peek_safe(3).name in (*self.standard_expr_checks,
+                                      *self.op_node_names):
             return
 
         expr = self.peek(0)
@@ -578,7 +624,9 @@ class Parser(ParserBase):
         self.parens.append((output, self._cursor))
 
         self.start = self._cursor
-        self._tokens[self._cursor] = ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos, False)
+        self._tokens[self._cursor] = \
+            ParserToken("OPEN_PAREN_USED", '(', self._tokens[self._cursor].pos,
+                        False)
         self.parse_paren_close()
 
     @rule(0, "OPEN_PAREN_USED expr|expr_list|kv_pair CLOSE_PAREN")
