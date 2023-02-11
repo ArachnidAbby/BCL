@@ -1,1 +1,3 @@
-# from .arrayindex import *
+from .index import VariableIndexRef
+
+__all__ = ["VariableIndexRef"]

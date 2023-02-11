@@ -42,6 +42,8 @@ class ParserBase:
         parser for the language.
     '''
 
+    CREATED_RULES: list[tuple[str, int]] = []
+
     def __init__(self, lex_stream, module):
         self._tokens = []
         self.lex_stream = lex_stream
@@ -58,8 +60,13 @@ class ParserBase:
                               "COLON", "DOUBLE_DOT")
         self.compiled_rules: dict[str, Callable[Self, bool]] = {}
 
+        for rule, start in self.CREATED_RULES:
+            self.compiled_rules[rule] = self.compile_rule(rule)
+
+        del self.CREATED_RULES[0:]  # clear unused memory
+
     def single_compile(self, wanting: str, pos: int) -> str:
-        if wanting == '_':  # allow any 
+        if wanting == '_':  # allow any
             return 'True'
         if wanting == '__':  # allow any with "complete" == True
             return f'input[{pos}].completed'
@@ -72,7 +79,7 @@ class ParserBase:
         else:
             return f'input[{pos}].name=="{wanting}"'
 
-    def compile_rule(self, rule: str, pos: int) -> tuple[Callable[[list[ParserToken]], bool], int]:
+    def compile_rule(self, rule: str) -> tuple[Callable[[list[ParserToken]], bool], int]:
         output_stmts: list[str] = []
         for c, wanting in enumerate(rule.split(' ')):
             if wanting == '_':  # allow any
@@ -81,7 +88,8 @@ class ParserBase:
 
         output_str = (" and ".join(output_stmts))
 
-        return (compile(output_str, 'COMPILED RULE', 'eval'), len(rule.split(' ')))
+        return (compile(output_str, 'COMPILED RULE', 'eval'),
+                len(rule.split(' ')))
 
     def parse(self, close_condition: Callable[[], bool] = lambda: False):
         '''Parser main'''
@@ -97,11 +105,12 @@ class ParserBase:
             # * end of debug code
             token_name = self.peek(0).name
             # skip tokens if possible
-            if token_name not in self.parsing_functions.keys():
+            valid_funcs = self.parsing_functions.get(token_name)
+            if not valid_funcs:  # None check
                 self.move_cursor()
                 continue
 
-            for func in self.parsing_functions[token_name]:
+            for func in valid_funcs:
                 func()
                 if not self.do_move:
                     break
@@ -175,14 +184,14 @@ class ParserBase:
 
         return self.peek(index)
 
-    def _consume(self, index: int = 0, amount: int = 1):
+    def _consume(self, index: int, amount: int):
         '''consume specific amount of tokens but don't reset cursor position'''
         index = self._cursor+index
         del self._tokens[index: index+amount]
 
     # todo: make this just use positional arguments for the amount.
 
-    def consume(self, index: int = 0, amount: int = 1):
+    def consume(self, index: int, amount: int):
         '''Consume a specific `amount` of tokens starting at `index`'''
         self._consume(index=index, amount=amount)
 
@@ -198,9 +207,6 @@ class ParserBase:
 
     def check(self, index: int, wanting: str) -> bool:
         '''check the value of a token (with formatting)'''
-        if wanting not in self.compiled_rules.keys():
-            self.compiled_rules[wanting] = (compile(self.single_compile(wanting, 0), '', 'eval'), index)
-
         return eval(self.compiled_rules[wanting][0], {},
                     {"input": [self.peek(index)]})
 
@@ -221,12 +227,10 @@ class ParserBase:
         '''check a group of tokens in a string seperated by spaces.'''
         tokens = wanting.split(' ')
 
-        if (self._cursor+start_index) < 0 or self.isEOF(len(tokens) + self._cursor + start_index-1):
+        rule_max_cursor_pos = len(tokens) + self._cursor + start_index-1
+        if (self._cursor+start_index) < 0 or self.isEOF(rule_max_cursor_pos):
             return False
 
-        if wanting not in self.compiled_rules.keys():
-            self.compiled_rules[wanting] = self.compile_rule(wanting,
-                                                             start_index)
         tokens_start = start_index + self._cursor
         tokens_end = self.compiled_rules[wanting][1] + start_index+self._cursor
         input_tokens = self._tokens[tokens_start:tokens_end]
@@ -261,3 +265,14 @@ class ParserBase:
                 return False
 
         return True
+
+
+def rule(start: int, rule: str):
+    ParserBase.CREATED_RULES.append((rule, start))
+
+    def decorator(func):
+        def wrapper(self):
+            if self.check_group(start, rule):
+                func(self)
+        return wrapper
+    return decorator

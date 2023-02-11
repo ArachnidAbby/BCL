@@ -1,4 +1,3 @@
-from Ast.arrays.index import VariableIndexRef
 from Ast.Ast_Types import Void
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
@@ -55,7 +54,6 @@ class VariableAssign(ASTNode):
             return
 
         self.create_new_var(func)
-
         if not self.is_declaration and self.explicit_typ:
             error("Cannot declare the type of a variable after initial" +
                   " declaration", line=self.position)

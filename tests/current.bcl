@@ -164,7 +164,9 @@ struct gross {
 }
 
 // define testing(x: test) -> gross {
-//     return gross {x: &(x.y), y: x.x};
+//     referencable = x.y;
+//     value = gross {x: &(x.y), y: x.x};
+//     return value;
 // }
 
 define main() {
@@ -173,8 +175,8 @@ define main() {
         x: test {x: 1, y: 2},
         y: test {x: 3, y: 4}
     };
-    x.x.x = 8;
+    // x.x.x = 8;
     // x.y.z;
-    println(x.x.x); // completely inapropriate! XXX content in my code?!
+    println(x.y.x); // completely inapropriate! XXX content in my code?!
     println(8+x.y.x); //should be 11
 }

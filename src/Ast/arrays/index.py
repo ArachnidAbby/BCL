@@ -14,12 +14,23 @@ from errors import error
 ZERO_CONST: Final = ir.Constant(ir.IntType(64), 0)
 
 
-class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESSION
-    '''Variable Reference that acts like other `expr` nodes. It returns a value uppon `eval`''' # TODO: add correct doc
+def check_in_range(rang, arrayrang):
+    return rang[0] in arrayrang and rang[1] in arrayrang
+
+
+def check_valid_literal_range(lhs, rhs):
+    return rhs.isconstant and \
+        (lhs.ret_type.size-1 < rhs.value or rhs.value < 0)
+
+
+# TODO: RENAME & MAKE INTO MATH EXPRESSION
+class VariableIndexRef(ExpressionNode):
+    '''The index to an array'''
     __slots__ = ('ind', 'varref', 'var_name', 'size')
     assignable = True
 
-    def __init__(self, pos: SrcPosition, varref: VariableRef, ind: ExpressionNode):
+    def __init__(self, pos: SrcPosition, varref: VariableRef,
+                 ind: ExpressionNode):
         self._position = pos
         self.varref = varref
         self.ind = ind
@@ -34,14 +45,15 @@ class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESS
         self.ind.pre_eval(func)
         if isinstance(self.ind.ret_type.name, Ref):
             self.ind = self.ind.get_value(func)
-        if self.varref.ret_type.get_op_return('ind', None, self.ind) is not None:
-            self.ret_type = self.varref.ret_type.get_op_return('ind', None, self.ind)
+        op_return = self.varref.ret_type.get_op_return('ind', None, self.ind)
+        if op_return is not None:
+            self.ret_type = op_return
         else:
             self.ret_type = self.varref.ret_type
         self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
-        if rhs.isconstant and (lhs.ret_type.size-1 < rhs.value or rhs.value < 0):  # check inbounds
+        if rhs.isconstant and check_valid_literal_range(lhs, rhs):
             error(f'Array index out range. Max size \'{lhs.ret_type.size}\'',
                   line=rhs.position)
 
@@ -51,32 +63,46 @@ class VariableIndexRef(ExpressionNode):  # TODO: RENAME & MAKE INTO MATH EXPRESS
 
     def _out_of_bounds(self, func):
         '''creates the code for runtime bounds checking'''
-        size = Literal((-1,-1,-1), self.varref.ir_type.count-1, Ast_Types.Integer_32())
-        zero = Literal((-1,-1,-1), 0, Ast_Types.Integer_32())
+        size = Literal((-1, -1, -1), self.varref.ir_type.count-1,
+                       Ast_Types.Integer_32())
+        zero = Literal((-1, -1, -1), 0, Ast_Types.Integer_32())
         cond = self.ind.ret_type.le(func, size, self.ind)
         cond2 = self.ind.ret_type.gr(func, zero, self.ind)
         condcomb = func.builder.or_(cond, cond2)
-        with func.builder.if_then(condcomb) as if_block:
-            exception.over_index_exception(func, self.varref, self.ind.eval(func), self.position)
+        with func.builder.if_then(condcomb) as _:
+            exception.over_index_exception(func, self.varref,
+                                           self.ind.eval(func), self.position)
 
-    # TODO: fix this painful code. It is so ugly.
+    def generate_runtime_check(self, func):
+        '''generates the runtime bounds checking
+        depending on the node type of the index operand'''
+        if self.ind.isconstant:  # don't generate checks for constants
+            return
+
+        if isinstance(self.ind, OperationNode) and \
+                self.ind.ret_type.rang is not None:
+            rang = self.ind.ret_type.rang
+            arrayrang = range(0, self.varref.ir_type.count)
+            if check_in_range(rang, arrayrang):
+                return func.builder.gep(self.varref.get_ptr(func),
+                                        [ZERO_CONST, self.ind.eval(func)])
+
+        elif self.ind.get_var(func).range is not None:
+            rang = self.ind.get_var(func).range
+            arrayrang = range(0, self.varref.ir_type.count)
+            in_range = check_in_range(rang, arrayrang)
+            if isinstance(self.ind, VariableRef) and in_range:
+                return func.builder.gep(self.varref.get_ptr(func),
+                                        [ZERO_CONST, self.ind.eval(func)])
+
+        self._out_of_bounds(func)
+
     def get_ptr(self, func) -> ir.Instruction:
         self.check_valid_literal(self.varref, self.ind)
-        if not self.ind.isconstant:  # * error checking at runtime
-            if isinstance(self.ind, OperationNode) and self.ind.ret_type.rang is not None:
-                rang = self.ind.ret_type.rang
-                arrayrang = range(0, self.varref.ir_type.count)
-                if rang[0] in arrayrang and rang[1] in arrayrang:
-                    return func.builder.gep(self.varref.get_ptr(func), [ZERO_CONST, self.ind.eval(func),])
-
-            elif self.ind.get_var(func).range is not None:
-                rang = self.ind.get_var(func).range
-                arrayrang = range(0, self.varref.ir_type.count)
-                if isinstance(self.ind, VariableRef) and rang[0] in arrayrang and rang[1] in arrayrang:
-                    return func.builder.gep(self.varref.get_ptr(func), [ZERO_CONST, self.ind.eval(func)])
-
-            self._out_of_bounds(func)
-        return func.builder.gep(self.varref.get_ptr(func), [ZERO_CONST, self.ind.eval(func)])
+        if self.generate_runtime_check(func):
+            return
+        return func.builder.gep(self.varref.get_ptr(func),
+                                [ZERO_CONST, self.ind.eval(func)])
 
     def get_value(self, func):
         return self.get_ptr(func)
