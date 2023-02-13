@@ -8,6 +8,7 @@ class Ref(ExpressionNode):
     It returns a ptr uppon `eval`'''
     __slots__ = ('var', )
     # name = "ref"
+    assignable = True
 
     def __init__(self, pos: SrcPosition, var):
         super().__init__(pos)

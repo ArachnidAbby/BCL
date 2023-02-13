@@ -34,9 +34,6 @@ class Module(ASTNode):
     def get_unique_name(self, name: str):
         return self.module.get_unique_name(name)
 
-    def add_child(self, item):
-        self.children.append(item)
-
     def get_local_name(self, name: str, position: tuple[int, int, int]):
         '''get a local object by name, this could be a global, import, or function'''
         if name in self.globals:
@@ -113,6 +110,7 @@ class Module(ASTNode):
             extra_args = [f"-l{x}" for x in args["--libs"]]
             linker.link_all(loc, [f"{loc}.o"], extra_args)
 
+    # TODO: Create a seperate error parser
     def syntax_error_information(self, child, c: int):
         '''more useful syntax error messages'''
         errors.developer_info(f'item: {child}   in: {self.children}')

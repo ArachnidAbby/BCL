@@ -1,11 +1,10 @@
 import os
-import sys
 from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
-from typing import Union
 
 import errors
+from Ast.nodes.commontypes import SrcPosition
 from errors import _print_raw, _print_text, inline_warning
 
 DEFAULT_ARGS: dict[str, bool|str|list] = {  # contains all valid command line arguments
@@ -37,22 +36,31 @@ def compile(src_str: str, output_loc: str, args, file=""):
 
         process = psutil.Process(os.getpid())
         tmp = imports_mem = process.memory_info().rss
+        import Ast.module
         import codegen
 
         code_gen = codegen.CodeGen()
         imports_mem = process.memory_info().rss - tmp
 
+        from rply.errors import LexingError
+
         import Ast.functions.standardfunctions
-        import Ast.module
         import lexer as lex
 
     with timingContext('lexing finished'):
         tokens = lex.Lexer().get_lexer().lex(src_str)
 
     with timingContext('parsing finished'):
-        module = Ast.module.Module((-1, -1, -1, ""), "main", str(file), tokens)
-        Ast.functions.standardfunctions.declare_all(module.module)
-        module.parse()
+        try:
+            module = Ast.module.Module(SrcPosition.invalid(), "main",
+                                       str(file), tokens)
+            Ast.functions.standardfunctions.declare_all(module.module)
+            module.parse()
+        except LexingError as e:
+            error_pos = e.source_pos
+            pos = SrcPosition(error_pos.lineno, error_pos.colno, 0, str(file))
+            errors.error("A Lexing Error has occured. Invalid Syntax",
+                         line=pos, full_line=True)
 
     with timingContext('module created'):
         module.pre_eval()

@@ -9,10 +9,11 @@ import errors
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 
+
 def make_project(args: List[str]):
     '''setup project files'''
     template = "helloworld"
-    
+
     if not os.path.isdir(args[2]):
         os.mkdir(args[2])
 
@@ -32,7 +33,6 @@ def make_project(args: List[str]):
 
 if __name__ == "__main__":
     args = sys.argv
-
 
     if "--dev" in args:
         errors.PROFILING = True

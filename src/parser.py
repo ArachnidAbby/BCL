@@ -5,6 +5,7 @@ import Ast.literals.numberliteral
 import errors
 from Ast.nodes.commontypes import SrcPosition
 from errors import error
+from lexer import Lexer
 from parserbase import ParserBase, ParserToken, rule
 
 
@@ -29,6 +30,7 @@ class Parser(ParserBase):
                  "op_node_names")
 
     def __init__(self, *args, **kwargs):
+        # * rules that aren't denoted with @rule()
         ParserBase.CREATED_RULES.append(("$true", 0))
         ParserBase.CREATED_RULES.append(("$false", 0))
         ParserBase.CREATED_RULES.append(("$TWO_PI", 0))
@@ -54,8 +56,8 @@ class Parser(ParserBase):
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct'
-        )
+            'as', 'for', 'in', 'struct', 'import'
+        )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
                                      "expr", "OPEN_SQUARE", "paren")
@@ -75,7 +77,7 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement, self.parse_math,
+            "KEYWORD": (self.parse_return_statement, self.parse_math, # self.parse_import_statment,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
                         self.parse_if_else,
@@ -126,6 +128,25 @@ class Parser(ParserBase):
             if not found:
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
+
+    # @rule(0, "$import expr SEMI_COLON")
+    # def parse_import_statment(self):
+    #     if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
+    #         errors.error("Import must use a module name",
+    #                      line=self.peek(1).pos)
+
+    #     name = self.peek(1).value.var_name
+    #     directories = self.module.location.split("/")[:-1]
+    #     directory_path = '/'.join(directories)
+    #     filedir = f"{directory_path}/{name}.bcl"
+    #     with open(filedir, 'r') as f:
+    #         src_str = f.read()
+    #         tokens = Lexer().get_lexer().lex(src_str)
+    #     new_module = Ast.module.Module(SrcPosition.invalid(), name,
+    #                                    filedir, tokens)
+    #     Ast.program.add_module_queue(new_module)
+    #     errors.inline_warning("Notice: import statements don't do anything")
+    #     self.consume(0, 3)
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement|expr_list CLOSE_CURLY")
     def parse_finished_blocks(self):

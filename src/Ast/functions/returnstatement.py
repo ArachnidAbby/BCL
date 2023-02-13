@@ -1,5 +1,6 @@
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
+from Ast.nodes.block import Block
 from Ast.nodes.commontypes import SrcPosition
 
 
@@ -29,3 +30,4 @@ class ReturnStatement(ASTNode):
             func.builder.ret_void()
         else:
             func.builder.ret(self.expr.eval(func))
+        Block.BLOCK_STACK[-1].ended = True

@@ -36,13 +36,14 @@ MAX_SIZE = 8  # TODO: move this into the ParserBase class
 class ParserBase:
     __slots__ = ('_tokens', '_cursor', 'start', 'builder', 'module', 'do_move',
                  'start_min', 'parsing_functions', 'standard_expr_checks',
-                 'op_node_names', 'compiled_rules', 'lex_stream', 'EOS')
+                 'op_node_names', 'lex_stream', 'EOS')
     '''Backend of the Parser.
         This is primarily to seperate the basics of parsing from the actual
         parser for the language.
     '''
 
     CREATED_RULES: list[tuple[str, int]] = []
+    compiled_rules: dict[str, Callable[Self, bool]] = {}
 
     def __init__(self, lex_stream, module):
         self._tokens = []
@@ -58,7 +59,7 @@ class ParserBase:
                                      "expr", "OPEN_SQUARE", "paren")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT")
-        self.compiled_rules: dict[str, Callable[Self, bool]] = {}
+        # self.compiled_rules: dict[str, Callable[Self, bool]] = {}
 
         for rule, start in self.CREATED_RULES:
             self.compiled_rules[rule] = self.compile_rule(rule)
@@ -188,8 +189,6 @@ class ParserBase:
         '''consume specific amount of tokens but don't reset cursor position'''
         index = self._cursor+index
         del self._tokens[index: index+amount]
-
-    # todo: make this just use positional arguments for the amount.
 
     def consume(self, index: int, amount: int):
         '''Consume a specific `amount` of tokens starting at `index`'''

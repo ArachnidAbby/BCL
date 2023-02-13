@@ -31,6 +31,10 @@ def declare_printf(module):
     printf = ir.Function(module, printf_ty, name="printf")
     functions.functionsdict["__printf"] = [printf, 'void']
 
+    declare_globals(module)
+
+
+def declare_globals(module):
     fmt_strings["nl"]["i32"] = declare_global_str(module, "%i\n\0",
                                                   "fstr_int_n")
     fmt_strings["nonl"]["i32"] = declare_global_str(module, "%i\0",

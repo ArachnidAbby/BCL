@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Self
+from typing import Any, Iterator, Self
 
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
@@ -45,6 +45,16 @@ class Block(ContainerNode):
                 return
         self.last_instruction = not func.ret_type.is_void()
         self.children[-1].eval(func)
+        self.BLOCK_STACK.pop()
+
+    def __iter__(self) -> Iterator[Any]:
+        self.BLOCK_STACK.append(self)
+        for child in self.children[0:-1]:
+            yield child
+            if self.ended:
+                self.BLOCK_STACK.pop()
+                return
+        yield self.children[-1]
         self.BLOCK_STACK.pop()
 
     def get_variable(self, var_name: str):
