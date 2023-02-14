@@ -1,5 +1,4 @@
 # from Ast.variables import *
-import Ast.program
 from Ast.arrays import *
 from Ast.Ast_Types import *
 from Ast.flowcontrol import *

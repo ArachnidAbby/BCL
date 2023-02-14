@@ -55,12 +55,14 @@ class ParenthBlock(ContainerNode):
             self.children[c] = child.eval(func)
 
     def eval(self, func):
-        self._pass_as_pointer_changes(func)  # TODO: THIS SHOULD NOT MODIFY THE ORIGINAL
+        # TODO: THIS SHOULD NOT MODIFY THE ORIGINAL
+        self._pass_as_pointer_changes(func)
         if len(self.children) == 1:
             return self.children[0]
 
     def __repr__(self) -> str:
-        return f'<Parenth Block: \'({", ".join((repr(x) for x in self.children))})\'>'
+        children_repr = (repr(x) for x in self.children)
+        return f'<Parenth Block: \'({", ".join(children_repr)})\'>'
 
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''

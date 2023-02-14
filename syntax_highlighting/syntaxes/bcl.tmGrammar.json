@@ -96,7 +96,7 @@
             "name": "keyword.control.bcl"
           },
           {
-            "match": "((or)|(and)|(not)|(in))",
+            "match": "\\b((or)|(and)|(not)|(in))\\b",
             "name": "keyword.operator.bcl"
           },
           {
@@ -135,7 +135,7 @@
             "match": "[\\+\\-\\*\\/\\%\\&]",
             "name": "keyword.operator.arithmetic.bcl"
           },
-          
+
           {"match": "[;]", "name": "punctuation.terminator.statement.bcl"},
           {"match": "[,]", "name": "punctuation.seperator.bcl"},
           {
