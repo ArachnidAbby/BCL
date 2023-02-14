@@ -1,5 +1,3 @@
-from Ast import Ast_Types
-from Ast.functions import functionobject
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
 from errors import error
@@ -49,20 +47,7 @@ class VariableRef(ExpressionNode):
         '''Get this variable's name as a Type
         This is useful for static type declaration.
         '''
-        # if self.var_name in Ast_Types.types_dict:
-        return func.module.get_type(self.var_name)()
-        # else:
-        #     error(f"Could not find type: {self.var_name}", line=self.position)
-
-    def as_func_reference(self):
-        '''Get this variable's name as the name of a function
-        Not yet used, but I predict it will be needed
-        '''  # TODO KEEP UPDATED
-        if self.var_name in functionobject.functions.keys():
-            return functionobject.functions[self.var_name]
-        else:
-            error(f"Could not find function: {self.var_name}",
-                  line=self.position)
+        return func.module.get_type(self.var_name, self.position)()
 
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"

@@ -1,7 +1,6 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast.Ast_Types import Type_I32
-from Ast.literals.numberliteral import Literal
 from errors import error
 
 from . import Type_Base

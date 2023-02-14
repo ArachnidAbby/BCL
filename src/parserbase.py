@@ -1,5 +1,5 @@
 import ast  # python ast module
-from typing import Any, Callable, NamedTuple, Self
+from typing import Any, Callable, NamedTuple
 
 import Ast
 import errors
@@ -43,7 +43,7 @@ class ParserBase:
     '''
 
     CREATED_RULES: list[tuple[str, int]] = []
-    compiled_rules: dict[str, Callable[Self, bool]] = {}
+    compiled_rules: dict[str, tuple] = {}
 
     def __init__(self, lex_stream, module):
         self._tokens = []
@@ -76,11 +76,13 @@ class ParserBase:
         elif wanting.startswith('$'):  # `match value` operation
             return f'input[{pos}].value=="{wanting[1:]}"'
         elif '|' in wanting:  # `or` operation
-            return "("+(' or '.join([self.single_compile(y, pos) for y in wanting.split('|')]))+")"
+            code = [self.single_compile(y, pos) for y in wanting.split('|')]
+            return "("+(' or '.join(code))+")"
         else:
             return f'input[{pos}].name=="{wanting}"'
 
-    def compile_rule(self, rule: str) -> tuple[Callable[[list[ParserToken]], bool], int]:
+    def compile_rule(self, rule: str) -> tuple[Callable[[list[ParserToken]],
+                                                        bool], int]:
         output_stmts: list[str] = []
         for c, wanting in enumerate(rule.split(' ')):
             if wanting == '_':  # allow any
@@ -92,7 +94,7 @@ class ParserBase:
         return (compile(output_str, 'COMPILED RULE', 'eval'),
                 len(rule.split(' ')))
 
-    def parse(self, close_condition: Callable[[], bool] = lambda: False):
+    def parse(self):
         '''Parser main'''
         previous_start_position = self.start
         self.start = self._cursor   # where to reset cursor after consuming

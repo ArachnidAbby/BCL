@@ -9,7 +9,6 @@ class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
     __slots__ = ('variables', 'builder', 'last_instruction', 'ended')
 
-    # TODO: Move global state to centralized location
     BLOCK_STACK: deque[Self] = deque()
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
@@ -48,7 +47,7 @@ class Block(ContainerNode):
         self.BLOCK_STACK.pop()
 
     def __iter__(self) -> Iterator[Any]:
-        self.BLOCK_STACK.append(self)
+        self.BLOCK_STACK.append(self)  # type: ignore
         for child in self.children[0:-1]:
             yield child
             if self.ended:
@@ -63,7 +62,8 @@ class Block(ContainerNode):
 
     def validate_variable(self, var_name: str) -> bool:
         '''Return true if a variable already has a ptr'''
-        return self.variables[var_name].ptr is not None
+        var_ptr = self.variables[var_name].ptr  # type: ignore
+        return var_ptr is not None
 
     def validate_variable_exists(self, var_name: str) -> bool:
         return var_name in self.variables.keys()

@@ -21,6 +21,5 @@ class RangeLiteral(ExpressionNode):
         self.start = self.start.eval(func)
         self.end = self.end.eval(func)
 
-    @property
-    def position(self) -> SrcPosition:
+    def get_position(self) -> SrcPosition:
         return self.merge_pos((self.start.position, self.end.position))

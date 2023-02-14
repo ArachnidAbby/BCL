@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 from Ast.functions import functionobject as functions
@@ -161,7 +161,6 @@ def std_print_f32(func, args):
     x = args[0]
     pistr = func.builder.bitcast(fmt_strings["nonl"]["f32"], voidptr_ty)
     return func.builder.call(printf, [pistr, x])
-
 
 
 @functions.internal_function("exit", Ast_Types.Void(),

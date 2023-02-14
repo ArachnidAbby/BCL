@@ -22,6 +22,5 @@ class KeyValuePair(ASTNode):
         '''Get and validate type'''
         return self.value.as_type_reference(func)
 
-    @property
-    def position(self) -> SrcPosition:
+    def get_position(self) -> SrcPosition:
         return self.merge_pos((self.value.position, ))

@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
@@ -34,7 +34,6 @@ class StructLiteral(ExpressionNode):
         self.ptr = ptr
         return func.builder.load(ptr)
 
-    @property
-    def position(self) -> SrcPosition:
+    def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,
                                *[x.position for x in self.members.children]))

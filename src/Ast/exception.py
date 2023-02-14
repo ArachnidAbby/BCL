@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 import errors
 from Ast.functions import standardfunctions

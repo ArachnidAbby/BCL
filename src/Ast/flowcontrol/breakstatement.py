@@ -4,8 +4,6 @@ from Ast.nodes import ASTNode, Block
 
 class BreakStatement(ASTNode):
     __slots__ = ()
-    # type = NodeTypes.STATEMENT
-    # name = "break"
 
     def eval(self, func):
         if func.inside_loop is None:

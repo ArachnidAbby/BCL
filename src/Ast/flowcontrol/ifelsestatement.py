@@ -7,8 +7,6 @@ from Ast.nodes.commontypes import SrcPosition
 class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
-    # type = NodeTypes.STATEMENT
-    # name = "IfElse"
 
     def __init__(self, pos: SrcPosition, cond: ASTNode, if_block: ASTNode, else_block: ASTNode):
         self._position = pos
@@ -44,14 +42,10 @@ class IfElseStatement(ASTNode):
             with if_block:
                 for node in self.iter_block_or_stmt(self.if_block):
                     node.eval(func)
-                    # if isinstance(node, ReturnStatement):
-                    #     func.has_return = bfor
                 ifreturns = func.has_return
             func.has_return = bfor
             with else_block:
                 self.else_block.eval(func)
-                # if isinstance(self.else_block, IfStatement):# or isinstance(self.else_block, IfElseStatement):
-                #     func.has_return = bfor
                 elsereturns = func.has_return
 
         if elsereturns and ifreturns:

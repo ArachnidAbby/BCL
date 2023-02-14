@@ -1,5 +1,4 @@
 from Ast import Ast_Types
-from Ast.reference import Ref
 from errors import error
 
 from . import Type_Base
@@ -31,7 +30,7 @@ class Reference(Type_Base.Type):
         return hash(f"&{self.typ}")
 
     def convert_from(self, func, typ, previous):
-        if typ.name == "ref" and isinstance(previous.ret_type, Ref):
+        if typ.name == "ref" and isinstance(previous.ret_type, Reference):
             error("Pointer conversions are not supported due to unsafe " +
                   "behavior", line=previous.position)
         return self.typ.convert_from(func, typ, previous)

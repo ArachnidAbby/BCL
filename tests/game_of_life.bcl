@@ -6,8 +6,8 @@ define main() {
     board[4][1] = true;
     println("Generation: 0");
     draw_board(&board);
-    iters = 5;
-    for i in 0..iters {
+    gen = 0;
+    while true {
         for x in 0..10 {
             for y in 0..10 {
                 neighbors = check_neighbors(&board, x, y);
@@ -21,10 +21,13 @@ define main() {
                 }
             }
         }
+        println("\u001b[H");
         print("Generation: ");
-        println(i+1);
+        println(gen+1);
         board = new_board;
         draw_board(&board);
+        gen += 1;
+        usleep(500000);
     }
 
 

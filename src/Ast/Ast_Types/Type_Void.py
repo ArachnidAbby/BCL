@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from errors import error
 
@@ -26,6 +26,9 @@ class Void(Type_Base.Type):
             case Void(): return orig.eval(func)
             case _: error(f"Cannot convert 'void' to type '{typ}'",
                           line=orig.position)
+
+    def is_void(self) -> bool:
+        return True
 
     def get_op_return(self, op: str, lhs, rhs):
         return Void()

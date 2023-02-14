@@ -1,7 +1,6 @@
-import parser
-from typing import Self
+import parser  # type: ignore
 
-from llvmlite import binding, ir
+from llvmlite import binding, ir  # type: ignore
 
 import Ast.functions.standardfunctions
 import errors
@@ -10,9 +9,8 @@ from Ast.functions.functionobject import _Function
 from Ast.nodes import ASTNode, SrcPosition
 from lexer import Lexer
 
-# global_functions  = {} #! this will likely be later deprecated once `import <name>` is added
-
 modules: dict[str, "Module"] = {}
+
 
 class Module(ASTNode):
     __slots__ = ('location', 'functions', 'globals', 'imports', 'children',
@@ -23,10 +21,13 @@ class Module(ASTNode):
         super().__init__(pos)
         self.mod_name = name
         self.location = location
-        self.functions: dict[str, dict[tuple, _Function]] = {}  # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
-        self.globals: dict[str, object] = {}  # TODO: object is a placeholder for when this feature is properly added 
+        # will be a dict of dicts: dict[str, dict[tuple, _Function]],
+        # example: `{func_name: {arg_type_tuple: _Function(...)}}`
+        self.functions: dict[str, dict[tuple, _Function]] = {}
+        # TODO: object is a placeholder for when this feature is properly added
+        self.globals: dict[str, object] = {}
         self.imports: dict[str, "Module"] = {}
-        self.types: dict[str, "Type"] = {}
+        self.types: dict[str, "Type"] = {}   # type: ignore
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.target = binding.Target.from_triple(self.module.triple)
@@ -62,14 +63,14 @@ class Module(ASTNode):
     def create_type(self, name: str, typeobj: Ast.Type):
         self.types[name] = typeobj
 
-    def get_type(self, name) -> Ast.Ast_Types.Type:
+    def get_type(self, name, position) -> Ast.Ast_Types.Type:  # type: ignore
         if name in self.types.keys():
             return self.types[name]
         for imp in self.imports.values():
             if name in imp.types.keys():
                 return imp.types[name]
         if name in Ast.Ast_Types.definedtypes.types_dict.keys():
-            return Ast.Ast_Types.definedtypes.types_dict[name]
+            return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
 
         errors.error(f"Cannot find type '{name}' in module" +
                      "'{self.mod_name}'", line=position)
@@ -78,7 +79,8 @@ class Module(ASTNode):
         return self.module.get_unique_name(name)
 
     def get_local_name(self, name: str, position: tuple[int, int, int]):
-        '''get a local object by name, this could be a global, import, or function'''
+        '''get a local object by name, this could be a global, import,
+        or function'''
         if name in self.globals:
             return self.globals[name]
 
@@ -121,7 +123,7 @@ class Module(ASTNode):
 
     def get_all_functions(self) -> list[_Function]:
         '''get all functions for linking'''
-        output = []
+        output: list[_Function] = []
         for func_named in self.functions.values():
             output += func_named.values()
         return output
@@ -163,7 +165,7 @@ class Module(ASTNode):
                                                    codemodel="default")
         module_pass = binding.ModulePassManager()
         # * commented out optimizations may be re-added later on
-        pass_manager = binding.PassManagerBuilder()
+        # pass_manager = binding.PassManagerBuilder()
         # pass_manager.loop_vectorize = True
         # pass_manager.opt_level = 1
         module_pass.add_memcpy_optimization_pass()

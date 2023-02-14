@@ -5,7 +5,6 @@ import Ast.literals.numberliteral
 import errors
 from Ast.nodes.commontypes import SrcPosition
 from errors import error
-from lexer import Lexer
 from parserbase import ParserBase, ParserToken, rule
 
 
@@ -77,7 +76,8 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement, self.parse_math, self.parse_import_statment,
+            "KEYWORD": (self.parse_return_statement, self.parse_math,
+                        self.parse_import_statment,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
                         self.parse_if_else,
@@ -131,7 +131,8 @@ class Parser(ParserBase):
 
     @rule(0, "$import expr SEMI_COLON")
     def parse_import_statment(self):
-        if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
+        if not isinstance(self.peek(1).value,
+                          Ast.variables.reference.VariableRef):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
@@ -496,8 +497,8 @@ class Parser(ParserBase):
     def parse_var_usage(self):
         if self.peek(0).value in self.keywords:
             return
-        var = Ast.VariableRef(self.peek(0).pos, self.peek(0).value,
-                              self.blocks[-1][0])
+        var = Ast.variables.VariableRef(self.peek(0).pos, self.peek(0).value,
+                                        self.blocks[-1][0])
         self.replace(1, "expr", var)
 
     @rule(0, "AMP expr !OPEN_SQUARE")

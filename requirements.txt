@@ -5,7 +5,7 @@ sphinx-rtd-theme
 # project
 rply
 #llvmlite
-git+https://github.com/spidertyler2005/llvmlite.git 
+git+https://github.com/spidertyler2005/llvmlite.git
 psutil
 
 ## profiling

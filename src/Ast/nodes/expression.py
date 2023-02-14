@@ -7,9 +7,7 @@ from errors import error
 class ExpressionNode(ASTNode):
     '''Acts as an Expression in the AST.
     This means it has a value and return type'''
-
     __slots__ = ("ret_type", "ir_type", "ptr")
-    # type = NodeTypes.EXPRESSION
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self.ret_type = Ast_Types.Type()

@@ -1,15 +1,12 @@
 import errors
 from Ast import Ast_Types
-from Ast.functions.functionobject import functionsdict
 from Ast.nodes import ExpressionNode, ParenthBlock
 from Ast.nodes.commontypes import SrcPosition
 
 
-# TODO: should be turned into an operator and use a function type
 class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''
     __slots__ = ('ir_type', 'paren', 'function', 'args_types', "func_name")
-    # name = "funcCall"
 
     def __init__(self, pos: SrcPosition, name: str, parenth: ParenthBlock):
         super().__init__(pos)
@@ -22,7 +19,8 @@ class FunctionCall(ExpressionNode):
         functions = func.module.get_function(self.func_name,  self.position)
         if self.args_types not in functions:
             args_for_error = ','.join([str(x) for x in self.args_types])
-            errors.error(f"function '{self.func_name}({args_for_error})' was never defined", line=self.position)
+            errors.error(f"function '{self.func_name}({args_for_error})'" +
+                         "was never defined", line=self.position)
 
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):

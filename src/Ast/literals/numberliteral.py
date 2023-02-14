@@ -1,6 +1,6 @@
 from typing import Any
 
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition

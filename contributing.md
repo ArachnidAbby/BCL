@@ -28,13 +28,15 @@ Try to keep up with any updates to the static type checker being used.
 
 ## Avoid using strings as type annotations
 
-This can sometimes be unavoidable, but try your best to use it sparingly or for organizational purposes only (Ex: a class is defined much further down, but a type annotation needs to be used.)
+This can sometimes be unavoidable, but try your best to use it sparingly or for organizational purposes only (Ex: a class is defined much further down, but a type annotation needs to be used). This is also useful if you are having circular imports.
 
 ---
 
 # Code formatting (PEP8 -- modified)
 
 This repo very loosely follows pep8 formatting. Do not worry about the 80 char limit, but do ensure that lines are most readable.
+
+**Just use Flake8**
 
 ## avoid one-liners
 
@@ -49,21 +51,6 @@ def foo(y):
 # This sucks to read 82% of the time. 
 my_list = #[My long list comprehension I am too lazy to write]
 ```
-
-## When it makes sense, line up the `=`
-
-This just looks nice, I picked this up from a youtube video a few years back, and it's very nice.
-This is NOT a requirement ofc, just extra brownie-points :)
-
-```python
-class foo:
-    def __init__(self, x, y, z):
-        # mfw the equal sign lines up:
-        x_pos      = x
-        y_position = y
-        z_index    = z
-```
-
 
 
 ## Always use `__slots__` unless you need a dict
@@ -84,6 +71,8 @@ You also may never modify the LICENSE file unless given explicit permission.
 
 **this is a no-brainer**
 
+If you can, avoid confusing code.
+
 ## Include doc comments for other developers
 
 Doc comments are exclusively for other developers unless a compiler-plugin-api is made.
@@ -91,6 +80,7 @@ Doc comments are exclusively for other developers unless a compiler-plugin-api i
 ## Write and run tests!
 
 Your PR will be denied if it does not pass tests. Also, include failing and passing tests for correct and common error behavior.
+Also note, some bugs cause tests to not work when run together, but work when run seperately.
 
 <br>...
 

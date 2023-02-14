@@ -32,6 +32,5 @@ class ContainerNode(ASTNode):
     def set_end_pos(self, pos: SrcPosition):
         self.end_pos = pos
 
-    @property
-    def position(self) -> SrcPosition:
+    def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position, self.end_pos))

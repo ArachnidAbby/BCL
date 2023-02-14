@@ -1,7 +1,7 @@
 import os
 import platform
 
-from llvmlite import binding
+from llvmlite import binding  # type: ignore
 
 import errors
 
@@ -16,7 +16,8 @@ import errors
 #     ],
 #     [
 #         "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",
-#         "/lib64/ld-linux-x86-64.so.2", "-L/usr/lib/gcc/x86_64-pc-linux-gnu/12.2.1/",
+#         "/lib64/ld-linux-x86-64.so.2",
+#         "-L/usr/lib/gcc/x86_64-pc-linux-gnu/12.2.1/",
 #         "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
 #     ]
 # )
@@ -25,17 +26,20 @@ import errors
 def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
     binding.lld.lld_linux(file,
-            [
-                *get_linuxcrt(),
-                # *["tests/crt.o"],
-                *objects,
-            ],
-            [
-                "-Bdynamic", "-no-pie", "--build-id", "--dynamic-linker",
-                "/lib64/ld-linux-x86-64.so.2", f"-L{get_gcc_dir()}/",
-                "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc" #? what happens on 32 bit
-            ] + additional_args
-        )
+                          [
+                              *get_linuxcrt(),
+                              # *["tests/crt.o"],
+                              *objects,
+                          ],
+                          [
+                              "-Bdynamic", "-no-pie", "--build-id",
+                              "--dynamic-linker",
+                              "/lib64/ld-linux-x86-64.so.2",
+                              f"-L{get_gcc_dir()}/",
+                              "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/",
+                              "-L/lib64/", "-lc"  # ? what happens on 32 bit
+                          ] + additional_args
+                          )
 
 
 def get_gcc_dir(lib_dir='lib') -> str:
@@ -93,8 +97,10 @@ def get_linuxcrt() -> list[str]:
     return output
 
 
-def link_all(file: str, objects: list[str], additional_args: list[str] = []) -> str:
-    '''detect host machine and run the correct linking function. Return output file name'''
+def link_all(file: str, objects: list[str],
+             additional_args: list[str] = []) -> str:
+    '''detect host machine and run the correct linking function.
+    Return output file name'''
     system = platform.system()
 
     if system == "Linux":

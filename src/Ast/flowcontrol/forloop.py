@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 # from Ast.literals.numberliteral import Literal
@@ -11,9 +11,6 @@ class ForLoop(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('var', 'rang', 'block', 'loop_before', 'for_after',
                  'for_body', 'varptr',)
-
-    # name = "forloop"
-    # type = NodeTypes.STATEMENT
 
     def __init__(self, pos: SrcPosition, var: ASTNode, rang, block: Block):
         super().__init__(pos)

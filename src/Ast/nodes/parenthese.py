@@ -10,8 +10,6 @@ from errors import error
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ir_type', 'ret_type', 'in_func_call', 'ptr')
-    # type = NodeTypes.EXPRESSION
-    # name = "Parenth"
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
@@ -25,7 +23,10 @@ class ParenthBlock(ContainerNode):
             child.pre_eval(func)
 
         # * tuples return `void` but an expr returns the same data as its child
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
+        if len(self.children) == 1:
+            self.ret_type = self.children[0].ret_type
+        else:
+            self.ret_type = Ast_Types.Void()
         self.ir_type = self.ret_type.ir_type
 
     def __iter__(self) -> Iterator[Any]:
@@ -41,13 +42,13 @@ class ParenthBlock(ContainerNode):
 
     def append_child(self, child: GenericNode):
         self.children.append(child)
-        self.ret_type = self.children[0].ret_type if len(self.children)==1 else Ast_Types.Void()
 
     def _pass_as_pointer_changes(self, func):
         '''changes child elements to be passed as pointers if needed'''
         for c, child in enumerate(self.children):
             # TODO: THIS IS SHIT
-            if self.in_func_call and (child.ret_type.pass_as_ptr or child.ret_type.name=='strlit'):
+            if self.in_func_call and (child.ret_type.pass_as_ptr or
+                                      child.ret_type.name == 'strlit'):
                 ptr = child.get_ptr(func)
                 self.children[c] = ptr
                 continue
@@ -64,7 +65,8 @@ class ParenthBlock(ContainerNode):
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
         if len(self.children) > 1:
-            error("Cannot get a ptr to a set of parentheses with more than one value", line=self.position)
+            error("Cannot get a ptr to a set of parentheses with more than " +
+                  "one value", line=self.position)
 
         if self.ptr is None:
             self.ptr = func.create_const_var(self.ret_type)

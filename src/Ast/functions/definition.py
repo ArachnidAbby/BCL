@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 import errors
 from Ast import Ast_Types
@@ -13,11 +13,9 @@ class FunctionDef(ASTNode):
                  'module', 'is_ret_set', 'args_types', 'ret_type',
                  "has_return", "inside_loop", "func_name", "variables",
                  "consts", "ir_entry")
-    # type = NodeTypes.STATEMENT
-    # name = "funcDef"
 
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
-                 block: Block, module: "Module"):
+                 block: Block, module):
         self._position = pos
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
@@ -53,8 +51,8 @@ class FunctionDef(ASTNode):
         args_ir = []
         args_types = []
         for arg in args:
-            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(self),
-                                           True]  # type: ignore
+            self.args[arg.key.var_name] = \
+                [None, arg.value.as_type_reference(self), True]  # type: ignore
             if arg.get_type(self).pass_as_ptr:
                 args_ir.append(arg.get_type(self).ir_type.as_pointer())
             else:
@@ -107,7 +105,8 @@ class FunctionDef(ASTNode):
                                     self.func_name, self.function_ir,
                                     self.ret_type, self.args_types)
 
-        self.module.create_function(self.func_name, self.args_types, function_object)
+        self.module.create_function(self.func_name, self.args_types,
+                                    function_object)
 
         # Early return if the function has no body.
         if self.block is None:

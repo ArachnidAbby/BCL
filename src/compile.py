@@ -7,7 +7,8 @@ import errors
 from Ast.nodes.commontypes import SrcPosition
 from errors import _print_raw, _print_text, inline_warning
 
-DEFAULT_ARGS: dict[str, bool|str|list] = {  # contains all valid command line arguments
+# contains all valid command line arguments
+DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--emit-object": False,
     "--emit-binary": False,
     "--dev": False,
@@ -26,23 +27,25 @@ def timingContext(text: str):
 def compile(src_str: str, output_loc: Path, args, file=""):
     start = perf_counter()
 
-    inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
+    inline_warning("Python has notoriusly high memory usage, this applies " +
+                   "for this compiler!\nThis compiler is written in python " +
+                   "with llvmlite!")
     _print_raw("")
 
-    _print_raw(f'{errors.GREEN}/------------------------------------------------#{errors.RESET}')
+    _print_raw(f'{errors.GREEN}/{"-"*48}#{errors.RESET}')
 
     with timingContext('imports finished'):
-        import psutil
+        import psutil  # type: ignore
 
         process = psutil.Process(os.getpid())
         tmp = imports_mem = process.memory_info().rss
         import Ast.module
         import codegen
 
-        code_gen = codegen.CodeGen()
+        codegen.initialize_llvm()
         imports_mem = process.memory_info().rss - tmp
 
-        from rply.errors import LexingError
+        from rply.errors import LexingError  # type: ignore
 
         import Ast.functions.standardfunctions
         import lexer as lex
@@ -66,14 +69,16 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         module.eval()
 
     module.save_ir(output_loc.parents[0], args=args)
-    code_gen.shutdown()
+    codegen.shutdown_llvm()
 
-    _print_raw(f'{errors.GREEN}| IR saved, compilation done | {perf_counter() - start}s')
-    _print_raw(f'\\--------------------------------------------------/{errors.RESET}')
+    _print_raw(f'{errors.GREEN}| IR saved, compilation done | ' +
+               f'{perf_counter() - start}s')
+    _print_raw(f'\\{"-"*50}/{errors.RESET}')
     _print_raw("")
 
     usage = process.memory_info().rss
-    errors.inline_warning(f'{(usage - imports_mem)/1000:,.1f}KB of memory used for this operation.')  # in bytes
+    errors.inline_warning(f'{(usage - imports_mem)/1000:,.1f}' +
+                          'KB of memory used for this operation.')
 
     _print_raw('\n\n\n')
 
@@ -85,7 +90,7 @@ def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
         if not arg.startswith('-'):
             continue
         if '=' not in arg:
-            args_dict[arg] = not args_dict[arg] # invert current value
+            args_dict[arg] = not args_dict[arg]  # invert current value
         else:
             name, value = arg.split('=')
             if "," in value:

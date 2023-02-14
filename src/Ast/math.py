@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Any, Callable, Final, NamedTuple
 
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 import errors
 from Ast.Ast_Types.Type_Reference import Reference
@@ -9,7 +9,6 @@ from Ast.Ast_Types.Type_Reference import Reference
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
-from Ast.variables.reference import VariableRef
 
 # from Ast.variable import VariableRef
 

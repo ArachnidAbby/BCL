@@ -4,7 +4,7 @@
         "-s",
         "./tests",
         "-p",
-        "*_Test.py",
+        "*_Test.py"
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
@@ -14,6 +14,4 @@
             "source.organizeImports": true
         }
     }
-    
-    
 }

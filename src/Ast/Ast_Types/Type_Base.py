@@ -1,22 +1,28 @@
 
 from typing import Self
 
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from errors import error
 
 
 class Type:
-    '''abstract type class that outlines the necessary features of a type class.'''
+    '''abstract type class that outlines the necessary
+    features of a type class.'''
 
     __slots__ = ('ir_type')
     name = "UNKNOWN"
     pass_as_ptr = False
-    rang: tuple[int, int] | None = None  # Used for optimizations in array indexing. This is pretty epic.
-    no_load = False  # when allocating arguments as local vars on the stack this is checked -- False: Do allocated and load, True: Don't
-    read_only = False  # useful for things like function types.
+    # Used for optimizations in array indexing.
+    rang: tuple[int, int] | None = None
+    # when allocating arguments as local vars on the stack this is checked
+    # -- False: Do allocated and load, True: Don't
+    no_load = False
+    # useful for things like function types.
+    read_only = False
     has_members = False
-    returnable = True  # is this type allowed to be the return type of a function
+    # is this type allowed to be the return type of a function
+    returnable = True
 
     def __init__(self):
         pass
@@ -29,9 +35,10 @@ class Type:
         error("Type has no conversions",  line=orig.position)
 
     def is_void(self) -> bool:
-        return self.name == "void"
+        return False
 
-    def get_member(self, func, lhs, name) -> tuple[ir.Instruction, Self]|None:
+    def get_member(self, func, lhs,
+                   name) -> tuple[ir.Instruction, Self] | None:
         return None
 
     def __eq__(self, other):

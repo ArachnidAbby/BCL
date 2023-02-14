@@ -1,10 +1,8 @@
-# from Ast import Ast_Types
 from typing import Self
 
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast.Ast_Types import Type_Char, Type_I32
-from Ast.literals.numberliteral import Literal
 from errors import error
 
 from . import Type_Base

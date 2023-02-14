@@ -6,8 +6,6 @@ from Ast.nodes.commontypes import SrcPosition
 
 class ReturnStatement(ASTNode):
     __slots__ = ('expr')
-    # type = NodeTypes.STATEMENT
-    # name = "return"
 
     def __init__(self, pos: SrcPosition, expr: ExpressionNode):
         self._position = pos

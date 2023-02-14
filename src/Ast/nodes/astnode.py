@@ -48,9 +48,12 @@ class ASTNode:
 
         return SrcPosition(*new_pos)  # type: ignore
 
+    def get_position(self) -> SrcPosition:
+        return self._position
+
     @property
     def position(self) -> SrcPosition:
-        return self._position
+        return self.get_position()
 
     @position.setter
     def position(self, val):

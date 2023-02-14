@@ -1,4 +1,4 @@
-from llvmlite import ir
+from llvmlite import ir  # type: ignore
 
 from Ast.Ast_Types import Type_F32, Type_I32
 from errors import error
