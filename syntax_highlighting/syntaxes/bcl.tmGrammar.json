@@ -1,15 +1,87 @@
 {
     "scopeName": "source.bcl",
-    "patterns": [{ "include": "#expression" }],
+    "patterns": [
+      { "include": "#expression" }
+    ],
     "repository": {
       "expression": {
         "patterns": [
             { "include": "#comment" },
             { "include": "#constants" },
-            { "include": "#userDefined" },
+            { "include": "#function_declaration" },
+            { "include": "#structs"},
+            { "include": "#types"},
             { "include": "#keywords" },
             { "include": "#punctuation" },
             { "include": "#string" }
+        ]
+      },
+
+      "function_declaration": {
+        "begin": "(define)\\s+([a-zA-Z0-9_]+)\\s*(\\()",
+        "beginCaptures": {
+            "1": {"name": "storage.type.function.bcl"},
+            "2": {"name": "entity.name.function.bcl"},
+            "3": {"name": "punctuation.definition.parameters.begin.bcl"}
+        },
+        "end": "\\)",
+        "endCaptures": {
+            "0": {"name": "punctuation.definition.parameters.end.bcl"}
+        },
+        "patterns": [
+            {"include": "#comment" },
+            {
+              "begin": "([a-zA-Z0-9_]+)\\s*(:)",
+              "beginCaptures": {
+                "1": {"name": "variable.parameter.mylang"},
+                "2": {"name": "keyword.operator.type.annotation.mylang"}
+              },
+              "end": "(?=[,\\)])",
+              "patterns": [
+                {"include": "#comment"},
+                {"include": "#punctuation"},
+                {"include": "#types"}
+              ]
+            },
+
+            {
+             "match": ",",
+             "name": "punctuation.separator.parameter.mylang"
+            }
+        ]
+      },
+
+      "types": {
+        "match": "\\b((i8)|(i16)|(i32)|(i64)|(f32)|(f64)|(bool)|(char)|(string)|(strlit)|(str))\\b",
+        "name": "storage.type.bcl"
+      },
+      "structs": {
+        "begin": "(struct)\\s+([a-zA-Z0-9_]+)\\s*(\\{)",
+        "beginCaptures": {
+          "1": {"name": "storage.type.structure.bcl"},
+          "2": {"name": "entity.name.structure.bcl"},
+          "3": {"name": "punctuation.definition.block.start.bcl"}
+        },
+        "end": "\\}",
+        "endCaptures": {
+          "0": {"name": "punctuation.definition.block.end.bcl"}
+        },
+        "patterns": [
+          {"include": "#comment" },
+          {
+            "begin": "([a-zA-Z0-9_]+)\\s*(:)",
+            "beginCaptures": {
+              "1": {"name": "support.variable.property.bcl"},
+              "2": {"name": "keyword.operator.type.annotation.mylang"}
+            },
+            "end": "(?=[,\\}\\;])",
+            "patterns": [
+              {"include": "#comment"},
+              {"include": "#punctuation"},
+              {"include": "#types"}
+            ]
+          },
+          {"include": "#punctuation"}
         ]
       },
 
@@ -20,27 +92,15 @@
             "name": "meta.function-call.generic.bcl"
           },
           {
-            "match": "((if)|(else)|(for)|(while)|(import)|(return))",
+            "match": "\\b((if)|(else)|(for)|(while)|(import)|(return))\\b",
             "name": "keyword.control.bcl"
-          },
-          {
-            "match": "(define)",
-            "name": "storage.type.function"
-          },
-          {
-            "match": "(struct)",
-            "name": "storage.type.structure"
           },
           {
             "match": "((or)|(and)|(not)|(in))",
             "name": "keyword.operator.bcl"
           },
           {
-            "match": "((i8)|(i16)|(i32)|(i64)|(f32)|(f64)|(bool)|(char)|(string)|(strlit)|(str))",
-            "name": "storage.type.bcl"
-          },
-          {
-            "match": "((break)|(continue))",
+            "match": "\\b((break)|(continue))\\b",
             "name": "keyword.control.flow.bcl"
           },
           {
@@ -52,20 +112,7 @@
 
       "string": {
         "match": "([\"'])(?:(?=(\\\\?))\\2.)*?\\1",
-        "name": "string.quoted.double.bcl"    
-      },
-
-      "userDefined": {
-        "patterns": [
-          {
-            "match": "(?<=define\\s*)[a-zA-Z0-9_]+",
-            "name": "entity.name.function.bcl"
-          },
-          {
-            "match": "(?<=([,\\(]))\\s*([\\w\\d_]+(?=\\s*\\:))",
-            "name": "variable.parameter.function.bcl"
-          }
-        ]
+        "name": "string.quoted.double.bcl"
       },
 
       "comment": {

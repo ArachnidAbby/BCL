@@ -38,6 +38,22 @@ class _Function:
             return func.builder.call(self.function_object, args)
         return self.function_object(func, args)  # type: ignore
 
+    def get_ir_types(self):
+        ir_types = []
+        for arg in self.arg_types:
+            if arg.pass_as_ptr:
+                ir_types.append(arg.ir_type.as_pointer())
+            else:
+                ir_types.append(arg.ir_type)
+        return tuple(ir_types)
+
+    def declare(self, module):
+        if self.function_behavior == self.BEHAVIOR_INTERNAL:
+            return
+        fnty = ir.FunctionType((self.ret_type).ir_type, self.get_ir_types(), False)
+        ir.Function(module.module, fnty,
+                    name=module.get_unique_name(self.name))
+
 
 def internal_function(name: str, ret_type: Any,
                       arg_types: tuple, *,

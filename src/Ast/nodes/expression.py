@@ -25,6 +25,6 @@ class ExpressionNode(ASTNode):
             func.builder.store(val, self.ptr)
         return self.ptr
 
-    def as_type_reference(self):
+    def as_type_reference(self, func):
         '''Get this expresion as the reference to a type'''
         error(f"invalid type: {str(self)}", line=self.position)

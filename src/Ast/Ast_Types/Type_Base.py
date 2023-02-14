@@ -140,6 +140,10 @@ class Type:
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
+    def cleanup(self, func, ptr):
+        '''code to run on the closing of a function'''
+        print("cleanup")
+
     def __hash__(self):
         return hash(self.name)
 
@@ -153,7 +157,10 @@ class Type:
         '''Does nothing'''
         pass
 
-    def as_type_reference(self):
+    def declare(self, mod):
+        '''re-declare an ir-type in a module'''
+
+    def as_type_reference(self, func):
         return self
 
     def get_members(self):

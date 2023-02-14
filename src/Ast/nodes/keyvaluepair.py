@@ -15,12 +15,12 @@ class KeyValuePair(ASTNode):
         self.key = k
         self.value = v
 
-    def validate_type(self):  # TODO: REMOVE, DUPLICATE
-        return self.value.as_type_reference()
+    def validate_type(self, func):  # TODO: REMOVE, DUPLICATE
+        return self.value.as_type_reference(func)
 
-    def get_type(self) -> Any:
+    def get_type(self, func) -> Any:
         '''Get and validate type'''
-        return self.value.as_type_reference()
+        return self.value.as_type_reference(func)
 
     @property
     def position(self) -> SrcPosition:

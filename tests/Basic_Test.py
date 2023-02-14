@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from pathlib import Path
 
 p = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{p}/../src')
@@ -23,7 +24,8 @@ class basictests(unittest.TestCase):
         define test_func(x: i32, y: i32) -> i32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions.ll',
+        file = Path(f'{p}/random/test_functions.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_function_overloading(self):
@@ -40,7 +42,8 @@ class basictests(unittest.TestCase):
         define test_func(x: f32, y: f32) -> f32 { return x+y;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_functions_2.ll',
+        file = Path(f'{p}/random/test_functions_2.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     @unittest.expectedFailure
@@ -52,7 +55,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_1.ll',
+        file = Path(f'{p}/random/test_variables_1.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     @unittest.expectedFailure
@@ -66,7 +70,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_2.ll',
+        file = Path(f'{p}/random/test_variables_2.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_variables_3(self):
@@ -79,7 +84,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_variables_3.ll',
+        file = Path(f'{p}/random/test_variables_3.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_ops(self):
@@ -96,7 +102,8 @@ class basictests(unittest.TestCase):
         define test(x: i32) -> i32 { return 12;}
         """
 
-        compile.compile(test_code, f'{p}/random/test_ops.ll',
+        file = Path(f'{p}/random/test_ops.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_if_else_if(self):
@@ -114,7 +121,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_ifs.ll',
+        file = Path(f'{p}/random/test_ifs.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_named_constants(self):
@@ -129,7 +137,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_named_consts.ll',
+        file = Path(f'{p}/random/test_named_consts.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_struct(self):
@@ -145,7 +154,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/test_struct_usage.ll',
+        file = Path(f'{p}/random/test_struct_usage.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
 

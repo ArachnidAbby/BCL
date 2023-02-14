@@ -116,5 +116,5 @@ class VariableIndexRef(ExpressionNode):
     def __repr__(self) -> str:
         return f"<index of `{self.varref}`>"
 
-    def as_type_reference(self):
-        return Ast_Types.Array(self.ind, self.varref.as_type_reference())
+    def as_type_reference(self, func):
+        return Ast_Types.Array(self.ind, self.varref.as_type_reference(func))

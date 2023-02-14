@@ -1,182 +1,72 @@
-// define pause() -> i32;
-// define puts(x: strlit);
+import SDL;
 
-// struct SDL_Rect {
+define main() -> i32 {
+    if SDL_Init(32) < 0 {
+        println("Failed to initialize sdl2");
+        return -1;
+    }
+
+    window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
+                                          805240832,
+                                          805240832,
+                                          680, 480,
+                                          0);
+
+    window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
+
+    SDL_UpdateWindowSurface(window);
+
+    SDL_Delay(10000);
+
+    // event = SDL_Event {
+    //         type: ' ',
+    //         active: [' ';3], 
+    //         key: [' ';7], // 2, 1, 1, 1, 2
+    //         motion: [' ';6],
+    //         button: [' ';5],
+    //         jaxis: [' ';5], 
+    //         jball: [' ';5], 
+    //         jhat: [' ';4],
+    //         jbutton: [' ';4],
+    //         resize: [' ';5], 
+    //         expose: ' ', 
+    //         quit: ' ', 
+    //         user: [' ';13], // 1, 4, 8, 8 
+    //         syswm: [' ';9]
+    //     };
+
+    return 0;
+}
+
+// struct parent {
+//     x: test,
+//     y: test;
+// }
+
+// struct test {
 //     x: i32,
-//     y: i32,
-//     w: i32,
-//     h: i32;
+//     y: i32;
 // }
 
-// struct SDL_DisplayMode {
-//     w: i32, h: i32,
-//     refresh_rate: i32,
-//     driverdata: &char;
+// struct gross {
+//     x: &i32,
+//     y: i32;
 // }
 
-// struct SDL_WindowShaperMode {
-//     mode: i32,
-//     parameters: i32;
+// // define testing(x: test) -> gross {
+// //     referencable = x.y;
+// //     value = gross {x: &(x.y), y: x.x};
+// //     return value;
+// // }
+
+// define main() {
+//     // (10) = true;
+//     x = parent {
+//         x: test {x: 1, y: 2},
+//         y: test {x: 3, y: 4}
+//     };
+//     // x.x.x = 8;
+//     // x.y.z;
+//     println(x.y.x); // completely inapropriate! XXX content in my code?!
+//     println(8+x.y.x); //should be 11
 // }
-
-// struct SDL_WindowShaper {
-//     window: &char,
-//     userx: i32, usery: i32,
-//     mode: SDL_WindowShaperMode;
-// }
-
-// struct SDL_WindowUserData {
-//     name: strlit,
-//     data: &char,
-//     next: &char;
-// }
-
-// struct SDL_Surface {
-//     flags: i32,
-//     format: char[4],
-//     w: i32, h: i32,
-//     pitch: i32,
-//     pixels: &char,
-//     userdata: &char,
-//     locked: i32,
-//     lock_data: &char,
-//     clip_rect: SDL_Rect,
-//     map: &char,
-//     refcount: i32;
-// }
-
-// struct SDL_Window {
-//     magic: &char,
-//     id: i32,
-//     title: &char,
-//     icon: &SDL_Surface,
-//     x: i32, y: i32,
-//     w: i32, h: i32,
-//     min_w: i32, min_y: i32,
-//     max_w: i32, max_h: i32,
-//     flags: i32,
-//     last_fullscreen_flags: i32,
-
-//     windowed: SDL_Rect,
-//     fullscreen_mode: SDL_DisplayMode,
-//     brightness: f32,
-//     gamma: &char[2], // in place of &i16
-//     saved_gamma: &char[2],
-    
-//     surface: &SDL_Surface,
-//     is_hiding: i32, // in place of SDL_bool
-//     is_destroying: i32, // in place of SDL_bool
-//     shaper: &SDL_WindowShaper,
-//     data: &SDL_WindowUserData,
-//     driverdata: &char,
-//     prev: &char,
-//     next: &char;
-// }
-
-// struct SDL_Event {
-//     type: char,
-//     active: char[3], 
-//     key: char[7], // 2, 1, 1, 1, 2
-//     motion: char[6],
-//     button: char[5],
-//     jaxis: char[5], 
-//     jball: char[5], 
-//     jhat: char[4],
-//     jbutton: char[4],
-//     resize: char[5], 
-//     expose: char, 
-//     quit: char, 
-//     user: char[13], // 1, 4, 8, 8 
-//     syswm: char[9];
-// }
-
-// define SDL_Init(flags: i32) -> i32;
-// define SDL_CreateWindow(name: strlit, x: i32, y: i32, w: i32, h: i32, idk: i32) -> &SDL_Window;
-// define SDL_GetWindowSurface(window: &SDL_Window) -> &SDL_Surface;
-// define SDL_UpdateWindowSurface(window: &SDL_Window) -> i32;
-// define SDL_Delay(ms: i32);
-// define SDL_PollEvent(event: &SDL_Event) -> i32;
-
-// define main() -> i32 {
-//     if SDL_Init(32) < 0 {
-//         println("Failed to initialize sdl2");
-//         return -1;
-//     }
-
-//     window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
-//                                           805240832,
-//                                           805240832,
-//                                           680, 480,
-//                                           0);
-
-//     window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
-
-//     SDL_UpdateWindowSurface(window);
-
-//     // SDL_Delay(10000);
-
-//     event = SDL_Event {
-//             type: ' ',
-//             active: [' ';3], 
-//             key: [' ';7], // 2, 1, 1, 1, 2
-//             motion: [' ';6],
-//             button: [' ';5],
-//             jaxis: [' ';5], 
-//             jball: [' ';5], 
-//             jhat: [' ';4],
-//             jbutton: [' ';4],
-//             resize: [' ';5], 
-//             expose: ' ', 
-//             quit: ' ', 
-//             user: [' ';13], // 1, 4, 8, 8 
-//             syswm: [' ';9]
-//         };
-
-//     quit = false;
-//     event.type.asdff;
-
-//     // while not quit {
-//     //     temp = SDL_PollEvent(&event);
-//     //     if temp!=0{
-//     //         println("gaming");
-//     //     if event[0] == 256 { //SDL_QUIT
-//     //         exit(0);
-//     //     }
-//     //     }
-//     // }
-
-//     return 0;
-// }
-
-struct parent {
-    x: test,
-    y: test;
-}
-
-struct test {
-    x: i32,
-    y: i32;
-}
-
-struct gross {
-    x: &i32,
-    y: i32;
-}
-
-// define testing(x: test) -> gross {
-//     referencable = x.y;
-//     value = gross {x: &(x.y), y: x.x};
-//     return value;
-// }
-
-define main() {
-    // (10) = true;
-    x = parent {
-        x: test {x: 1, y: 2},
-        y: test {x: 3, y: 4}
-    };
-    // x.x.x = 8;
-    // x.y.z;
-    println(x.y.x); // completely inapropriate! XXX content in my code?!
-    println(8+x.y.x); //should be 11
-}

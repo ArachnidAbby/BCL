@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from pathlib import Path
 
 p = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{p}/../src')
@@ -20,7 +21,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_creation.ll',
+        file = Path(f'{p}/random/arrays/test_creation.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_indexing(self):
@@ -33,7 +35,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_index.ll',
+        file = Path(f'{p}/random/arrays/test_index.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     @unittest.expectedFailure
@@ -47,7 +50,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_over_index.ll',
+        file = Path(f'{p}/random/arrays/test_over_index.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_functions(self):
@@ -65,7 +69,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_functions.ll',
+        file = Path(f'{p}/random/arrays/test_functions.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_index_assign(self):
@@ -77,7 +82,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_index_assign.ll',
+        file = Path(f'{p}/random/arrays/test_index_assign.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_math(self):
@@ -89,7 +95,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_math.ll',
+        file = Path(f'{p}/random/arrays/test_math.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_index_with_vars(self):
@@ -101,7 +108,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_index_w_vars.ll',
+        file = Path(f'{p}/random/arrays/test_index_w_vars.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_assign_with_vars(self):
@@ -114,7 +122,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_assign_w_vars.ll',
+        file = Path(f'{p}/random/arrays/test_assign_w_vars.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_arrays_of_structs(self):
@@ -142,7 +151,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_struct_arrays.ll',
+        file = Path(f'{p}/random/arrays/test_struct_arrays.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
     def test_inplace_ops(self):
@@ -157,7 +167,8 @@ class basictests(unittest.TestCase):
         }
         """
 
-        compile.compile(test_code, f'{p}/random/arrays/test_inplace_ops.ll',
+        file = Path(f'{p}/random/arrays/test_inplace_ops.ll')
+        compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
 

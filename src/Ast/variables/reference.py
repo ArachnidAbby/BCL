@@ -45,14 +45,14 @@ class VariableRef(ExpressionNode):
         self.ret_type = self.ret_type.typ
         return self
 
-    def as_type_reference(self):
+    def as_type_reference(self, func):
         '''Get this variable's name as a Type
         This is useful for static type declaration.
         '''
-        if self.var_name in Ast_Types.types_dict:
-            return Ast_Types.types_dict[self.var_name]()
-        else:
-            error(f"Could not find type: {self.var_name}", line=self.position)
+        # if self.var_name in Ast_Types.types_dict:
+        return func.module.get_type(self.var_name)()
+        # else:
+        #     error(f"Could not find type: {self.var_name}", line=self.position)
 
     def as_func_reference(self):
         '''Get this variable's name as the name of a function

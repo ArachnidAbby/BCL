@@ -14,7 +14,7 @@ class Reference(Type_Base.Type):
     returnable = False
 
     def __init__(self, typ):
-        self.typ = typ.as_type_reference()
+        self.typ = typ
 
         self.ir_type = typ.ir_type.as_pointer()
 

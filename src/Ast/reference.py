@@ -37,5 +37,5 @@ class Ref(ExpressionNode):
     def __str__(self) -> str:
         return str(self.var)
 
-    def as_type_reference(self):
-        return Ast_Types.Reference(self.var.as_type_reference())
+    def as_type_reference(self, func):
+        return Ast_Types.Reference(self.var.as_type_reference(func))

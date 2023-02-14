@@ -1,4 +1,4 @@
-// import random_import;
+import random_import;
 
 // Tile Types
 // '.' = Nothing
@@ -7,6 +7,7 @@
 // '^' = powered wire (tail)
 
 define main() {
+    // poggers();
     board: char[8][8] = [['.', '.', '*', '*', '.', '.', '.', '.'],
                          ['.', '*', '*', '.', '*', '*', '.', '.'],
                          ['*', '.', '*', '*', '.', '.', '*', '.'],

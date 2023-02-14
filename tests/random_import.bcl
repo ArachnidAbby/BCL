@@ -1,0 +1,12 @@
+import wire_world;
+
+struct test {
+    x: i32,
+    y: i32;
+}
+
+define poggers() {
+    println("SHOG");
+    println(get_new('#',2));
+    println("");
+}

@@ -14,7 +14,7 @@ class Array(Type_Base.Type):
     no_load = False
 
     def __init__(self, size, typ):
-        self.typ = typ.as_type_reference()
+        self.typ = typ
 
         if not size.isconstant:
             error("size of array type must be a int-literal",
@@ -27,7 +27,6 @@ class Array(Type_Base.Type):
         elif size.ret_type != Type_I32.Integer_32:
             error("Array size must be an integer", line=size.position)
 
-        typ.eval(None)
         self.ir_type = ir.ArrayType(typ.ir_type, self.size)
 
     @staticmethod

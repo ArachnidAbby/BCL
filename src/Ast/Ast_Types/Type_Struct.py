@@ -36,14 +36,14 @@ class Struct(Ast_Types.Type):
         self.size = len(self.member_indexs)-1
         self.rang = None
 
-    def declare(self):
+    def define(self, func):
         for member in self.raw_members:
             # when encountering an unreturnable type, make this struct unreturnable
-            if not member.get_type().returnable:
+            if not member.get_type(func).returnable:
                 self.returnable = False
 
             member_name = member.key.var_name
-            self.members[member_name] = member.get_type()
+            self.members[member_name] = member.get_type(func)
         self.ir_type.set_body(*[x.ir_type for x in self.members.values()])
 
     # TODO: allow casting overloads

@@ -23,7 +23,7 @@ def timingContext(text: str):
     _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
 
-def compile(src_str: str, output_loc: str, args, file=""):
+def compile(src_str: str, output_loc: Path, args, file=""):
     start = perf_counter()
 
     inline_warning("Python has notoriusly high memory usage, this applies for this compiler!\nThis compiler is written in python with llvmlite!")
@@ -52,9 +52,8 @@ def compile(src_str: str, output_loc: str, args, file=""):
 
     with timingContext('parsing finished'):
         try:
-            module = Ast.module.Module(SrcPosition.invalid(), "main",
+            module = Ast.module.Module(SrcPosition.invalid(), output_loc.stem,
                                        str(file), tokens)
-            Ast.functions.standardfunctions.declare_all(module.module)
             module.parse()
         except LexingError as e:
             error_pos = e.source_pos
@@ -66,7 +65,7 @@ def compile(src_str: str, output_loc: str, args, file=""):
         module.pre_eval()
         module.eval()
 
-    module.save_ir(output_loc, args=args)
+    module.save_ir(output_loc.parents[0], args=args)
     code_gen.shutdown()
 
     _print_raw(f'{errors.GREEN}| IR saved, compilation done | {perf_counter() - start}s')
@@ -104,5 +103,5 @@ def compile_file(file: Path, args):
 
     with file.open() as f:
         args = create_args_dict(args)
-        compile(f.read(), str(file.absolute().parents[0] / "output"), args,
+        compile(f.read(), file.absolute(), args,
                 file=str(file))

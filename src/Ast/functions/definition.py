@@ -53,13 +53,13 @@ class FunctionDef(ASTNode):
         args_ir = []
         args_types = []
         for arg in args:
-            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(),
+            self.args[arg.key.var_name] = [None, arg.value.as_type_reference(self),
                                            True]  # type: ignore
-            if arg.get_type().pass_as_ptr:
-                args_ir.append(arg.get_type().ir_type.as_pointer())
+            if arg.get_type(self).pass_as_ptr:
+                args_ir.append(arg.get_type(self).ir_type.as_pointer())
             else:
-                args_ir.append(arg.get_type().ir_type)
-            args_types.append(arg.get_type())
+                args_ir.append(arg.get_type(self).ir_type)
+            args_types.append(arg.get_type(self))
 
         self.args_ir = tuple(args_ir)
         self.args_types = tuple(args_types)
@@ -70,12 +70,12 @@ class FunctionDef(ASTNode):
             errors.error(f"Function {self.func_name}'s argument tuple " +
                          "consists of non KV_pairs", line=self.position)
 
-    def _validate_return(self):
+    def _validate_return(self, func):
         ret_line = SrcPosition.invalid()
         if self.is_ret_set:
             # self.ret_type.eval(self)
             ret_line = self.ret_type.position
-            self.ret_type = self.ret_type.as_type_reference()
+            self.ret_type = self.ret_type.as_type_reference(self)
         if (not self.ret_type.returnable) and self.block is not None:
             errors.error(f"Function {self.func_name} cannot return a " +
                          "reference to a local variable or value.",
@@ -94,7 +94,7 @@ class FunctionDef(ASTNode):
             self.variables.append((self.block.variables[x], x))
 
     def pre_eval(self):
-        self._validate_return()
+        self._validate_return(self)
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
 
         if self.func_name not in functionsdict:
@@ -103,10 +103,11 @@ class FunctionDef(ASTNode):
 
         self.function_ir = ir.Function(self.module.module, fnty,
                                        name=self._mangle_name(self.func_name))
-        functionsdict[self.func_name][self.args_types] = \
-            _Function(_Function.BEHAVIOR_DEFINED,
-                      self.func_name, self.function_ir,
-                      self.ret_type, self.args_types)  # TODO: REMOVE
+        function_object = _Function(_Function.BEHAVIOR_DEFINED,
+                                    self.func_name, self.function_ir,
+                                    self.ret_type, self.args_types)
+
+        self.module.create_function(self.func_name, self.args_types, function_object)
 
         # Early return if the function has no body.
         if self.block is None:

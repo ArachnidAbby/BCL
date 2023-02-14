@@ -3,17 +3,21 @@ from typing import Self
 
 from llvmlite import binding, ir
 
+import Ast.functions.standardfunctions
 import errors
 import linker
 from Ast.functions.functionobject import _Function
 from Ast.nodes import ASTNode, SrcPosition
+from lexer import Lexer
 
 # global_functions  = {} #! this will likely be later deprecated once `import <name>` is added
 
+modules: dict[str, "Module"] = {}
 
 class Module(ASTNode):
     __slots__ = ('location', 'functions', 'globals', 'imports', 'children',
-                 'module', 'mod_name', 'target')
+                 'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
+                 'evaled', 'ir_saved', 'types')
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -21,15 +25,54 @@ class Module(ASTNode):
         self.location = location
         self.functions: dict[str, dict[tuple, _Function]] = {}  # will be a dict of dicts: dict[str, dict[tuple, _Function]], example: `{func_name: {arg_type_tuple: _Function(...)}}`
         self.globals: dict[str, object] = {}  # TODO: object is a placeholder for when this feature is properly added 
-        self.imports: dict[str, Self] = {}
+        self.imports: dict[str, "Module"] = {}
+        self.types: dict[str, "Type"] = {}
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.target = binding.Target.from_triple(self.module.triple)
         self.children = tokens
+        self.parsed = False
+        self.pre_evaled = False
+        self.evaled = False
+        self.ir_saved = False
+        Ast.functions.standardfunctions.declare_all(self.module)
+
+        modules[name] = self
 
     def parse(self):
         pg = parser.Parser(self.children, self)
         self.children = pg.parse()
+        self.parsed = True
+        for imp in self.imports.values():
+            if not imp.parsed:
+                imp.parse()
+
+    def add_import(self, file: str, name: str):
+        if name in modules.keys():
+            self.imports[name] = modules[name]
+            return
+
+        with open(file, 'r') as f:
+            src_str = f.read()
+            tokens = Lexer().get_lexer().lex(src_str)
+            new_module = Ast.module.Module(SrcPosition.invalid(), name,
+                                           file, tokens)
+            self.imports[name] = new_module
+
+    def create_type(self, name: str, typeobj: Ast.Type):
+        self.types[name] = typeobj
+
+    def get_type(self, name) -> Ast.Ast_Types.Type:
+        if name in self.types.keys():
+            return self.types[name]
+        for imp in self.imports.values():
+            if name in imp.types.keys():
+                return imp.types[name]
+        if name in Ast.Ast_Types.definedtypes.types_dict.keys():
+            return Ast.Ast_Types.definedtypes.types_dict[name]
+
+        errors.error(f"Cannot find type '{name}' in module" +
+                     "'{self.mod_name}'", line=position)
 
     def get_unique_name(self, name: str):
         return self.module.get_unique_name(name)
@@ -58,23 +101,64 @@ class Module(ASTNode):
 
     def get_function(self, name: str, position: tuple[int, int, int]):
         '''get a function defined in module'''
-        if name in self.functions:
+        if name in self.functions.keys():
             return self.functions[name]
+        for imp in self.imports.values():
+            if name in imp.functions.keys():
+                return imp.functions[name]
+        if name in Ast.functions.functionobject.functionsdict.keys():
+            return Ast.functions.functionobject.functionsdict[name]
 
         errors.error(f"Cannot find function '{name}' in module" +
                      "'{self.mod_name}'", line=position)
 
+    def create_function(self, name: str, args_types: tuple,
+                        function_object: _Function):
+        if name not in self.functions.keys():
+            self.functions[name] = {args_types: function_object}
+            return
+        self.functions[name][args_types] = function_object
+
+    def get_all_functions(self) -> list[_Function]:
+        '''get all functions for linking'''
+        output = []
+        for func_named in self.functions.values():
+            output += func_named.values()
+        return output
+
+    def get_import_functions(self):
+        output = []
+        for mod in self.imports.values():
+            output += mod.get_all_functions()
+        return output
+
     def pre_eval(self):
+        self.pre_evaled = True
+        for mod in self.imports.values():
+            if not mod.pre_evaled:
+                mod.pre_eval()
+                mod.pre_evaled = True
+
         for c, child in enumerate(self.children):
             if not child.completed:
                 self.syntax_error_information(child, c)
             child.value.pre_eval()
 
     def eval(self):
+        self.evaled = True
+        for mod in self.imports.values():
+            if not mod.evaled:
+                mod.eval()
+                mod.evaled = True
+
         for child in self.children:
             child.value.eval()
 
+        del self.children
+
     def save_ir(self, loc, args={}):
+        if self.ir_saved:
+            return
         target = self.target.create_target_machine(force_elf=True,
                                                    codemodel="default")
         module_pass = binding.ModulePassManager()
@@ -94,21 +178,34 @@ class Module(ASTNode):
         module_pass.add_cfg_simplification_pass()
         # module_pass.add_merge_returns_pass()
         # pass_manager.populate(module_pass)
+        funcs = self.get_import_functions()
+        for func in funcs:
+            func.declare(self)
 
         llir = str(self.module)
         mod = binding.parse_assembly(llir)
         module_pass.run(mod)
 
-        with open(f"{loc}.ll", 'w') as output_file:
+        with open(f"{loc}/{self.mod_name}.ll", 'w') as output_file:
             output_file.write(str(mod))
 
         if not (args["--emit-object"] or args["--emit-binary"]):
             return
-        with open(f"{loc}.o", 'wb') as output_file:
+        with open(f"{loc}/{self.mod_name}.o", 'wb') as output_file:
             output_file.write(target.emit_object(mod))
+        self.ir_saved = True
+
+        other_args = args.copy()
+        other_args["--emit-binary"] = False
+        other_args["--emit-object"] = True
+        objects = [f"{loc}/{self.mod_name}.o"]
+        for mod in self.imports.values():
+            mod.save_ir(f"{loc}/", other_args)
+            objects.append(f"{loc}/{mod.mod_name}.o")
+
         if args["--emit-binary"]:
             extra_args = [f"-l{x}" for x in args["--libs"]]
-            linker.link_all(loc, [f"{loc}.o"], extra_args)
+            linker.link_all(f"{loc}/output", objects, extra_args)
 
     # TODO: Create a seperate error parser
     def syntax_error_information(self, child, c: int):

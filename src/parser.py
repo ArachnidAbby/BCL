@@ -77,7 +77,7 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement, self.parse_math, # self.parse_import_statment,
+            "KEYWORD": (self.parse_return_statement, self.parse_math, self.parse_import_statment,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
                         self.parse_if_else,
@@ -129,24 +129,19 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
-    # @rule(0, "$import expr SEMI_COLON")
-    # def parse_import_statment(self):
-    #     if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
-    #         errors.error("Import must use a module name",
-    #                      line=self.peek(1).pos)
+    @rule(0, "$import expr SEMI_COLON")
+    def parse_import_statment(self):
+        if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
+            errors.error("Import must use a module name",
+                         line=self.peek(1).pos)
 
-    #     name = self.peek(1).value.var_name
-    #     directories = self.module.location.split("/")[:-1]
-    #     directory_path = '/'.join(directories)
-    #     filedir = f"{directory_path}/{name}.bcl"
-    #     with open(filedir, 'r') as f:
-    #         src_str = f.read()
-    #         tokens = Lexer().get_lexer().lex(src_str)
-    #     new_module = Ast.module.Module(SrcPosition.invalid(), name,
-    #                                    filedir, tokens)
-    #     Ast.program.add_module_queue(new_module)
-    #     errors.inline_warning("Notice: import statements don't do anything")
-    #     self.consume(0, 3)
+        name = self.peek(1).value.var_name
+        directories = self.module.location.split("/")[:-1]
+        directory_path = '/'.join(directories)
+        filedir = f"{directory_path}/{name}.bcl"
+        self.module.add_import(filedir, name)
+        errors.inline_warning("Notice: import statements may be buggy")
+        self.consume(0, 3)
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement|expr_list CLOSE_CURLY")
     def parse_finished_blocks(self):

@@ -34,7 +34,7 @@ class VariableAssign(ASTNode):
         name = self.var_name.var_name
 
         if name not in self.block.variables.keys():
-            self.typ = self.typ.as_type_reference()
+            self.typ = self.typ.as_type_reference(func)
             self.block.variables[name] = VariableObj(None, self.typ,
                                                      False)
             self.is_declaration = True

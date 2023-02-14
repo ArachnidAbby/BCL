@@ -97,15 +97,14 @@ class OperationNode(ExpressionNode):
     def __str__(self) -> str:
         return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
 
-    def as_type_reference(self):
+    def as_type_reference(self, func):
         if not self.shunted:
-            print("BAMING")
-            return RPN_to_node(shunt(self)).as_type_reference_defer()
+            return RPN_to_node(shunt(self)).as_type_reference_defer(func)
         else:
-            return self.as_type_reference_defer()
+            return self.as_type_reference_defer(func)
 
-    def as_type_reference_defer(self):
-        return super().as_type_reference()
+    def as_type_reference_defer(self, func):
+        return super().as_type_reference(func)
 
 
 # To any future programmers:
@@ -228,7 +227,7 @@ def member_access(self, func, lhs, rhs):
 
 @operator(10, "as")
 def _as(self, func, lhs, rhs):
-    return (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference())
+    return (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
 
 
 # TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
