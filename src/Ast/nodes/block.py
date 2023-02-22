@@ -7,17 +7,18 @@ from Ast.nodes.container import ContainerNode
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder', 'last_instruction', 'ended')
+    __slots__ = ('variables', 'builder', 'last_instruction', 'ended', 'parent')
 
     BLOCK_STACK: deque[Self] = deque()
 
-    def __init__(self, pos: SrcPosition, *args, **kwargs):
+    def __init__(self, pos: SrcPosition, parent=None, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
         self.variables: dict[str, object] = {}
         # {name: VarObj, ...} -- recursive import uppon proper type annotation
         self.builder = None
         self.last_instruction = False
         self.ended = False
+        self.parent = parent
 
     def append_nested_vars(self):
         '''append vars for nested blocks'''
@@ -26,7 +27,7 @@ class Block(ContainerNode):
                               **self.BLOCK_STACK[-1].variables}
 
     def pre_eval(self, func):
-        self.append_nested_vars()
+        # self.append_nested_vars()
         self.BLOCK_STACK.append(self)
         for x in self.children:
             x.pre_eval(func)
@@ -58,12 +59,20 @@ class Block(ContainerNode):
 
     def get_variable(self, var_name: str):
         '''get variable by name'''
-        return self.variables[var_name]
+        if var_name in self.variables.keys():
+            return self.variables[var_name]
+        elif self.parent is not None:
+            return self.parent.get_variable(var_name)
+        else:
+            return None
 
     def validate_variable(self, var_name: str) -> bool:
         '''Return true if a variable already has a ptr'''
-        var_ptr = self.variables[var_name].ptr  # type: ignore
+        var_ptr = self.get_variable(var_name).ptr  # type: ignore
         return var_ptr is not None
 
     def validate_variable_exists(self, var_name: str) -> bool:
-        return var_name in self.variables.keys()
+        if self.parent is None:
+            return var_name in self.variables.keys()
+        return (var_name in self.variables.keys()) or \
+            self.parent.validate_variable_exists(var_name)

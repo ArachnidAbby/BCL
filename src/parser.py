@@ -158,6 +158,8 @@ class Parser(ParserBase):
             errors.error("Unclosed '('", line=tok.pos)
 
         block = self.blocks.pop()
+        if self.blocks[-1][0] is not None:
+            block[0].parent = self.blocks[-1][0]
         self.start = self.blocks[-1][1]
 
         self.replace(3, "statement", block[0])

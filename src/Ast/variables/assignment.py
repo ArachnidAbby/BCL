@@ -33,14 +33,14 @@ class VariableAssign(ASTNode):
 
         name = self.var_name.var_name
 
-        if name not in self.block.variables.keys():
+        if not self.block.get_variable(name):
             self.typ = self.typ.as_type_reference(func)
             self.block.variables[name] = VariableObj(None, self.typ,
                                                      False)
             self.is_declaration = True
 
         if self.block.get_variable(name).type.is_void():
-            self.block.variables[name].type = self.value.ret_type
+            self.block.get_variable(name).type = self.value.ret_type
 
         var_search_tuple = (self.block.get_variable(name),
                             name)
@@ -67,7 +67,7 @@ class VariableAssign(ASTNode):
 
         name = self.var_name.var_name
         if self.block.validate_variable(name):
-            self.block.variables[name].is_constant = False
+            self.block.get_variable(name).is_constant = False
 
     def eval(self, func):
         self.value.pre_eval(func)

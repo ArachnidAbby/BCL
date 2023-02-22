@@ -32,9 +32,7 @@ This can sometimes be unavoidable, but try your best to use it sparingly or for 
 
 ---
 
-# Code formatting (PEP8 -- modified)
-
-This repo very loosely follows pep8 formatting. Do not worry about the 80 char limit, but do ensure that lines are most readable.
+# Code formatting (PEP8/Flake8)
 
 **Just use Flake8**
 
