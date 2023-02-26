@@ -21,14 +21,25 @@ class StrLiteral(ExpressionNode):
         self.ir_type = self.ret_type.ir_type
 
     def eval(self, func) -> ir.Constant:
+        ZERO = ir.Constant(ir.IntType(32), 0)
+
         encoded_string = self.value.encode("utf-8")
         length = len(encoded_string)
         const = ir.Constant(ir.ArrayType(ir.IntType(8), length),
                             bytearray(encoded_string))
         ptr = func.builder.alloca(ir.ArrayType(ir.IntType(8), length))
         func.builder.store(const, ptr)
-        return ptr
+        ptr = func.builder.bitcast(ptr, ir.IntType(8).as_pointer())
 
-    def get_ptr(self, func):
-        return func.builder.bitcast(self.eval(func),
-                                    ir.IntType(8).as_pointer())
+        string_struct = ir.LiteralStructType((ir.IntType(8).as_pointer(), ))
+
+        val_ptr = func.builder.alloca(string_struct)
+        val_str_ptr = func.builder.gep(val_ptr, (ZERO, ZERO))
+        func.builder.store(ptr, val_str_ptr)
+        val = func.builder.load(val_ptr)
+
+        return val
+
+    # def get_ptr(self, func):
+    #     return func.builder.bitcast(self.eval(func),
+    #                                 ir.IntType(8).as_pointer())

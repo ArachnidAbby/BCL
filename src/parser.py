@@ -606,7 +606,7 @@ class Parser(ParserBase):
                                     self.peek(2).value)
             self.replace(3, "expr", op)
 
-    @rule(0, "expr|expr_list|kv_pair COMMA expr|kv_pair")
+    @rule(0, "expr|expr_list|kv_pair|ELLIPSIS COMMA expr|kv_pair|ELLIPSIS")
     def parse_expr_list(self):
         # * parse expression lists
         if self.peek_safe(3).name in (*self.standard_expr_checks,
@@ -615,13 +615,17 @@ class Parser(ParserBase):
 
         expr = self.peek(0)
         out = None
+
         if expr.name == "expr_list":
             expr.value.append_children(self.peek(2).value)
             out = expr.value
         else:
-            out = Ast.nodes.ContainerNode(SrcPosition.invalid())
+            out = Ast.nodes.ParenthBlock(SrcPosition.invalid())
             out.append_child(expr.value)
             out.append_child(self.peek(2).value)
+
+        if self.peek(0).name == "ELLIPSIS" or self.peek(2).name == "ELLIPSIS":
+            out.contains_ellipsis = True
 
         self.replace(3, "expr_list", out)
 
@@ -648,16 +652,21 @@ class Parser(ParserBase):
                         False)
         self.parse_paren_close()
 
-    @rule(0, "OPEN_PAREN_USED expr|expr_list|kv_pair CLOSE_PAREN")
+    @rule(0, "OPEN_PAREN_USED expr|expr_list|kv_pair|ELLIPSIS CLOSE_PAREN")
     def parse_paren_close(self):
         # * parse full paren blocks
         name = "expr"
 
+        paren = self.parens[-1][0]
+
         if self.simple_check(1, 'expr_list'):
-            self.parens[-1][0].children = self.peek(1).value.children
+            paren.children = self.peek(1).value.children
+            paren.contains_ellipsis = self.peek(1).value.contains_ellipsis
             name = "paren"
         elif self.simple_check(1, 'expr') or self.simple_check(1, 'kv_pair'):
-            self.parens[-1][0].children = [self.peek(1).value]
+            paren.children = [self.peek(1).value]
+        elif self.peek(1).name == "ELLIPSIS":
+            paren.contains_ellipsis = True
 
         block = self.parens.pop()
         block[0].set_end_pos(self.peek(2).pos)

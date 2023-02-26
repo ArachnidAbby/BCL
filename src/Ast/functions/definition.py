@@ -12,7 +12,7 @@ class FunctionDef(ASTNode):
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir',
                  'module', 'is_ret_set', 'args_types', 'ret_type',
                  "has_return", "inside_loop", "func_name", "variables",
-                 "consts", "ir_entry")
+                 "consts", "ir_entry", "contains_dynamic", "contains_ellipsis")
 
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
                  block: Block, module):
@@ -35,6 +35,9 @@ class FunctionDef(ASTNode):
         self.ir_entry = None
         self.variables: list[tuple] = []
         self.consts: list[tuple] = []
+        # ellipsis always make this dynamic
+        self.contains_ellipsis = args.contains_ellipsis
+        self.contains_dynamic = self.contains_ellipsis
 
         self._validate_args(args)  # validate arguments
 
@@ -58,6 +61,8 @@ class FunctionDef(ASTNode):
             else:
                 args_ir.append(arg.get_type(self).ir_type)
             args_types.append(arg.get_type(self))
+            if arg.get_type(self).is_dynamic:
+                self.contains_dynamic = True
 
         self.args_ir = tuple(args_ir)
         self.args_types = tuple(args_types)
@@ -71,7 +76,6 @@ class FunctionDef(ASTNode):
     def _validate_return(self, func):
         ret_line = SrcPosition.invalid()
         if self.is_ret_set:
-            # self.ret_type.eval(self)
             ret_line = self.ret_type.position
             self.ret_type = self.ret_type.as_type_reference(self)
         if (not self.ret_type.returnable) and self.block is not None:
@@ -93,23 +97,21 @@ class FunctionDef(ASTNode):
 
     def pre_eval(self):
         self._validate_return(self)
-        fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir, False)
-
-        if self.func_name not in functionsdict:
-            # Ast_Types.Type_Function.Function(self.func_name, self.module)
-            functionsdict[self.func_name] = dict()
+        fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir,
+                               self.contains_ellipsis)
 
         self.function_ir = ir.Function(self.module.module, fnty,
                                        name=self._mangle_name(self.func_name))
         function_object = _Function(_Function.BEHAVIOR_DEFINED,
                                     self.func_name, self.function_ir,
-                                    self.ret_type, self.args_types)
+                                    self.ret_type, self.args_types,
+                                    self.contains_ellipsis)
 
         self.module.create_function(self.func_name, self.args_types,
-                                    function_object)
+                                    function_object, self.contains_dynamic)
 
         # Early return if the function has no body.
-        if self.block is None:
+        if self.has_no_body:
             return
 
         block = self.function_ir.append_basic_block("entry")
@@ -141,7 +143,7 @@ class FunctionDef(ASTNode):
                 x[0].define(self, x[1])
 
     def eval(self):
-        if self.block is None:
+        if self.has_no_body:
             return
         self.function_ir.attributes.add("nounwind")
         self.block.pre_eval(self)
@@ -155,3 +157,7 @@ class FunctionDef(ASTNode):
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
                          "return! Ensure that at least 1 return statement is" +
                          " reachable!")
+
+    @property
+    def has_no_body(self) -> bool:
+        return self.block is None

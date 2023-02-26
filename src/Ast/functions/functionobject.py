@@ -14,7 +14,7 @@ internal_function_ty = Callable[[Any, tuple], Optional[ir.Instruction]]
 class _Function:
     '''A function object to run "interal functions" and "defined functions"'''
     __slots__ = ('function_behavior', 'function_object', 'ret_type',
-                 'arg_types', 'name')
+                 'arg_types', 'name', 'contains_ellipsis')
 
     # constants to be used to define behaviors
     BEHAVIOR_INTERNAL = 0
@@ -22,12 +22,13 @@ class _Function:
 
     def __init__(self, behavior: int, name: str,
                  function_obj: internal_function_ty | ir.Function,
-                 ret_type: Any, arg_types: tuple):
+                 ret_type: Any, arg_types: tuple, contains_ellipsis: bool):
         self.function_behavior = behavior
         self.function_object = function_obj
         self.ret_type = ret_type
         self.arg_types = arg_types
         self.name = name
+        self.contains_ellipsis = contains_ellipsis
 
     def __str__(self):
         '''Example: my_func(int, int)'''
@@ -52,9 +53,19 @@ class _Function:
         if self.function_behavior == self.BEHAVIOR_INTERNAL:
             return
         fnty = ir.FunctionType((self.ret_type).ir_type, self.get_ir_types(),
-                               False)
+                               self.contains_ellipsis)
         ir.Function(module.module, fnty,
                     name=module.get_unique_name(self.name))
+
+    def check_args_match(self, types: tuple):
+        # TODO: update this to actually do propery checks with ellipsis
+        if self.contains_ellipsis:
+            return True
+
+        for check_type, arg_type in zip(types, self.arg_types):
+            if not arg_type.roughly_equal(check_type):
+                return False
+        return True
 
 
 def internal_function(name: str, ret_type: Any,
@@ -69,7 +80,7 @@ def internal_function(name: str, ret_type: Any,
             container[name] = {}
         container[name][arg_types] = \
             _Function(_Function.BEHAVIOR_INTERNAL, name, func,
-                      ret_type, arg_types)
+                      ret_type, arg_types, False)
 
         def call(ast_func, args: tuple) -> Optional[ir.Instruction]:
             # warning does not display in `_Function(...).call(...)`

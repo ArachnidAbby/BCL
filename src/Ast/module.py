@@ -36,7 +36,7 @@ class Module(ASTNode):
         self.pre_evaled = False
         self.evaled = False
         self.ir_saved = False
-        Ast.functions.standardfunctions.declare_all(self.module)
+        # Ast.functions.standardfunctions.declare_all(self.module)
 
         modules[name] = self
 
@@ -73,7 +73,7 @@ class Module(ASTNode):
             return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
 
         errors.error(f"Cannot find type '{name}' in module" +
-                     "'{self.mod_name}'", line=position)
+                     f"'{self.mod_name}'", line=position)
 
     def get_unique_name(self, name: str):
         return self.module.get_unique_name(name)
@@ -99,7 +99,20 @@ class Module(ASTNode):
             return self.globals[name]
 
         errors.error(f"Cannot find global '{name}' in module" +
-                     "'{self.mod_name}'", line=position)
+                     f"'{self.mod_name}'", line=position)
+
+    def get_func_from_dict(self, name: str, funcs: dict, types: tuple, position):
+        if types in funcs.keys():
+            return funcs[types]
+
+        # Iterate thru all functions with non-static args
+        for func in funcs["NONSTATIC"]:
+            if func.check_args_match(types):
+                return func
+
+        args_for_error = ','.join([str(x) for x in types])
+        errors.error(f"function '{name}({args_for_error})'" +
+                     "was never defined", line=position)
 
     def get_function(self, name: str, position: tuple[int, int, int]):
         '''get a function defined in module'''
@@ -108,18 +121,27 @@ class Module(ASTNode):
         for imp in self.imports.values():
             if name in imp.functions.keys():
                 return imp.functions[name]
-        if name in Ast.functions.functionobject.functionsdict.keys():
-            return Ast.functions.functionobject.functionsdict[name]
 
         errors.error(f"Cannot find function '{name}' in module" +
-                     "'{self.mod_name}'", line=position)
+                     f" '{self.mod_name}'", line=position)
 
     def create_function(self, name: str, args_types: tuple,
-                        function_object: _Function):
+                        function_object: _Function, dynamic: bool):
+        if dynamic:  # TODO: This likely shouldn't be here
+            self. create_dynamic_function(name, args_types, function_object)
+
         if name not in self.functions.keys():
-            self.functions[name] = {args_types: function_object}
+            self.functions[name] = {args_types: function_object,
+                                    "NONSTATIC": []}
             return
         self.functions[name][args_types] = function_object
+
+    def create_dynamic_function(self, name: str, args_types: tuple,
+                                function_object: _Function):
+        if name not in self.functions.keys():
+            self.functions[name] = {"NONSTATIC": [function_object]}
+            return
+        self.functions[name]["NONSTATIC"].append(function_object)
 
     def get_all_functions(self) -> list[_Function]:
         '''get all functions for linking'''
@@ -182,6 +204,10 @@ class Module(ASTNode):
         # pass_manager.populate(module_pass)
         funcs = self.get_import_functions()
         for func in funcs:
+            if isinstance(func, list):
+                for actual_func in func:
+                    actual_func.declare(self)
+                continue
             func.declare(self)
 
         llir = str(self.module)

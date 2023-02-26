@@ -9,7 +9,8 @@ from errors import error
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'ret_type', 'in_func_call', 'ptr')
+    __slots__ = ('ir_type', 'ret_type', 'in_func_call', 'ptr',
+                 'contains_ellipsis')
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
@@ -17,6 +18,7 @@ class ParenthBlock(ContainerNode):
         self.in_func_call = False
         self.ptr = None
         self.ret_type = Ast_Types.Void()
+        self.contains_ellipsis = False
 
     def pre_eval(self, func):
         for c, child in enumerate(self.children):
@@ -29,6 +31,7 @@ class ParenthBlock(ContainerNode):
             self.ret_type = Ast_Types.Void()
         self.ir_type = self.ret_type.ir_type
 
+    # TODO: Should probably not use Iter[Any]
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
 
@@ -41,14 +44,15 @@ class ParenthBlock(ContainerNode):
         return True
 
     def append_child(self, child: GenericNode):
+        if child == "...":
+            return
         self.children.append(child)
 
     def _pass_as_pointer_changes(self, func):
         '''changes child elements to be passed as pointers if needed'''
         for c, child in enumerate(self.children):
             # TODO: THIS IS SHIT
-            if self.in_func_call and (child.ret_type.pass_as_ptr or
-                                      child.ret_type.name == 'strlit'):
+            if self.in_func_call and (child.ret_type.pass_as_ptr):
                 ptr = child.get_ptr(func)
                 self.children[c] = ptr
                 continue
@@ -76,3 +80,7 @@ class ParenthBlock(ContainerNode):
 
             func.builder.store(val, self.ptr)
         return self.ptr
+
+    @property
+    def is_empty(self) -> bool:
+        return len(self.children) == 0

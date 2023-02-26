@@ -23,6 +23,9 @@ class Type:
     has_members = False
     # is this type allowed to be the return type of a function
     returnable = True
+    # Dynamic types change function definitions and the
+    # matching of function args when calling
+    is_dynamic = False
 
     def __init__(self):
         pass
@@ -175,3 +178,12 @@ class Type:
            Must check `typ.has_members` or an Exception will occur
         '''
         return self.members.keys()  # members should always be a dict!
+
+    def roughly_equals(self, other):
+        '''check if two types are equivalent.
+        This is helpful when you have compound types such as "Any"
+        or a Protocol type.
+
+        defaults to `__eq__` behavior
+        '''
+        return self == other

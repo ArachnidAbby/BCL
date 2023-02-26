@@ -34,7 +34,7 @@ class StringLiteral(Type_Base.Type):
         else:
             self.size = size
 
-        self.ir_type = ir.IntType(8).as_pointer()
+        self.ir_type = ir.LiteralStructType((ir.IntType(8).as_pointer(),))
 
     @staticmethod
     def convert_from(func, typ: str, previous):

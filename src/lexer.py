@@ -24,6 +24,7 @@ class Lexer():
         self.lexer.add('COLON', r'\:')
         self.lexer.add('RIGHT_ARROW', r'\-\>')
         self.lexer.add('COMMA', r'\,')
+        self.lexer.add('ELLIPSIS', r'\.\.\.')
         self.lexer.add('DOUBLE_DOT', r'\.\.')
         self.lexer.add('DOT', r'\.')
         # Operators

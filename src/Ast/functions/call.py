@@ -14,13 +14,10 @@ class FunctionCall(ExpressionNode):
         self.ret_type = Ast_Types.Void()
         self.paren = parenth
 
-    def _check_function_exists(self, func):
-        '''ensure a function exists and the correct form of it exists'''
-        functions = func.module.get_function(self.func_name,  self.position)
-        if self.args_types not in functions:
-            args_for_error = ','.join([str(x) for x in self.args_types])
-            errors.error(f"function '{self.func_name}({args_for_error})'" +
-                         "was never defined", line=self.position)
+    # def _check_function_exists(self, func):
+    #     '''ensure a function exists and the correct form of it exists'''
+    #     functions = func.module.get_function(self.func_name,  self.position)
+    #     if not :
 
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):
@@ -28,10 +25,13 @@ class FunctionCall(ExpressionNode):
         self.paren.pre_eval(func)
 
         self.args_types = tuple([x.ret_type for x in self.paren])
-        self._check_function_exists(func)
+        # self._check_function_exists(func)
 
         function_name = func.module.get_function(self.func_name, self.position)
-        self.function = function_name[self.args_types]
+        self.function = func.module.get_func_from_dict(self.func_name,
+                                                       function_name,
+                                                       self.args_types,
+                                                       self.position)
 
         self.ret_type = self.function.ret_type
         self.ir_type = (self.ret_type).ir_type

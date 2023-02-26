@@ -1,3 +1,4 @@
+import stdlib;
 import SDL;
 
 define main() -> i32 {
