@@ -5,7 +5,7 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", )
+    __slots__ = ("typ", "ir_type")
 
     name = 'ref'
     pass_as_ptr = False

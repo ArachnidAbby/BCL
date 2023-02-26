@@ -34,7 +34,6 @@ class FunctionCall(ExpressionNode):
                                                        self.position)
 
         self.ret_type = self.function.ret_type
-        self.ir_type = (self.ret_type).ir_type
 
     def eval(self, func):
         x = self.paren.eval(func)

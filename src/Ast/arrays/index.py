@@ -40,7 +40,7 @@ class VariableIndexRef(ExpressionNode):
         self.varref.pre_eval(func)
         if self.varref.ret_type.name == "ref":
             self.varref = self.varref.get_value(func)
-            self.varref.ir_type = self.varref.ret_type.ir_type
+            # self.varref.ir_type = self.varref.ret_type.ir_type
 
         self.ind.pre_eval(func)
         if isinstance(self.ind.ret_type.name, Ref):
@@ -50,7 +50,6 @@ class VariableIndexRef(ExpressionNode):
             self.ret_type = op_return
         else:
             self.ret_type = self.varref.ret_type
-        self.ir_type = self.ret_type.ir_type
 
     def check_valid_literal(self, lhs, rhs):
         if rhs.isconstant and check_valid_literal_range(lhs, rhs):

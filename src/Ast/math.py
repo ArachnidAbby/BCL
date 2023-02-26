@@ -76,8 +76,6 @@ class OperationNode(ExpressionNode):
             self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type,
                                                               self.lhs,
                                                               self.rhs)
-        # if self.ret_type is not None:
-        #     self.ir_type = self.ret_type.ir_type
 
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)

@@ -15,6 +15,8 @@ errors.SILENT_MODE = True
 class basictests(unittest.TestCase):
     def test_functions(self):
         test_code = """
+        import stdlib;
+
         define main() {
             println 2;
             println(test_func(2, 10));
@@ -30,6 +32,8 @@ class basictests(unittest.TestCase):
 
     def test_function_overloading(self):
         test_code = """
+        import stdlib;
+
         define main() {
             println 2;
             println(test_func(2, 10));
@@ -49,6 +53,8 @@ class basictests(unittest.TestCase):
     @unittest.expectedFailure
     def test_variables_1(self):
         test_code = """
+        import stdlib;
+
         define main() {
             println(test);
             test = 10;
@@ -62,6 +68,7 @@ class basictests(unittest.TestCase):
     @unittest.expectedFailure
     def test_variables_2(self):
         test_code = """
+        import stdlib;
         define main() {
             {
                 x = 22;
@@ -76,6 +83,7 @@ class basictests(unittest.TestCase):
 
     def test_variables_3(self):
         test_code = """
+        import stdlib;
         define main() {
             x = 22;
             {
@@ -108,6 +116,8 @@ class basictests(unittest.TestCase):
 
     def test_if_else_if(self):
         test_code = """
+        import stdlib;
+
         define main() {
             if true {
                 println(9);
@@ -127,6 +137,8 @@ class basictests(unittest.TestCase):
 
     def test_named_constants(self):
         test_code = """
+        import stdlib;
+
         define main() {
             radius = 12;
             println((radius*radius)*PI);
@@ -143,6 +155,8 @@ class basictests(unittest.TestCase):
 
     def test_struct(self):
         test_code = """
+        import stdlib;
+
         struct example {
             x: i32,
             y: i32;

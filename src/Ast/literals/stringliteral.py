@@ -18,7 +18,6 @@ class StrLiteral(ExpressionNode):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
                              Ast_Types.Integer_32())
         self.ret_type = Ast_Types.StringLiteral(array_size)
-        self.ir_type = self.ret_type.ir_type
 
     def eval(self, func) -> ir.Constant:
         ZERO = ir.Constant(ir.IntType(32), 0)

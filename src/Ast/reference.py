@@ -16,7 +16,6 @@ class Ref(ExpressionNode):
     def pre_eval(self, func):
         self.var.pre_eval(func)
         self.ret_type = Ast_Types.Reference(self.var.ret_type)
-        self.ir_type = self.ret_type.ir_type
 
     def eval(self, func):
         return self.var.get_ptr(func)

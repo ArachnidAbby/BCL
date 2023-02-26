@@ -9,19 +9,18 @@ from errors import error
 
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
-    __slots__ = ('ir_type', 'ret_type', 'in_func_call', 'ptr',
+    __slots__ = ('ret_type', 'in_func_call', 'ptr',
                  'contains_ellipsis')
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
-        self.ir_type = Ast_Types.Void().ir_type
         self.in_func_call = False
         self.ptr = None
         self.ret_type = Ast_Types.Void()
         self.contains_ellipsis = False
 
     def pre_eval(self, func):
-        for c, child in enumerate(self.children):
+        for child in self.children:
             child.pre_eval(func)
 
         # * tuples return `void` but an expr returns the same data as its child
@@ -29,7 +28,6 @@ class ParenthBlock(ContainerNode):
             self.ret_type = self.children[0].ret_type
         else:
             self.ret_type = Ast_Types.Void()
-        self.ir_type = self.ret_type.ir_type
 
     # TODO: Should probably not use Iter[Any]
     def __iter__(self) -> Iterator[Any]:
@@ -84,3 +82,7 @@ class ParenthBlock(ContainerNode):
     @property
     def is_empty(self) -> bool:
         return len(self.children) == 0
+
+    @property
+    def ir_type(self):
+        return self.ret_type.ir_type

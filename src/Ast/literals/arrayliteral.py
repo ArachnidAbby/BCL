@@ -11,7 +11,7 @@ from Ast.nodes.commontypes import SrcPosition
 
 
 class ArrayLiteral(ExpressionNode):
-    __slots__ = ('value', 'ir_type', 'literal')
+    __slots__ = ('value', 'literal')
     isconstant = False
 
     def __init__(self, pos: SrcPosition, value: list[Any]):
@@ -35,7 +35,6 @@ class ArrayLiteral(ExpressionNode):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
                              Ast_Types.Integer_32())
         self.ret_type = Ast_Types.Array(array_size, typ)
-        self.ir_type = self.ret_type.ir_type
 
     def eval(self, func):
         # Allocate for array and then munually
