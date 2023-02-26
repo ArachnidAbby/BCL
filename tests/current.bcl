@@ -1,42 +1,68 @@
 import stdlib;
-import SDL;
+// import SDL;
 
-define main() -> i32 {
-    if SDL_Init(32) < 0 {
-        println("Failed to initialize sdl2");
-        return -1;
+// define main() -> i32 {
+//     if SDL_Init(32) < 0 {
+//         println("Failed to initialize sdl2");
+//         return -1;
+//     }
+
+//     window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
+//                                           805240832,
+//                                           805240832,
+//                                           680, 480,
+//                                           0);
+
+//     window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
+
+//     SDL_UpdateWindowSurface(window);
+
+//     SDL_Delay(10000);
+
+//     // event = SDL_Event {
+//     //         type: ' ',
+//     //         active: [' ';3], 
+//     //         key: [' ';7], // 2, 1, 1, 1, 2
+//     //         motion: [' ';6],
+//     //         button: [' ';5],
+//     //         jaxis: [' ';5], 
+//     //         jball: [' ';5], 
+//     //         jhat: [' ';4],
+//     //         jbutton: [' ';4],
+//     //         resize: [' ';5], 
+//     //         expose: ' ', 
+//     //         quit: ' ', 
+//     //         user: [' ';13], // 1, 4, 8, 8 
+//     //         syswm: [' ';9]
+//     //     };
+
+//     return 0;
+// }
+
+import math;
+
+define tests() -> f32 {
+    return 934f;
+}
+
+define main() {
+    println(factorial(4));
+    println(floor(22, 7));
+    println(ceil(22, 4));
+    println(floor(22f, 7f));
+    println(ceil(22f, 4f));
+    println(tests());
+
+    println();
+    println(8 and 3);
+    println(0 and 12);
+    if 0 {
+        println("hola");
+    } else
+
+    if (10f>9) * 2f {
+        println("hi");
     }
-
-    window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
-                                          805240832,
-                                          805240832,
-                                          680, 480,
-                                          0);
-
-    window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
-
-    SDL_UpdateWindowSurface(window);
-
-    SDL_Delay(10000);
-
-    // event = SDL_Event {
-    //         type: ' ',
-    //         active: [' ';3], 
-    //         key: [' ';7], // 2, 1, 1, 1, 2
-    //         motion: [' ';6],
-    //         button: [' ';5],
-    //         jaxis: [' ';5], 
-    //         jball: [' ';5], 
-    //         jhat: [' ';4],
-    //         jbutton: [' ';4],
-    //         resize: [' ';5], 
-    //         expose: ' ', 
-    //         quit: ' ', 
-    //         user: [' ';13], // 1, 4, 8, 8 
-    //         syswm: [' ';9]
-    //     };
-
-    return 0;
 }
 
 // struct parent {

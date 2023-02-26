@@ -33,7 +33,7 @@ class IfElseStatement(ASTNode):
         Block.BLOCK_STACK.pop()
 
     def eval(self, func):
-        cond = self.cond.eval(func)
+        cond = self.cond.ret_type.truthy(func, self.cond)
         bfor = func.has_return
         ifreturns = False
         elsereturns = False

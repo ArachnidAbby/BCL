@@ -2,6 +2,7 @@ import Ast.Ast_Types as Ast_Types
 import errors
 from Ast.nodes import ASTNode
 from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.container import ContainerNode
 
 
 class StructDef(ASTNode):
@@ -15,7 +16,10 @@ class StructDef(ASTNode):
 
         self.struct_name = name.value.var_name
         self.block = block
-        members = self.block.children[0].children
+        if isinstance(self.block.children[0], ContainerNode):
+            members = self.block.children[0].children
+        else:
+            members = [self.block.children[0]]
         self.struct_type = Ast_Types.Struct(self.struct_name, members, module)
         module.types[self.struct_name] = self.struct_type
         self.module = module

@@ -27,7 +27,11 @@ define println(x: bool) {
 }
 
 define println(x: f32) {
-    printf("%f\n", x);
+    printf("%.2F\n", x as f64);
+}
+
+define println(x: f64) {
+    printf("%.2F\n", x);
 }
 
 define println(x: char) {
@@ -57,6 +61,10 @@ define print(x: bool) {
 }
 
 define print(x: f32) {
+    printf("%f", x as f64);
+}
+
+define print(x: f64) {
     printf("%f", x);
 }
 

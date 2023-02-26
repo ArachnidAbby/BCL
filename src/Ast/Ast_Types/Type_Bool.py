@@ -17,7 +17,7 @@ class Integer_1(Type_Base.Type):
 
     @classmethod
     def convert_from(cls, func, typ: str, previous):
-        if typ in (Type_I32.Integer_32, Type_F32.Float_32):
+        if typ in (Type_I32.Integer_32(), Type_F32.Float_32()):
             return func.builder.trunc(previous, Integer_1.ir_type)
         elif typ == Integer_1:
             return previous
@@ -31,22 +31,23 @@ class Integer_1(Type_Base.Type):
                 return orig.eval(func)
             case Type_I32.Integer_32():
                 return func.builder.zext(orig.eval(func), ir.IntType(32))
-            case 'i64':
+            case Type_I32.Integer_32(name='i64'):
                 return func.builder.zext(orig.eval(func), ir.IntType(64))
             case Type_F32.Float_32():
                 return func.builder.sitofp(orig.eval(func), ir.FloatType())
-            case 'f64':
+            case Type_F32.Float_32(name="f64"):
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
             case _:
                 error(f"Cannot convert 'bool' to type '{typ}'",
                       line=orig.position)
 
     def get_op_return(self, op: str, lhs, rhs):
+        if x := super().get_op_return(op, lhs, rhs):
+            return x
         match op.lower():
             case 'sum' | 'sub' | 'mul' | 'div' | 'mod':
                 return definedtypes.get_std_ret_type(lhs, rhs)
-            case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr' |\
-                 'and' | 'or' | 'not':
+            case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr':
                 return Integer_1()
 
     @staticmethod
@@ -142,14 +143,17 @@ class Integer_1(Type_Base.Type):
             error('rhs of boolean operation must be of boolean type.',
                   line=rhs.position)
 
-    def _and(self, func, lhs, rhs):
-        Integer_1.err_if_not_bool(rhs)
-        return func.builder.and_(lhs.eval(func), rhs.eval(func))
+    # def _and(self, func, lhs, rhs):
+    #     Integer_1.err_if_not_bool(rhs)
+    #     return func.builder.and_(lhs.eval(func), rhs.eval(func))
 
-    def _or(self, func, lhs, rhs):
-        Integer_1.err_if_not_bool(rhs)
-        return func.builder.or_(lhs.eval(func), rhs.eval(func))
+    # def _or(self, func, lhs, rhs):
+    #     Integer_1.err_if_not_bool(rhs)
+    #     return func.builder.or_(lhs.eval(func), rhs.eval(func))
 
-    def _not(self, func, rhs):
-        Integer_1.err_if_not_bool(rhs)
-        return func.builder.not_(rhs.eval(func))
+    # def _not(self, func, rhs):
+    #     Integer_1.err_if_not_bool(rhs)
+    #     return func.builder.not_(rhs.eval(func))
+
+    def truthy(self, func, val):
+        return val.eval(func)

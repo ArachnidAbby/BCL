@@ -7,12 +7,14 @@ from . import Type_Base, definedtypes
 
 
 class Float_32(Type_Base.Type):
-    __slots__ = ()
+    __slots__ = ('ir_type', 'name')
 
-    ir_type = ir.FloatType()
-    name = 'f32'
     pass_as_ptr = False
     no_load = False
+
+    def __init__(self, name='f32', typ=ir.FloatType()):
+        self.ir_type = typ
+        self.name = name
 
     @classmethod
     def convert_from(cls, func, typ, previous):
@@ -132,3 +134,7 @@ class Float_32(Type_Base.Type):
             return typ.gr(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('>', lhs, rhs)
+
+    def truthy(self, func, val):
+        return func.builder.fcmp_ordered('!=', val.eval(func),
+                                         ir.Constant(self.ir_type, float(0.0)))

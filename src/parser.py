@@ -1,4 +1,5 @@
 from collections import deque
+from os import path
 
 import Ast
 import Ast.literals.numberliteral
@@ -91,7 +92,8 @@ class Parser(ParserBase):
                         self.parse_structs, self.parse_KV_pairs),
             "func_def_portion": (self.parse_funcdef_empty,
                                  self.parse_funcdef_with_body),
-            "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit),
+            "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit,
+                        self.parse_statement),
             "expr_list": (self.parse_expr_list, self.parse_statement),
             "OPEN_PAREN": (self.parse_paren_empty, self.parse_paren_start),
             "OPEN_PAREN_USED": (self.parse_paren_close, ),
@@ -140,6 +142,13 @@ class Parser(ParserBase):
         directories = self.module.location.split("/")[:-1]
         directory_path = '/'.join(directories)
         filedir = f"{directory_path}/{name}.bcl"
+        if not path.exists(filedir):
+            libbcl_dir = path.dirname(__file__) + "/libbcl"
+            filedir = f"{libbcl_dir}/{name}.bcl"
+            if not path.exists(filedir):
+                errors.error(f"Could not find module '{name}'",
+                             line=self.peek(1).pos)
+
         self.module.add_import(filedir, name)
         errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
@@ -210,7 +219,7 @@ class Parser(ParserBase):
                                                self.peek(1).value)
             self.replace(2, "expr", struct_literal)
 
-    @rule(-1, "__|OPEN_CURLY_USED expr|expr_list|statement SEMI_COLON")
+    @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
     def parse_statement(self):
         '''Parsing statements and statement lists'''
         self.replace(2, "statement", self.peek(0).value)
@@ -537,8 +546,8 @@ class Parser(ParserBase):
         '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
         if isinstance(self.peek(1).value, Ast.Literal) and \
-                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32,
-                                                Ast.Ast_Types.Integer_32):
+                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32(),
+                                                Ast.Ast_Types.Integer_32()):
             if self.check(0, "SUB"):
                 self.peek(1).value.value *= -1
                 self.replace(2, "expr", self.peek(1).value)

@@ -3,7 +3,7 @@
 // Date: 12/08/2022 (M/D/Y)
 // Link: https://github.com/FuzzyCat444/BCL-Cube/blob/main/cube.bcl
 // ==================================================================
-
+import stdlib;
 
 define main() {
     screen : bool[60][45] = [[false; 60]; 45];

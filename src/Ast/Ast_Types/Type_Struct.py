@@ -13,7 +13,8 @@ class Struct(Ast_Types.Type):
     '''
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
-                 'rang', 'member_index_search', 'returnable', 'raw_members')
+                 'rang', 'member_index_search', 'returnable', 'raw_members',
+                 'ir_type')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -99,6 +100,3 @@ class Struct(Ast_Types.Type):
 
     def __str__(self) -> str:
         return self.struct_name
-
-    def __call__(self) -> Self:
-        return self

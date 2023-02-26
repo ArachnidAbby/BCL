@@ -16,7 +16,7 @@ class StrLiteral(ExpressionNode):
 
     def pre_eval(self, func):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
-                             Ast_Types.Integer_32)
+                             Ast_Types.Integer_32())
         self.ret_type = Ast_Types.StringLiteral(array_size)
         self.ir_type = self.ret_type.ir_type
 

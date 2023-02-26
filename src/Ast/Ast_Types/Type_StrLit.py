@@ -9,7 +9,7 @@ from . import Type_Base
 
 
 class StringLiteral(Type_Base.Type):
-    __slots__ = ('size', 'typ')
+    __slots__ = ('size', 'typ', 'ir_type')
     name = "strlit"
     pass_as_ptr = False
     no_load = False
@@ -27,7 +27,7 @@ class StringLiteral(Type_Base.Type):
             if self.size <= 0:
                 error("Array size must be > 0",
                       line=size.position)
-            elif size.ret_type != Type_I32.Integer_32:
+            elif size.ret_type != Type_I32.Integer_32():
                 error("Array size must be an integer",
                       line=size.position)
 

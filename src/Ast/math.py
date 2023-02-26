@@ -1,9 +1,10 @@
 from collections import deque
 from typing import Any, Callable, Final, NamedTuple
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
 
 import errors
+from Ast import Ast_Types  # type: ignore
 from Ast.Ast_Types.Type_Reference import Reference
 # from Ast import exception
 # from Ast.literals import Literal
@@ -54,30 +55,29 @@ class OperationNode(ExpressionNode):
         return self.op.right_asso
 
     def deref(self, func):
-        # TODO: NONE CHECK COULD BE REDUNDENT
-        if self.rhs.ret_type is not None and isinstance(self.rhs.ret_type,
-                                                        Reference):
+        if isinstance(self.rhs.ret_type, Reference):
             self.rhs = self.rhs.get_value(func)
-        if self.lhs.ret_type is not None and isinstance(self.lhs.ret_type,
-                                                        Reference):
+        if isinstance(self.lhs.ret_type, Reference):
             self.lhs = self.lhs.get_value(func)
 
-    def pre_eval(self, func):
+    def pre_eval_math(self, func):
         self.lhs.pre_eval(func)
         if self.op.pre_eval_right:
             self.rhs.pre_eval(func)
 
         self.deref(func)
 
+        # TODO: Allow an override_get_return Callable
         if self.op.name == "as":
-            self.rhs.eval(func)
-            self.ret_type = self.rhs.ret_type
+            self.ret_type = self.rhs.as_type_reference(func)
+        elif self.op.name in ('not', 'and', 'or'):
+            self.ret_type = Ast_Types.Integer_1()
         else:
             self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type,
                                                               self.lhs,
                                                               self.rhs)
-        if self.ret_type is not None:
-            self.ir_type = self.ret_type.ir_type
+        # if self.ret_type is not None:
+        #     self.ir_type = self.ret_type.ir_type
 
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -85,6 +85,17 @@ class OperationNode(ExpressionNode):
     def right_handed_position(self):
         '''get the position of the right handed element. This is recursive'''
         return self.rhs.position
+
+    def pre_eval(self, func):
+        if not self.shunted:
+            new = RPN_to_node(shunt(self))
+            self.shunted = True
+            self.lhs = new.lhs
+            self.rhs = new.rhs
+            self.op = new.op
+            self.pre_eval(func)
+        else:
+            self.pre_eval_math(func)
 
     def eval(self, func):
         if not self.shunted:
@@ -224,7 +235,7 @@ def member_access(self, func, lhs, rhs):
 #     pass
 
 
-@operator(10, "as")
+@operator(10, "as", pre_eval_right=False)
 def _as(self, func, lhs, rhs):
     return (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
 

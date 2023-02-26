@@ -1,3 +1,5 @@
+from llvmlite import ir
+
 from Ast.Ast_Types.Type_Base import Type
 from Ast.nodes import ExpressionNode
 
@@ -12,10 +14,13 @@ types_dict = {
     'void': Void,
     'bool': Integer_1,
     'char': Char,
-    "i32": Integer_32,
-    "int": Integer_32,
-    'f32': Float_32,
-    'float': Float_32,
+    "i32": Integer_32(),
+    "int": Integer_32(),
+    'i64': Integer_32(64, 'i64',
+                      (-9223372036854775808, 9223372036854775807)),
+    'f32': Float_32(),
+    'f64': Float_32(name='f64', typ=ir.DoubleType()),
+    'float': Float_32(),
     'strlit': StringLiteral
 }
 
@@ -25,9 +30,9 @@ conversion_priority_raw = [
     Integer_1(),
     Char(),
     Integer_32(),
-    'i64',
+    types_dict['i64'],
     Float_32(),
-    'f64'
+    Float_32(name='f64', typ=ir.DoubleType())
 ]  # the further down the list this is, the higher priority
 conversion_priority = {x: c for c, x in enumerate(conversion_priority_raw)}
 

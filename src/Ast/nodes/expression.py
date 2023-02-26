@@ -7,7 +7,7 @@ from errors import error
 class ExpressionNode(ASTNode):
     '''Acts as an Expression in the AST.
     This means it has a value and return type'''
-    __slots__ = ("ret_type", "ir_type", "ptr")
+    __slots__ = ("ret_type", "ptr")
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self.ret_type = Ast_Types.Type()
@@ -26,3 +26,7 @@ class ExpressionNode(ASTNode):
     def as_type_reference(self, func):
         '''Get this expresion as the reference to a type'''
         error(f"invalid type: {str(self)}", line=self.position)
+
+    @property
+    def ir_type(self):
+        return self.ret_type.ir_type

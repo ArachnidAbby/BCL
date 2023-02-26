@@ -10,7 +10,8 @@ class Type:
     '''abstract type class that outlines the necessary
     features of a type class.'''
 
-    __slots__ = ('ir_type')
+    __slots__ = ()
+    ir_type: ir.Type = None
     name = "UNKNOWN"
     pass_as_ptr = False
     # Used for optimizations in array indexing.
@@ -50,7 +51,8 @@ class Type:
     def __neq__(self, other):
         return other is None or self.name != other.name
 
-    def get_op_return(self, op, lhs, rhs): pass
+    def get_op_return(self, op, lhs, rhs):
+        pass
 
     def sum(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operator '+' is not supported for type '{lhs.ret_type}'",
@@ -100,17 +102,16 @@ class Type:
         error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
-    def _not(self, func, rhs) -> ir.Instruction:
-        error(f"Operator 'not' is not supported for type '{rhs.ret_type}'",
-              line=rhs.position)
+    def _and(self, func, lhs, rhs):
+        return func.builder.and_(lhs.ret_type.truthy(func, lhs),
+                                 rhs.ret_type.truthy(func, rhs))
 
-    def _and(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator 'and' is not supported for type '{lhs.ret_type}'",
-              line=lhs.position)
+    def _or(self, func, lhs, rhs):
+        return func.builder.or_(lhs.ret_type.truthy(func, lhs),
+                                rhs.ret_type.truthy(func, rhs))
 
-    def _or(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator 'or' is not supported for type '{lhs.ret_type}'",
-              line=lhs.position)
+    def _not(self, func, rhs):
+        return func.builder.not_(rhs.ret_type.truthy(func, rhs))
 
     def index(self, func, lhs) -> ir.Instruction:
         error(f"Operation 'index' is not supported for type '{lhs.ret_type}'",
@@ -150,7 +151,7 @@ class Type:
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
-    def cleanup(self, func, ptr):
+    def cleanup(self, func, ptr): # TODO: IMPLEMENT
         '''code to run on the closing of a function'''
         print("cleanup")
 
@@ -162,6 +163,9 @@ class Type:
 
     def __str__(self) -> str:
         return self.name
+
+    def __call__(self) -> Self:
+        return self
 
     def eval(self, foo):  # ? Why is this here
         '''Does nothing'''
@@ -187,3 +191,7 @@ class Type:
         defaults to `__eq__` behavior
         '''
         return self == other
+
+    # def truthy(self, func, val):
+    #     '''When using boolean ops or if statements'''
+    #     return ir.Constant(ir.IntType(1), 0)

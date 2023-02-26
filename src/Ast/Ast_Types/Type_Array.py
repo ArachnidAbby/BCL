@@ -7,7 +7,7 @@ from . import Type_Base
 
 
 class Array(Type_Base.Type):
-    __slots__ = ('size', 'typ')
+    __slots__ = ('size', 'typ', 'ir_type')
     name = "array"
     pass_as_ptr = True
     no_load = False
@@ -23,7 +23,7 @@ class Array(Type_Base.Type):
 
         if self.size <= 0:
             error("Array size must be > 0", line=size.position)
-        elif size.ret_type != Type_I32.Integer_32:
+        elif size.ret_type != Type_I32.Integer_32():
             error("Array size must be an integer", line=size.position)
 
         self.ir_type = ir.ArrayType(typ.ir_type, self.size)

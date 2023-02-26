@@ -8,22 +8,26 @@ from . import Type_Base
 
 
 class Integer_32(Type_Base.Type):
-    __slots__ = ()
+    __slots__ = ('ir_type', 'name', 'rang')
 
-    ir_type = ir.IntType(32)
-    name = 'i32'
     pass_as_ptr = False
     no_load = False
-    rang = (-2147483648, 2147483647)
 
-    @classmethod
-    def convert_from(cls, func, typ, previous):
+    def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647)):
+        self.name = name
+        self.ir_type = ir.IntType(size)
+        self.rang = rang
+
+    def __call__(self):
+        return self
+
+    def convert_from(self, func, typ, previous):
         if typ.name in ('f32', 'f64'):
-            return func.builder.fptosi(previous.eval(), Integer_32.ir_type)
+            return func.builder.fptosi(previous.eval(), self.ir_type)
         elif typ.name == 'bool':
-            return func.builder.zext(previous.eval(), Integer_32.ir_type)
+            return func.builder.zext(previous.eval(), self.ir_type)
         elif typ.name == 'i64':
-            return func.builder.trunc(previous.eval(), Integer_32.ir_type)
+            return func.builder.trunc(previous.eval(), self.ir_type)
         elif typ.name == 'i32':
             return previous.eval(func)
 
@@ -136,3 +140,7 @@ class Integer_32(Type_Base.Type):
             return typ.gr(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.icmp_signed('>', lhs, rhs)
+
+    def truthy(self, func, val):
+        return func.builder.icmp_signed('!=', val.eval(func),
+                                        ir.Constant(self.ir_type, int(0)))
