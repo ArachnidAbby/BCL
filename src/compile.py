@@ -12,6 +12,7 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--emit-object": False,
     "--emit-binary": False,
     "--dev": False,
+    "--emit-ast": False,
     "--libs": []
 }
 

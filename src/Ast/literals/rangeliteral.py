@@ -23,3 +23,8 @@ class RangeLiteral(ExpressionNode):
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self.start.position, self.end.position))
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Range Literal",
+                                start=self.start,
+                                end=self.end)

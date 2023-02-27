@@ -76,3 +76,8 @@ class Block(ContainerNode):
             return var_name in self.variables.keys()
         return (var_name in self.variables.keys()) or \
             self.parent.validate_variable_exists(var_name)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Block",
+                                contents=self.children,
+                                variables=self.variables)

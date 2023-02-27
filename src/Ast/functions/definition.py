@@ -161,3 +161,9 @@ class FunctionDef(ASTNode):
     @property
     def has_no_body(self) -> bool:
         return self.block is None
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Function Definition",
+                                name=self.func_name,
+                                contents=self.block,
+                                return_type=self.ret_type)

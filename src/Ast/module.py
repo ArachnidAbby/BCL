@@ -178,7 +178,13 @@ class Module(ASTNode):
         for child in self.children:
             child.value.eval()
 
-        del self.children
+        # del self.children
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree(f"Module {self.mod_name}",
+                                functions=self.functions,
+                                location=self.location,
+                                contents=[x.value for x in self.children])
 
     def save_ir(self, loc, args={}):
         if self.ir_saved:
@@ -209,7 +215,8 @@ class Module(ASTNode):
                     actual_func.declare(self)
                 continue
             func.declare(self)
-
+        if args["--emit-ast"]:
+            print(self.repr_as_tree())
         llir = str(self.module)
         mod = binding.parse_assembly(llir)
         module_pass.run(mod)

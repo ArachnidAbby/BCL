@@ -54,3 +54,9 @@ class IfElseStatement(ASTNode):
 
         if func.block.last_instruction:
             func.builder.unreachable()
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("If Statement",
+                                condition=self.cond,
+                                contents_if=self.if_block,
+                                contents_else=self.else_block)

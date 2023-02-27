@@ -6,7 +6,7 @@ from Ast.nodes.commontypes import SrcPosition
 
 class FunctionCall(ExpressionNode):
     '''Defines a function in the IR'''
-    __slots__ = ('ir_type', 'paren', 'function', 'args_types', "func_name")
+    __slots__ = ('paren', 'function', 'args_types', "func_name")
 
     def __init__(self, pos: SrcPosition, name: str, parenth: ParenthBlock):
         super().__init__(pos)
@@ -42,3 +42,8 @@ class FunctionCall(ExpressionNode):
         else:
             args = [x]
         return self.function.call(func, args)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Function Call",
+                                name=self.func_name,
+                                paren=self.paren)

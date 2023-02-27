@@ -39,6 +39,7 @@ class StrLiteral(ExpressionNode):
 
         return val
 
-    # def get_ptr(self, func):
-    #     return func.builder.bitcast(self.eval(func),
-    #                                 ir.IntType(8).as_pointer())
+    def repr_as_tree(self) -> str:
+        return self.create_tree("String Literal",
+                                content=self.value,
+                                return_type=self.ret_type)

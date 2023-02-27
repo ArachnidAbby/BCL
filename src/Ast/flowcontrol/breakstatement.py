@@ -12,3 +12,6 @@ class BreakStatement(ASTNode):
 
         Block.BLOCK_STACK[-1].ended = True
         func.builder.branch(func.inside_loop.while_after)
+
+    def repr_as_tree(self) -> str:
+        return "Break Statement"

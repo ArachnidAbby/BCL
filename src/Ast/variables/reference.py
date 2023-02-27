@@ -55,3 +55,8 @@ class VariableRef(ExpressionNode):
 
     def __hash__(self):
         return hash(self.var_name)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Variable Access",
+                                name=self.var_name,
+                                return_type=self.ret_type)

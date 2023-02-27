@@ -29,3 +29,7 @@ class ReturnStatement(ASTNode):
         else:
             func.builder.ret(self.expr.eval(func))
         Block.BLOCK_STACK[-1].ended = True
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Return Statement",
+                                contents=self.expr)

@@ -31,7 +31,7 @@ class VariableIndexRef(ExpressionNode):
 
     def __init__(self, pos: SrcPosition, varref: VariableRef,
                  ind: ExpressionNode):
-        self._position = pos
+        super().__init__(pos)
         self.varref = varref
         self.ind = ind
         self.size = 0
@@ -117,3 +117,9 @@ class VariableIndexRef(ExpressionNode):
 
     def as_type_reference(self, func):
         return Ast_Types.Array(self.ind, self.varref.as_type_reference(func))
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Array Index",
+                                item=self.varref,
+                                index=self.ind,
+                                return_type=self.ret_type)

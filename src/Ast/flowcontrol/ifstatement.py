@@ -27,3 +27,8 @@ class IfStatement(ASTNode):
 
         if Block.BLOCK_STACK[-1].ended:
             func.builder.unreachable()
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("If Statement",
+                                condition=self.cond,
+                                contents=self.block)

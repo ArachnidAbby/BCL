@@ -71,3 +71,9 @@ class ForLoop(ASTNode):
         func.builder.store(val, self.varptr)
         cond = func.builder.icmp_signed("<", val, self.rang.end)
         func.builder.cbranch(cond, self.for_body, self.for_after)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("For Loop",
+                                var=self.block.variables[self.var.var_name],
+                                range=self.rang,
+                                contents=self.block)

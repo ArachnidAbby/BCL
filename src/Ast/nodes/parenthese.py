@@ -86,3 +86,8 @@ class ParenthBlock(ContainerNode):
     @property
     def ir_type(self):
         return self.ret_type.ir_type
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Parenthesis",
+                                children=self.children,
+                                return_type=self.ret_type)

@@ -114,6 +114,13 @@ class OperationNode(ExpressionNode):
     def as_type_reference_defer(self, func):
         return super().as_type_reference(func)
 
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Math Expression",
+                                lhs=self.lhs,
+                                rhs=self.rhs,
+                                operation=self.op.name,
+                                return_type=self.ret_type)
+
 
 # To any future programmers:
 #   I am sorry for this shunt() function.

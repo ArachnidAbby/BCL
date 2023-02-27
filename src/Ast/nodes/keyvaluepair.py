@@ -24,3 +24,8 @@ class KeyValuePair(ASTNode):
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self.value.position, ))
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Key Value Pair",
+                                key=self.key,
+                                value=self.value)

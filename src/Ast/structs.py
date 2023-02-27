@@ -29,3 +29,8 @@ class StructDef(ASTNode):
 
     def eval(self):
         pass
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("If Statement",
+                                name=self.struct_name,
+                                contents=self.block)

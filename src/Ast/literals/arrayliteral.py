@@ -55,3 +55,9 @@ class ArrayLiteral(ExpressionNode):
     def get_position(self) -> SrcPosition:
         x = self.merge_pos([x.position for x in self.value])  # type: ignore
         return SrcPosition(x.line, x.col, x.length+1, x.source_name)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Array Literal",
+                                content=self.value,
+                                size=self.ret_type.size,
+                                return_type=self.ret_type)

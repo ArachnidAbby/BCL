@@ -6,7 +6,6 @@
 //   - FuzzyCat444 on Github.com (for many of the trig functions)
 // ======================================
 
-import matrix;
 
 define ceil(x: i32, y:i32) -> i32 {
     if x>y { return x; }

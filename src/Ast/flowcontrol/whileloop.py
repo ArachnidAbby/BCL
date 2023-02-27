@@ -48,3 +48,8 @@ class WhileStatement(ASTNode):
     def branch_logic(self, func):
         cond = self.cond.eval(func)
         func.builder.cbranch(cond, self.while_body, self.while_after)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("For Loop",
+                                condition=self.cond,
+                                contents=self.block)

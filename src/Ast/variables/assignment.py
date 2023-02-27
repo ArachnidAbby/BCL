@@ -75,3 +75,8 @@ class VariableAssign(ASTNode):
         self.set_not_constant(func)
         typ = self.var_name.ret_type
         typ.assign(func, ptr, self.value, typ)
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Variable Assignment",
+                                value=self.value,
+                                var=self.var_name)

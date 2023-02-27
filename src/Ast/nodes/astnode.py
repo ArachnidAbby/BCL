@@ -58,3 +58,38 @@ class ASTNode:
     @position.setter
     def position(self, val):
         self._position = val
+
+    def repr_as_tree(self) -> str:
+        return repr(self)
+
+    def create_tree_list(self, parent_repr, children) -> str:
+        output = f'/ {parent_repr}:\n'
+        for child in children:
+            if isinstance(child, ASTNode):
+                child_str = child.repr_as_tree().replace('\n', '\n|\t')
+                output += f"\n|\t{child_str}"
+            else:
+                output += f"\n|\t{repr(child)}"
+        return output
+
+    def create_tree_dict(self, parent_repr: str, children) -> str:
+        output = f'/ {parent_repr}:\n'
+        for child_name in children.keys():
+            child = children[child_name]
+            if isinstance(child, ASTNode):
+                child_str = child.repr_as_tree().replace('\n', '\n|\t')
+                output += f"|\t{child_name}: {child_str}\n"
+            elif isinstance(child, dict):
+                sub_tree = self.create_tree_dict('dict', child)
+                sub_tree_str = sub_tree.replace('\n', '\n|\t') + '\n'
+                output += f"|\t{child_name}: {sub_tree_str}"
+            elif isinstance(child, list):
+                sub_tree = self.create_tree_list('list', child)
+                sub_tree_str = sub_tree.replace('\n', '\n|\t') + '\n'
+                output += f"|\t{child_name}: {sub_tree_str}"
+            else:
+                output += f"|\t{child_name}: {repr(child)}\n"
+        return output
+
+    def create_tree(self, parent_repr: str, **children) -> str:
+        return self.create_tree_dict(parent_repr, children)
