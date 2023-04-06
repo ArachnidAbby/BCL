@@ -16,7 +16,7 @@ modules: dict[str, "Module"] = {}
 class Module(ASTNode):
     __slots__ = ('location', 'functions', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
-                 'evaled', 'ir_saved', 'types')
+                 'evaled', 'ir_saved', 'types', 'post_parsed')
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -35,6 +35,7 @@ class Module(ASTNode):
         self.children = tokens
         self.parsed = False
         self.pre_evaled = False
+        self.post_parsed = False
         self.evaled = False
         self.ir_saved = False
         # Ast.functions.standardfunctions.declare_all(self.module)
@@ -152,27 +153,37 @@ class Module(ASTNode):
             output += mod.get_all_globals()
         return output
 
-    def pre_eval(self):
-        self.pre_evaled = True
+    def post_parse(self, parent):
+        self.post_parsed = True
         for mod in self.imports.values():
-            if not mod.pre_evaled:
-                mod.pre_eval()
-                mod.pre_evaled = True
+            if not mod.post_parsed:
+                mod.post_parse(mod)
+                mod.post_parsed = True
 
         for c, child in enumerate(self.children):
             if not child.completed:
                 self.syntax_error_information(child, c)
-            child.value.pre_eval()
+            child.value.post_parse(self)
 
-    def eval(self):
+    def pre_eval(self, parent):
+        self.pre_evaled = True
+        for mod in self.imports.values():
+            if not mod.pre_evaled:
+                mod.pre_eval(mod)
+                mod.pre_evaled = True
+
+        for c, child in enumerate(self.children):
+            child.value.pre_eval(self)
+
+    def eval(self, parent):
         self.evaled = True
         for mod in self.imports.values():
             if not mod.evaled:
-                mod.eval()
+                mod.eval(mod)
                 mod.evaled = True
 
         for child in self.children:
-            child.value.eval()
+            child.value.eval(self)
 
         # del self.children
 

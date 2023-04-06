@@ -12,7 +12,7 @@ class FunctionDef(ASTNode):
     __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir',
                  'module', 'is_ret_set', 'args_types', 'ret_type',
                  "has_return", "inside_loop", "func_name", "variables",
-                 "consts", "ir_entry", "contains_dynamic", "contains_ellipsis")
+                 "ir_entry", "contains_dynamic", "contains_ellipsis")
 
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
                  block: Block, module):
@@ -34,7 +34,6 @@ class FunctionDef(ASTNode):
         # "invisible" variables
         self.ir_entry = None
         self.variables: list[tuple] = []
-        self.consts: list[tuple] = [] #! Unused
         # ellipsis always make this dynamic
         self.contains_ellipsis = args.contains_ellipsis
         self.contains_dynamic = self.contains_ellipsis
@@ -95,7 +94,7 @@ class FunctionDef(ASTNode):
             self.block.variables[x].ptr = args[c]
             self.variables.append((self.block.variables[x], x))
 
-    def pre_eval(self):
+    def post_parse(self, parent):
         self._validate_return(self)
         fnty = ir.FunctionType((self.ret_type).ir_type, self.args_ir,
                                self.contains_ellipsis)
@@ -107,8 +106,9 @@ class FunctionDef(ASTNode):
         function_object.add_return(self.ret_type)\
                        .set_ellipses(self.contains_ellipsis)
 
-        self.module.create_function(self.func_name, function_object)
+        parent.create_function(self.func_name, function_object)
 
+    def pre_eval(self, parent):
         # Early return if the function has no body.
         if self.has_no_body:
             return
@@ -116,6 +116,7 @@ class FunctionDef(ASTNode):
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
         self.ir_entry = block
+        self.block.pre_eval(self)
         self._append_args()
 
     def create_const_var(self, typ):
@@ -142,11 +143,11 @@ class FunctionDef(ASTNode):
             else:
                 x[0].define(self, x[1])
 
-    def eval(self):
+    def eval(self, parent):
         if self.has_no_body:
             return
         self.function_ir.attributes.add("nounwind")
-        self.block.pre_eval(self)
+        # self.block.pre_eval(self)
         self.alloc_stack()
 
         self.block.eval(self)

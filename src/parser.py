@@ -365,7 +365,7 @@ class Parser(ParserBase):
                                                         func_name,
                                                         self.peek(2).value,
                                                         None, self.module)
-            self.start_min = self._cursor
+            # self.start_min = self._cursor
             self.replace(3, "func_def_portion", func)
         elif self.peek(0).value not in self.keywords:
             error(f"invalid syntax '{self.peek(0).value}'",
@@ -383,7 +383,7 @@ class Parser(ParserBase):
                                                         None, self.module)
             func.ret_type = self.peek(4).value
             func.is_ret_set = True
-            self.start_min = self._cursor
+            # self.start_min = self._cursor
             self.replace(5, "func_def_portion", func)
         elif self.peek(0).value not in self.keywords:
             error(f"invalid syntax '{self.peek(0).value}'",
@@ -399,13 +399,13 @@ class Parser(ParserBase):
     def parse_funcdef_with_body(self):
         # * complete function definition.
         self.peek(0).value.block = self.peek(1).value
-        self.start_min = self._cursor
-        self.replace(2, "func_def", self.peek(0).value)
+        # self.start_min = self._cursor
+        self.replace(2, "statement", self.peek(0).value)
 
     @rule(0, "func_def_portion SEMI_COLON")
     def parse_funcdef_empty(self):
-        self.start_min = self._cursor
-        self.replace(2, "func_def", self.peek(0).value)
+        # self.start_min = self._cursor
+        self.replace(2, "statement", self.peek(0).value)
 
     @rule(-1, "!DOT expr expr|paren")
     def parse_func_call(self):

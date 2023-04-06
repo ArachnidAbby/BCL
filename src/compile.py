@@ -66,8 +66,9 @@ def compile(src_str: str, output_loc: Path, args, file=""):
                          line=pos, full_line=True)
 
     with timingContext('module created'):
-        module.pre_eval()
-        module.eval()
+        module.post_parse(None)
+        module.pre_eval(None)
+        module.eval(None)
 
     module.save_ir(output_loc.parents[0], args=args)
     codegen.shutdown_llvm()

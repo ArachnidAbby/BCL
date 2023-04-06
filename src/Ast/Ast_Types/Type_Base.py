@@ -128,10 +128,10 @@ class Type:
 
     def assign(self, func, ptr, value, typ: Self):
         if self.read_only:
-            error("This type is read_only",
-                  line=value.position, full_line=True)
+            error(f"Type: \'{ptr.ret_type}\' is read_only",
+                  line=ptr.position)
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
-        func.builder.store(val, ptr)
+        func.builder.store(val, ptr.get_ptr(func))
 
     def isum(self, func, ptr, rhs):
         final_value = self.sum(func, ptr, rhs)

@@ -1,5 +1,6 @@
 import Ast.Ast_Types as Ast_Types
 import errors
+from Ast.functions.definition import FunctionDef
 from Ast.nodes import ASTNode
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
@@ -18,17 +19,42 @@ class StructDef(ASTNode):
         self.block = block
         if isinstance(self.block.children[0], ContainerNode):
             members = self.block.children[0].children
-        else:
+        elif isinstance(self.block.children[0], ):
             members = [self.block.children[0]]
+        else:
+            errors.error("The first statement in a struct definition MUST "+
+                         "be a list of members", line=self.block.children[0].pos)
         self.struct_type = Ast_Types.Struct(self.struct_name, members, module)
         module.types[self.struct_name] = self.struct_type
         self.module = module
 
-    def pre_eval(self):
+    def _yield_functions(self):
+        # skip first element
+        for statement in self.block.children[1:]:
+            if isinstance(statement, FunctionDef):
+                yield statement
+            else:
+                errors.error("Struct bodies can only contain function " +
+                             "declarations or member declarations",
+                             line=statement.pos)
+
+    def create_function(self, name: str, func_obj):
+        self.struct_type.create_function(name, func_obj)
+
+    def post_parse(self, module):
         self.struct_type.define(self)
 
-    def eval(self):
-        pass
+        for stmt in self._yield_functions():
+            # stmt.func_name = f"{stmt.func_name}"
+            stmt.post_parse(self)
+
+    def pre_eval(self, module):
+        for stmt in self._yield_functions():
+            stmt.pre_eval(self)
+
+    def eval(self, module):
+        for stmt in self._yield_functions():
+            stmt.eval(self)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("If Statement",

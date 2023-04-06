@@ -21,6 +21,18 @@ class ContainerNode(ASTNode):
     def __len__(self) -> int:
         return len(self.children)
 
+    def post_parse(self, parent):
+        for child in self.children:
+            child.post_parse(parent)
+
+    def pre_eval(self, func):
+        for child in self.children:
+            child.pre_eval(func)
+
+    def eval(self, func):
+        for child in self.children:
+            child.eval(func)
+
     def append_child(self, child: GenericNode):
         '''append child to container.'''
         self.children.append(child)

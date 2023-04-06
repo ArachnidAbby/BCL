@@ -243,13 +243,17 @@ class MemberAccess(OperationNode):
             possible_func = self._get_global_func(func.module, rhs.var_name)
             if possible_func is not None:
                 return possible_func
-            errors.error("Has no members2", line=self.position())
+            errors.error("Has no members", line=self.position)
         return (lhs.ret_type).get_member(func, lhs, rhs)
 
     def using_global(self, func) -> bool:
         rhs = self.rhs
         possible_func = self._get_global_func(func.module, rhs.var_name)
         return possible_func is not None
+
+    def get_position(self) -> SrcPosition:
+        return self.merge_pos((self._position,
+                               self.rhs.position))
 
 
 # TODO: have functions be variables

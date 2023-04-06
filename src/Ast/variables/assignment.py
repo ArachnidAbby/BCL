@@ -71,7 +71,7 @@ class VariableAssign(ASTNode):
 
     def eval(self, func):
         self.value.pre_eval(func)
-        ptr = self.var_name.get_ptr(func)
+        ptr = self.var_name
         self.set_not_constant(func)
         typ = self.var_name.ret_type
         typ.assign(func, ptr, self.value, typ)

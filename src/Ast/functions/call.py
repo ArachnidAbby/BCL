@@ -1,7 +1,6 @@
-import errors
 from Ast import Ast_Types
 from Ast.math import MemberAccess
-from Ast.nodes import ContainerNode, ExpressionNode, ParenthBlock
+from Ast.nodes import ExpressionNode, ParenthBlock
 from Ast.nodes.commontypes import SrcPosition
 
 
@@ -24,6 +23,7 @@ class FunctionCall(ExpressionNode):
         self.args_types = tuple([x.ret_type for x in self.paren])
 
         self.func_name.pre_eval(func)
+        # * Special "dot call" syntax
         if isinstance(self.func_name, MemberAccess) and \
                 self.func_name.using_global(func):
             data = self.func_name.lhs

@@ -29,6 +29,11 @@ class ASTNode:
         '''check whether or not a node is an expression'''
         return False
 
+    def post_parse(self, parent):
+        '''Happens before pre_eval but after parsing
+        This creates globals. Ex: functions
+        '''
+
     def pre_eval(self, func):
         '''pre eval step that is usually used to validate
         the contents of a node

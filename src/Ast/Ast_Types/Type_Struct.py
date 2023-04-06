@@ -15,7 +15,7 @@ class Struct(Ast_Types.Type):
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
-                 'ir_type')
+                 'ir_type', 'module')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -38,6 +38,7 @@ class Struct(Ast_Types.Type):
 
         self.ir_type = ir.global_context.get_identified_type(f"struct.{name}")
         self.size = len(self.member_indexs)-1
+        self.module = module
         self.rang = None
 
     def define(self, func):
@@ -50,6 +51,13 @@ class Struct(Ast_Types.Type):
             member_name = member.key.var_name
             self.members[member_name] = member.get_type(func)
         self.ir_type.set_body(*[x.ir_type for x in self.members.values()])
+
+    def create_function(self, name: str, func_typ):
+        if name not in self.members.keys():
+            self.members[name] = Ast_Types.FunctionGroup(name, self.module)
+        group = self.members[name]
+        group.add_function(func_typ)  # type: ignore
+        return group
 
     # TODO: allow casting overloads
     # "define __as__(&Self, x: othertype) -> Self;"
@@ -77,11 +85,15 @@ class Struct(Ast_Types.Type):
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
             error("member not found!", line=rhs.position)
-        return MemberInfo(True, True, self.members[rhs.var_name])
+        typ = self.members[rhs.var_name]
+        is_ptr = not isinstance(typ, Ast_Types.FunctionGroup)
+        return MemberInfo(not typ.read_only, is_ptr, typ)
 
     def get_member(self, func, lhs,
                    member_name_in: "Ast.variable.VariableRef"):
         member_name = member_name_in.var_name
+        if isinstance(self.members[member_name], Ast_Types.FunctionGroup):
+            return self.members[member_name]
         member_index = self.member_index_search[member_name]
         # ^ no need to check if it exists.
         # We do this when getting the return type
