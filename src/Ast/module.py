@@ -5,6 +5,7 @@ from llvmlite import binding, ir  # type: ignore
 import Ast.functions.standardfunctions
 import errors
 import linker
+from Ast import Ast_Types
 from Ast.functions.functionobject import _Function
 from Ast.nodes import ASTNode, SrcPosition
 from lexer import Lexer
@@ -93,15 +94,21 @@ class Module(ASTNode):
         errors.error(f"Cannot find '{name}' in module '{self.mod_name}'",
                      line=position)
 
-    def get_global(self, name: str, position: tuple[int, int, int]):
+    def get_global(self, name: str) -> object | None:
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
 
-        errors.error(f"Cannot find global '{name}' in module" +
-                     f"'{self.mod_name}'", line=position)
+        # imp instead of "import"
+        # gbl instead of "global"
+        for imp in self.imports.values():
+            if (gbl := imp.get_global(name)) is not None:
+                return gbl
 
-    def get_func_from_dict(self, name: str, funcs: dict, types: tuple, position):
+        return None
+
+    def get_func_from_dict(self, name: str, funcs: dict, types: tuple,
+                           position):
         if types in funcs.keys():
             return funcs[types]
 
@@ -125,35 +132,24 @@ class Module(ASTNode):
         errors.error(f"Cannot find function '{name}' in module" +
                      f" '{self.mod_name}'", line=position)
 
-    def create_function(self, name: str, args_types: tuple,
-                        function_object: _Function, dynamic: bool):
-        if dynamic:  # TODO: This likely shouldn't be here
-            self. create_dynamic_function(name, args_types, function_object)
+    def create_function(self, name: str, function_object: Ast_Types.Function):
+        if name not in self.globals.keys():
+            self.globals[name] = Ast_Types.FunctionGroup(name, self)
+        group = self.globals[name]
+        group.add_function(function_object)  # type: ignore
+        return group
 
-        if name not in self.functions.keys():
-            self.functions[name] = {args_types: function_object,
-                                    "NONSTATIC": []}
-            return
-        self.functions[name][args_types] = function_object
-
-    def create_dynamic_function(self, name: str, args_types: tuple,
-                                function_object: _Function):
-        if name not in self.functions.keys():
-            self.functions[name] = {"NONSTATIC": [function_object]}
-            return
-        self.functions[name]["NONSTATIC"].append(function_object)
-
-    def get_all_functions(self) -> list[_Function]:
+    def get_all_globals(self) -> list[object]:
         '''get all functions for linking'''
-        output: list[_Function] = []
-        for func_named in self.functions.values():
-            output += func_named.values()
+        output: list[object] = []
+        for func in self.globals.values():
+            output.append(func)
         return output
 
-    def get_import_functions(self):
+    def get_import_globals(self):
         output = []
         for mod in self.imports.values():
-            output += mod.get_all_functions()
+            output += mod.get_all_globals()
         return output
 
     def pre_eval(self):
@@ -182,7 +178,7 @@ class Module(ASTNode):
 
     def repr_as_tree(self) -> str:
         return self.create_tree(f"Module {self.mod_name}",
-                                functions=self.functions,
+                                globals=self.globals,
                                 location=self.location,
                                 contents=[x.value for x in self.children])
 
@@ -208,12 +204,8 @@ class Module(ASTNode):
         module_pass.add_cfg_simplification_pass()
         # module_pass.add_merge_returns_pass()
         # pass_manager.populate(module_pass)
-        funcs = self.get_import_functions()
+        funcs = self.get_import_globals()
         for func in funcs:
-            if isinstance(func, list):
-                for actual_func in func:
-                    actual_func.declare(self)
-                continue
             func.declare(self)
         if args["--emit-ast"]:
             print(self.repr_as_tree())

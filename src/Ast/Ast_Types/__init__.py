@@ -3,6 +3,7 @@ from Ast.Ast_Types.Type_Array import *
 from Ast.Ast_Types.Type_Base import *
 from Ast.Ast_Types.Type_Bool import *
 from Ast.Ast_Types.Type_Char import *
+from Ast.Ast_Types.Type_Function import *
 from Ast.Ast_Types.Type_I32 import *
 from Ast.Ast_Types.Type_Reference import *
 from Ast.Ast_Types.Type_StrLit import *

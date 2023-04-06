@@ -208,17 +208,36 @@ def operator(precedence: int, name: str, right=False,
 
 
 class MemberAccess(OperationNode):
-    assignable = True
+    __slots__ = ("assignable",)
+
+    def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
+        super().__init__(pos, op, lhs, rhs, shunted)
+        self.assignable = True
 
     def pre_eval(self, func):
         super().pre_eval(func)
+        rhs = self.rhs
+        func = self._get_global_func(func.module, rhs.var_name)
+        if func is not None:
+            self.ret_type = func
+        self.assignable = not self.ret_type.read_only
+
+    def _get_global_func(self, module, name: str):
+        return module.get_global(name)
 
     def get_ptr(self, func):
         lhs = self.lhs
         rhs = self.rhs
         if not lhs.ret_type.has_members:
+            if self.using_global(func):
+                return func
             errors.error("Has no members", line=self.right_handed_position())
         return (lhs.ret_type).get_member(func, lhs, rhs)
+
+    def using_global(self, func) -> bool:
+        rhs = self.rhs
+        func = self._get_global_func(func.module, rhs.var_name)
+        return func is not None
 
 
 # TODO: have functions be variables

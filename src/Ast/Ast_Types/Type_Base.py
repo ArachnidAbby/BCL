@@ -5,6 +5,7 @@ from llvmlite import ir  # type: ignore
 
 from errors import error
 
+# TODO: Should this be an Enum for operation names?
 
 class Type:
     '''abstract type class that outlines the necessary
@@ -27,6 +28,7 @@ class Type:
     # Dynamic types change function definitions and the
     # matching of function args when calling
     is_dynamic = False
+    functions: dict = {"NONSTATIC": []}
 
     def __init__(self):
         pass
@@ -192,6 +194,11 @@ class Type:
         '''
         return self == other
 
-    # def truthy(self, func, val):
-    #     '''When using boolean ops or if statements'''
-    #     return ir.Constant(ir.IntType(1), 0)
+    # ? should this error instead?
+    def truthy(self, func, val):
+        '''When using boolean ops or if statements'''
+        return ir.Constant(ir.IntType(1), 0)  # defaults false
+
+    @property
+    def ret_type(self):
+        return self

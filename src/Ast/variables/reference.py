@@ -11,7 +11,7 @@ class VariableRef(ExpressionNode):
     Doing it in this way prevents the parser from needing to taking
     multiple passes
     '''
-    __slots__ = ('block', 'var_name')
+    __slots__ = ('block', 'var_name', 'from_global')
     assignable = True
 
     def __init__(self, pos: SrcPosition, name: str, block):
@@ -20,21 +20,26 @@ class VariableRef(ExpressionNode):
         self.block = block
 
     def pre_eval(self, func):
-        if not self.block.validate_variable_exists(self.var_name):
+        if not self.block.validate_variable_exists(self.var_name, func.module):
             error(f"Undefined variable '{self.var_name}'", line=self.position)
 
-        self.ret_type = self.block.get_variable(self.var_name).type
+        self.ret_type = self.block.get_variable(self.var_name,
+                                                func.module).type
         if self.ret_type.is_void():
             error(f"undefined variable '{self.var_name}'", line=self.position)
 
     def eval(self, func):
-        return self.block.get_variable(self.var_name).get_value(func)
+        return self.block.get_variable(self.var_name, func.module)\
+            .get_value(func)
 
     def get_ptr(self, func):
-        return self.block.get_variable(self.var_name).ptr
+        return self.block.get_variable(self.var_name, func.module).ptr
 
     def get_var(self, func):
-        return self.block.get_variable(self.var_name)
+        return self.block.get_variable(self.var_name, func.module)
+
+    def get_function(self, func):
+        return func.module.get_function(self.var_name, self.position)
 
     def get_value(self, func):
         '''only important in references'''

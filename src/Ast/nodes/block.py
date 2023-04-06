@@ -57,25 +57,28 @@ class Block(ContainerNode):
         yield self.children[-1]
         self.BLOCK_STACK.pop()
 
-    def get_variable(self, var_name: str):
+    def get_variable(self, var_name: str, module=None):
         '''get variable by name'''
         if var_name in self.variables.keys():
             return self.variables[var_name]
         elif self.parent is not None:
-            return self.parent.get_variable(var_name)
+            return self.parent.get_variable(var_name, module)
+        elif module is not None:
+            return module.get_global(var_name)
         else:
             return None
 
-    def validate_variable(self, var_name: str) -> bool:
+    def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''
-        var_ptr = self.get_variable(var_name).ptr  # type: ignore
+        var_ptr = self.get_variable(var_name, module).ptr  # type: ignore
         return var_ptr is not None
 
-    def validate_variable_exists(self, var_name: str) -> bool:
+    def validate_variable_exists(self, var_name: str, module=None) -> bool:
         if self.parent is None:
-            return var_name in self.variables.keys()
+            return (var_name in self.variables.keys()) or \
+                (module.get_global(var_name) is not None)
         return (var_name in self.variables.keys()) or \
-            self.parent.validate_variable_exists(var_name)
+            self.parent.validate_variable_exists(var_name, module)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Block",

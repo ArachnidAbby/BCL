@@ -23,6 +23,13 @@ class ExpressionNode(ASTNode):
             func.builder.store(val, self.ptr)
         return self.ptr
 
+    def get_var(self, func):
+        '''Place holder!
+        Useful when we want something to act like a variable.
+        The default is to have something return itself.
+        '''
+        return self
+
     def as_type_reference(self, func):
         '''Get this expresion as the reference to a type'''
         error(f"invalid type: {str(self)}", line=self.position)

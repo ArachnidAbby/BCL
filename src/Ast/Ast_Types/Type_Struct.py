@@ -51,6 +51,7 @@ class Struct(Ast_Types.Type):
         self.ir_type.set_body(*[x.ir_type for x in self.members.values()])
 
     # TODO: allow casting overloads
+    # "define __as__(&Self, x: othertype) -> Self;"
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
         if typ == previous.ret_type:

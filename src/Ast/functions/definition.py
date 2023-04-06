@@ -34,7 +34,7 @@ class FunctionDef(ASTNode):
         # "invisible" variables
         self.ir_entry = None
         self.variables: list[tuple] = []
-        self.consts: list[tuple] = []
+        self.consts: list[tuple] = [] #! Unused
         # ellipsis always make this dynamic
         self.contains_ellipsis = args.contains_ellipsis
         self.contains_dynamic = self.contains_ellipsis
@@ -102,13 +102,12 @@ class FunctionDef(ASTNode):
 
         self.function_ir = ir.Function(self.module.module, fnty,
                                        name=self._mangle_name(self.func_name))
-        function_object = _Function(_Function.BEHAVIOR_DEFINED,
-                                    self.func_name, self.function_ir,
-                                    self.ret_type, self.args_types,
-                                    self.contains_ellipsis)
+        function_object = Ast_Types.Function(self.func_name, self.args_types,
+                                             self.function_ir, self.module)
+        function_object.add_return(self.ret_type)\
+                       .set_ellipses(self.contains_ellipsis)
 
-        self.module.create_function(self.func_name, self.args_types,
-                                    function_object, self.contains_dynamic)
+        self.module.create_function(self.func_name, function_object)
 
         # Early return if the function has no body.
         if self.has_no_body:
@@ -127,6 +126,7 @@ class FunctionDef(ASTNode):
         return ptr
 
     def alloc_stack(self):
+        # TODO: REFACTOR
         for x in self.variables:
             if x[0].is_constant:
                 if x[0].type.pass_as_ptr:

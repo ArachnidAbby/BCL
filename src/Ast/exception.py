@@ -9,6 +9,14 @@ PRINTF_ARGS = ()
 EXIT_ARGS = (Ast_Types.Integer_32(),)
 
 
+def _get_function(module, name: str, args: tuple, pos):
+    func = module.get_global(name)
+    if func is None:
+        errors.error(f"Could not get function {name}, hint: import stdlib",
+                     line=pos)
+    return func.get_function(args)
+
+
 # TODO: MAKE BETTER
 def over_index_exception(func, name, index, pos):
     over_index_fmt = (f"{errors.RED}Invalid index '%i' for array" +
@@ -24,14 +32,12 @@ def over_index_exception(func, name, index, pos):
 
     fmt_bitcast = stringliteral.StrLiteral(pos, over_index_fmt)
 
-    printf_dict = func.module.get_function("printf", pos)
-    printf = func.module.get_func_from_dict("printf", printf_dict,
-                                            PRINTF_ARGS, pos)
+    printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
+    exit_args = (Ast_Types.Integer_32(),)
 
-    exit_dict = func.module.get_function("exit", pos)
-    exit_func = func.module.get_func_from_dict("exit", exit_dict,
-                                               EXIT_ARGS, pos)
+    printf = _get_function(func.module, "printf", printf_args, pos)
+    exit_func = _get_function(func.module, "exit", exit_args, pos)
 
-    func.builder.call(printf.function_object, [fmt_bitcast.eval(func), index])
-    func.builder.call(exit_func.function_object,
+    func.builder.call(printf.func_obj, [fmt_bitcast.eval(func), index])
+    func.builder.call(exit_func.func_obj,
                       [ir.Constant(ir.IntType(32), 1)])

@@ -70,7 +70,7 @@ class Parser(ParserBase):
             "expr": (self.parse_var_decl, self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
-                     self.parse_func_call_dot, self.parse_expr_list,
+                     self.parse_expr_list,
                      self.parse_rangelit, self.parse_struct_literal,
                      self.parse_member_access),
             "statement": (self.parse_statement, self.parse_combine_statements),
@@ -97,7 +97,7 @@ class Parser(ParserBase):
             "expr_list": (self.parse_expr_list, self.parse_statement),
             "OPEN_PAREN": (self.parse_paren_empty, self.parse_paren_start),
             "OPEN_PAREN_USED": (self.parse_paren_close, ),
-            "paren": (self.parse_func_call, self.parse_func_call_dot),
+            "paren": (self.parse_member_access,),
             "OPEN_SQUARE": (self.parse_array_literal_multi_element,
                             self.parse_array_literal,),
             "AMP": (self.parse_varref, )
@@ -250,7 +250,7 @@ class Parser(ParserBase):
                                        self.peek(2).value, self.module)
         self.replace(3, "structdef", struct)
 
-    @rule(0, "expr DOT expr !expr|paren|OPEN_PAREN|OPEN_PAREN_USED")
+    @rule(0, "expr|paren DOT expr")
     def parse_member_access(self):
         op = Ast.math.ops['access_member'](self.peek(0).pos,
                                            self.peek(0).value,
@@ -410,34 +410,33 @@ class Parser(ParserBase):
     @rule(-1, "!DOT expr expr|paren")
     def parse_func_call(self):
         # * Function Calls
-        if (isinstance(self.peek(0).value, Ast.variables.VariableRef)):
-            func_name = self.peek(0).value.var_name
-            args = self.peek(1).value
+        func_name = self.peek(0).value
+        args = self.peek(1).value
 
-            if not isinstance(args, Ast.nodes.ParenthBlock):
-                args = Ast.nodes.ParenthBlock(self.peek(1).pos)
-                args.children.append(self.peek(1).value)
+        if not isinstance(args, Ast.nodes.ParenthBlock):
+            args = Ast.nodes.ParenthBlock(self.peek(1).pos)
+            args.children.append(self.peek(1).value)
 
-            func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name,
-                                                   args)
-            self.replace(2, "expr", func)
+        func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name,
+                                                args)
+        self.replace(2, "expr", func)
 
-    @rule(0, "expr|paren DOT expr expr|paren")
-    def parse_func_call_dot(self):
-        if not isinstance(self.peek(2).value, Ast.variables.VariableRef):
-            return
-        func_name = self.peek(2).value.var_name
-        args1 = self.peek(0).value
-        args2 = self.peek(3).value
-        args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) \
-            else [args1]  # wrap in a list if not already done
-        args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) \
-            else [args2]  # wrap in a list if not already done
-        args = Ast.nodes.ParenthBlock(self.peek(0).pos)
-        args.children = args1+args2
-        func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name,
-                                               args)
-        self.replace(4, "expr", func)
+    # @rule(0, "expr|paren DOT expr expr|paren")
+    # def parse_func_call_dot(self):
+    #     if not isinstance(self.peek(2).value, Ast.variables.VariableRef):
+    #         return
+    #     func_name = self.peek(2).value.var_name
+    #     args1 = self.peek(0).value
+    #     args2 = self.peek(3).value
+    #     args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) \
+    #         else [args1]  # wrap in a list if not already done
+    #     args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) \
+    #         else [args2]  # wrap in a list if not already done
+    #     args = Ast.nodes.ParenthBlock(self.peek(0).pos)
+    #     args.children = args1+args2
+    #     func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name,
+    #                                            args)
+    #     self.replace(4, "expr", func)
 
     @rule(0, 'expr COLON expr COMMA|SEMI_COLON|CLOSE_PAREN|' +
              'CLOSE_CURLY|SET_VALUE')

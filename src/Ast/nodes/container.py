@@ -18,6 +18,9 @@ class ContainerNode(ASTNode):
     def __iter__(self) -> Iterator[Any]:
         yield from self.children
 
+    def __len__(self) -> int:
+        return len(self.children)
+
     def append_child(self, child: GenericNode):
         '''append child to container.'''
         self.children.append(child)
