@@ -7,23 +7,23 @@
 // ======================================
 
 
-define ceil(x: i32, y:i32) -> i32 {
+define max(x: i32, y:i32) -> i32 {
     if x>y { return x; }
     return y;
 }
 
-define ceil(x: f32, y:f32) -> f32 {
+define max(x: f32, y:f32) -> f32 {
     if x>y { return x; }
     return y;
 }
 
 
-define floor(x: i32, y:i32) -> i32 {
+define min(x: i32, y:i32) -> i32 {
     if x<y { return x; }
     return y;
 }
 
-define floor(x: f32, y:f32) -> f32 {
+define min(x: f32, y:f32) -> f32 {
     if x<y { return x; }
     return y;
 }
