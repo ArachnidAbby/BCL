@@ -1,6 +1,7 @@
 from llvmlite import ir  # type: ignore
 
 from Ast.Ast_Types import Type_I32
+from Ast.nodes.commontypes import MemberInfo
 from errors import error
 
 from . import Type_Base
@@ -11,6 +12,7 @@ class Array(Type_Base.Type):
     name = "array"
     pass_as_ptr = True
     no_load = False
+    has_members = True
 
     def __init__(self, size, typ):
         self.typ = typ
@@ -43,6 +45,13 @@ class Array(Type_Base.Type):
         if op == "ind":
             return self.typ
 
+    def get_member_info(self, lhs, rhs):
+        match rhs.var_name:
+            case "length":
+                return MemberInfo(False, False, Type_I32.Integer_32())
+            case _:
+                error("member not found!", line=rhs.position)
+
     def __eq__(self, other):
         if (other is None) or other.name != self.name:
             return False
@@ -69,3 +78,10 @@ class Array(Type_Base.Type):
 
     def __str__(self) -> str:
         return f"{self.typ}[{self.size}]"
+
+    def get_member(self, func, lhs, rhs):
+        match rhs.var_name:
+            case "length":
+                return ir.Constant(ir.IntType(32), self.size)
+            case _:
+                error("member not found!", line=rhs.position)

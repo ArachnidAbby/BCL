@@ -16,12 +16,6 @@ class FunctionCall(ExpressionNode):
         self.ret_type = Ast_Types.Void()
         self.paren = parenth
 
-    # def get_function(self, func):
-    #     return self.func_name.get_function(func)
-
-    #     self.func_name.pre_eval(func)
-    #     return self.func_name.ret_type.functions
-
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):
             self.paren.in_func_call = True
@@ -42,11 +36,6 @@ class FunctionCall(ExpressionNode):
         self.function = self.func_name.get_var(func).ret_type
 
     def eval(self, func):
-        # x = self.paren.eval(func)
-        # if isinstance(self.paren, ParenthBlock):
-        #     args = self.paren.children
-        # else:
-        #     args = [x]
         return self.function.call(func, self.func_name, self.paren)
 
     def repr_as_tree(self) -> str:

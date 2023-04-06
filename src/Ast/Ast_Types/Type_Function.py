@@ -147,8 +147,8 @@ class FunctionGroup(Ast_Types.Type):
         self.print_call_error(args)
 
     def print_call_error(self, rhs):
-        error("Invalid Argument types for function group with" +
-              f"name: {self.func_name}",
+        error("Invalid Argument types for function group with " +
+              f"name: {self.func_name}\nargs: {str(rhs)}",
               line=rhs.position)
 
     def call(self, func, lhs, args: tuple):

@@ -208,19 +208,30 @@ def operator(precedence: int, name: str, right=False,
 
 
 class MemberAccess(OperationNode):
-    __slots__ = ("assignable",)
+    __slots__ = ("assignable", "is_pointer")
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
+        self.is_pointer = False
 
-    def pre_eval(self, func):
-        super().pre_eval(func)
+    def pre_eval_math(self, func):
+        self.lhs.pre_eval(func)
+        lhs = self.lhs
         rhs = self.rhs
-        func = self._get_global_func(func.module, rhs.var_name)
-        if func is not None:
-            self.ret_type = func
-        self.assignable = not self.ret_type.read_only
+        if not lhs.ret_type.has_members:
+            possible_func = self._get_global_func(func.module, rhs.var_name)
+            if possible_func is not None:
+                self.ret_type = possible_func
+                self.assignable = False
+            else:
+                errors.error("Has no members", line=self.position)
+        else:
+            super().pre_eval_math(func)
+            member_info = lhs.ret_type.get_member_info(lhs, rhs)
+            self.assignable = member_info.mutable
+            self.is_pointer = member_info.is_pointer
+            self.ret_type = member_info.typ
 
     def _get_global_func(self, module, name: str):
         return module.get_global(name)
@@ -229,15 +240,16 @@ class MemberAccess(OperationNode):
         lhs = self.lhs
         rhs = self.rhs
         if not lhs.ret_type.has_members:
-            if self.using_global(func):
-                return func
-            errors.error("Has no members", line=self.right_handed_position())
+            possible_func = self._get_global_func(func.module, rhs.var_name)
+            if possible_func is not None:
+                return possible_func
+            errors.error("Has no members2", line=self.position())
         return (lhs.ret_type).get_member(func, lhs, rhs)
 
     def using_global(self, func) -> bool:
         rhs = self.rhs
-        func = self._get_global_func(func.module, rhs.var_name)
-        return func is not None
+        possible_func = self._get_global_func(func.module, rhs.var_name)
+        return possible_func is not None
 
 
 # TODO: have functions be variables
@@ -248,7 +260,11 @@ class MemberAccess(OperationNode):
 
 @operator(13, "access_member", pre_eval_right=False, cls=MemberAccess)
 def member_access(self, func, lhs, rhs):
-    return func.builder.load(self.get_ptr(func))
+    ptr = self.get_ptr(func)
+    if self.is_pointer:  # from llvmlite.ir.Type
+        return func.builder.load(ptr)
+    else:
+        return ptr
 
 # @operator(13, "index", cls = VariableIndexRef)
 # def index(self, func, lhs, rhs):

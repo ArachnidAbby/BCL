@@ -179,6 +179,11 @@ class Type:
     def as_type_reference(self, func):
         return self
 
+    def get_member_info(self, lhs, rhs):
+        '''Used to get information about members
+        ex: ret_type, mutability, etc
+        '''
+
     def get_members(self):
         '''Gets all the member names.
            Must check `typ.has_members` or an Exception will occur

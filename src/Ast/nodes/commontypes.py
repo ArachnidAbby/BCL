@@ -2,7 +2,7 @@
 such as `SrcPosition` named tuple
 '''
 
-from typing import NamedTuple, Union
+from typing import Any, NamedTuple, Union
 
 
 class SrcPosition(NamedTuple):
@@ -14,6 +14,12 @@ class SrcPosition(NamedTuple):
     @staticmethod
     def invalid():
         return SrcPosition(-1, -1, -1)
+
+
+class MemberInfo(NamedTuple):
+    mutable: bool
+    is_pointer: bool
+    typ: Any  # can't fully qualify this because circular imports
 
 
 GenericNode = Union["ASTNode", "ExpressionNode"]  # NOQA: F821 # type: ignore

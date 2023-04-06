@@ -4,6 +4,7 @@ from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 from Ast.nodes import KeyValuePair
+from Ast.nodes.commontypes import MemberInfo
 from errors import error
 
 
@@ -71,10 +72,12 @@ class Struct(Ast_Types.Type):
 
     # TODO: implement this
     def get_op_return(self, op, lhs, rhs):
-        if op == "access_member":
-            if rhs.var_name not in self.members.keys():
-                error("member not found!", line=rhs.position)
-            return self.members[rhs.var_name]
+        pass
+
+    def get_member_info(self, lhs, rhs):
+        if rhs.var_name not in self.members.keys():
+            error("member not found!", line=rhs.position)
+        return MemberInfo(True, True, self.members[rhs.var_name])
 
     def get_member(self, func, lhs,
                    member_name_in: "Ast.variable.VariableRef"):
@@ -90,7 +93,7 @@ class Struct(Ast_Types.Type):
         return func.builder.load(lhs.get_ptr(func))
 
     def put(self, func, lhs, value):
-        error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'",
+        error(f"Operation 'put-at' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def __hash__(self):

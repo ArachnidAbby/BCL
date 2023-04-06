@@ -10,7 +10,7 @@ functionsdict: dict[str, dict[tuple[Ast_Types.Type, ...], '_Function']] = {}
 internal_function_ty = Callable[[Any, tuple], Optional[ir.Instruction]]
 
 
-# TODO: REMOVE FOR REAL FUNCTION TYPE
+# TODO: REMOVE
 class _Function:
     '''A function object to run "interal functions" and "defined functions"'''
     __slots__ = ('function_behavior', 'function_object', 'ret_type',
