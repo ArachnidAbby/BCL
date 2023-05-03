@@ -1,7 +1,7 @@
-override FILE = console_cube.bcl
+override FILE = current.bcl
 
 env/bin/activate: requirements.txt
-	python3.11 -m venv env 
+	python3.11 -m venv env
 	./env/bin/pip3.11 install -r requirements.txt
 
 run: env/bin/activate

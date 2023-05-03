@@ -1,0 +1,9 @@
+// ======================================
+// created: 02/26/2023
+// description:
+//   This is a rough clone of Curses/NCurses
+//   This will not be 100% faithful to the original
+//   And currently it has no promise of being cross-platform
+// ======================================
+
+define 

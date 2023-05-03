@@ -30,6 +30,10 @@ class Type:
     is_dynamic = False
     functions: dict = {"NONSTATIC": []}
 
+    # mainly used for the function type, but makes writing other code easier
+    # when included for all types
+    is_method = False
+
     def __init__(self):
         pass
 

@@ -3,6 +3,7 @@ from typing import Self
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
+from Ast.math import MemberAccess
 from errors import error
 
 
@@ -11,7 +12,7 @@ class Function(Ast_Types.Type):
     of a type class.'''
 
     __slots__ = ('func_name', 'module', 'args', 'func_ret',
-                 'contains_ellipsis', "func_obj")
+                 'contains_ellipsis', "func_obj", "is_method")
     name = "Function"
     pass_as_ptr = False
     no_load = False
@@ -25,6 +26,7 @@ class Function(Ast_Types.Type):
         # Contains the actually llvm function
         self.func_obj = func_obj
         self.contains_ellipsis = False
+        self.is_method = False
 
     def add_return(self, ret: Ast_Types.Type):
         self.func_ret = ret
@@ -32,6 +34,10 @@ class Function(Ast_Types.Type):
 
     def set_ellipses(self, ellipsis):
         self.contains_ellipsis = ellipsis
+        return self
+
+    def set_method(self, method, parent):
+        self.is_method = method
         return self
 
     def get_ir_types(self):
@@ -79,19 +85,28 @@ class Function(Ast_Types.Type):
               f"{str(self)}",
               line=rhs.position)
 
-    def match_args(self, args):
-        if not self.contains_ellipsis and len(args) != len(self.args):
+    def _fix_args(self, lhs, args):
+        if isinstance(lhs, MemberAccess) and self.is_method:
+            return [lhs.lhs, *args.children]
+        else:
+            return args.children
+
+    def match_args(self, lhs, args):
+        args_used = self._fix_args(lhs, args)
+
+        if not self.contains_ellipsis and len(args_used) != len(self.args):
             return False
-        if self.contains_ellipsis and len(args) < len(self.args):
+        if self.contains_ellipsis and len(args_used) < len(self.args):
             return False
 
-        for func_arg, passed_arg in zip(self.args, args):
+        for func_arg, passed_arg in zip(self.args, args_used):
             if not func_arg.roughly_equals(passed_arg.ret_type):
                 return False
 
         return True
 
     def call(self, func, lhs, args):
+        args.children = self._fix_args(lhs, args)
         args.eval(func)
         return func.builder.call(self.func_obj, args.children)
 
@@ -137,22 +152,22 @@ class FunctionGroup(Ast_Types.Type):
         if op != "call":
             return
         # rhs is the argument tuple
-        return self.get_function(rhs).func_ret
+        return self.get_function(lhs, rhs).func_ret
 
-    def get_function(self, args):
+    def get_function(self, lhs, args):
         for version in self.versions:
-            if version.match_args(args):
+            if version.match_args(lhs, args):
                 return version
 
         self.print_call_error(args)
 
     def print_call_error(self, rhs):
-        error("Invalid Argument types for function group with " +
-              f"name: {self.func_name}\nargs: {str(rhs)}",
+        error("Invalid Argument types for function group with \n" +
+              f" name: {self.func_name}\n args: {str(rhs)}",
               line=rhs.position)
 
     def call(self, func, lhs, args: tuple):
-        return self.get_function(args).call(func, lhs, args)
+        return self.get_function(lhs, args).call(func, lhs, args)
 
     @property
     def type(self):

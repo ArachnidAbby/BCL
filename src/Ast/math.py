@@ -220,6 +220,8 @@ class MemberAccess(OperationNode):
         lhs = self.lhs
         rhs = self.rhs
         if not lhs.ret_type.has_members:
+            # get function if struct doesn't contain members.
+            # global functions can still use the member access syntax on structs
             possible_func = self._get_global_func(func.module, rhs.var_name)
             if possible_func is not None:
                 self.ret_type = possible_func
@@ -244,23 +246,19 @@ class MemberAccess(OperationNode):
             if possible_func is not None:
                 return possible_func
             errors.error("Has no members", line=self.position)
+
         return (lhs.ret_type).get_member(func, lhs, rhs)
 
     def using_global(self, func) -> bool:
         rhs = self.rhs
+        lhs = self.lhs
         possible_func = self._get_global_func(func.module, rhs.var_name)
-        return possible_func is not None
+        return possible_func is not None and not lhs.ret_type.has_members
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,
                                self.rhs.position))
 
-
-# TODO: have functions be variables
-# @operator(11, "call")
-# def call(self, func, lhs: VariableRef, rhs):
-#     func.module.functions[lhs.name]
-#     return (lhs.ret_type).convert_to(func, lhs, rhs.ret_type)
 
 @operator(13, "access_member", pre_eval_right=False, cls=MemberAccess)
 def member_access(self, func, lhs, rhs):

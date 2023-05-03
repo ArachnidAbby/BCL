@@ -1,7 +1,7 @@
 import Ast.Ast_Types as Ast_Types
 import errors
 from Ast.functions.definition import FunctionDef
-from Ast.nodes import ASTNode
+from Ast.nodes import ASTNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
 
@@ -19,7 +19,7 @@ class StructDef(ASTNode):
         self.block = block
         if isinstance(self.block.children[0], ContainerNode):
             members = self.block.children[0].children
-        elif isinstance(self.block.children[0], ):
+        elif isinstance(self.block.children[0], KeyValuePair):
             members = [self.block.children[0]]
         else:
             errors.error("The first statement in a struct definition MUST "+
@@ -27,6 +27,16 @@ class StructDef(ASTNode):
         self.struct_type = Ast_Types.Struct(self.struct_name, members, module)
         module.types[self.struct_name] = self.struct_type
         self.module = module
+
+    @property
+    def ir_type(self):
+        return self.struct_type.ir_type
+
+    def get_type(self, _):
+        return self.struct_type
+
+    def get_unique_name(self, name: str) -> str:
+        return self.module.get_unique_name(f"{self.struct_name}.{name}")
 
     def _yield_functions(self):
         # skip first element
@@ -57,6 +67,6 @@ class StructDef(ASTNode):
             stmt.eval(self)
 
     def repr_as_tree(self) -> str:
-        return self.create_tree("If Statement",
+        return self.create_tree("Struct Def Statement",
                                 name=self.struct_name,
                                 contents=self.block)

@@ -6,7 +6,6 @@ import Ast.functions.standardfunctions
 import errors
 import linker
 from Ast import Ast_Types
-from Ast.functions.functionobject import _Function
 from Ast.nodes import ASTNode, SrcPosition
 from lexer import Lexer
 
@@ -14,7 +13,7 @@ modules: dict[str, "Module"] = {}
 
 
 class Module(ASTNode):
-    __slots__ = ('location', 'functions', 'globals', 'imports', 'children',
+    __slots__ = ('location', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed')
 
@@ -22,10 +21,6 @@ class Module(ASTNode):
         super().__init__(pos)
         self.mod_name = name
         self.location = location
-        # will be a dict of dicts: dict[str, dict[tuple, _Function]],
-        # example: `{func_name: {arg_type_tuple: _Function(...)}}`
-        self.functions: dict[str, dict[tuple, _Function]] = {}
-        # TODO: object is a placeholder for when this feature is properly added
         self.globals: dict[str, object] = {}
         self.imports: dict[str, "Module"] = {}
         self.types: dict[str, "Type"] = {}   # type: ignore
@@ -38,7 +33,6 @@ class Module(ASTNode):
         self.post_parsed = False
         self.evaled = False
         self.ir_saved = False
-        # Ast.functions.standardfunctions.declare_all(self.module)
 
         modules[name] = self
 
@@ -86,9 +80,6 @@ class Module(ASTNode):
         if name in self.globals:
             return self.globals[name]
 
-        if name in self.functions:
-            return self.functions[name]
-
         if name in self.imports:
             return self.imports[name]
 
@@ -121,17 +112,6 @@ class Module(ASTNode):
         args_for_error = ','.join([str(x) for x in types])
         errors.error(f"function '{name}({args_for_error})'" +
                      "was never defined", line=position)
-
-    def get_function(self, name: str, position: tuple[int, int, int]):
-        '''get a function defined in module'''
-        if name in self.functions.keys():
-            return self.functions[name]
-        for imp in self.imports.values():
-            if name in imp.functions.keys():
-                return imp.functions[name]
-
-        errors.error(f"Cannot find function '{name}' in module" +
-                     f" '{self.mod_name}'", line=position)
 
     def create_function(self, name: str, function_object: Ast_Types.Function):
         if name not in self.globals.keys():

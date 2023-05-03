@@ -45,24 +45,60 @@ define tests() -> f32 {
     return 934f;
 }
 
-define main() {
-    println(factorial(4));
-    println(floor(22, 7));
-    println(ceil(22, 4));
-    println(floor(22f, 7f));
-    println(ceil(22f, 4f));
-    println(tests());
+struct TestStruct {
+    x: i32,
+    y: i32;
 
-    println();
-    println(8 and 3);
-    println(0 and 12);
-    if 0 {
-        println("hola");
-    } else
-
-    if (10f>9) * 2f {
-        println("hi");
+    define test() -> char {
+        return 'F';
     }
+
+    define testing(self) {
+        println("gaming");
+        println(self.x);
+    }
+
+    define tests(self, x: i32) {
+        self.testing();
+        self.x = x;
+        println(self.x);
+        println();
+    }
+}
+
+define main() {
+    // println 10;
+    m = TestStruct {x: 123, y: 1232};
+    println(m.test());
+    m.testing();
+    println();
+    m.tests(69420);
+    println(m.x);
+
+    // m.test = 11;
+
+    // x = [1232; 1292];
+    // println(x.length);
+    // (22f, 7f).min();
+    // (10).print();
+
+    // println(factorial(4));
+    // println(min(22, 7));
+    // println(max(22, 4));
+    // println(min(22f, 7f));
+    // println(max(22f, 4f));
+    // println(tests());
+
+    // println();
+    // println(8 and 3);
+    // println(0 and 12);
+    // if 0 {
+    //     println("hola");
+    // } else
+
+    // if (10f>9) * 2f {
+    //     println("hi");
+    // }
 }
 
 // struct parent {
@@ -94,6 +130,6 @@ define main() {
 //     };
 //     // x.x.x = 8;
 //     // x.y.z;
-//     println(x.y.x); // completely inapropriate! XXX content in my code?!
+//     println(x.x.x); // completely inapropriate! XXX content in my code?!
 //     println(8+x.y.x); //should be 11
 // }

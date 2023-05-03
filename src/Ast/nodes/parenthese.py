@@ -66,6 +66,10 @@ class ParenthBlock(ContainerNode):
         children_repr = (repr(x) for x in self.children)
         return f'<Parenth Block: \'({", ".join(children_repr)})\'>'
 
+    def __str__(self) -> str:
+        children_repr = (str(x) for x in self.children)
+        return f'({", ".join(children_repr)})'
+
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
         if len(self.children) > 1:

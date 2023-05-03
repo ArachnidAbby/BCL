@@ -10,7 +10,7 @@ define main(); // main function
 //Linux CRT entry symbol
 define _start () {
     main();
-    
+
     // prevents segfault if not called by main()
-    exit(0); 
+    exit(0);
 }

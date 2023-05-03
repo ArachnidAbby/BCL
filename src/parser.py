@@ -194,15 +194,6 @@ class Parser(ParserBase):
     def parse_block_open(self):
         output = Ast.Block(self.peek(0).pos)
 
-        # * check for function declaration before the block.
-        # * this lets arguments be interpreted as usable variables.
-        # TODO: THIS CODE SHOULD NOT BE PLACED IN THE PARSER
-        if self.simple_check(-1, "func_def_portion"):
-            for x in self.peek(-1).value.args.keys():
-                arg = self.peek(-1).value.args[x]
-                output.variables[x] = Ast.variables.VariableObj(arg[0], arg[1],
-                                                                True)
-
         # * main implementation
         self.blocks.append((output, self._cursor))
         self.start = self._cursor

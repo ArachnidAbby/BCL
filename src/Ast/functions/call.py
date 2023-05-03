@@ -30,7 +30,8 @@ class FunctionCall(ExpressionNode):
             data = data.children if isinstance(data, ParenthBlock) else [data]
             self.paren.children = data + self.paren.children
 
-        self.ret_type = self.func_name.ret_type.get_op_return("call", None,
+        self.ret_type = self.func_name.ret_type.get_op_return("call",
+                                                              self.func_name,
                                                               self.paren)
 
         self.function = self.func_name.get_var(func).ret_type
