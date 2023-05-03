@@ -55,22 +55,25 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] for-loops (only with range literals rignt now)
 - [x] references
 - [ ] `const`ants
-- [ ] structs
-- [ ] struct functions
+- [x] structs
+- [x] struct functions
+- [x] struct methods (WIP, only immutable right now)
 - [ ] struct operator overloading
+- [ ] struct generic typing
+- [ ] protocol types
 - [ ] `import` statement with the ability to import modules/packages
 - [x] compile a folder or file instead of hardcoded test string.
 - [ ] heap allocation with garbage collection
 - [ ] `del` or `free` statement (only work when GC is off)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
-- [x] some access to llvm function directly. (notice: more can, and will, be added)
+- [x] ~~some access to llvm function directly. (notice: more can, and will, be added)~~ disabled temporarily
 - [ ] access to cpu registers.
-- [ ] standard math library
+- [x] standard math library (VERY VERY WIP)
 - [x] string (literal)
 - [ ] strings (mutable)
 - [ ] vectors
-- [ ] stdio library
+- [x] stdio library (VERY WIP)
 - [ ] run-time errors
 
 
