@@ -58,7 +58,7 @@ struct TestStruct {
         println(self.x);
     }
 
-    define tests(self, x: i32) {
+    define tests(&self, x: i32) {
         self.testing();
         self.x = x;
         println(self.x);

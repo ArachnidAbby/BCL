@@ -7,6 +7,7 @@ from Ast import Ast_Types
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
 from Ast.nodes.commontypes import SrcPosition
+from Ast.reference import Ref
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
 
@@ -74,12 +75,25 @@ class FunctionDef(ASTNode):
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
 
+    def add_method_arg(self, arg, parent) -> KeyValuePair:
+        if isinstance(arg, VariableRef):
+            return KeyValuePair(arg._position, arg, parent.get_type(self))
+
+        if isinstance(arg, Ref) and isinstance(arg.var, VariableRef):
+            return KeyValuePair(arg._position, arg.var,
+                                Ast_Types.Reference(parent.get_type(self)))
+        else:
+            errors.error("Invalid syntax, first argument must be a " +
+                         "Key-Value pair, Reference, or Variable name.",
+                         line=arg.position)
+            return  # type: ignore
+
     def _construct_args(self, args: ParenthBlock, parent):
         '''Construct the lists of args required when building this function'''
         args_ir = []
         args_types = []
         if self.is_method:
-            args.children[0] = KeyValuePair(args.children[0]._position, args.children[0], parent.get_type(self))
+            args.children[0] = self.add_method_arg(args.children[0], parent)
         for arg in args:
             self.args[arg.key.var_name] = \
                 [None, arg.get_type(self), True]  # type: ignore
@@ -100,7 +114,9 @@ class FunctionDef(ASTNode):
             if not isinstance(arg, KeyValuePair) and c != 0:
                 errors.error(f"Function {self.func_name}'s argument tuple " +
                              "consists of non KV_pairs", line=self.position)
-            elif isinstance(arg, VariableRef) and c == 0:
+            elif isinstance(arg, VariableRef):
+                self.is_method = True
+            elif isinstance(arg, Ref) and isinstance(arg.var, VariableRef):
                 self.is_method = True
 
     def _validate_return(self, func):

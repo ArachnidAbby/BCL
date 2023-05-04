@@ -11,20 +11,21 @@ BCL (Ben's Compiled Language) is a compiled programming language that is inspire
 ```
 //  fizzbuzz program
 // ===================
-// outputs
-//   0: not fizz or buzz
-//   1: fizz
-//   2: buzz
-///  3: fizzbuzz
+
+import stdlib; // will later be an auto-import
 
 define main() {
-    i = 0;
-    loop_amount = 200;
-    while i < loop_amount {
-        i = i+1;
-        fizz = is_multiple(i, 3);
-        buzz = is_multiple(i, 5)*2;
-        println(fizz + buzz);
+    for i in 0..100 {
+        // printf is in the language, could be used here too!
+        print(i);
+        print(' ');
+        if is_multiple(i, 3) {
+            print("fizz");
+        }
+        if is_multiple(i, 5) {
+            print("buzz");
+        }
+        println();
     }
 }
 
@@ -57,10 +58,11 @@ The language is *not* fit for production use. It is missing a very large number 
 - [ ] `const`ants
 - [x] structs
 - [x] struct functions
-- [x] struct methods (WIP, only immutable right now)
+- [x] struct methods
 - [ ] struct operator overloading
 - [ ] struct generic typing
 - [ ] protocol types
+- [ ] generator functions/iterators
 - [ ] `import` statement with the ability to import modules/packages
 - [x] compile a folder or file instead of hardcoded test string.
 - [ ] heap allocation with garbage collection

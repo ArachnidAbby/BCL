@@ -1,9 +1,11 @@
+from enum import Enum
 from typing import Self
 
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 from Ast.math import MemberAccess
+from Ast.reference import Ref
 from errors import error
 
 
@@ -85,8 +87,11 @@ class Function(Ast_Types.Type):
               f"{str(self)}",
               line=rhs.position)
 
-    def _fix_args(self, lhs, args):
+    def _fix_args(self, lhs, args, func=None):
         if isinstance(lhs, MemberAccess) and self.is_method:
+            if func is not None:
+                if isinstance(self.args[0], Ast_Types.Reference):
+                    return [Ref(lhs.lhs.position, lhs.lhs), *args.children]
             return [lhs.lhs, *args.children]
         else:
             return args.children
@@ -100,13 +105,15 @@ class Function(Ast_Types.Type):
             return False
 
         for func_arg, passed_arg in zip(self.args, args_used):
+            if isinstance(lhs, MemberAccess) and self.is_method:
+                continue
             if not func_arg.roughly_equals(passed_arg.ret_type):
                 return False
 
         return True
 
     def call(self, func, lhs, args):
-        args.children = self._fix_args(lhs, args)
+        args.children = self._fix_args(lhs, args, func)
         args.eval(func)
         return func.builder.call(self.func_obj, args.children)
 

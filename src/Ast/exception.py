@@ -4,6 +4,9 @@ import errors
 from Ast import Ast_Types  # type: ignore
 from Ast.functions import standardfunctions
 from Ast.literals import stringliteral
+from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.parenthese import ParenthBlock
+from Ast.variables.reference import VariableRef
 
 PRINTF_ARGS = ()
 EXIT_ARGS = (Ast_Types.Integer_32(),)
@@ -14,7 +17,10 @@ def _get_function(module, name: str, args: tuple, pos):
     if func is None:
         errors.error(f"Could not get function {name}, hint: import stdlib",
                      line=pos)
-    return func.get_function(args)
+    args_fixed = ParenthBlock(pos)
+    for arg in args:
+        args_fixed.children.append(arg)
+    return func.get_function(VariableRef(pos, name, None), args_fixed)
 
 
 # TODO: MAKE BETTER

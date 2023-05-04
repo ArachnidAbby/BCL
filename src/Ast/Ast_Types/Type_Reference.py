@@ -5,7 +5,7 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type")
+    __slots__ = ("typ", "ir_type", "has_members")
 
     name = 'ref'
     pass_as_ptr = False
@@ -16,6 +16,7 @@ class Reference(Type_Base.Type):
         self.typ = typ
 
         self.ir_type = typ.ir_type.as_pointer()
+        self.has_members = self.typ.has_members
 
     def __eq__(self, other):
         return self.name == other.name and self.typ == other.typ
@@ -42,7 +43,14 @@ class Reference(Type_Base.Type):
               line=orig.position)
 
     def get_op_return(self, op: str, lhs, rhs):
-        self.typ.get_op_return(op, lhs, rhs)
+        return self.typ.get_op_return(op, lhs, rhs)
+
+    def get_member_info(self, lhs, rhs):
+        return self.typ.get_member_info(lhs, rhs)
+
+    def get_member(self, func, lhs,
+                   member_name_in: "Ast.variable.VariableRef"):
+        return self.typ.get_member(func, lhs, member_name_in)
 
     def sum(self, func, lhs, rhs):
         return lhs.typ.sum(func, lhs.as_varref(), rhs)
