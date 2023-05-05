@@ -16,7 +16,7 @@ class ReturnStatement(ASTNode):
 
     def _check_valid_type(self, func):
         if self.expr.ret_type != func.ret_type:
-            errors.error(f"Funtion, \"{func.func_name}\", has a return type" +
+            errors.error(f"Function, \"{func.func_name}\", has a return type" +
                          f" of '{func.ret_type}'. Return statement returned" +
                          f" '{self.expr.ret_type}'", line=self.position)
 

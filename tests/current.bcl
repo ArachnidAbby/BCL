@@ -64,6 +64,15 @@ struct TestStruct {
         println(self.x);
         println();
     }
+
+    define __add__(self, x: i32) -> TestStruct {
+        temp = TestStruct {x: (self.x+x), y: self.y}; //! buggy
+        return temp;
+    }
+
+    define __eq__(self, other: i32) -> TestStruct {
+        return self + other;
+    }
 }
 
 define main() {
@@ -74,6 +83,12 @@ define main() {
     println();
     m.tests(69420);
     println(m.x);
+    j = m + 12000;
+    print("value of j.x: ");
+    println(j.x);
+    if j==0 {
+        println("AHAHAH");
+    }
 
     // m.test = 11;
 

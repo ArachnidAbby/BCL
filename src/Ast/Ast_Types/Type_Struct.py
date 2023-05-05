@@ -3,9 +3,28 @@ from typing import Self
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
-from Ast.nodes import KeyValuePair
+from Ast.math import MemberAccess
+from Ast.nodes import KeyValuePair, ParenthBlock
 from Ast.nodes.commontypes import MemberInfo
 from errors import error
+
+struct_op_overloads = {
+    "sum": "__add__",
+    "sub": "__sub__",
+    "mul": "__mul__",
+    "div": "__div__",
+    "mod": "__mod__",
+    "eq": "__eq__",
+    "ne": "__ne__",
+    "le": "__lt__",
+    "gr": "__gt__",
+    "geq": "__geq__",
+    "leq": "__leq__",
+    "imul": "__imul__",
+    "idiv": "__div__",
+    "isub": "__isub__",
+    "isum": "__iadd__"
+}
 
 
 class Struct(Ast_Types.Type):
@@ -78,9 +97,56 @@ class Struct(Ast_Types.Type):
     def __neq__(self, other):
         return super().__neq__(other) and other.struct_name != self.struct_name
 
+    def get_func(self, name, lhs, rhs):
+        args = ParenthBlock(rhs.position)
+        args.children = [lhs, rhs]
+        args.in_func_call = True
+        return self.members[name].get_function(lhs, args)
+
+    def call_func(self, func, name, lhs, rhs):
+        args = ParenthBlock(rhs.position)
+        args.children = [lhs, rhs]
+        args.in_func_call = True
+        args.pre_eval(func)
+        return self.members[name].call(func, lhs, args)
+
     # TODO: implement this
-    def get_op_return(self, op, lhs, rhs):
-        pass
+    # @classmethod
+    def get_op_return(self, op: str, lhs, rhs):
+        op_name = struct_op_overloads.get(op.lower())
+        if op_name is None:
+            return
+        return self.get_func(op_name, lhs, rhs).func_ret
+
+    def sum(self, func, lhs, rhs):
+        return self.call_func(func, "__add__", lhs, rhs)
+
+    def sub(self, func, lhs, rhs):
+        return self.call_func(func, "__sub__", lhs, rhs)
+
+    def mul(self, func, lhs, rhs):
+        return self.call_func(func, "__mul__", lhs, rhs)
+
+    def div(self, func, lhs, rhs):
+        return self.call_func(func, "__div__", lhs, rhs)
+
+    def eq(self, func, lhs, rhs):
+        return self.call_func(func, "__eq__", lhs, rhs)
+
+    def neq(self, func, lhs, rhs):
+        return self.call_func(func, "__neq__", lhs, rhs)
+
+    def le(self, func, lhs, rhs):
+        return self.call_func(func, "__lt__", lhs, rhs)
+
+    def gr(self, func, lhs, rhs):
+        return self.call_func(func, "__gt__", lhs, rhs)
+
+    def leq(self, func, lhs, rhs):
+        return self.call_func(func, "__leq__", lhs, rhs)
+
+    def geq(self, func, lhs, rhs):
+        return self.call_func(func, "__geq__", lhs, rhs)
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
