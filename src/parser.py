@@ -202,7 +202,7 @@ class Parser(ParserBase):
                                 False)
         self._tokens[self._cursor] = new_token
 
-    @rule(0, "!KEYWORD expr statement")
+    @rule(-1, "!KEYWORD expr statement")
     def parse_struct_literal(self):
         if isinstance(self.peek(1).value, Ast.Block):
             struct_literal = Ast.StructLiteral(self.peek(0).pos,

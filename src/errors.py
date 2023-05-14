@@ -24,7 +24,7 @@ USES_FEATURE: dict[str, bool] = {}  # give warning about used features
 
 SrcPosition = collections.namedtuple('SrcPosition',
                                      ['line', 'col', 'length', 'source_name'])
-invalid_pos = (-1, -1, -1, "")
+invalid_pos = SrcPosition(-1, -1, -1, '')
 
 
 def _print_text(text):
@@ -49,7 +49,10 @@ def error(text: str, line=invalid_pos, full_line=False):
     if SILENT_MODE:
         sys.exit(1)
 
-    code_line = show_error_spot(line, full_line)
+    if line[0] != -1:
+        code_line = show_error_spot(line, full_line)
+    else:
+        code_line = ""
 
     largest = max(
         [len(x) for x in f"| {text}".split('\n')] +
@@ -59,7 +62,7 @@ def error(text: str, line=invalid_pos, full_line=False):
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
-    if line != invalid_pos:
+    if line[0] != -1:
         print(f'|    Line: {line[0]}')
         print(f'|    File: {line.source_name}')
         print("#"+"-"*len(code_line.split('\n')[0]))
@@ -76,7 +79,7 @@ def inline_warning(text: str, line=invalid_pos):
 
     print(ORANGE, end='')
     _print_text(text)
-    if line != invalid_pos:
+    if line[0] != -1:
         print(f'|    Line: {line.line}')
         print(f'|    File: {line.source_name}')
     print(RESET, end='')
@@ -125,7 +128,7 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
 
 def show_error_spot(position: SrcPosition,
                     use_full_line: bool) -> str:
-    if position == invalid_pos:
+    if position[0] == -1:
         return ""
     full_line = ""
     with open(position.source_name, 'r') as fp:

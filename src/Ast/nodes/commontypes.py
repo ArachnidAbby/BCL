@@ -13,7 +13,11 @@ class SrcPosition(NamedTuple):
 
     @staticmethod
     def invalid():
-        return SrcPosition(-1, -1, -1)
+        return SrcPosition(-1, -1, -1, '')
+
+    @property
+    def is_invalid(self):
+        return self == self.invalid()
 
 
 class MemberInfo(NamedTuple):

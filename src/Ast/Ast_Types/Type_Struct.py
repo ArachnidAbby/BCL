@@ -6,6 +6,7 @@ from Ast import Ast_Types
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock
 from Ast.nodes.commontypes import MemberInfo
+from Ast.reference import Ref
 from errors import error
 
 struct_op_overloads = {
@@ -21,7 +22,7 @@ struct_op_overloads = {
     "geq": "__geq__",
     "leq": "__leq__",
     "imul": "__imul__",
-    "idiv": "__div__",
+    "idiv": "__idiv__",
     "isub": "__isub__",
     "isum": "__iadd__"
 }
@@ -147,6 +148,18 @@ class Struct(Ast_Types.Type):
 
     def geq(self, func, lhs, rhs):
         return self.call_func(func, "__geq__", lhs, rhs)
+
+    def isum(self, func, lhs, rhs):
+        return self.call_func(func, "__iadd__", Ref(lhs.position, lhs), rhs)
+
+    def isub(self, func, lhs, rhs):
+        return self.call_func(func, "__isub__", Ref(lhs.position, lhs), rhs)
+
+    def imul(self, func, lhs, rhs):
+        return self.call_func(func, "__imul__", Ref(lhs.position, lhs), rhs)
+
+    def idiv(self, func, lhs, rhs):
+        return self.call_func(func, "__idiv__", Ref(lhs.position, lhs), rhs)
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():

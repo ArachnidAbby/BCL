@@ -66,8 +66,16 @@ struct TestStruct {
     }
 
     define __add__(self, x: i32) -> TestStruct {
-        temp = TestStruct {x: (self.x+x), y: self.y}; //! buggy
+        temp = TestStruct {x: (self.x+x), y: self.y}; //! buggy FIX SOON
         return temp;
+    }
+
+    define __iadd__(&self, other: i32) {
+        self.x += other;
+    }
+
+    define __iadd__(&self, other: TestStruct) {
+        self.x += other.x;
     }
 
     define __eq__(self, other: i32) -> TestStruct {
@@ -78,18 +86,15 @@ struct TestStruct {
 define main() {
     // println 10;
     m = TestStruct {x: 123, y: 1232};
+    printf("m.x: %i\n", m.x);
+    m += m;
     println(m.test());
     m.testing();
     println();
     m.tests(69420);
-    println(m.x);
+    printf("m.x: %i\n", m.x);
     j = m + 12000;
-    print("value of j.x: ");
-    println(j.x);
-    if j==0 {
-        println("AHAHAH");
-    }
-
+    printf("value of j.x: %i\n", j.x);
     // m.test = 11;
 
     // x = [1232; 1292];
