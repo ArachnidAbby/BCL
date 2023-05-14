@@ -94,6 +94,15 @@ define main() {
     printf("m.x: %i\n", m.x);
     j = m + 12000;
     printf("value of j.x: %i\n", j.x);
+
+    p = 0..10;
+    p.end = 12;
+
+    for x in p {
+        for y in p {
+            printf("%i %i\n", x, y);
+        }
+    }
     // m.test = 11;
 
     // x = [1232; 1292];

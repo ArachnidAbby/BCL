@@ -37,3 +37,8 @@ class StructLiteral(ExpressionNode):
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,
                                *[x.position for x in self.members.children]))
+
+    def repr_as_tree(self) -> str:
+        return self.create_tree("Struct Literal",
+                                members=self.members,
+                                struct_name=self.struct_name)

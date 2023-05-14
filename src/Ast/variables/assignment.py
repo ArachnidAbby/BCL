@@ -59,6 +59,9 @@ class VariableAssign(ASTNode):
                   " declaration", line=self.position)
 
         self.var_name.pre_eval(func)
+        if not self.var_name.assignable:
+            error("Cannot assign value to non-assignable variable/member",
+                  line=self.var_name.position)
 
     def set_not_constant(self, func):
         '''set a variable object's is_constant attribute to False'''

@@ -5,7 +5,6 @@ from llvmlite import ir  # type: ignore
 
 from errors import error
 
-# TODO: Should this be an Enum for operation names?
 
 class Type:
     '''abstract type class that outlines the necessary
@@ -13,7 +12,7 @@ class Type:
 
     __slots__ = ()
     ir_type: ir.Type = None
-    name = "UNKNOWN"
+    name = "UNKNOWN/UNQUALIFIED"
     pass_as_ptr = False
     # Used for optimizations in array indexing.
     rang: tuple[int, int] | None = None
@@ -211,3 +210,15 @@ class Type:
     @property
     def ret_type(self):
         return self
+
+    def get_iter_return(self):
+        error(f"{self.name} is not Iterable")
+
+    def iter_condition(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")
+
+    def iter(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")
+
+    def iter_get_val(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")

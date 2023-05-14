@@ -9,29 +9,30 @@ from Ast.variables.varobject import VariableObj
 
 class ForLoop(ASTNode):
     '''Code for an If-Statement'''
-    __slots__ = ('var', 'rang', 'block', 'loop_before', 'for_after',
-                 'for_body', 'varptr',)
+    __slots__ = ('var', 'iterable', 'block', 'loop_before', 'for_after',
+                 'for_body', 'varptr', 'iter_ptr')
 
     def __init__(self, pos: SrcPosition, var: ASTNode, rang, block: Block):
         super().__init__(pos)
         self.var = var
         self.varptr = None
-        self.rang = rang
+        self.iterable = rang
+        self.iter_ptr = None
         self.block = block
         self.loop_before = None
         self.for_after = None
         self.for_body = None
 
     def pre_eval(self, func):
-        self.varptr = func.create_const_var(Ast_Types.Integer_32())
+        self.iterable.pre_eval(func)
+        self.varptr = func.create_const_var(self.iterable.ret_type.get_iter_return())
         self.block.variables[self.var.var_name] = \
             VariableObj(self.varptr, Ast_Types.Integer_32(), False)
 
-        if self.rang.start.isconstant and self.rang.end.isconstant:
-            self.block.variables[self.var.var_name].range = \
-                (self.rang.start.value, self.rang.end.value)
+        # if self.rang.start.isconstant and self.rang.end.isconstant:
+        #     self.block.variables[self.var.var_name].range = \
+        #         (self.rang.start.value, self.rang.end.value)
 
-        self.rang.pre_eval(func)
         self.block.pre_eval(func)
 
     def eval(self, func):
@@ -48,8 +49,9 @@ class ForLoop(ASTNode):
         func.inside_loop = self
 
         # create cond
-        self.rang.eval(func)
-        func.builder.store(self.rang.start, self.varptr)
+        self.iterable.eval(func)
+        self.iter_ptr = self.iterable.get_ptr(func)
+        func.builder.store(self.iterable.ret_type.iter_get_val(func, self.iter_ptr), self.varptr)
 
         # branching and loop body
         func.builder.branch(self.for_body)
@@ -66,10 +68,8 @@ class ForLoop(ASTNode):
             func.builder.unreachable()
 
     def branch_logic(self, func):
-        val = func.builder.load(self.varptr)
-        val = func.builder.add(ir.Constant(ir.IntType(32), 1), val)
-        func.builder.store(val, self.varptr)
-        cond = func.builder.icmp_signed("<", val, self.rang.end)
+        func.builder.store(self.iterable.ret_type.iter(func, self.iter_ptr), self.varptr)
+        cond = self.iterable.ret_type.iter_condition(func, self.iter_ptr)
         func.builder.cbranch(cond, self.for_body, self.for_after)
 
     def repr_as_tree(self) -> str:

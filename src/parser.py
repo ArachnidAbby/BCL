@@ -304,7 +304,7 @@ class Parser(ParserBase):
             start = self.peek(0).value
             end = self.peek(2).value
             literal = Ast.literals.RangeLiteral(self.peek(0).pos, start, end)
-            self.replace(3, "range_lit", literal)
+            self.replace(3, "expr", literal)
 
     @rule(0, "$if expr statement !$else")
     def parse_if_statement(self):
@@ -329,7 +329,7 @@ class Parser(ParserBase):
         x = Ast.flowcontrol.WhileStatement(self.peek(0).pos, expr, block)
         self.replace(3, "statement", x)
 
-    @rule(0, "$for expr $in range_lit statement")
+    @rule(0, "$for expr $in expr statement")
     def parse_for_loop(self):
         if not isinstance(self.peek(1).value, Ast.variables.VariableRef):
             errors.error("'for loop' variable must be a variable name," +
