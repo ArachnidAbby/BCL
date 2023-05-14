@@ -218,7 +218,7 @@ class ParserBase:
     def replace(self, leng: int, name: str, value, i: int = 0,
                 completed: bool = True):
         '''replace a group of tokens with a single token.'''
-        self._consume(amount=leng, index=-i)
+        self._consume(amount=leng, index=i)
         self.insert(i, name, value, completed=completed)
 
         self._cursor = max(self.start, self.start_min)

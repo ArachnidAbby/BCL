@@ -66,12 +66,13 @@ class Parser(ParserBase):
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
-            "OPEN_CURLY_USED": (self.parse_finished_blocks,),
+            "OPEN_CURLY_USED": (self.parse_finished_blocks,
+                                self.parse_struct_literal),
             "expr": (self.parse_var_decl, self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
                      self.parse_expr_list,
-                     self.parse_rangelit, self.parse_struct_literal,
+                     self.parse_rangelit,
                      self.parse_member_access),
             "statement": (self.parse_statement, self.parse_combine_statements),
             "statement_list": (self.parse_statement_list, ),
@@ -153,7 +154,7 @@ class Parser(ParserBase):
         errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
 
-    @rule(0, "OPEN_CURLY_USED statement_list|statement|expr_list CLOSE_CURLY")
+    @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):
         '''parsing finished sets of curly braces into blocks'''
         if self.check(1, 'statement_list|expr_list'):
@@ -202,13 +203,17 @@ class Parser(ParserBase):
                                 False)
         self._tokens[self._cursor] = new_token
 
-    @rule(-1, "!KEYWORD expr statement")
+    @rule(-1, "expr OPEN_CURLY_USED expr_list CLOSE_CURLY")
     def parse_struct_literal(self):
-        if isinstance(self.peek(1).value, Ast.Block):
-            struct_literal = Ast.StructLiteral(self.peek(0).pos,
-                                               self.peek(0).value,
-                                               self.peek(1).value)
-            self.replace(2, "expr", struct_literal)
+        # if isinstance(self.peek(1).value, Ast.Block):
+        block = self.blocks.pop()
+        if self.blocks[-1][0] is not None:
+            block[0].parent = self.blocks[-1][0]
+        self.start = self.blocks[-1][1]
+        struct_literal = Ast.StructLiteral(self.peek(-1).pos,
+                                           self.peek(-1).value,
+                                           self.peek(1).value)
+        self.replace(4, "expr", struct_literal, i=-1)
 
     @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
     def parse_statement(self):

@@ -66,8 +66,7 @@ struct TestStruct {
     }
 
     define __add__(self, x: i32) -> TestStruct {
-        temp = TestStruct {x: (self.x+x), y: self.y}; //! buggy FIX SOON
-        return temp;
+        return TestStruct {x: (self.x+x), y: self.y};
     }
 
     define __iadd__(&self, other: i32) {
@@ -78,8 +77,8 @@ struct TestStruct {
         self.x += other.x;
     }
 
-    define __eq__(self, other: i32) -> TestStruct {
-        return self + other;
+    define __eq__(self, other: i32) -> bool {
+        return self.x == other;
     }
 }
 
