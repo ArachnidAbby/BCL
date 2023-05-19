@@ -21,6 +21,11 @@ class StructLiteral(ExpressionNode):
             if not isinstance(child, KeyValuePair):
                 errors.error("Invalid Syntax:", line=child.position)
             child.value.pre_eval(func)
+            name = child.key.var_name
+            if child.value.ret_type != self.ret_type.members[name]:
+                errors.error(f"Expected type {self.ret_type.members[name]} " +
+                             f"got {child.value.ret_type}",
+                             line=child.value.position)
 
     def eval(self, func):
         ptr = func.create_const_var(self.ret_type)

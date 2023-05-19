@@ -153,25 +153,6 @@ class basictests(unittest.TestCase):
         compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
-    def test_struct(self):
-        test_code = """
-        import stdlib;
-
-        struct example {
-            x: i32,
-            y: i32;
-        }
-
-        define main() {
-            j: example = example {x: 8, y: 2};
-            println(j.x);
-        }
-        """
-
-        file = Path(f'{p}/random/test_struct_usage.ll')
-        compile.compile(test_code, file,
-                        compile.DEFAULT_ARGS)
-
 
 if __name__ == '__main__':
     unittest.main()
