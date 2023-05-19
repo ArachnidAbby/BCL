@@ -10,6 +10,7 @@ class RangeType(Type):
 
     name = "Range"
     has_members = True
+    is_iterator = True
     # {START: I32, END: I32, CURRENT: I32}
     ir_type = ir.LiteralStructType((ir.IntType(32),
                                     ir.IntType(32),
@@ -17,8 +18,6 @@ class RangeType(Type):
 
     def __init__(self):
         pass
-        # self.start = start
-        # self.end = end
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
@@ -60,11 +59,11 @@ class RangeType(Type):
     def iter_condition(self, func, self_ptr):
         end_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
-                                    ir.Constant(ir.IntType(32), 1)])
+                                    ir.Constant(ir.IntType(32), 2)])
         end_val = func.builder.load(end_ptr)
         val_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
-                                    ir.Constant(ir.IntType(32), 2)])
+                                    ir.Constant(ir.IntType(32), 1)])
         val_val = func.builder.load(val_ptr)
         return func.builder.icmp_signed("<", val_val, end_val)
 

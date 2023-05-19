@@ -256,7 +256,7 @@ class MemberAccess(OperationNode):
         return possible_func is not None and not lhs.ret_type.has_members
 
     def get_position(self) -> SrcPosition:
-        return self.merge_pos((self._position,
+        return self.merge_pos((self.lhs.position,
                                self.rhs.position))
 
 
@@ -367,7 +367,7 @@ def _not(self, func, lhs, rhs):
 def check_valid_inplace(lhs) -> bool:
     '''check if lhs is a variable ref'''
     return lhs.assignable or \
-        errors.error("Left-hand-side of inplace operation must be a variable!",
+        errors.error("Left-hand-side of inplace operation must be assignable!",
                      line=lhs.position)  # only runs if false!
 
 

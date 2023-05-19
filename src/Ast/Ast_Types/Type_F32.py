@@ -51,7 +51,6 @@ class Float_32(Type_Base.Type):
             case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr':
                 return Ast_Types.Type_Bool.Integer_1()
 
-    @staticmethod
     def convert_args(func, lhs, rhs) -> tuple:
         typ = definedtypes.get_std_ret_type(lhs, rhs)
         lhs = (lhs.ret_type).convert_to(func, lhs, typ)

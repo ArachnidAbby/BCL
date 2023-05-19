@@ -52,6 +52,13 @@ class Array(Type_Base.Type):
             case _:
                 error("member not found!", line=rhs.position)
 
+    def get_member(self, func, lhs, rhs):
+        match rhs.var_name:
+            case "length":
+                return ir.Constant(ir.IntType(32), self.size)
+            case _:
+                error("member not found!", line=rhs.position)
+
     def __eq__(self, other):
         if (other is None) or other.name != self.name:
             return False
@@ -79,9 +86,86 @@ class Array(Type_Base.Type):
     def __str__(self) -> str:
         return f"{self.typ}[{self.size}]"
 
-    def get_member(self, func, lhs, rhs):
-        match rhs.var_name:
-            case "length":
-                return ir.Constant(ir.IntType(32), self.size)
-            case _:
-                error("member not found!", line=rhs.position)
+    def get_iter_return(self):
+        return ItemIterator(self)
+
+    def create_iterator(self, func, val):
+        iter_type = ItemIterator(self)
+        ptr = func.create_const_var(iter_type)
+
+        data_ptr_ptr = func.builder.gep(ptr,
+                                        [ir.Constant(ir.IntType(32), 0),
+                                         ir.Constant(ir.IntType(32), 0)])
+        current_ptr = func.builder.gep(ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                       ir.Constant(ir.IntType(32), 1)])
+        size_ptr = func.builder.gep(ptr,
+                                    [ir.Constant(ir.IntType(32), 0),
+                                    ir.Constant(ir.IntType(32), 2)])
+
+        func.builder.store(val.get_ptr(func), data_ptr_ptr)
+        func.builder.store(ir.Constant(ir.IntType(32), 0), current_ptr)
+        func.builder.store(ir.Constant(ir.IntType(32), self.size), size_ptr)
+
+        return ptr
+
+
+class ItemIterator(Type_Base.Type):
+    __slots__ = ("iter_ret", "ir_type")
+    is_iterator = True
+    returnable = False
+
+    name = "ItemIter"
+
+    def __init__(self, collection_type):
+        self.iter_ret = collection_type.typ
+        # {data_ptr: *T, current: i32, size: i32}
+        self.ir_type = ir.LiteralStructType((collection_type.ir_type.as_pointer(),
+                                             ir.IntType(32),
+                                             ir.IntType(32)))
+
+    def get_iter_return(self):
+        return self.iter_ret
+
+    def iter_condition(self, func, self_ptr):
+        end_ptr = func.builder.gep(self_ptr,
+                                   [ir.Constant(ir.IntType(32), 0),
+                                    ir.Constant(ir.IntType(32), 2)])
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)])
+        end_val = func.builder.load(end_ptr)
+        current_val = func.builder.load(current_ptr)
+        return func.builder.icmp_signed("<", current_val, end_val)
+
+    def iter(self, func, self_ptr):
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)])
+        current_val = func.builder.load(current_ptr)
+        addition = func.builder.add(current_val, ir.Constant(ir.IntType(32), 1))
+        func.builder.store(addition, current_ptr)
+        value_ptr_ptr = func.builder.gep(self_ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), 0)])
+        val_ptr_val = func.builder.load(value_ptr_ptr)
+        value_ptr = func.builder.gep(val_ptr_val,
+                                     [ir.Constant(ir.IntType(32), 0),
+                                      addition])
+        value = func.builder.load(value_ptr)
+        return value
+
+    def iter_get_val(self, func, self_ptr):
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)])
+        current_val = func.builder.load(current_ptr)
+        value_ptr_ptr = func.builder.gep(self_ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), 0)])
+        val_ptr_val = func.builder.load(value_ptr_ptr)
+        value_ptr = func.builder.gep(val_ptr_val,
+                                     [ir.Constant(ir.IntType(32), 0),
+                                      current_val])
+        value = func.builder.load(value_ptr)
+        return value

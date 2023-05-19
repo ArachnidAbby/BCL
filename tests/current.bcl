@@ -96,13 +96,20 @@ define main() {
     printf("value of j.x: %i\n", j.x);
 
     p = 0..10;
-    p.end = 12;
+    // p.end += 12;
 
     for x in p {
         for y in p {
             printf("%i %i\n", x, y);
         }
     }
+
+    my_array = [0, 2, 4, 6, 8, 10, 12];
+    for x in my_array {
+        printf("Got %i from array: \"my_array\"\n", x);
+        x = 12;
+    }
+
     // m.test = 11;
 
     // x = [1232; 1292];

@@ -44,12 +44,12 @@ class ASTNode:
 
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         current_pos = self._position
-        new_pos = list(self._position)
+        new_pos: list[int] = list(self._position)
         for x in positions:
             # len of current position ptr VV
             current_len = (current_pos.length + current_pos.col-1)
-            end_pos = (x.col-current_len)+x.length
-            new_pos[2] = end_pos
+            end_pos = (x.col-current_len-1)+x.length
+            new_pos[2] += end_pos
 
         return SrcPosition(*new_pos)  # type: ignore
 

@@ -28,6 +28,8 @@ class Type:
     # matching of function args when calling
     is_dynamic = False
     functions: dict = {"NONSTATIC": []}
+    # Is this type iterable, or does iterating return a new iterator?
+    is_iterator = False
 
     # mainly used for the function type, but makes writing other code easier
     # when included for all types
@@ -213,6 +215,13 @@ class Type:
 
     def get_iter_return(self):
         error(f"{self.name} is not Iterable")
+
+    def create_iterator(self, func):
+        '''should return a ptr'''
+        if not self.is_iterator:
+            error(f"{self.name} is not Iterable") # default
+        else:
+            error(f"{self.name} is already an Iterator")
 
     def iter_condition(self, func, self_ptr):
         error(f"{self.name} is not Iterable")

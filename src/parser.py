@@ -36,16 +36,16 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("$TWO_PI", 0))
         ParserBase.CREATED_RULES.append(("$HALF_PI", 0))
         ParserBase.CREATED_RULES.append(("$PI", 0))
-        ParserBase.CREATED_RULES.append(("CLOSE_SQUARE|expr", -1))
-        ParserBase.CREATED_RULES.append(("$not expr", 0))
-        ParserBase.CREATED_RULES.append(("expr ISUM expr SEMI_COLON", 0))
-        ParserBase.CREATED_RULES.append(("expr ISUB expr SEMI_COLON", 0))
-        ParserBase.CREATED_RULES.append(("expr IMUL expr SEMI_COLON", 0))
-        ParserBase.CREATED_RULES.append(("expr IDIV expr SEMI_COLON", 0))
-        ParserBase.CREATED_RULES.append(("expr _ expr", 0))
-        ParserBase.CREATED_RULES.append(("expr $and expr", 0))
-        ParserBase.CREATED_RULES.append(("expr $or expr", 0))
-        ParserBase.CREATED_RULES.append(("expr $as expr", 0))
+        ParserBase.CREATED_RULES.append(("CLOSE_SQUARE|expr|paren", -1))
+        ParserBase.CREATED_RULES.append(("$not expr|paren", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren ISUM expr|paren SEMI_COLON", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren ISUB expr|paren SEMI_COLON", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren IMUL expr|paren SEMI_COLON", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren IDIV expr|paren SEMI_COLON", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren _ expr|paren", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren $and expr|paren", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren $or expr|paren", 0))
+        ParserBase.CREATED_RULES.append(("expr|paren $as expr|paren", 0))
         ParserBase.CREATED_RULES.append(("$define", 0))
         ParserBase.CREATED_RULES.append(("!CLOSE_CURLY", 2))
         ParserBase.CREATED_RULES.append(("SUB", 0))
@@ -203,16 +203,21 @@ class Parser(ParserBase):
                                 False)
         self._tokens[self._cursor] = new_token
 
-    @rule(-1, "expr OPEN_CURLY_USED expr_list CLOSE_CURLY")
+    @rule(-1, "expr OPEN_CURLY_USED expr_list|kv_pair CLOSE_CURLY")
     def parse_struct_literal(self):
         # if isinstance(self.peek(1).value, Ast.Block):
         block = self.blocks.pop()
         if self.blocks[-1][0] is not None:
             block[0].parent = self.blocks[-1][0]
+
+        values = self.peek(1).value
+        if self.peek(1).name == "kv_pair":
+            values = Ast.nodes.ContainerNode(self.peek(1).pos)
+            values.append_child(self.peek(1).value)
         self.start = self.blocks[-1][1]
         struct_literal = Ast.StructLiteral(self.peek(-1).pos,
                                            self.peek(-1).value,
-                                           self.peek(1).value)
+                                           values)
         self.replace(4, "expr", struct_literal, i=-1)
 
     @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
@@ -257,7 +262,7 @@ class Parser(ParserBase):
     @rule(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE")
     def parse_array_literal_multi_element(self):
         '''check for all nodes dealing with arrays'''
-        if self.check(-1, "CLOSE_SQUARE|expr"):
+        if self.check(-1, "CLOSE_SQUARE|expr|paren"):
             return
         if self.simple_check(-1, "KEYWORD") and \
                 self.peek(-1).value not in self.keywords:
@@ -560,7 +565,7 @@ class Parser(ParserBase):
 
     def parse_math(self):
         '''Parse mathematical expressions'''
-        if self.check_group_lookahead(0, '$not expr') and \
+        if self.check_group_lookahead(0, '$not expr|paren') and \
                 self.peek_safe(2).name != "DOUBLE_DOT":
             op = Ast.math.ops['not'](self.peek(0).pos, self.peek(1).value,
                                      Ast.nodes.ExpressionNode(
@@ -571,41 +576,41 @@ class Parser(ParserBase):
             return
         # todo: add more operations
         # * Parse expressions
-        if self.check_group(0, "expr ISUM expr SEMI_COLON"):
+        if self.check_group(0, "expr|paren ISUM expr|paren SEMI_COLON"):
             op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,
                                        self.peek(2).value)
             self.replace(4, "statement", op)
-        elif self.check_group(0, "expr ISUB expr SEMI_COLON"):
+        elif self.check_group(0, "expr|paren ISUB expr|paren SEMI_COLON"):
             op = Ast.math.ops["_ISUB"](self.peek(0).pos, self.peek(0).value,
                                        self.peek(2).value)
             self.replace(4, "statement", op)
-        elif self.check_group(0, "expr IMUL expr SEMI_COLON"):
+        elif self.check_group(0, "expr|paren IMUL expr|paren SEMI_COLON"):
             op = Ast.math.ops["_IMUL"](self.peek(0).pos, self.peek(0).value,
                                        self.peek(2).value)
             self.replace(4, "statement", op)
-        elif self.check_group(0, "expr IDIV expr SEMI_COLON"):
+        elif self.check_group(0, "expr|paren IDIV expr|paren SEMI_COLON"):
             op = Ast.math.ops["_IDIV"](self.peek(0).pos, self.peek(0).value,
                                        self.peek(2).value)
             self.replace(4, "statement", op)
 
-        elif self.check_group(0, 'expr _ expr') and \
+        elif self.check_group(0, 'expr|paren _ expr|paren') and \
                 self.peek(1).name in Ast.math.ops.keys():
             op_str = self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value,
                                       self.peek(2).value)
             self.replace(3, "expr", op)
 
-        elif self.check_group(0, 'expr $and expr'):
+        elif self.check_group(0, 'expr|paren $and expr|paren'):
             op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
                                      self.peek(2).value)
             self.replace(3, "expr", op)
 
-        elif self.check_group(0, 'expr $or expr'):
+        elif self.check_group(0, 'expr|paren $or expr|paren'):
             op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)
 
-        elif self.check_group(0, 'expr $as expr'):
+        elif self.check_group(0, 'expr|paren $as expr|paren'):
             op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)
