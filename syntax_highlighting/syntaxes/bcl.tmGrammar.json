@@ -43,6 +43,13 @@
                 {"include": "#types"}
               ]
             },
+            {
+              "match": "(\\&*)([a-zA-Z0-9_]+)(?=[,\\)])",
+              "captures" : {
+                "1": {"name": "keyword.operator.arithmetic.bcl"},
+                "2": {"name": "variable.parameter.mylang"}
+              }
+            },
 
             {
              "match": ",",
@@ -81,7 +88,12 @@
               {"include": "#types"}
             ]
           },
-          {"include": "#punctuation"}
+          {"include": "#punctuation"},
+          {"include": "#function_declaration"},
+          {"include": "#types"},
+          {"include": "#constants"},
+          {"include": "#keywords"},
+          {"include": "#string"}
         ]
       },
 
