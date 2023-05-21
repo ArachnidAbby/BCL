@@ -12,9 +12,17 @@ class ReturnStatement(ASTNode):
         self.expr = expr
 
     def pre_eval(self, func):
+        if self.expr is None:
+            return
         self.expr.pre_eval(func)
 
     def _check_valid_type(self, func):
+        if func.ret_type.is_void():
+            if self.expr is None:
+                return
+            errors.error("Return value of function is \"Void\", " +
+                         "use \"return;\" instead",
+                         line=self.position)
         if self.expr.ret_type != func.ret_type:
             errors.error(f"Function, \"{func.func_name}\", has a return type" +
                          f" of '{func.ret_type}'. Return statement returned" +
@@ -33,3 +41,8 @@ class ReturnStatement(ASTNode):
     def repr_as_tree(self) -> str:
         return self.create_tree("Return Statement",
                                 contents=self.expr)
+
+    def get_position(self):
+        if self.expr is None:
+            return self._position
+        return self.merge_pos((self._position, self.expr.position))

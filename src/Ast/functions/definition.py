@@ -282,49 +282,54 @@ class FunctionDef(ASTNode):
             self.populate_yield_struct()
             val = self.builder.load(self.yield_struct_ptr)
             self.builder.ret(val)
-            self.ret_type = Ast_Types.Void()
-
-            self.function_ir = self.yield_function
-
-            if self.has_no_body:
-                return
-
-            block = self.yield_block
-            self.builder = ir.IRBuilder(self.yield_block)
-            self.yield_struct_ptr = self.yield_function.args[0]
-            self.alloc_stack()
-            self.ir_entry = block
-            state_ptr = self.builder.gep(self.yield_struct_ptr,
-                                       [ir.Constant(ir.IntType(32), 0),
-                                        ir.Constant(ir.IntType(32), 1)])
-            self.builder.position_at_start(self.yield_start)
-            self.block.eval(self)
-            after_block = self.builder.block
-
-            self.builder.position_at_end(block)
-            state = self.builder.load(state_ptr)
-            # print(self.builder.function, self.yield_start)
-            ibranch = self.builder.branch_indirect(state)
-            ibranch.add_destination(self.yield_start)
-            for branch in self.yield_after_blocks:
-                ibranch.add_destination(branch)
-            self.builder.position_at_start(after_block)
-
-            continue_ptr = self.builder.gep(self.yield_struct_ptr,
-                                            [ir.Constant(ir.IntType(32), 0),
-                                             ir.Constant(ir.IntType(32), 0)])
-            self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
-
-            self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
+            self.eval_generator(parent)
 
         # if self.builder.block.is_terminated:
 
-        if self.ret_type.is_void():
+        if self.ret_type.is_void() and not self.has_return:
             self.builder.ret_void()
         elif not self.has_return:
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
                          "return! Ensure that at least 1 return statement is" +
                          " reachable!")
+
+    def eval_generator(self, parent):
+        self.ret_type = Ast_Types.Void()
+
+        self.function_ir = self.yield_function
+
+        if self.has_no_body:
+            return
+
+        block = self.yield_block
+        self.builder = ir.IRBuilder(self.yield_block)
+        self.yield_struct_ptr = self.yield_function.args[0]
+
+        self.alloc_stack()
+        self.ir_entry = block
+        state_ptr = self.builder.gep(self.yield_struct_ptr,
+                                     [ir.Constant(ir.IntType(32), 0),
+                                      ir.Constant(ir.IntType(32), 1)])
+        self.builder.position_at_start(self.yield_start)
+        self.block.eval(self)
+        after_block = self.builder.block
+
+        self.builder.position_at_end(block)
+
+        # Do branching on function entry
+        state = self.builder.load(state_ptr)
+        ibranch = self.builder.branch_indirect(state)
+        ibranch.add_destination(self.yield_start)
+        for branch in self.yield_after_blocks:
+            ibranch.add_destination(branch)
+        self.builder.position_at_start(after_block)
+
+        continue_ptr = self.builder.gep(self.yield_struct_ptr,
+                                        [ir.Constant(ir.IntType(32), 0),
+                                            ir.Constant(ir.IntType(32), 0)])
+        self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
+
+        self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
 
     def populate_yield_struct(self):
         continue_ptr = self.builder.gep(self.yield_struct_ptr,

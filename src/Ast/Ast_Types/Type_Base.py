@@ -40,9 +40,13 @@ class Type:
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
+        if previous.ret_type == typ:
+            return previous.eval(func)
         error("Type has no conversions",  line=previous.position)
 
     def convert_to(self, func, orig, typ) -> ir.Instruction:
+        if orig.ret_type == typ:
+            return orig.eval(func)
         error("Type has no conversions",  line=orig.position)
 
     def is_void(self) -> bool:
@@ -131,8 +135,8 @@ class Type:
     def call(self, func, lhs, args) -> ir.Instruction:
         error(f"type '{lhs.ret_type}' is not Callable", line=lhs.position)
 
-    def assign(self, func, ptr, value, typ: Self):
-        if self.read_only:
+    def assign(self, func, ptr, value, typ: Self, first_assignment=False):
+        if self.read_only and not first_assignment:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
                   line=ptr.position)
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore

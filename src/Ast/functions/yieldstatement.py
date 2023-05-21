@@ -29,15 +29,11 @@ class YieldStatement(ASTNode):
 
     def eval(self, func):
         orig_block_name = func.builder.block._name
-        # yield_body = func.builder.append_basic_block(
-        #         f'{orig_block_name}.yield'
-        #     )
+
         yield_after = func.builder.append_basic_block(
                 f'{orig_block_name}.yield_after'
             )
 
-        # func.builder.branch(yield_body)
-        # func.builder.position_at_start(yield_body)
         func.yield_after_blocks.append(yield_after)
         func.yield_gen_type.set_value(func, self.value.eval(func), yield_after)
         if not func.builder.block.is_terminated:

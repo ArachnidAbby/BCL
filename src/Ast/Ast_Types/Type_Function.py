@@ -176,6 +176,9 @@ class FunctionGroup(Ast_Types.Type):
     def call(self, func, lhs, args: tuple):
         return self.get_function(lhs, args).call(func, lhs, args)
 
+    def assign(self, func, ptr, value, typ: Self, first_assignment=False):
+        error("Variables cannot be set to a FunctionGroup", line=value.position)
+
     @property
     def type(self):
         return self

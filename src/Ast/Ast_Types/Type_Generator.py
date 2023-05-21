@@ -6,7 +6,6 @@ from Ast.Ast_Types.Type_Base import Type
 class GeneratorType(Type):
     __slots__ = ("iter_function", "ir_type", "typ")
 
-    read_only = True
     is_iterator = True
     name = "Generator"
 
@@ -55,6 +54,10 @@ class GeneratorType(Type):
 
     def __str__(self) -> str:
         return f"Generator<{self.iter_function.func_name}>"
+
+    def __hash__(self):
+        return hash(f"Generator<{self.iter_function.func_name}, " +
+                    f"{self.iter_function.args}>")
 
     def get_iter_return(self):
         return self.typ

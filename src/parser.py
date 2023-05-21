@@ -78,7 +78,9 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement, self.parse_math,
+            "KEYWORD": (self.parse_return_statement,
+                        self.parse_return_statement_empty,
+                        self.parse_math,
                         self.parse_import_statment,
                         self.parse_yield_stmt,
                         self.parse_keyword_literals,
@@ -492,6 +494,12 @@ class Parser(ParserBase):
         stmt = Ast.functions.returnstatement.ReturnStatement(self.peek(0).pos,
                                                              value)
         self.replace(3, 'statement', stmt)
+
+    @rule(0, "$return SEMI_COLON")
+    def parse_return_statement_empty(self):
+        stmt = Ast.functions.returnstatement.ReturnStatement(self.peek(0).pos,
+                                                             None)
+        self.replace(2, 'statement', stmt)
 
     @rule(-1, "!COLON expr SET_VALUE expr|statement SEMI_COLON")
     def parse_var_decl(self):

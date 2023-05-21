@@ -59,14 +59,14 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] structs
 - [x] struct functions
 - [x] struct methods
-- [ ] struct operator overloading
+- [x] struct operator overloading
 - [ ] struct generic typing
 - [ ] protocol types
-- [ ] generator functions/iterators
-- [ ] `import` statement with the ability to import modules/packages
+- [x] generator functions/iterators
+- [x] `import` statement with the ability to import modules/packages (WIP, needs namespaces)
 - [x] compile a folder or file instead of hardcoded test string.
 - [ ] heap allocation with garbage collection
-- [ ] `del` or `free` statement (only work when GC is off)
+- [ ] `del` or `free` statement (only work when GC is off, otherwise they decrease the ref count by 1)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
 - [x] ~~some access to llvm function directly. (notice: more can, and will, be added)~~ disabled temporarily
@@ -76,7 +76,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [ ] strings (mutable)
 - [ ] vectors
 - [x] stdio library (VERY WIP)
-- [ ] run-time errors
+- [ ] run-time errors (Error type for errors as values.)
 
 
 # VSCode highlighting
