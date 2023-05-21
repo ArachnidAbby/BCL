@@ -41,63 +41,73 @@ import stdlib;
 
 import math;
 
-define tests() -> f32 {
-    return 934f;
-}
+// define tests() -> f32 {
+//     return 934f;
+// }
 
-struct TestStruct {
-    x: i32,
-    y: i32;
+// struct TestStruct {
+//     x: i32,
+//     y: i32;
 
-    define test() -> char {
-        return 'F';
+//     define test() -> char {
+//         return 'F';
+//     }
+
+//     define testing(self) {
+//         println("gaming");
+//         println(self.x);
+//     }
+
+//     define tests(&self, x: i32) {
+//         self.testing();
+//         self.x = x;
+//         println(self.x);
+//         println();
+//     }
+
+//     define __add__(self, x: i32) -> TestStruct {
+//         return TestStruct {x: (self.x+x), y: self.y};
+//     }
+
+//     define __iadd__(&self, other: i32) {
+//         self.x += other;
+//     }
+
+//     define __iadd__(&self, other: TestStruct) {
+//         self.x += other.x;
+//     }
+
+//     define __eq__(self, other: i32) -> bool {
+//         return self.x == other;
+//     }
+// }
+
+define test_gen() -> i32 {
+    yield 69;
+    for i in 0..12 {
+        yield i;
     }
-
-    define testing(self) {
-        println("gaming");
-        println(self.x);
-    }
-
-    define tests(&self, x: i32) {
-        self.testing();
-        self.x = x;
-        println(self.x);
-        println();
-    }
-
-    define __add__(self, x: i32) -> TestStruct {
-        return TestStruct {x: (self.x+x), y: self.y};
-    }
-
-    define __iadd__(&self, other: i32) {
-        self.x += other;
-    }
-
-    define __iadd__(&self, other: TestStruct) {
-        self.x += other.x;
-    }
-
-    define __eq__(self, other: i32) -> bool {
-        return self.x == other;
-    }
+    yield 420;
 }
 
 define main() {
     // println 10;
-    m = TestStruct {x: 123, y: 1232};
-    printf("m.x: %i\n", m.x);
-    m += m;
-    println(m.test());
-    m.testing();
-    println();
-    m.tests(69420);
-    printf("m.x: %i\n", m.x);
-    j = m + 12000;
-    printf("value of j.x: %i\n", j.x);
+    // m = TestStruct {x: 123, y: 1232};
+    // printf("m.x: %i\n", m.x);
+    // m += m;
+    // println(m.test());
+    // m.testing();
+    // println();
+    // m.tests(69420);
+    // printf("m.x: %i\n", m.x);
+    // j = m + 12000;
+    // printf("value of j.x: %i\n", j.x);
 
     p = 0..10;
     // p.end += 12;
 
+    // since P is the same range object each time, this
+    // for loop acts weird
     for x in p {
         for y in p {
             printf("%i %i\n", x, y);
@@ -108,6 +118,10 @@ define main() {
     for x in my_array {
         printf("Got %i from array: \"my_array\"\n", x);
         x = 12;
+    }
+
+    for x in test_gen() {
+        println x;
     }
 
     // m.test = 11;

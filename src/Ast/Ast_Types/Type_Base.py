@@ -219,7 +219,7 @@ class Type:
     def create_iterator(self, func):
         '''should return a ptr'''
         if not self.is_iterator:
-            error(f"{self.name} is not Iterable") # default
+            error(f"{self.name} is not Iterable")  # default
         else:
             error(f"{self.name} is already an Iterator")
 

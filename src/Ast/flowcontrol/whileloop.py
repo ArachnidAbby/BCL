@@ -14,6 +14,10 @@ class WhileStatement(ASTNode):
         self.while_after = None
         self.while_body = None
 
+    def post_parse(self, func):
+        for child in self.block:
+            child.post_parse(func)
+
     def pre_eval(self, func):
         self.cond.pre_eval(func)
         self.block.pre_eval(func)

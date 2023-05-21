@@ -26,6 +26,10 @@ class Block(ContainerNode):
             self.variables = {**self.variables,
                               **self.BLOCK_STACK[-1].variables}
 
+    def post_parse(self, func):
+        for child in self:
+            child.post_parse(func)
+
     def pre_eval(self, func):
         # self.append_nested_vars()
         self.BLOCK_STACK.append(self)

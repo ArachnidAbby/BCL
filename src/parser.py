@@ -56,7 +56,7 @@ class Parser(ParserBase):
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct', 'import'
+            'as', 'for', 'in', 'struct', 'import', 'yield'
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
@@ -80,6 +80,7 @@ class Parser(ParserBase):
             "SUM": (self.parse_numbers, ),
             "KEYWORD": (self.parse_return_statement, self.parse_math,
                         self.parse_import_statment,
+                        self.parse_yield_stmt,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
                         self.parse_if_else,
@@ -355,6 +356,11 @@ class Parser(ParserBase):
     def parse_break_stmt(self):
         x = Ast.flowcontrol.BreakStatement(self.peek(0).pos)
         self.replace(2, "statement", x)
+
+    @rule(0, "$yield expr SEMI_COLON")
+    def parse_yield_stmt(self):
+        x = Ast.functions.YieldStatement(self.peek(0).pos, self.peek(1).value)
+        self.replace(3, "statement", x)
 
     @rule(0, "KEYWORD KEYWORD expr|paren !RIGHT_ARROW")
     def parse_functions(self):

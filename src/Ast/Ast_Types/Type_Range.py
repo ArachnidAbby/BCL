@@ -59,11 +59,11 @@ class RangeType(Type):
     def iter_condition(self, func, self_ptr):
         end_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
-                                    ir.Constant(ir.IntType(32), 2)])
+                                    ir.Constant(ir.IntType(32), 1)])
         end_val = func.builder.load(end_ptr)
         val_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
-                                    ir.Constant(ir.IntType(32), 1)])
+                                    ir.Constant(ir.IntType(32), 2)])
         val_val = func.builder.load(val_ptr)
         return func.builder.icmp_signed("<", val_val, end_val)
 

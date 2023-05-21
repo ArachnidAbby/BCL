@@ -13,13 +13,20 @@ class IfElseStatement(ASTNode):
         self.if_block = if_block
         self.else_block = else_block
 
+    def post_parse(self, func):
+        for child in self.iter_block_or_stmt(self.if_block):
+            child.post_parse(func)
+
+        for child in self.iter_block_or_stmt(self.else_block):
+            child.post_parse(func)
+
     def pre_eval(self, func):
         self.cond.pre_eval(func)
         self.if_block.pre_eval(func)
         self.else_block.pre_eval(func)
 
     def iter_block_or_stmt(self, obj):
-        if isinstance(self.if_block, Block):
+        if isinstance(obj, Block):
             return self.iter_block(obj)
 
         return self.iter_stmt(obj)

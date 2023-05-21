@@ -24,6 +24,10 @@ class ForLoop(ASTNode):
         self.for_after = None
         self.for_body = None
 
+    def post_parse(self, func):
+        for child in self.block:
+            child.post_parse(func)
+
     def pre_eval(self, func):
         self.iterable.pre_eval(func)
 
@@ -31,9 +35,9 @@ class ForLoop(ASTNode):
             self.iter_type = self.iterable.ret_type
         else:
             self.iter_type = self.iterable.ret_type.get_iter_return()
-        self.varptr = func.create_const_var(self.iter_type.get_iter_return())
+        # self.varptr = func.create_const_var(self.iter_type.get_iter_return())
         self.block.variables[self.var.var_name] = \
-                VariableObj(self.varptr, self.iter_type.get_iter_return(), False)
+                VariableObj(None, self.iter_type.get_iter_return(), False)
 
         # if self.rang.start.isconstant and self.rang.end.isconstant:
         #     self.block.variables[self.var.var_name].range = \
@@ -44,6 +48,8 @@ class ForLoop(ASTNode):
     def eval(self, func):
         # cond = self.cond.eval(func)
         orig_block_name = func.builder.block._name
+        self.varptr = func.create_const_var(self.iter_type.get_iter_return())
+        self.block.variables[self.var.var_name].ptr = self.varptr
         self.for_body = func.builder.append_basic_block(
                 f'{orig_block_name}.for'
             )
@@ -69,6 +75,7 @@ class ForLoop(ASTNode):
         func.builder.position_at_start(self.for_body)
 
         self.block.eval(func)
+
         if not func.has_return and not self.block.ended:
             self.branch_logic(func)
 

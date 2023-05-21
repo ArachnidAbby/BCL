@@ -47,6 +47,9 @@ class VariableAssign(ASTNode):
         if var_search_tuple not in func.variables:
             variable = self.block.get_variable(name)
             func.variables.append((variable, name))
+            if func.yields:
+                func.yield_gen_type.add_members(func.yield_consts, [x[0].type for x in func.variables])
+
 
     def pre_eval(self, func):
         self.value.pre_eval(func)
