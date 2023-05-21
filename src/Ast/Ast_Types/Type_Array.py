@@ -98,10 +98,10 @@ class Array(Type_Base.Type):
                                          ir.Constant(ir.IntType(32), 0)])
         current_ptr = func.builder.gep(ptr,
                                        [ir.Constant(ir.IntType(32), 0),
-                                       ir.Constant(ir.IntType(32), 1)])
+                                        ir.Constant(ir.IntType(32), 1)])
         size_ptr = func.builder.gep(ptr,
                                     [ir.Constant(ir.IntType(32), 0),
-                                    ir.Constant(ir.IntType(32), 2)])
+                                     ir.Constant(ir.IntType(32), 2)])
 
         func.builder.store(val.get_ptr(func), data_ptr_ptr)
         func.builder.store(ir.Constant(ir.IntType(32), 0), current_ptr)

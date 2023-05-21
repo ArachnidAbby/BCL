@@ -16,7 +16,7 @@ class StructLiteral(ExpressionNode):
 
     def pre_eval(self, func):
         self.ret_type = self.struct_name.as_type_reference(func)
-        self.members.pre_eval(func)
+        # self.members.pre_eval(func)
         for child in self.members:
             if not isinstance(child, KeyValuePair):
                 errors.error("Invalid Syntax:", line=child.position)

@@ -1,5 +1,7 @@
 from typing import Any, Iterator
 
+from llvmlite import ir
+
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes import ContainerNode
 from Ast.nodes.commontypes import GenericNode, SrcPosition
@@ -23,11 +25,11 @@ class ParenthBlock(ContainerNode):
         for child in self.children:
             child.pre_eval(func)
 
-        # * tuples return `void` but an expr returns the same data as its child
         if len(self.children) == 1:
             self.ret_type = self.children[0].ret_type
         else:
-            self.ret_type = Ast_Types.Void()
+            members = [child.ret_type for child in self.children]
+            self.ret_type = Ast_Types.TupleType(members)
 
     # TODO: Should probably not use Iter[Any]
     def __iter__(self) -> Iterator[Any]:
@@ -61,6 +63,17 @@ class ParenthBlock(ContainerNode):
         self._pass_as_pointer_changes(func)
         if len(self.children) == 1:
             return self.children[0]
+        elif not self.in_func_call:
+            if self.ptr is None:
+                self.ptr = func.create_const_var(self.ret_type)
+                for c, child in enumerate(self.children):
+                    child_ptr = \
+                        func.builder.gep(self.ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), c)])
+                    func.builder.store(child, child_ptr)
+
+            return func.builder.load(self.ptr)
 
     def __repr__(self) -> str:
         children_repr = (repr(x) for x in self.children)
@@ -72,15 +85,16 @@ class ParenthBlock(ContainerNode):
 
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
-        if len(self.children) > 1:
-            error("Cannot get a ptr to a set of parentheses with more than " +
-                  "one value", line=self.position)
+        # if len(self.children) > 1:
+        #     error("Cannot get a ptr to a set of parentheses with more than " +
+        #           "one value", line=self.position)
 
         if self.ptr is None:
-            self.ptr = func.create_const_var(self.ret_type)
             val = self.eval(func)
 
-            func.builder.store(val, self.ptr)
+            if len(self.children) == 1:
+                self.ptr = func.create_const_var(self.ret_type)
+                func.builder.store(val, self.ptr)
         return self.ptr
 
     @property
@@ -95,3 +109,10 @@ class ParenthBlock(ContainerNode):
         return self.create_tree("Parenthesis",
                                 children=self.children,
                                 return_type=self.ret_type)
+
+    def as_type_reference(self, func):
+        if len(self.children) == 1:
+            return self.children[0].as_type_reference(func)
+        else:
+            members = [child.as_type_reference(func) for child in self.children]
+            return Ast_Types.TupleType(members)

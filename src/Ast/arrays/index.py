@@ -45,6 +45,10 @@ class VariableIndexRef(ExpressionNode):
         self.ind.pre_eval(func)
         if isinstance(self.ind.ret_type.name, Ref):
             self.ind = self.ind.get_value(func)
+        if not self.ind.isconstant and self.varref.ret_type.literal_index:
+            error(f"Type \"{str(self.varref.ret_type)}\" can only have " +
+                  "literal indexes", line=self.ind.position)
+
         op_return = self.varref.ret_type.get_op_return('ind', None, self.ind)
         if op_return is not None:
             self.ret_type = op_return
@@ -77,6 +81,10 @@ class VariableIndexRef(ExpressionNode):
         depending on the node type of the index operand'''
         if self.ind.isconstant:  # don't generate checks for constants
             return
+
+        if self.varref.ret_type.literal_index:
+            error(f"Type \"{str(self.varref.ret_type)}\" can only have " +
+                  "literal indexes", line=self.ind.position)
 
         if isinstance(self.ind, OperationNode) and \
                 self.ind.ret_type.rang is not None:

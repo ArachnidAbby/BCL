@@ -10,3 +10,4 @@ from Ast.Ast_Types.Type_Range import *
 from Ast.Ast_Types.Type_Reference import *
 from Ast.Ast_Types.Type_StrLit import *
 from Ast.Ast_Types.Type_Struct import *
+from Ast.Ast_Types.Type_Tuple import *

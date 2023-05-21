@@ -186,6 +186,7 @@ class Struct(Ast_Types.Type):
         idx = ir.Constant(ir.IntType(32), member_index)
         return func.builder.gep(lhs.get_ptr(func), [zero_const, idx])
 
+    # TODO:
     def index(self, func, lhs) -> ir.Instruction:
         return func.builder.load(lhs.get_ptr(func))
 

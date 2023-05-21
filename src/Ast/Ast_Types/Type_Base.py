@@ -35,6 +35,9 @@ class Type:
     # when included for all types
     is_method = False
 
+    # Only allow indexes via literals
+    literal_index = False
+
     def __init__(self):
         pass
 

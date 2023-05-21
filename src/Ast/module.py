@@ -133,6 +133,19 @@ class Module(ASTNode):
             output += mod.get_all_globals()
         return output
 
+    def get_all_types(self) -> list[object]:
+        '''get all functions for linking'''
+        output: list[object] = []
+        for typ in self.types.values():
+            output.append(typ)
+        return output
+
+    def get_import_types(self):
+        output = []
+        for mod in self.imports.values():
+            output += mod.get_all_types()
+        return output
+
     def post_parse(self, parent):
         self.post_parsed = True
         for mod in self.imports.values():
@@ -198,8 +211,9 @@ class Module(ASTNode):
         funcs = self.get_import_globals()
         for func in funcs:
             func.declare(self)
-        for type_name in self.types.keys():
-            self.types[type_name].declare(self)
+        types = self.get_import_types()
+        for typ in types:
+            typ.declare(self)
         if args["--emit-ast"]:
             print(self.repr_as_tree())
         llir = str(self.module)

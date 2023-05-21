@@ -41,9 +41,9 @@ import stdlib;
 
 import math;
 
-// define tests() -> f32 {
-//     return 934f;
-// }
+define tests() -> f32 {
+    return 934f;
+}
 
 // struct TestStruct {
 //     x: i32,
@@ -82,12 +82,14 @@ import math;
 //     }
 // }
 
-define test_gen() -> i32 {
-    yield 69;
+define test_gen() -> (i32, i32) {
+    yield (69, 0);
     for i in 0..12 {
-        yield i;
+        for i2 in 0..5 {
+            yield (i, i2);
+        }
     }
-    yield 420;
+    yield (420, 0);
 }
 
 define main() {
@@ -120,8 +122,19 @@ define main() {
         x = 12;
     }
 
+    ind = 12;
+
     for x in test_gen() {
-        println x;
+        x[ind];
+        print x[0];
+        print ' ';
+        println x[1];
+    }
+
+    range = 0..10;
+    for i in range {
+        range = 0..(range.end - i*2);
+        println(i);
     }
 
     // m.test = 11;
