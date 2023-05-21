@@ -1,3 +1,5 @@
+from llvmlite import ir
+
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.block import Block
@@ -31,6 +33,12 @@ class ReturnStatement(ASTNode):
     def eval(self, func):
         func.has_return = True
         self._check_valid_type(func)
+
+        if func.yields:
+            continue_ptr = func.builder.gep(func.yield_struct_ptr,
+                                            [ir.Constant(ir.IntType(32), 0),
+                                             ir.Constant(ir.IntType(32), 0)])
+            func.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
         if func.ret_type.is_void():
             func.builder.ret_void()

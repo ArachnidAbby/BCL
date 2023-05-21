@@ -67,7 +67,8 @@ class ForLoop(ASTNode):
         func.builder.store(self.iter_type.iter_get_val(func, self.iter_ptr), self.varptr)
 
         # branching and loop body
-        func.builder.branch(self.for_body)
+        cond = self.iter_type.iter_condition(func, self.iter_ptr)
+        func.builder.cbranch(cond, self.for_body, self.for_after)
         func.builder.position_at_start(self.for_body)
 
         self.block.eval(func)

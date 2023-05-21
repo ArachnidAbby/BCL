@@ -184,11 +184,10 @@ class FunctionDef(ASTNode):
 
         if self.block is not None:
             self.block.post_parse(self)
-            # for child in self.block.children:
-            #     if isinstance(child, YieldStatement) and not self.yields:
-            #         self.yields = True
-            #         self.ret_type = Ast_Types.GeneratorType(self, self.ret_type)
-            #         self.yield_gen_type = self.ret_type
+
+        if self.yields and self.ret_type.is_void():
+            errors.error("Generator Functions have a return a value",
+                         line=self.position)
 
         if self.yields:
             fnty = ir.FunctionType(ir.VoidType(),
@@ -233,9 +232,11 @@ class FunctionDef(ASTNode):
             self.yield_consts.append(typ)
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             ptr = self.builder.gep(self.yield_struct_ptr,
-                                    [ir.Constant(ir.IntType(32), 0),
-                                     ir.Constant(ir.IntType(32), 3),
-                                     ir.Constant(ir.IntType(32), len(self.yield_consts)-1)], name="CONST")
+                                   [ir.Constant(ir.IntType(32), 0),
+                                    ir.Constant(ir.IntType(32), 3),
+                                    ir.Constant(ir.IntType(32),
+                                                len(self.yield_consts)-1)],
+                                   name="CONST")
             self.builder.position_at_end(current_block)
 
             return ptr
@@ -283,8 +284,6 @@ class FunctionDef(ASTNode):
             val = self.builder.load(self.yield_struct_ptr)
             self.builder.ret(val)
             self.eval_generator(parent)
-
-        # if self.builder.block.is_terminated:
 
         if self.ret_type.is_void() and not self.has_return:
             self.builder.ret_void()
