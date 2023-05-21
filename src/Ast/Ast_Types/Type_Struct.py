@@ -61,6 +61,12 @@ class Struct(Ast_Types.Type):
         self.module = module
         self.rang = None
 
+    def declare(self, mod):
+        for name in self.members.keys():
+            val = self.members[name]
+            if isinstance(val, Ast_Types.FunctionGroup):
+                val.declare(mod)
+
     def define(self, func):
         for member in self.raw_members:
             # when encountering an unreturnable type, make this struct

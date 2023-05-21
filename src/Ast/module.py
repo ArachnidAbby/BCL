@@ -198,6 +198,8 @@ class Module(ASTNode):
         funcs = self.get_import_globals()
         for func in funcs:
             func.declare(self)
+        for type_name in self.types.keys():
+            self.types[type_name].declare(self)
         if args["--emit-ast"]:
             print(self.repr_as_tree())
         llir = str(self.module)

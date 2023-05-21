@@ -35,13 +35,9 @@ class ForLoop(ASTNode):
             self.iter_type = self.iterable.ret_type
         else:
             self.iter_type = self.iterable.ret_type.get_iter_return()
-        # self.varptr = func.create_const_var(self.iter_type.get_iter_return())
-        self.block.variables[self.var.var_name] = \
-                VariableObj(None, self.iter_type.get_iter_return(), False)
 
-        # if self.rang.start.isconstant and self.rang.end.isconstant:
-        #     self.block.variables[self.var.var_name].range = \
-        #         (self.rang.start.value, self.rang.end.value)
+        self.block.variables[self.var.var_name] = \
+            VariableObj(None, self.iter_type.get_iter_return(), False)
 
         self.block.pre_eval(func)
 
@@ -86,12 +82,13 @@ class ForLoop(ASTNode):
             func.builder.unreachable()
 
     def branch_logic(self, func):
-        func.builder.store(self.iter_type.iter(func, self.iter_ptr), self.varptr)
+        func.builder.store(self.iter_type.iter(func, self.iter_ptr),
+                           self.varptr)
         cond = self.iter_type.iter_condition(func, self.iter_ptr)
         func.builder.cbranch(cond, self.for_body, self.for_after)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("For Loop",
                                 var=self.block.variables[self.var.var_name],
-                                range=self.rang,
+                                range=self.iterable,
                                 contents=self.block)

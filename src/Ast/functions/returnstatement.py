@@ -17,7 +17,7 @@ class ReturnStatement(ASTNode):
         self.expr.pre_eval(func)
 
     def _check_valid_type(self, func):
-        if func.ret_type.is_void():
+        if func.ret_type.is_void() or func.yields:
             if self.expr is None:
                 return
             errors.error("Return value of function is \"Void\", " +
