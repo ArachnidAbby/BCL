@@ -45,6 +45,10 @@ define tests() -> f32 {
     return 934f;
 }
 
+define takes_tuple(x: &(i32, i32)) -> i32 {
+    return x[0] + x[1];
+}
+
 // struct TestStruct {
 //     x: i32,
 //     y: i32;
@@ -83,13 +87,16 @@ define tests() -> f32 {
 // }
 
 define test_gen() -> (i32, i32) {
-    yield (69, 0);
-    for i in 0..12 {
-        for i2 in 0..5 {
-            yield (i, i2);
-        }
+    if false {
+        yield (69, 0);
     }
-    yield (420, 0);
+//     for i in 0..12 {
+//         for i2 in 0..5 {
+//             yield (i, i2);
+//         }
+//     }
+//     return;
+//     yield (420, 0);
 }
 
 define main() {
@@ -116,26 +123,25 @@ define main() {
         }
     }
 
+    println takes_tuple(&(2, 2));
+
     my_array = [0, 2, 4, 6, 8, 10, 12];
     for x in my_array {
         printf("Got %i from array: \"my_array\"\n", x);
         x = 12;
     }
 
-    ind = 12;
-
     for x in test_gen() {
-        x[ind];
         print x[0];
-        print ' ';
+        print " WOWO ";
         println x[1];
     }
 
-    range = 0..10;
-    for i in range {
-        range = 0..(range.end - i*2);
-        println(i);
-    }
+    // range = 0..10;
+    // for i in range {
+    //     range = 0..(range.end - i*2);
+    //     println(i);
+    // }
 
     // m.test = 11;
 
