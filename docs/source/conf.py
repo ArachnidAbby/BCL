@@ -13,6 +13,10 @@
 import os
 import sys
 
+from pygments.lexer import RegexLexer
+from pygments.token import (Comment, Keyword, Name, Number, Operator,
+                            Punctuation, String, Whitespace)
+
 sys.path.insert(0, os.path.abspath('.'))
 
 
@@ -31,8 +35,7 @@ release = '0.1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-]
+extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,17 +59,10 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 html_logo = "_static/experimental_BCL_LOGO.png"
 
-from pygments.lexer import RegexLexer
-from pygments.token import *
-
 html_sidebars = {
     '**': [
         'globaltoc.html',
     ]
-}
-
-html_theme_options = {
-    "home_page_in_toc": True
 }
 
 
@@ -77,18 +73,21 @@ class BCLLexer(RegexLexer):
     tokens = {
         'root': [
             (r'[\s\n]+', Whitespace),
-            (r'(["\'])(?:(?=(\\?))\2.)*?\1',String.Double),
+            (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)', Keyword.Reserved),
-            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|(char)|(string)|(str)', Keyword.Type),
-            (r'\s+(or)|(and)|(not)|(in)\s+', Operator),
-            (r'(\=)|(\+)|(\-)|(\*)|(\\)|(\%)', Operator),
-            (r'[\{\};\(\)\:\[\]\,]',Punctuation),
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)',
+             Keyword.Reserved),
+            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|' +
+             r'(char)|(str)|(strlit)', Keyword.Type),
+            (r'\s+(or)|(and)|(not)|(in)\s+', Operator.Word),
+            (r'[\=\+\-\*\\\%\%\<\>]', Operator),
+            (r'[\{\};\(\)\:\[\]\,]', Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
             (r'//.*$', Comment.Single),
             (r'\w[\w\d]*', Name.Other)
         ]
     }
+
 
 def setup(app) -> None:
     from sphinx.highlighting import lexers

@@ -3,6 +3,10 @@ Arrays
 
 Arrays are an :code:`aggragate data type` that can store a fixed number of elements of a fixed type.
 
+.. important::
+
+    You must import :code:`stdlib` or define :code:`printf(strlit, ...)` and :code:`exit(i32)` to use variable index
+
 ##############
 instantiation
 ##############
@@ -11,6 +15,14 @@ instantiation
     
     define main() {
         x = [0, 1, 2, 3, 4, 5]; // variable `x` is of type `i32[6]`
+    }
+
+or, alternatively:
+
+.. code-block:: bcl
+    
+    define main() {
+        x = [0; 6]; // variable `x` is of type `i32[6]`
     }
 
 

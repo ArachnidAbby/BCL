@@ -37,7 +37,7 @@ else if
     define main() {
         if 0 == -1 {
             println("true");
-        } else if 8==0{
+        } else if 8 == 0{
             println("elif true");
         } else {
             println("not true");

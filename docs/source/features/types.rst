@@ -18,7 +18,7 @@ BCL has your standard primitive types that directly correlate to llvm types.
       - size
 
     * -
-      - boolean
+      - bool
       - 1b (most CPUs cannot work with single bits)
     * -
       - char

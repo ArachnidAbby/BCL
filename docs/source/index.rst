@@ -13,6 +13,11 @@ Welcome to BCL's documentation!
    features/index.rst
    features/future/index.rst
 
+.. toctree::
+   :caption: Tutorials
+
+   getting_started
+
 
 
 Indices and tables
