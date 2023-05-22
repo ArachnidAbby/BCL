@@ -1,0 +1,16 @@
+// BCL Run-Time Library
+//
+// This is will be compiled to an object file and included in
+// executables created on every platform.
+//
+// THIS IS A WORK IN PROGRESS
+
+define main(); // main function
+
+//Linux CRT entry symbol
+define _start () {
+    main();
+
+    // prevents segfault if not called by main()
+    exit(0);
+}

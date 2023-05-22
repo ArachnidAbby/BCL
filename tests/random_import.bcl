@@ -1,0 +1,15 @@
+import wire_world;
+
+struct test {
+    x: i32,
+    y: i32;
+}
+
+define strnlen(str: strlit, max: i32) -> i32;
+
+define poggers() {
+    println("SHOG");
+    println("SOGGERS".strnlen(123123));
+    println(get_new('#',2));
+    println("");
+}

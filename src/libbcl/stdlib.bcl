@@ -1,0 +1,107 @@
+// ==================================
+// Created: 02/26/2023
+// description:
+//   This is the Standard library of BCL
+//   It contains all the basic functionality you may desire
+//   such as println, print, sleep, usleep, etc.
+// ===================================
+// WARNINGS:
+// Direct Usage of printf will not do any kind of fancy
+// compile-time checks. Be careful when passing things in.
+
+// EXTERNAL DEFINITIONS
+define printf(x: strlit, ...);
+define puts(data: strlit);
+
+//  PRINTLN()
+define println(x: i32) {
+    printf("%i\n", x);
+}
+
+define println(x: bool) {
+    if x {
+        puts("true");
+    } else {
+        puts("false");
+    }
+}
+
+define println(x: f32) {
+    printf("%F\n", x as f64);
+}
+
+define println(x: f64) {
+    printf("%F\n", x);
+}
+
+define println(x: char) {
+    printf("%c\n", x);
+}
+
+define println(x: strlit) {
+    puts(x);
+}
+
+define println() {
+    puts("");
+}
+
+
+// PRINT()
+define print(x: i32) {
+    printf("%i", x);
+}
+
+define print(x: bool) {
+    if x {
+        printf("%s", "true");
+    } else {
+        printf("%s", "false");
+    }
+}
+
+define print(x: f32) {
+    printf("%f", x as f64);
+}
+
+define print(x: f64) {
+    printf("%f", x);
+}
+
+define print(x: char) {
+    printf("%c", x);
+}
+
+define print(x: strlit) {
+    printf("%s", x);
+}
+
+
+// SLEEP FUNCTIONS
+define usleep(microsec: i32);
+define sleep(seconds: i32);
+
+// EXIT
+define exit(exit_code: i32);
+define exit();
+
+
+// DEBUGGING
+
+// define main() {
+//     println(12);
+//     println(true);
+//     println(false);
+//     println(12.3f);
+//     println('h');
+//     println("hi");
+
+//     print(12);
+//     print(true);
+//     print(false);
+//     print(12.3f);
+//     print('h');
+//     print("hello");
+
+//     println();
+// }

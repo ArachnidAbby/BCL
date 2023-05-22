@@ -1,0 +1,91 @@
+import random_import;
+
+// Tile Types
+// '.' = Nothing
+// '*' = Un-activated wire
+// '@' = powered wire (head)
+// '^' = powered wire (tail)
+
+define main() {
+    poggers();
+    board: char[8][8] = [['.', '.', '*', '*', '.', '.', '.', '.'],
+                         ['.', '*', '*', '.', '*', '*', '.', '.'],
+                         ['*', '.', '*', '*', '.', '.', '*', '.'],
+                         ['*', '.', '.', '.', '.', '.', '*', '.'],
+                         ['*', '.', '.', '.', '.', '.', '*', '.'],
+                         ['@', '.', '.', '*', '*', '.', '*', '.'],
+                         ['.', '*', '*', '.', '*', '*', '.', '.'],
+                         ['.', '.', '.', '*', '*', '.', '.', '.']];
+
+    while true {
+        println("\u001b[H");
+        draw_board(&board);
+        update(&board);
+        usleep(500000);
+    }
+}
+
+define draw_row(row: &char[8]) {
+    for c in 0..8 {
+        print(row[c]);
+    }
+    println("");
+}
+
+define draw_board(board: &char[8][8]) {
+    for c in 0..8 {
+        draw_row(&board[c]);
+    }
+    println("");
+}
+
+define get(board: &char[8][8], x: i32, y: i32, offset_x: i32, offset_y: i32) -> char {
+    if (x+offset_x<0) or (y+offset_y<0){
+        return '.';
+    } else if (x+offset_x>7) or (y+offset_y>7){
+        return '.';
+    }else {
+        return board[x+offset_x][y+offset_y];
+    }
+}
+
+
+define get_neighbors(board: char[8][8], x: i32, y: i32) -> i32{
+    count = 0 + (get(&board, x, y, -1, -1) == '@') +
+                (get(&board, x, y, -1,  0) == '@') +
+                (get(&board, x, y, -1, +1) == '@') +
+                (get(&board, x, y,  0, -1) == '@') +
+                (get(&board, x, y,  0, +1) == '@') +
+                (get(&board, x, y, +1, -1) == '@') +
+                (get(&board, x, y, +1,  0) == '@') +
+                (get(&board, x, y, +1, +1) == '@');
+    return count;
+}
+
+define get_new(original: char, neighbors: i32) -> char {
+    if original == '^' {
+        return '*';
+    } else if original == '*' {
+        if neighbors > 0 and neighbors < 3{
+            return '@';
+        }
+        return '*';
+    } else if original == '@'{
+        return '^';
+    } else {
+        return '.';
+    }
+}
+
+define update(board: &char[8][8]) {
+    temp: char[8][8] = board; // TODO: fix so I don't have to do this.
+    new_board = [['.'; 8]; 8];
+
+    for x in 0..8 {
+        for y in 0..8 {
+            // println(check_left(&temp, x, y)); // TODO: Fix double pointer issue
+            new_board[x][y] = get_new(board[x][y], get_neighbors(temp, x, y));
+        }
+    }
+    board = new_board;
+}

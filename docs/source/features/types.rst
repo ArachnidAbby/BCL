@@ -18,27 +18,27 @@ BCL has your standard primitive types that directly correlate to llvm types.
       - size
 
     * -
-      - boolean
-      - 1B, 8b (Cpu can't work with smaller than a byte)
+      - bool
+      - 1b (most CPUs cannot work with single bits)
     * -
       - char
-      - 1B
+      - 1B, 8b
     
     * -
       - 
       - 
 
     * - ints
-      - byte
+      - i8
       - 1B
     * - ints
-      - short
+      - i16
       - 2B, 16b
     * - ints
-      - int
+      - i32
       - 4B, 32b
     * - ints
-      - long
+      - i64
       - 8B, 64b
       
     * -
@@ -46,8 +46,8 @@ BCL has your standard primitive types that directly correlate to llvm types.
       - 
     
     * - floats
-      - float
+      - f32
       - 4B
     * - floats
-      - double
+      - f64
       - 8B

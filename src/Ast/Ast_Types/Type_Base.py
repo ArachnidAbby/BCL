@@ -1,137 +1,240 @@
-from enum import Enum
-from Ast.Nodes import AST_NODE
-from Errors import error
+
+from typing import Self
+
+from llvmlite import ir  # type: ignore
+
+from errors import error
 
 
-class AbstractType:
-    '''abstract type class that outlines the necessary features of a type class.'''
+class Type:
+    '''abstract type class that outlines the necessary
+    features of a type class.'''
 
-    __slots__ = ('ir_type')
-    name = "UNKNOWN"
+    __slots__ = ()
+    ir_type: ir.Type = None
+    name = "UNKNOWN/UNQUALIFIED"
+    pass_as_ptr = False
+    # Used for optimizations in array indexing.
+    rang: tuple[int, int] | None = None
+    # when allocating arguments as local vars on the stack this is checked
+    # -- False: Do allocated and load, True: Don't
+    no_load = False
+    # useful for things like function types.
+    read_only = False
+    has_members = False
+    # is this type allowed to be the return type of a function
+    returnable = True
+    # Dynamic types change function definitions and the
+    # matching of function args when calling
+    is_dynamic = False
+    functions: dict = {"NONSTATIC": []}
+    # Is this type iterable, or does iterating return a new iterator?
+    is_iterator = False
+
+    # mainly used for the function type, but makes writing other code easier
+    # when included for all types
+    is_method = False
+
+    # Only allow indexes via literals
+    literal_index = False
 
     def __init__(self):
         pass
 
     @classmethod
-    def convert_from(cls, func, typ, previous): error(f"AbstractType has no conversions",  line = previous.position)
-    
-    def convert_to(self, func, orig, typ): error(f"AbstractType has no conversions",  line = orig.position)
+    def convert_from(cls, func, typ, previous) -> ir.Instruction:
+        if previous.ret_type == typ:
+            return previous.eval(func)
+        error("Type has no conversions",  line=previous.position)
+
+    def convert_to(self, func, orig, typ) -> ir.Instruction:
+        if orig.ret_type == typ:
+            return orig.eval(func)
+        error("Type has no conversions",  line=orig.position)
+
+    def is_void(self) -> bool:
+        return False
+
+    def get_member(self, func, lhs,
+                   name) -> tuple[ir.Instruction, Self] | None:
+        return None
 
     def __eq__(self, other):
-        return (other != None) and self.name == other.name
+        return (other is not None) and self.name == other.name
+
     def __neq__(self, other):
-        print(self.name != other.name)
-        return self.name != other.name
+        return other is None or self.name != other.name
 
-    @classmethod
-    def print_error(cls, op: str, lhs, rhs):
-        if op=='not': cls._not(None, None, rhs)
+    def get_op_return(self, op, lhs, rhs):
+        pass
 
-        {
-            'sum': cls.sum,
-            'sub': cls.sub,
-            'mul': cls.mul,
-            'div': cls.div,
-            'mod': cls.mod,
-            'eq': cls.eq,
-            'neq': cls.neq,
-            'geq': cls.geq,
-            'leq': cls.leq,
-            'le': cls.le,
-            'gr': cls.gr,
-            'and': cls._and,
-            'or': cls._or,
-        }[op](None, None, lhs, rhs)
+    def sum(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '+' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    
-    def get_op_return(self, op, lhs, rhs): pass
+    def sub(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '-' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
+    def mul(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '*' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    
-    def sum  (self, func, lhs, rhs): error(f"Operator '+' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
-    
-    def sub  (self, func, lhs, rhs): error(f"Operator '-' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
-    
-    def mul  (self, func, lhs, rhs): error(f"Operator '*' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
-    
-    def div  (self, func, lhs, rhs): error(f"Operator '/' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
-    
-    def mod  (self, func, lhs, rhs): error(f"Operator '%' is not supported for type '{lhs.ret_type}'",  line = lhs.position)
+    def div(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '/' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    
-    def eq   (self, func, lhs, rhs): error(f"Operator '==' is not supported for type '{lhs.ret_type}'", line = lhs.position)
-    
-    def neq  (self, func, lhs, rhs): error(f"Operator '!=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
+    def mod(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '%' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    def geq  (self, func, lhs, rhs): error(f"Operator '>=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
-    
-    def leq  (self, func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
-    
-    def le   (self, func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
-    
-    def gr   (self, func, lhs, rhs): error(f"Operator '<=' is not supported for type '{lhs.ret_type}'", line = lhs.position)
+    def pow(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '**' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    
-    def _not (self, func, rhs): error(f"Operator 'not' is not supported for type '{rhs.ret_type}'",line = rhs.position)
-    
-    def _and (self, func, lhs, rhs): error(f"Operator 'and' is not supported for type '{lhs.ret_type}'",line = lhs.position)
-    
-    def _or  (self, func, lhs, rhs): error(f"Operator 'or' is not supported for type '{lhs.ret_type}'", line = lhs.position)
+    def eq(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '==' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
 
-    
-    def index  (self, func, lhs, rhs): error(f"Operation 'index' is not supported for type '{lhs.ret_type}'", line = lhs.position)
-    
+    def neq(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '!=' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def geq(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '>=' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def leq(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def le(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def gr(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def _and(self, func, lhs, rhs):
+        return func.builder.and_(lhs.ret_type.truthy(func, lhs),
+                                 rhs.ret_type.truthy(func, rhs))
+
+    def _or(self, func, lhs, rhs):
+        return func.builder.or_(lhs.ret_type.truthy(func, lhs),
+                                rhs.ret_type.truthy(func, rhs))
+
+    def _not(self, func, rhs):
+        return func.builder.not_(rhs.ret_type.truthy(func, rhs))
+
+    def index(self, func, lhs) -> ir.Instruction:
+        error(f"Operation 'index' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def put(self, func, lhs, value):
+        error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def call(self, func, lhs, args) -> ir.Instruction:
+        error(f"type '{lhs.ret_type}' is not Callable", line=lhs.position)
+
+    def assign(self, func, ptr, value, typ: Self, first_assignment=False):
+        if self.read_only and not first_assignment:
+            error(f"Type: \'{ptr.ret_type}\' is read_only",
+                  line=ptr.position)
+        val = value.ret_type.convert_to(func, value, typ)  # type: ignore
+        func.builder.store(val, ptr.get_ptr(func))
+
+    def isum(self, func, ptr, rhs):
+        final_value = self.sum(func, ptr, rhs)
+        ptr = ptr.get_ptr(func)
+        func.builder.store(final_value, ptr)
+
+    def isub(self, func, ptr, rhs):
+        final_value = self.sub(func, ptr, rhs)
+        ptr = ptr.get_ptr(func)
+        func.builder.store(final_value, ptr)
+
+    def imul(self, func, ptr, rhs):
+        final_value = self.mul(func, ptr, rhs)
+        ptr = ptr.get_ptr(func)
+        func.builder.store(final_value, ptr)
+
+    def idiv(self, func, ptr, rhs):
+        final_value = self.div(func, ptr, rhs)
+        ptr = ptr.get_ptr(func)
+        func.builder.store(final_value, ptr)
+
+    def cleanup(self, func, ptr): # TODO: IMPLEMENT
+        '''code to run on the closing of a function'''
+        print("cleanup")
+
     def __hash__(self):
         return hash(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        return f'<Type: {self.name}>'
+
+    def __str__(self) -> str:
         return self.name
 
+    def __call__(self) -> Self:
+        return self
 
+    def eval(self, foo):  # ? Why is this here
+        '''Does nothing'''
+        pass
 
-from .Type_Bool import Integer_1
-from .Type_F64 import Float_64
-from .Type_I32 import Integer_32
-from .Type_Void import Void
+    def declare(self, mod):
+        '''re-declare an ir-type in a module'''
 
-# def get_type(typ: Types) -> AbstractType:
-#     match typ:
-#         case Types.VOID:
-#             return Void  # type: ignore
-#         case Types.I32|Types.INT:
-#             return Integer_32  # type: ignore
-#         case Types.F64|Types.FLOAT:
-#             return Float_64  # type: ignore
-#         case Types.BOOL:
-#             return Integer_1  # type: ignore
-#         case _:
-#             return None  # type: ignore
+    def as_type_reference(self, func):
+        return self
 
-types_dict = {
-    'void': Void,
-    'bool': Integer_1,
-    "i32": Integer_32,
-    "int": Integer_32,
-    'f64': Float_64,
-    'float': Float_64
-}
+    def get_member_info(self, lhs, rhs):
+        '''Used to get information about members
+        ex: ret_type, mutability, etc
+        '''
 
-# todo: replace strings in the future
-conversion_priority_raw = [
-    AbstractType(),
-    Integer_1(),
-    Integer_32(),
-    'i64',
-    Float_64(),
-    'f128'
-] # the further down the list this is, the higher priority
+    def get_members(self):
+        '''Gets all the member names.
+           Must check `typ.has_members` or an Exception will occur
+        '''
+        return self.members.keys()  # members should always be a dict!
 
-def get_std_ret_type(self: AST_NODE,  other: AST_NODE):
-    '''When a math operation happens between types, we need to know what the final return type will be.'''
-    conversion_priority = {x: c for c,x in enumerate(conversion_priority_raw)}
-    largest_priority = max(
-        conversion_priority[self.ret_type],
-        conversion_priority[other.ret_type]
-    )
+    def roughly_equals(self, other):
+        '''check if two types are equivalent.
+        This is helpful when you have compound types such as "Any"
+        or a Protocol type.
 
-    return conversion_priority_raw[largest_priority]
+        defaults to `__eq__` behavior
+        '''
+        return self == other
+
+    # ? should this error instead?
+    def truthy(self, func, val):
+        '''When using boolean ops or if statements'''
+        return ir.Constant(ir.IntType(1), 0)  # defaults false
+
+    @property
+    def ret_type(self):
+        return self
+
+    def get_iter_return(self):
+        error(f"{self.name} is not Iterable")
+
+    def create_iterator(self, func):
+        '''should return a ptr'''
+        if not self.is_iterator:
+            error(f"{self.name} is not Iterable")  # default
+        else:
+            error(f"{self.name} is already an Iterator")
+
+    def iter_condition(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")
+
+    def iter(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")
+
+    def iter_get_val(self, func, self_ptr):
+        error(f"{self.name} is not Iterable")

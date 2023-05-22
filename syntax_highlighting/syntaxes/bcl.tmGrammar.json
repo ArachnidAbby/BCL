@@ -1,64 +1,135 @@
 {
     "scopeName": "source.bcl",
-    "patterns": [{ "include": "#expression" }],
+    "patterns": [
+      { "include": "#expression" }
+    ],
     "repository": {
       "expression": {
         "patterns": [
             { "include": "#comment" },
             { "include": "#constants" },
-            { "include": "#userDefined" },
+            { "include": "#function_declaration" },
+            { "include": "#structs"},
+            { "include": "#types"},
             { "include": "#keywords" },
             { "include": "#punctuation" },
             { "include": "#string" }
         ]
       },
 
+      "function_declaration": {
+        "begin": "(define)\\s+([a-zA-Z0-9_]+)\\s*(\\()",
+        "beginCaptures": {
+            "1": {"name": "storage.type.function.bcl"},
+            "2": {"name": "entity.name.function.bcl"},
+            "3": {"name": "punctuation.definition.parameters.begin.bcl"}
+        },
+        "end": "\\)",
+        "endCaptures": {
+            "0": {"name": "punctuation.definition.parameters.end.bcl"}
+        },
+        "patterns": [
+            {"include": "#comment" },
+            {
+              "begin": "([a-zA-Z0-9_]+)\\s*(:)",
+              "beginCaptures": {
+                "1": {"name": "variable.parameter.mylang"},
+                "2": {"name": "keyword.operator.type.annotation.mylang"}
+              },
+              "end": "(?=[,\\)])",
+              "patterns": [
+                {"include": "#comment"},
+                {"include": "#punctuation"},
+                {"include": "#types"}
+              ]
+            },
+            {
+              "match": "(\\&*)([a-zA-Z0-9_]+)(?=[,\\)])",
+              "captures" : {
+                "1": {"name": "keyword.operator.arithmetic.bcl"},
+                "2": {"name": "variable.parameter.mylang"}
+              }
+            },
+
+            {
+             "match": ",",
+             "name": "punctuation.separator.parameter.mylang"
+            }
+        ]
+      },
+
+      "types": {
+        "match": "\\b((i8)|(i16)|(i32)|(i64)|(f32)|(f64)|(bool)|(char)|(string)|(strlit)|(str))\\b",
+        "name": "storage.type.bcl"
+      },
+      "structs": {
+        "begin": "(struct)\\s+([a-zA-Z0-9_]+)\\s*(\\{)",
+        "beginCaptures": {
+          "1": {"name": "storage.type.structure.bcl"},
+          "2": {"name": "entity.name.structure.bcl"},
+          "3": {"name": "punctuation.definition.block.start.bcl"}
+        },
+        "end": "\\}",
+        "endCaptures": {
+          "0": {"name": "punctuation.definition.block.end.bcl"}
+        },
+        "patterns": [
+          {"include": "#comment" },
+          {
+            "begin": "([a-zA-Z0-9_]+)\\s*(:)",
+            "beginCaptures": {
+              "1": {"name": "support.variable.property.bcl"},
+              "2": {"name": "keyword.operator.type.annotation.mylang"}
+            },
+            "end": "(?=[,\\}\\;])",
+            "patterns": [
+              {"include": "#comment"},
+              {"include": "#punctuation"},
+              {"include": "#types"}
+            ]
+          },
+          {"include": "#punctuation"},
+          {"include": "#function_declaration"},
+          {"include": "#types"},
+          {"include": "#constants"},
+          {"include": "#keywords"},
+          {"include": "#string"}
+        ]
+      },
+
       "keywords": {
         "patterns": [
           {
-            "match": "(?<!define\\s*)[a-zA-Z0-9_]+(?=\\(.*\\))",
+            "match": "(?<!define\\s+)[a-zA-Z0-9_]+(?=\\(.*\\))",
             "name": "meta.function-call.generic.bcl"
           },
           {
-            "match": "((if)|(elif)|(else)|(define)|(for)(while)|(import))(?=\\W+)",
+            "match": "\\b((if)|(else)|(for)|(while)|(import)|(return)|(yield))\\b",
             "name": "keyword.control.bcl"
           },
           {
-            "match": "(?<=\\W+)((or)|(and)|(not)|(in))(?=\\W+)",
+            "match": "\\b((or)|(and)|(not)|(in))\\b",
             "name": "keyword.operator.bcl"
           },
           {
-            "match": "(?<=\\W+)((byte)|(short)|(int)|(long)|(float)|(double)|(bool)|(char)|(string))(?=\\W+)",
-            "name": "storage.type.bcl"
+            "match": "\\b((break)|(continue))\\b",
+            "name": "keyword.control.flow.bcl"
           },
           {
-            "match": "[a-zA-Z0-9_]+",
-            "name": "variable.other.bcl"
+            "match": "([a-zA-Z0-9_]+)|(\\s+)",
+            "name": "source.bcl"
           }
         ]
       },
 
       "string": {
         "match": "([\"'])(?:(?=(\\\\?))\\2.)*?\\1",
-        "name": "string.quoted.double.bcl"    
-      },
-
-      "userDefined": {
-        "patterns": [
-          {
-            "match": "(?<=define\\s*)[a-zA-Z0-9_]+",
-            "name": "entity.name.function.bcl"
-          },
-          {
-            "match": "(?<=define\\s*[a-zA-Z0-9_]+\\()([a-zA-Z0-9_]+([\\s\\,]*))*",
-            "name": "variable.parameter.function.bcl"
-          }
-        ]
+        "name": "string.quoted.double.bcl"
       },
 
       "comment": {
         "match": "//.*$",
-        "name": "comment.line.slash.bcl"
+        "name": "comment.line.double-slash.bcl"
       },
 
       "punctuation": {
@@ -73,11 +144,12 @@
             "name": "keyword.operator.assignment.bcl"
           },
           {
-            "match": "[\\+\\-\\*/]",
+            "match": "[\\+\\-\\*\\/\\%\\&]",
             "name": "keyword.operator.arithmetic.bcl"
           },
-          
+
           {"match": "[;]", "name": "punctuation.terminator.statement.bcl"},
+          {"match": "[,]", "name": "punctuation.seperator.bcl"},
           {
             "begin": "\\(",
             "end": "\\)",
@@ -99,6 +171,7 @@
 
       "constants": {
         "patterns": [
+          {"match": "\\d+((\\.\\d+f)|(\\.\\d+)|f)", "name": "constant.numeric.bcl"},
           {"match": "\\d+", "name": "constant.numeric.bcl"},
           {
             "match": "(true)|(false)|(none)",

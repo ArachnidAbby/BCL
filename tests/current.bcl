@@ -1,14 +1,203 @@
-define main() {
-    i = 0;
-    loop_amount = 200;
-    while i < loop_amount {
-        i = i+1;
-        fizz = is_multiple(i, 3);
-        buzz = is_multiple(i, 5)*2;
-        println(fizz + buzz);
-    }
+import stdlib;
+// import SDL;
+
+// define main() -> i32 {
+//     if SDL_Init(32) < 0 {
+//         println("Failed to initialize sdl2");
+//         return -1;
+//     }
+
+//     window: &SDL_Window = SDL_CreateWindow("SDL2 Window",
+//                                           805240832,
+//                                           805240832,
+//                                           680, 480,
+//                                           0);
+
+//     window_surface: &SDL_Surface = SDL_GetWindowSurface(window);
+
+//     SDL_UpdateWindowSurface(window);
+
+//     SDL_Delay(10000);
+
+//     // event = SDL_Event {
+//     //         type: ' ',
+//     //         active: [' ';3], 
+//     //         key: [' ';7], // 2, 1, 1, 1, 2
+//     //         motion: [' ';6],
+//     //         button: [' ';5],
+//     //         jaxis: [' ';5], 
+//     //         jball: [' ';5], 
+//     //         jhat: [' ';4],
+//     //         jbutton: [' ';4],
+//     //         resize: [' ';5], 
+//     //         expose: ' ', 
+//     //         quit: ' ', 
+//     //         user: [' ';13], // 1, 4, 8, 8 
+//     //         syswm: [' ';9]
+//     //     };
+
+//     return 0;
+// }
+
+import math;
+
+define tests() -> f32 {
+    return 934f;
 }
 
-define is_multiple(value: i32, divider: i32) -> bool {
-    return (value % divider) == 0;
+define takes_tuple(x: &(i32, i32)) -> i32 {
+    return x[0] + x[1];
 }
+
+// struct TestStruct {
+//     x: i32,
+//     y: i32;
+
+//     define test() -> char {
+//         return 'F';
+//     }
+
+//     define testing(self) {
+//         println("gaming");
+//         println(self.x);
+//     }
+
+//     define tests(&self, x: i32) {
+//         self.testing();
+//         self.x = x;
+//         println(self.x);
+//         println();
+//     }
+
+//     define __add__(self, x: i32) -> TestStruct {
+//         return TestStruct {x: (self.x+x), y: self.y};
+//     }
+
+//     define __iadd__(&self, other: i32) {
+//         self.x += other;
+//     }
+
+//     define __iadd__(&self, other: TestStruct) {
+//         self.x += other.x;
+//     }
+
+//     define __eq__(self, other: i32) -> bool {
+//         return self.x == other;
+//     }
+// }
+
+define test_gen() -> (i32, i32) {
+    if false {
+        yield (69, 0);
+    }
+//     for i in 0..12 {
+//         for i2 in 0..5 {
+//             yield (i, i2);
+//         }
+//     }
+//     return;
+//     yield (420, 0);
+}
+
+define main() {
+    // println 10;
+    // m = TestStruct {x: 123, y: 1232};
+    // printf("m.x: %i\n", m.x);
+    // m += m;
+    // println(m.test());
+    // m.testing();
+    // println();
+    // m.tests(69420);
+    // printf("m.x: %i\n", m.x);
+    // j = m + 12000;
+    // printf("value of j.x: %i\n", j.x);
+
+    p = 0..10;
+    // p.end += 12;
+
+    // since P is the same range object each time, this
+    // for loop acts weird
+    for x in p {
+        for y in p {
+            printf("%i %i\n", x, y);
+        }
+    }
+
+    println takes_tuple(&(2, 2));
+
+    my_array = [0, 2, 4, 6, 8, 10, 12];
+    for x in my_array {
+        printf("Got %i from array: \"my_array\"\n", x);
+        x = 12;
+    }
+
+    for x in test_gen() {
+        print x[0];
+        print " WOWO ";
+        println x[1];
+    }
+
+    // range = 0..10;
+    // for i in range {
+    //     range = 0..(range.end - i*2);
+    //     println(i);
+    // }
+
+    // m.test = 11;
+
+    // x = [1232; 1292];
+    // println(x.length);
+    // (22f, 7f).min();
+    // (10).print();
+
+    // println(factorial(4));
+    // println(min(22, 7));
+    // println(max(22, 4));
+    // println(min(22f, 7f));
+    // println(max(22f, 4f));
+    // println(tests());
+
+    // println();
+    // println(8 and 3);
+    // println(0 and 12);
+    // if 0 {
+    //     println("hola");
+    // } else
+
+    // if (10f>9) * 2f {
+    //     println("hi");
+    // }
+}
+
+// struct parent {
+//     x: test,
+//     y: test;
+// }
+
+// struct test {
+//     x: i32,
+//     y: i32;
+// }
+
+// struct gross {
+//     x: &i32,
+//     y: i32;
+// }
+
+// // define testing(x: test) -> gross {
+// //     referencable = x.y;
+// //     value = gross {x: &(x.y), y: x.x};
+// //     return value;
+// // }
+
+// define main() {
+//     // (10) = true;
+//     x = parent {
+//         x: test {x: 1, y: 2},
+//         y: test {x: 3, y: 4}
+//     };
+//     // x.x.x = 8;
+//     // x.y.z;
+//     println(x.x.x); // completely inapropriate! XXX content in my code?!
+//     println(8+x.y.x); //should be 11
+// }

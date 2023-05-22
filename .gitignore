@@ -1,4 +1,5 @@
 # Python
+*.py.old
 *.o
 *.pyc
 *.prof
