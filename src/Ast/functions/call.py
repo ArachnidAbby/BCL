@@ -14,13 +14,15 @@ class FunctionCall(ExpressionNode):
         self.func_name = name
         self.ret_type = Ast_Types.Void()
         self.paren = parenth
+        self.args_types = None
 
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):
             self.paren.in_func_call = True
         self.paren.pre_eval(func)
 
-        self.args_types = tuple([x.ret_type for x in self.paren])
+        if self.args_types is None:
+            self.args_types = tuple([x.ret_type for x in self.paren])
 
         self.func_name.pre_eval(func)
         # * Special "dot call" syntax

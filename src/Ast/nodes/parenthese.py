@@ -12,13 +12,14 @@ from errors import error
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ret_type', 'in_func_call', 'ptr',
-                 'contains_ellipsis')
+                 'contains_ellipsis', 'evaled_children')
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
         self.in_func_call = False
         self.ptr = None
         self.ret_type = Ast_Types.Void()
+        self.evaled_children = []
         self.contains_ellipsis = False
 
     def pre_eval(self, func):
@@ -54,19 +55,19 @@ class ParenthBlock(ContainerNode):
             # TODO: THIS IS SHIT
             if self.in_func_call and (child.ret_type.pass_as_ptr):
                 ptr = child.get_ptr(func)
-                self.children[c] = ptr
+                self.evaled_children.append(ptr)
                 continue
-            self.children[c] = child.eval(func)
+            self.evaled_children.append(child.eval(func))
 
     def eval(self, func):
-        # TODO: THIS SHOULD NOT MODIFY THE ORIGINAL
+        self.evaled_children = []
         self._pass_as_pointer_changes(func)
         if len(self.children) == 1:
-            return self.children[0]
+            return self.evaled_children[0]
         elif not self.in_func_call:
             if self.ptr is None:
                 self.ptr = func.create_const_var(self.ret_type)
-                for c, child in enumerate(self.children):
+                for c, child in enumerate(self.evaled_children):
                     child_ptr = \
                         func.builder.gep(self.ptr,
                                          [ir.Constant(ir.IntType(32), 0),

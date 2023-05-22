@@ -40,6 +40,8 @@ class Integer_32(Type_Base.Type):
                 return orig.eval(func)
             case 'bool':
                 return func.builder.trunc(orig.eval(func), ir.IntType(1))
+            case 'char':
+                return func.builder.trunc(orig.eval(func), ir.IntType(8))
             case 'i64':
                 return func.builder.zext(orig.eval(func), ir.IntType(64))
             case 'f32':

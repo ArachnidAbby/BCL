@@ -115,7 +115,7 @@ class Function(Ast_Types.Type):
     def call(self, func, lhs, args):
         args.children = self._fix_args(lhs, args, func)
         args.eval(func)
-        return func.builder.call(self.func_obj, args.children)
+        return func.builder.call(self.func_obj, args.evaled_children)
 
     def __hash__(self):
         return hash(self.name+self.struct_name)
