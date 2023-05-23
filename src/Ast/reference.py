@@ -15,7 +15,10 @@ class Ref(ExpressionNode):
 
     def pre_eval(self, func):
         self.var.pre_eval(func)
-        self.ret_type = Ast_Types.Reference(self.var.ret_type)
+        if isinstance(self.var.ret_type, Ast_Types.Reference):
+            self.ret_type = self.var.ret_type
+        else:
+            self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
     def eval(self, func):
         return self.var.get_ptr(func)
@@ -33,7 +36,8 @@ class Ref(ExpressionNode):
         return f"<Ref to '{self.var}'>"
 
     def __str__(self) -> str:
-        return str(self.var)
+        print(self.ret_type)
+        return f"&{str(self.var)}"
 
     def as_type_reference(self, func):
         return Ast_Types.Reference(self.var.as_type_reference(func))

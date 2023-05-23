@@ -14,7 +14,7 @@ unittest: env/bin/activate
 	./env/bin/python3.11 tests/Basic_Test.py
 
 compile: env/bin/activate
-	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python3.11 src/main.py
+	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python3.11 src/main.py --include-data-dir=src/libbcl=src/libbcl
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/; \
