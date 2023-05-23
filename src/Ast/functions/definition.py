@@ -90,6 +90,16 @@ class FunctionDef(ASTNode):
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
 
+    def get_unique_name(self, name: str) -> str:
+        return self.module.get_unique_name(f"{self.func_name}.local.{name}")
+
+    def create_function(self, name, function_obj):
+        if name not in self.block.variables.keys():
+            self.block.variables[name] = Ast_Types.FunctionGroup(name, self)
+        group = self.block.variables[name]
+        group.add_function(function_obj)  # type: ignore
+        return group
+
     def add_method_arg(self, arg, parent) -> KeyValuePair:
         if isinstance(arg, VariableRef):
             return KeyValuePair(arg._position, arg, parent.get_type(self))
