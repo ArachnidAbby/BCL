@@ -9,7 +9,7 @@ class Reference(Type_Base.Type):
 
     name = 'ref'
     pass_as_ptr = False
-    no_load = True
+    no_load = False
     returnable = False
 
     def __init__(self, typ):
@@ -50,7 +50,7 @@ class Reference(Type_Base.Type):
 
     def get_member(self, func, lhs,
                    member_name_in: "Ast.variable.VariableRef"):
-        return self.typ.get_member(func, lhs, member_name_in)
+        return self.typ.get_member(func, lhs.as_varref(), member_name_in)
 
     def sum(self, func, lhs, rhs):
         return lhs.typ.sum(func, lhs.as_varref(), rhs)

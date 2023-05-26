@@ -153,6 +153,14 @@ class FunctionDef(ASTNode):
             errors.error(f"Function {self.func_name} cannot return a " +
                          "reference to a local variable or value.",
                          line=ret_line)
+        elif not self.ret_type.returnable:
+            errors.warning("THIS IS NOT AN ERROR\n" +
+                           "You are binding a function that returns a heap pointer.\n" +
+                           "Storing this and doing any operation that results in the\n" +
+                           "generation of a `gep` instruction will not work.\n" +
+                           "Do not expect support. Later, use `Box<T>`. \n" +
+                           "Do not try indexing or member access on this " +
+                           "functions\nreturn and expect it to work.", line=ret_line)
 
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and

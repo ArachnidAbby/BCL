@@ -12,6 +12,7 @@ class VariableObj:
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
         self.type = typ
+        #? Is this still necessary
         if isinstance(typ, str):
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant

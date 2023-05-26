@@ -9,6 +9,26 @@ import errors
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 
+HELP = """Commands:
+
+compile <src> [..args]
+    compile a file
+    args:
+        --supress-warnings
+        --emit-binary (auto enables --emit-object)
+        --emit-object (.o files emited)
+        --emit-ast (returns the AST, WARNING: VERY LONG OUTPUT)
+        --libs=[libs seperated by commas] \
+(some libs might need to be prefixed with ':')
+        --dev (additional information used during development of the language)
+help
+    you are already here?
+
+make <name>
+    Makes a project, unfinished
+
+"""
+
 
 def make_project(args: List[str]):
     '''setup project files'''
@@ -37,7 +57,7 @@ if __name__ == "__main__":
     if "--dev" in args:
         errors.PROFILING = True
 
-    if len(args)==1:
+    if len(args) == 1:
         errors.error("Valid sub-commands: compile, run, make, publish (Only compile works)")
 
     elif args[1] == "make":
@@ -45,6 +65,14 @@ if __name__ == "__main__":
 
     elif args[1] == "compile":
         compile.compile_file(Path(args[2]), args)
+
+    elif args[1] == "help":
+        length = max([len(x) for x in HELP.split('\n')]) + 2
+        print(f"{errors.GREEN}")
+        print(f"/{'-'*length}#")
+        errors._print_text(HELP)
+        print(f"\\{'-'*length}/")
+        print(errors.RESET)
 
     else:
         print(f"Invalid sub-command: {args[1]}")

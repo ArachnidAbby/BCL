@@ -5,6 +5,7 @@ from time import perf_counter
 
 import errors
 from Ast.nodes.commontypes import SrcPosition
+import errors
 from errors import _print_raw, _print_text, inline_warning
 
 # contains all valid command line arguments
@@ -13,6 +14,7 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--emit-binary": False,
     "--dev": False,
     "--emit-ast": False,
+    "--supress-warnings": False,
     "--libs": []
 }
 
@@ -34,6 +36,8 @@ def compile(src_str: str, output_loc: Path, args, file=""):
     _print_raw("")
 
     _print_raw(f'{errors.GREEN}/{"-"*48}#{errors.RESET}')
+    if args["--supress-warnings"]:
+        errors.SUPRESSED_WARNINGS = True
 
     with timingContext('imports finished'):
         import psutil  # type: ignore

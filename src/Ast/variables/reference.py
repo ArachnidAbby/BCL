@@ -33,7 +33,8 @@ class VariableRef(ExpressionNode):
             .get_value(func)
 
     def get_ptr(self, func):
-        return self.block.get_variable(self.var_name, func.module).ptr
+        var = self.block.get_variable(self.var_name, func.module)
+        return var.ptr
 
     def get_var(self, func):
         return self.block.get_variable(self.var_name, func.module)

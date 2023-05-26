@@ -15,9 +15,11 @@ PURPLE = "\u001b[35m"
 MAGENTA = "\u001b[35m"
 CODE125 = "\u001b[38;5;125m"
 CODE202 = "\u001b[38;5;202m"
+CODE214 = "\u001b[38;5;214m"
 CODE177 = "\u001b[38;5;177m"
 
 SILENT_MODE = False
+SUPRESSED_WARNINGS = False
 PROFILING = False
 
 USES_FEATURE: dict[str, bool] = {}  # give warning about used features
@@ -85,6 +87,32 @@ def inline_warning(text: str, line=invalid_pos):
     print(RESET, end='')
 
 
+def warning(text: str, line=invalid_pos, full_line=False):
+    '''prints a warning with a line # if provided'''
+    if SILENT_MODE or SUPRESSED_WARNINGS:
+        return
+
+    if line[0] != -1:
+        code_line = show_error_spot(line, full_line, color=CODE214)
+    else:
+        code_line = ""
+
+    largest = max(
+        [len(x) for x in f"| {text}".split('\n')] +
+        [len(f"|    Line: {line[0]}")] +
+        [len(code_line.split('\n')[0])]
+    )
+    print(f'{CODE214}#{"-"*(largest//4)}')
+
+    _print_text(text)
+    if line[0] != -1:
+        print(f'|    Line: {line[0]}')
+        print(f'|    File: {line.source_name}')
+        print("#"+"-"*len(code_line.split('\n')[0]))
+        print(f"{RESET}{code_line}")
+    print(f'{CODE214}#{"-"*(largest-1)}/{RESET}')
+
+
 def developer_warning(text: str):
     '''give warnings to developers of the language that unsupported behavior
     is being used.'''
@@ -127,7 +155,7 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
 
 
 def show_error_spot(position: SrcPosition,
-                    use_full_line: bool) -> str:
+                    use_full_line: bool, color=RED) -> str:
     if position[0] == -1:
         return ""
     full_line = ""
@@ -144,5 +172,5 @@ def show_error_spot(position: SrcPosition,
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
 
-    return f"{RED}|    {RESET}{full_line}\n{RED}|    {CODE177}{underline}\
+    return f"{color}|    {RESET}{full_line}\n{color}|    {CODE177}{underline}\
             {RESET}"

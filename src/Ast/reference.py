@@ -21,7 +21,10 @@ class Ref(ExpressionNode):
             self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
     def eval(self, func):
-        return self.var.get_ptr(func)
+        if isinstance(self.var.ret_type, Ast_Types.Reference):
+            return func.builder.load(self.var.get_ptr(func))
+        else:
+            return self.var.get_ptr(func)
 
     def get_var(self, func):
         return self.var.get_var(func)
@@ -30,13 +33,12 @@ class Ref(ExpressionNode):
         return self.var
 
     def get_ptr(self, func):
-        return self.var.get_ptr(func)
+        return self.eval(func)
 
     def __repr__(self) -> str:
         return f"<Ref to '{self.var}'>"
 
     def __str__(self) -> str:
-        print(self.ret_type)
         return f"&{str(self.var)}"
 
     def as_type_reference(self, func):
@@ -46,3 +48,7 @@ class Ref(ExpressionNode):
         return self.create_tree("Reference",
                                 var=self.var,
                                 return_type=self.ret_type)
+
+    def get_position(self) -> SrcPosition:
+        return self.merge_pos((self._position,
+                               self.var.position))
