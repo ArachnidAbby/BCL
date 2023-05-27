@@ -56,7 +56,7 @@ class Function(Ast_Types.Type):
         fnty = ir.FunctionType((self.func_ret).ir_type, self.get_ir_types(),
                                self.contains_ellipsis)
         ir.Function(module.module, fnty,
-                    name=module.get_unique_name(self.func_name))
+                    name=module.get_unique_name(self.func_obj.name))
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:

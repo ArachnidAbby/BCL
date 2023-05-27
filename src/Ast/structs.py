@@ -36,7 +36,7 @@ class StructDef(ASTNode):
         return self.struct_type
 
     def get_unique_name(self, name: str) -> str:
-        return self.module.get_unique_name(f"{self.struct_name}.{name}")
+        return self.module.get_unique_name(f"__meth.{self.struct_name}.{name}")
 
     def _yield_functions(self):
         # skip first element

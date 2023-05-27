@@ -22,6 +22,10 @@ class StructLiteral(ExpressionNode):
                 errors.error("Invalid Syntax:", line=child.position)
             child.value.pre_eval(func)
             name = child.key.var_name
+            if name not in self.ret_type.members.keys():
+                errors.error(f"{self.ret_type} has no member " +
+                             f"\"{child.key.var_name}\"",
+                             line=child.key.position);
             if child.value.ret_type != self.ret_type.members[name]:
                 errors.error(f"Expected type {self.ret_type.members[name]} " +
                              f"got {child.value.ret_type}",
