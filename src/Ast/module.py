@@ -68,7 +68,7 @@ class Module(ASTNode):
         if name in Ast.Ast_Types.definedtypes.types_dict.keys():
             return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
 
-        errors.error(f"Cannot find type '{name}' in module" +
+        errors.error(f"Cannot find type '{name}' in module " +
                      f"'{self.mod_name}'", line=position)
 
     def get_unique_name(self, name: str):

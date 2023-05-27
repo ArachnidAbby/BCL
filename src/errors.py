@@ -6,6 +6,12 @@ import sys
 from inspect import currentframe, getframeinfo
 from typing import Sequence
 
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexer import RegexLexer
+from pygments.token import (Comment, Keyword, Name, Number, Operator,
+                            Punctuation, String, Whitespace)
+
 RED = "\u001b[31m"
 RESET = "\u001b[0m"
 YELLOW = "\u001b[33;1m"
@@ -27,6 +33,29 @@ USES_FEATURE: dict[str, bool] = {}  # give warning about used features
 SrcPosition = collections.namedtuple('SrcPosition',
                                      ['line', 'col', 'length', 'source_name'])
 invalid_pos = SrcPosition(-1, -1, -1, '')
+
+
+class BCLLexer(RegexLexer):
+    name = 'bcl'
+    aliases = ['bcl']
+    filenames = ['*.bcl']
+    tokens = {
+        'root': [
+            (r'[\s\n]+', Whitespace),
+            (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
+            (r'\d+', Number),
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)',
+             Keyword.Reserved),
+            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|' +
+             r'(char)|(str)|(strlit)', Keyword.Type),
+            (r'\s+(or)|(and)|(not)|(in)\s+', Operator.Word),
+            (r'[\=\+\-\*\\\%\%\<\>\&]', Operator),
+            (r'[\{\};\(\)\:\[\]\,]', Punctuation),
+            (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
+            (r'//.*$', Comment.Single),
+            (r'\w[\w\d]*', Name.Other)
+        ]
+    }
 
 
 def _print_text(text):
@@ -56,18 +85,18 @@ def error(text: str, line=invalid_pos, full_line=False):
     else:
         code_line = ""
 
-    largest = max(
+    largest = min(max(
         [len(x) for x in f"| {text}".split('\n')] +
         [len(f"|    Line: {line[0]}")] +
         [len(code_line.split('\n')[0])]
-    )
+    ), 45)
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
     if line[0] != -1:
         print(f'|    Line: {line[0]}')
         print(f'|    File: {line.source_name}')
-        print("#"+"-"*len(code_line.split('\n')[0]))
+        print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
     print("\n\n\n\n")
@@ -97,18 +126,18 @@ def warning(text: str, line=invalid_pos, full_line=False):
     else:
         code_line = ""
 
-    largest = max(
+    largest = min(max(
         [len(x) for x in f"| {text}".split('\n')] +
         [len(f"|    Line: {line[0]}")] +
         [len(code_line.split('\n')[0])]
-    )
+    ), 45)
     print(f'{CODE214}#{"-"*(largest//4)}')
 
     _print_text(text)
     if line[0] != -1:
         print(f'|    Line: {line[0]}')
         print(f'|    File: {line.source_name}')
-        print("#"+"-"*len(code_line.split('\n')[0]))
+        print("#"+"-"*min(len(code_line.split('\n')[0]), 80))
         print(f"{RESET}{code_line}")
     print(f'{CODE214}#{"-"*(largest-1)}/{RESET}')
 
@@ -172,5 +201,7 @@ def show_error_spot(position: SrcPosition,
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
 
-    return f"{color}|    {RESET}{full_line}\n{color}|    {CODE177}{underline}\
+    highlighted = highlight(full_line, BCLLexer(), TerminalFormatter())
+
+    return f"{color}|    {RESET}{highlighted}{color}|    {CODE177}{underline}\
             {RESET}"

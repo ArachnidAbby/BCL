@@ -87,4 +87,4 @@ class Reference(Type_Base.Type):
 
     def assign(self, func, ptr, value, typ: Ast_Types.Type, first_assignment=False):
         val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
-        func.builder.store(val, ptr.get_ptr(func))
+        func.builder.store(val, ptr.get_var(func).ptr)

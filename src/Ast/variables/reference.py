@@ -1,3 +1,4 @@
+from Ast import Ast_Types
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
 from errors import error
@@ -34,6 +35,8 @@ class VariableRef(ExpressionNode):
 
     def get_ptr(self, func):
         var = self.block.get_variable(self.var_name, func.module)
+        if isinstance(var.type, Ast_Types.Reference):
+            return func.builder.load(var.ptr)
         return var.ptr
 
     def get_var(self, func):
