@@ -25,6 +25,10 @@ or, alternatively:
         x = [0; 6]; // variable `x` is of type `i32[6]`
     }
 
+.. note::
+
+    The expression inside an array instatiated in the way above will NOT be the same. For example calling :code:`random()` will generate random values for ALL the locations, not just a single random value coppied across all indexes. so, doing :code:`[random(); 6]` will look something like :code:`[343, 26534, 45654, 4345, 1236594, 43965]`
+
 
 ################
 indexing arrays
