@@ -238,7 +238,7 @@ class Module(ASTNode):
             objects.append(f"{loc}/{mod.mod_name}.o")
 
         if args["--emit-binary"]:
-            extra_args = [f"-l{x}" for x in args["--libs"]]
+            extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm'] # adds math.h
             linker.link_all(f"{loc}/output", objects, extra_args)
 
     # TODO: Create a seperate error parser

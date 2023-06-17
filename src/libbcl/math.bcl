@@ -44,6 +44,13 @@ define pow(x: i32, pow: i32) -> i32 {
     return x;
 }
 
+define pow(x: f32, pow: i32) -> f32 {
+    for i in 1..pow {
+        x *= x;
+    }
+    return x;
+}
+
 define pi() -> f32 {
     return 3.14159265359;
 }
@@ -106,6 +113,8 @@ define fmod(x : f32, y : f32) -> f32 {
     }
     return remainder;
 }
+
+define sqrtf(x: f32) -> f32;
 
 define fabs(x : f32) -> f32 {
     if x < 0 {
