@@ -1,3 +1,5 @@
+import platform
+
 from llvmlite import ir
 
 import errors
@@ -42,6 +44,16 @@ types_dict = {
     'Range': RangeType,
     'strlit': StringLiteral
 }
+
+plat = platform.architecture()[0]
+if plat == "32bit":
+    errors.developer_info("Size_t = u32")
+    types_dict["size_t"] = types_dict["u32"]
+if plat == "64bit":
+    errors.developer_info("Size_t = u64")
+    types_dict["size_t"] = types_dict["u64"]
+else:
+    errors.error("Platform not supported. Only 64bit and 32bit architectures are supported")
 
 # todo: replace strings in the future
 conversion_priority_raw = [
