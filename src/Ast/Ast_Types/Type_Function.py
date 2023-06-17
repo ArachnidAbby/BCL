@@ -170,7 +170,7 @@ class FunctionGroup(Ast_Types.Type):
 
     def print_call_error(self, rhs):
         error("Invalid Argument types for function group with \n" +
-              f" name: {self.func_name}\n args: {str(rhs)}",
+              f" name: {self.func_name}\n args: ({', '.join([str(x.ret_type) for x in rhs])})",
               line=rhs.position)
 
     def call(self, func, lhs, args: tuple):

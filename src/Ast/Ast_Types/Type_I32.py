@@ -7,14 +7,17 @@ from errors import error
 from . import Type_Base
 
 
+# TODO: Refactor this class name
+# Its a pain in the ass so do it when there is downtime.
 class Integer_32(Type_Base.Type):
-    __slots__ = ('ir_type', 'name', 'rang')
+    __slots__ = ('ir_type', 'name', 'rang', 'signed')
 
     pass_as_ptr = False
     no_load = False
 
-    def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647)):
+    def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647), signed=True):
         self.name = name
+        self.signed = signed
         self.ir_type = ir.IntType(size)
         self.rang = rang
 
@@ -23,11 +26,11 @@ class Integer_32(Type_Base.Type):
 
     def convert_from(self, func, typ, previous):
         if typ.name in ('f32', 'f64'):
-            return func.builder.fptosi(previous.eval(), self.ir_type)
+            return func.builder.fptosi(previous.eval(func), self.ir_type)
         elif typ.name == 'bool':
-            return func.builder.zext(previous.eval(), self.ir_type)
+            return func.builder.zext(previous.eval(func), self.ir_type)
         elif typ.name == 'i64':
-            return func.builder.trunc(previous.eval(), self.ir_type)
+            return func.builder.trunc(previous.eval(func), self.ir_type)
         elif typ.name == 'i32':
             return previous.eval(func)
 
@@ -35,18 +38,31 @@ class Integer_32(Type_Base.Type):
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
-        match typ.name:
-            case 'i32':
+        if typ == self:
+            return orig.eval(func)
+
+        if isinstance(typ, Integer_32):
+            if typ.size < self.size:
+                return func.builder.trunc(orig.eval(func), typ.size)
+            if typ.size > self.size:
+                if typ.signed:
+                    return func.builder.sext(orig.eval(func), typ.size)
+                return func.builder.zext(orig.eval(func), typ.size)
+
+        match (typ.name, self.name):
+            case ('char', 'i8'):
                 return orig.eval(func)
-            case 'bool':
+            case ('bool', _):
                 return func.builder.trunc(orig.eval(func), ir.IntType(1))
-            case 'char':
+            case ('char', _):
                 return func.builder.trunc(orig.eval(func), ir.IntType(8))
-            case 'i64':
-                return func.builder.zext(orig.eval(func), ir.IntType(64))
-            case 'f32':
+            case ('f32', _):
+                if not self.signed:
+                    return func.builder.uitofp(orig.eval(func), ir.FloatType())
                 return func.builder.sitofp(orig.eval(func), ir.FloatType())
-            case 'f64':
+            case ('f64', _):
+                if not self.signed:
+                    return func.builder.uitofp(orig.eval(func), ir.DoubleType())
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
 
         error(f"Cannot convert 'i32' to type '{typ}'", line=orig.position)

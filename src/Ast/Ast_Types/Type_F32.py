@@ -16,30 +16,33 @@ class Float_32(Type_Base.Type):
         self.ir_type = typ
         self.name = name
 
-    @classmethod
-    def convert_from(cls, func, typ, previous):
+    def convert_from(self, func, typ, previous):
         if typ.name in ('i32', 'i64'):
             return func.builder.sitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'bool':
             return func.builder.uitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'f64':
             return func.builder.fptrunc(previous.eval(), Float_32.ir_type)
-        elif typ == 'f32':
+        elif typ.name == 'f32' and self.name=="f32":
             return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to type 'float'",
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
-        match typ.name:
-            case 'f32':
+        match (typ.name, self.name):
+            case ('f32', 'f32'):
                 return orig.eval(func)
-            case 'i32':
-                return func.builder.fptosi(orig.eval(func), ir.IntType(32))
-            case 'i64':
-                return func.builder.fptosi(orig.eval(func), ir.IntType(64))
-            case 'f64':
+            case ('f32', 'f64'):
+                return func.builder.fptrunc(orig.eval(func), ir.FloatType())
+            case ('i8'|'i16'|'i32'|'i64', _):
+                return func.builder.fptosi(orig.eval(func), typ.ir_type)
+            case ('u8'|'u16'|'u32'|'u64', _):
+                return func.builder.fptoui(orig.eval(func), typ.ir_type)
+            case ('f64', 'f32'):
                 return func.builder.fpext(orig.eval(func), ir.DoubleType())
+            case ('f64', 'f64'):
+                return orig.eval(func)
             case _: error(f"Cannot convert 'f32' to type '{typ}'",
                           line=orig.position)
 
