@@ -52,6 +52,8 @@ class Block(ContainerNode):
         self.BLOCK_STACK.pop()
 
     def __iter__(self) -> Iterator[Any]:
+        if len(self.children) == 0:
+            return
         self.BLOCK_STACK.append(self)  # type: ignore
         for child in self.children[0:-1]:
             yield child
