@@ -17,3 +17,5 @@ test
 
 *.build/
 Main.bin
+tests/output
+main.bin
