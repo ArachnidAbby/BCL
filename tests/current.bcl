@@ -87,6 +87,11 @@ define takes_tuple(x: &(i32, i32)) -> i32 {
 // }
 
 define test_gen() -> (i32, i32) {
+    yield (420, 420);
+    yield (421, 420);
+    yield (422, 420);
+    yield (423, 420);
+
     if false {
         yield (69, 0);
     }
@@ -117,6 +122,7 @@ define main() {
 
     // since P is the same range object each time, this
     // for loop acts weird
+
     for x in p {
         for y in p {
             printf("%i %i\n", x, y);
@@ -136,6 +142,15 @@ define main() {
         print " WOWO ";
         println x[1];
     }
+    mp = test_gen();
+
+    println(mp.next()[0]);
+    println(mp.next()[0]);
+    println(mp.next()[0]);
+    println(mp.next()[0]);
+    println(mp.next()[0]);
+
+
 
     // range = 0..10;
     // for i in range {

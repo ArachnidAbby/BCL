@@ -47,3 +47,20 @@ def over_index_exception(func, name, index, pos):
     func.builder.call(printf.func_obj, [fmt_bitcast.eval(func), index])
     func.builder.call(exit_func.func_obj,
                       [ir.Constant(ir.IntType(32), 1)])
+
+
+def no_next_item(func, name):
+    over_index_fmt = (f"{errors.RED}No next item available" +
+                      f" '{str(name)}'\n\tLine: N/A{errors.RESET} \n")
+
+    fmt_bitcast = stringliteral.StrLiteral(SrcPosition.invalid(), over_index_fmt)
+
+    printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
+    exit_args = (Ast_Types.Integer_32(),)
+
+    printf = _get_function(func.module, "printf", printf_args, SrcPosition.invalid())
+    exit_func = _get_function(func.module, "exit", exit_args, SrcPosition.invalid())
+
+    func.builder.call(printf.func_obj, [fmt_bitcast.eval(func)])
+    func.builder.call(exit_func.func_obj,
+                      [ir.Constant(ir.IntType(32), 2)])

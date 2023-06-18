@@ -1,12 +1,54 @@
 from llvmlite import ir
 
+import Ast.exception
 from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Function import Function, FunctionGroup
+from Ast.Ast_Types.Type_Reference import Reference
+from Ast.nodes.commontypes import MemberInfo
+from errors import error
+
+
+class MockFunction:
+    __slots__ = ("builder", "module")
+
+    def __init__(self, builder, module):
+        self.builder = builder
+        self.module = module
+
+
+def create_next_method(module, gen_typ):
+    function_ty = ir.FunctionType(gen_typ.typ.ir_type,
+                                  (gen_typ.ir_type.as_pointer(), ))
+    func = ir.Function(module.module, function_ty, f"{gen_typ.name}.next")
+    block = func.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+    arg = func.args[0]
+    mock_func = MockFunction(builder, module)
+
+    orig_block_name = builder.block._name
+    body_name = f'{orig_block_name}.if'
+    end_name = f'{orig_block_name}.endif'
+    check_body = builder.append_basic_block(body_name)
+    check_after = builder.append_basic_block(end_name)
+
+    value = gen_typ.iter(mock_func, arg)
+    cond = gen_typ.iter_condition(mock_func, arg)
+    builder.cbranch(cond, check_after, check_body)
+
+    builder.position_at_start(check_body)
+    Ast.exception.no_next_item(mock_func, module.mod_name)
+    builder.unreachable()
+
+    builder.position_at_start(check_after)
+    builder.ret(value)
+    return func
 
 
 class GeneratorType(Type):
-    __slots__ = ("iter_function", "ir_type", "typ")
+    __slots__ = ("iter_function", "ir_type", "typ", "next", "next_group")
 
     is_iterator = True
+    has_members = True
     name = "Generator"
 
     def __init__(self, iter_function, typ):
@@ -14,6 +56,17 @@ class GeneratorType(Type):
         self.typ = typ
         # {continue: i1, state: i8*, result: typ, ...}
         self.ir_type = ir.global_context.get_identified_type(f"struct.{iter_function.func_name}")
+        self.next_group = FunctionGroup("next", self.iter_function.module)
+        mod = self.iter_function.module
+        self.next = Function("next", (Reference(self),), None, mod)
+        self.next.set_method(True, self)
+        self.next.add_return(self.typ)
+        self.next_group.add_function(self.next)
+
+    def create_next_method(self):
+        mod = self.iter_function.module
+        func_obj = create_next_method(mod, self)
+        self.next.func_obj = func_obj
 
     def add_members(self, consts, members):
         # Doing the dangerous thing and setting the elements directly
@@ -41,6 +94,18 @@ class GeneratorType(Type):
         func.builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
         block_addr = ir.BlockAddress(func.yield_function, block)
         func.builder.store(block_addr, state_ptr)
+
+    def get_member_info(self, lhs, rhs):
+        if rhs.var_name != "next":
+            error("member not found!", line=rhs.position)
+        typ = self.next
+        return MemberInfo(not typ.read_only, False, typ)
+
+    def get_member(self, func, lhs,
+                   member_name_in: "Ast.variable.VariableRef"):
+        member_name = member_name_in.var_name
+        if member_name == "next":
+            return self.next
 
     def __eq__(self, other):
         return other is not None and \

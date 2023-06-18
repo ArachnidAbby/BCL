@@ -60,7 +60,8 @@ class VariableIndexRef(ExpressionNode):
             error(f'Array index out range. Max size \'{lhs.ret_type.size}\'',
                   line=rhs.position)
 
-        if rhs.ret_type.name not in ("i32", "i64", "i16", "i8"):
+        if rhs.ret_type.name not in ("i32", "i64", "i16", "i8", "u8",
+                                     "u16", "u32", "u64"):
             error("Array index operation must use an integer index." +
                   f"type used: '{rhs.ret_type}'", line=rhs.position)
 

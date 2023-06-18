@@ -297,6 +297,7 @@ class FunctionDef(ASTNode):
             self.yield_gen_type = self.ret_type
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             self.populate_yield_struct()
+            self.yield_gen_type.create_next_method()
             val = self.builder.load(self.yield_struct_ptr)
             self.builder.ret(val)
             self.eval_generator(parent)

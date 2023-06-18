@@ -77,7 +77,7 @@ class Function(Ast_Types.Type):
         if op != "call":
             return
         # rhs is the argument tuple
-        if self.match_args(rhs):
+        if self.match_args(lhs, rhs):
             return self.func_ret
         else:
             self.print_call_error(rhs)
@@ -124,7 +124,7 @@ class Function(Ast_Types.Type):
         return f'<Type: {self.name}--{self.func_name}>'
 
     def __str__(self) -> str:
-        return f"{self.func_name}{self.args}->{self.func_ret}"
+        return f"{self.func_name}{str(self.args)}->{self.func_ret}"
 
     def __call__(self) -> Self:
         return self
