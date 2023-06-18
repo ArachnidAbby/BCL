@@ -1,4 +1,6 @@
+#!./bcl compile --run --emit-binary
 import stdlib;
+
 // import SDL;
 
 // define main() -> i32 {
@@ -86,7 +88,7 @@ define takes_tuple(x: &(i32, i32)) -> i32 {
 //     }
 // }
 
-define test_gen() -> (i32, i32) {
+define test_gen(w: i32) -> (i32, i32) {
     yield (420, 420);
     yield (421, 420);
     yield (422, 420);
@@ -137,12 +139,12 @@ define main() {
         x = 12;
     }
 
-    for x in test_gen() {
+    for x in test_gen(2) {
         print x[0];
         print " WOWO ";
         println x[1];
     }
-    mp = test_gen();
+    mp = test_gen(2);
 
     println(mp.next()[0]);
     println(mp.next()[0]);

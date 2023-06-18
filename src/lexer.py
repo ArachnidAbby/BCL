@@ -51,6 +51,7 @@ class Lexer():
         self.lexer.add('KEYWORD', r'(\w+)')
         # Ignore spaces
         self.lexer.ignore(r'\s+')
+        self.lexer.ignore(r'\A\#\!.*')
         self.lexer.ignore(r'//.*')
 
     def get_lexer(self):

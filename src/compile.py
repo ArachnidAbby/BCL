@@ -113,9 +113,20 @@ def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
     return args_dict
 
 
-def compile_file(file: Path, args):
+def compile_file(args):
+    file = None
+    for arg in args:
+        if arg.startswith('--') or arg == "compile":
+            continue
+        file = Path(arg)
+        break
+
+    if file is None:
+        errors.error("No file was specified")
+
     if not os.path.exists(file):
         errors.error(f"No Such file \"{file}\"")
+
 
     with file.open() as f:
         args = create_args_dict(args)

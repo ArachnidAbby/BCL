@@ -65,7 +65,7 @@ if __name__ == "__main__":
         make_project(args)
 
     elif args[1] == "compile":
-        compile.compile_file(Path(args[2]), args)
+        compile.compile_file(args[1:])
 
     elif args[1] == "help":
         length = max([len(x) for x in HELP.split('\n')]) + 2
