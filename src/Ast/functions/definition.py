@@ -260,6 +260,37 @@ class FunctionDef(ASTNode):
         self.builder.position_at_end(current_block)
         return ptr
 
+    def alloc_stack_gen_create(self):
+        for c, x in enumerate(self.variables):
+            if x[0].is_constant:
+                if x[0].type.pass_as_ptr:
+                    val = self.builder.load(x[0].ptr)
+                else:
+                    val = x[0].ptr
+                if not x[0].type.no_load:
+                    ptr = self.builder.gep(self.yield_struct_ptr,
+                                            [ir.Constant(ir.IntType(32), 0),
+                                            ir.Constant(ir.IntType(32), 4),
+                                            ir.Constant(ir.IntType(32), c)])
+                    self.builder.store(val, ptr)
+                    x[0].ptr = ptr
+                # x[0].is_constant = False
+                continue
+
+    def alloc_stack_gen(self):
+        for c, x in enumerate(self.variables):
+            if x[0].is_constant:
+                if not x[0].type.no_load:
+                    ptr = self.builder.gep(self.yield_struct_ptr,
+                                           [ir.Constant(ir.IntType(32), 0),
+                                            ir.Constant(ir.IntType(32), 4),
+                                            ir.Constant(ir.IntType(32), c)])
+                    x[0].ptr = ptr
+                x[0].is_constant = False
+                continue
+            else:
+                x[0].define(self, x[1], c)
+
     def alloc_stack(self):
         # TODO: REFACTOR
         for c, x in enumerate(self.variables):
@@ -269,13 +300,13 @@ class FunctionDef(ASTNode):
                 else:
                     val = x[0].ptr
                 if not x[0].type.no_load:
-                    if self.yields:
-                        ptr = self.builder.gep(self.yield_struct_ptr,
-                                               [ir.Constant(ir.IntType(32), 0),
-                                                ir.Constant(ir.IntType(32), 4),
-                                                ir.Constant(ir.IntType(32), c)])
-                    else:
-                        ptr = self.builder.alloca(x[0].type.ir_type)
+                    # if self.yields:
+                    #     ptr = self.builder.gep(self.yield_struct_ptr,
+                    #                            [ir.Constant(ir.IntType(32), 0),
+                    #                             ir.Constant(ir.IntType(32), 4),
+                    #                             ir.Constant(ir.IntType(32), c)])
+                    # else:
+                    ptr = self.builder.alloca(x[0].type.ir_type)
                     self.builder.store(val, ptr)
                     x[0].ptr = ptr
                 x[0].is_constant = False
@@ -297,6 +328,7 @@ class FunctionDef(ASTNode):
             self.yield_gen_type = self.ret_type
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             self.populate_yield_struct()
+            self.alloc_stack_gen_create()
             self.yield_gen_type.create_next_method()
             val = self.builder.load(self.yield_struct_ptr)
             self.builder.ret(val)
@@ -321,7 +353,7 @@ class FunctionDef(ASTNode):
         self.builder = ir.IRBuilder(self.yield_block)
         self.yield_struct_ptr = self.yield_function.args[0]
 
-        self.alloc_stack()
+        self.alloc_stack_gen()
         self.ir_entry = block
         state_ptr = self.builder.gep(self.yield_struct_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
