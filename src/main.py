@@ -59,7 +59,7 @@ if __name__ == "__main__":
         errors.PROFILING = True
 
     if len(args) == 1:
-        errors.error("Valid sub-commands: compile, run, make, publish (Only compile works)")
+        errors.error("Valid sub-commands: compile, make, publish (Only compile works)")
 
     elif args[1] == "make":
         make_project(args)
