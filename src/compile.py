@@ -89,7 +89,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
     _print_raw('\n\n\n')
     if args["--run"] and args["--emit-binary"]:
-        os.system(f"{output_loc.parents[0]}/target/output")
+        os.system(f"{os.getcwd()}/target/output")
 
 
 def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
