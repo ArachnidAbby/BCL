@@ -20,6 +20,7 @@ compile <src> [..args]
         --emit-ast (returns the AST, WARNING: VERY LONG OUTPUT)
         --libs=[libs seperated by commas] \
 (some libs might need to be prefixed with ':')
+        --run execute after compilation
         --dev (additional information used during development of the language)
 help
     you are already here?

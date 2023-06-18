@@ -1,3 +1,4 @@
+import os
 import parser  # type: ignore
 
 from llvmlite import binding, ir  # type: ignore
@@ -10,6 +11,18 @@ from Ast.nodes import ASTNode, SrcPosition
 from lexer import Lexer
 
 modules: dict[str, "Module"] = {}
+
+
+def create_target_dirs(base_dir: str):
+    if os.path.exists(f"{base_dir}/target/ll"):
+        return
+
+    os.makedirs(f"{base_dir}/target/ll")
+
+    if os.path.exists(f"{base_dir}/target/o"):
+        return
+
+    os.makedirs(f"{base_dir}/target/o")
 
 
 class Module(ASTNode):
@@ -219,27 +232,28 @@ class Module(ASTNode):
         llir = str(self.module)
         mod = binding.parse_assembly(llir)
         module_pass.run(mod)
+        create_target_dirs(loc)
 
-        with open(f"{loc}/{self.mod_name}.ll", 'w') as output_file:
+        with open(f"{loc}/target/ll/{self.mod_name}.ll", 'w') as output_file:
             output_file.write(str(mod))
 
         if not (args["--emit-object"] or args["--emit-binary"]):
             return
-        with open(f"{loc}/{self.mod_name}.o", 'wb') as output_file:
+        with open(f"{loc}/target/o/{self.mod_name}.o", 'wb') as output_file:
             output_file.write(target.emit_object(mod))
         self.ir_saved = True
 
         other_args = args.copy()
         other_args["--emit-binary"] = False
         other_args["--emit-object"] = True
-        objects = [f"{loc}/{self.mod_name}.o"]
+        objects = [f"{loc}/target/o/{self.mod_name}.o"]
         for mod in self.imports.values():
-            mod.save_ir(f"{loc}/", other_args)
-            objects.append(f"{loc}/{mod.mod_name}.o")
+            mod.save_ir(f"{loc}", other_args)
+            objects.append(f"{loc}/target/o/{mod.mod_name}.o")
 
         if args["--emit-binary"]:
             extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm'] # adds math.h
-            linker.link_all(f"{loc}/output", objects, extra_args)
+            linker.link_all(f"{loc}/target/output", objects, extra_args)
 
     # TODO: Create a seperate error parser
     def syntax_error_information(self, child, c: int):

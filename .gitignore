@@ -12,6 +12,7 @@ docs/build/
 ## test compiler outputs
 test
 *.ll
+target/
 
 ## nuitka compilation outputs
 

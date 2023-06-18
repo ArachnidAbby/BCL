@@ -5,7 +5,6 @@ from time import perf_counter
 
 import errors
 from Ast.nodes.commontypes import SrcPosition
-import errors
 from errors import _print_raw, _print_text, inline_warning
 
 # contains all valid command line arguments
@@ -15,7 +14,8 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--dev": False,
     "--emit-ast": False,
     "--supress-warnings": False,
-    "--libs": []
+    "--libs": [],
+    "--run": False
 }
 
 
@@ -74,7 +74,8 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         module.pre_eval(None)
         module.eval(None)
 
-    module.save_ir(output_loc.parents[0], args=args)
+    # loc = output_loc.parents[0]
+    module.save_ir(os.getcwd(), args=args)
     codegen.shutdown_llvm()
 
     _print_raw(f'{errors.GREEN}| IR saved, compilation done | ' +
@@ -87,6 +88,8 @@ def compile(src_str: str, output_loc: Path, args, file=""):
                           'KB of memory used for this operation.')
 
     _print_raw('\n\n\n')
+    if args["--run"] and args["--emit-binary"]:
+        os.system(f"{output_loc.parents[0]}/target/output")
 
 
 def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
@@ -95,6 +98,8 @@ def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
     for arg in args:
         if not arg.startswith('-'):
             continue
+        if arg not in args_dict.keys():
+            errors.error(f"No command line argument: \"{arg}\"")
         if '=' not in arg:
             args_dict[arg] = not args_dict[arg]  # invert current value
         else:
