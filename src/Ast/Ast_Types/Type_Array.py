@@ -86,10 +86,10 @@ class Array(Type_Base.Type):
     def __str__(self) -> str:
         return f"{self.typ}[{self.size}]"
 
-    def get_iter_return(self):
+    def get_iter_return(self, loc):
         return ItemIterator(self)
 
-    def create_iterator(self, func, val):
+    def create_iterator(self, func, val, loc):
         iter_type = ItemIterator(self)
         ptr = func.create_const_var(iter_type)
 
@@ -124,10 +124,10 @@ class ItemIterator(Type_Base.Type):
                                              ir.IntType(32),
                                              ir.IntType(32)))
 
-    def get_iter_return(self):
+    def get_iter_return(self, loc):
         return self.iter_ret
 
-    def iter_condition(self, func, self_ptr):
+    def iter_condition(self, func, self_ptr, loc):
         end_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 2)])
@@ -138,7 +138,7 @@ class ItemIterator(Type_Base.Type):
         current_val = func.builder.load(current_ptr)
         return func.builder.icmp_signed("<", current_val, end_val)
 
-    def iter(self, func, self_ptr):
+    def iter(self, func, self_ptr, loc):
         current_ptr = func.builder.gep(self_ptr,
                                        [ir.Constant(ir.IntType(32), 0),
                                         ir.Constant(ir.IntType(32), 1)])
@@ -155,7 +155,7 @@ class ItemIterator(Type_Base.Type):
         value = func.builder.load(value_ptr)
         return value
 
-    def iter_get_val(self, func, self_ptr):
+    def iter_get_val(self, func, self_ptr, loc):
         current_ptr = func.builder.gep(self_ptr,
                                        [ir.Constant(ir.IntType(32), 0),
                                         ir.Constant(ir.IntType(32), 1)])

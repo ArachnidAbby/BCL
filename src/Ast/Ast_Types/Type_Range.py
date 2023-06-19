@@ -53,10 +53,10 @@ class RangeType(Type):
             case _:
                 error("member not found!", line=rhs.position)
 
-    def get_iter_return(self):
+    def get_iter_return(self, loc):
         return Integer_32()
 
-    def iter_condition(self, func, self_ptr):
+    def iter_condition(self, func, self_ptr, loc):
         end_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 1)])
@@ -67,7 +67,7 @@ class RangeType(Type):
         val_val = func.builder.load(val_ptr)
         return func.builder.icmp_signed("<", val_val, end_val)
 
-    def iter(self, func, self_ptr):
+    def iter(self, func, self_ptr, loc):
         val_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 2)])
@@ -76,7 +76,7 @@ class RangeType(Type):
         func.builder.store(addition, val_ptr)
         return addition
 
-    def iter_get_val(self, func, self_ptr):
+    def iter_get_val(self, func, self_ptr, loc):
         val_ptr = func.builder.gep(self_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 2)])

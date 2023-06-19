@@ -220,21 +220,21 @@ class Type:
     def ret_type(self):
         return self
 
-    def get_iter_return(self):
-        error(f"{self.name} is not Iterable")
+    def get_iter_return(self, loc):
+        error(f"{self.name} is not Iterable", line=loc)
 
-    def create_iterator(self, func):
+    def create_iterator(self, func, loc):
         '''should return a ptr'''
         if not self.is_iterator:
-            error(f"{self.name} is not Iterable")  # default
+            error(f"{self.name} is not Iterable", line=loc)  # default
         else:
-            error(f"{self.name} is already an Iterator")
+            error(f"{self.name} is already an Iterator", line=loc)
 
-    def iter_condition(self, func, self_ptr):
-        error(f"{self.name} is not Iterable")
+    def iter_condition(self, func, self_ptr, loc):
+        error(f"{self.name} is not Iterable", line=loc)
 
-    def iter(self, func, self_ptr):
-        error(f"{self.name} is not Iterable")
+    def iter(self, func, self_ptr, loc):
+        error(f"{self.name} is not Iterable", line=loc)
 
-    def iter_get_val(self, func, self_ptr):
-        error(f"{self.name} is not Iterable")
+    def iter_get_val(self, func, self_ptr, loc):
+        error(f"{self.name} is not Iterable", line=loc)

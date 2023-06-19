@@ -4,7 +4,7 @@ import Ast.exception
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_Function import Function, FunctionGroup
 from Ast.Ast_Types.Type_Reference import Reference
-from Ast.nodes.commontypes import MemberInfo
+from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from errors import error
 
 
@@ -31,8 +31,8 @@ def create_next_method(module, gen_typ):
     check_body = builder.append_basic_block(body_name)
     check_after = builder.append_basic_block(end_name)
 
-    value = gen_typ.iter(mock_func, arg)
-    cond = gen_typ.iter_condition(mock_func, arg)
+    value = gen_typ.iter(mock_func, arg, SrcPosition.invalid())
+    cond = gen_typ.iter_condition(mock_func, arg, SrcPosition.invalid())
     builder.cbranch(cond, check_after, check_body)
 
     builder.position_at_start(check_body)
@@ -124,16 +124,16 @@ class GeneratorType(Type):
         return hash(f"Generator<{self.iter_function.func_name}, " +
                     f"{self.iter_function.args}>")
 
-    def get_iter_return(self):
+    def get_iter_return(self, loc):
         return self.typ
 
-    def iter_condition(self, func, self_ptr):
+    def iter_condition(self, func, self_ptr, loc):
         continue_ptr = func.builder.gep(self_ptr,
                                         [ir.Constant(ir.IntType(32), 0),
                                          ir.Constant(ir.IntType(32), 0)])
         return func.builder.load(continue_ptr)
 
-    def iter(self, func, self_ptr):
+    def iter(self, func, self_ptr, loc):
         func.builder.call(self.iter_function.yield_function, (self_ptr,))
         value_ptr = func.builder.gep(self_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
@@ -141,5 +141,5 @@ class GeneratorType(Type):
         value = func.builder.load(value_ptr)
         return value
 
-    def iter_get_val(self, func, self_ptr):
-        return self.iter(func, self_ptr)
+    def iter_get_val(self, func, self_ptr, loc):
+        return self.iter(func, self_ptr, loc)
