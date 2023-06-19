@@ -98,7 +98,7 @@ def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:
     for arg in args:
         if not arg.startswith('-'):
             continue
-        if arg not in args_dict.keys():
+        if arg.split('=')[0] not in args_dict.keys():
             errors.error(f"No command line argument: \"{arg}\"")
         if '=' not in arg:
             args_dict[arg] = not args_dict[arg]  # invert current value
