@@ -65,7 +65,8 @@ class OperationNode(ExpressionNode):
         if self.op.pre_eval_right:
             self.rhs.pre_eval(func)
 
-        self.deref(func)
+        if self.op.name != "as":
+            self.deref(func)
 
         # TODO: Allow an override_get_return Callable
         if self.op.name == "as":

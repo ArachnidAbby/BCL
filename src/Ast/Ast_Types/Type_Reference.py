@@ -37,8 +37,10 @@ class Reference(Type_Base.Type):
         return self.typ.convert_from(func, typ, previous)
 
     def convert_to(self, func, orig, typ):
-        if typ.name == "ref" or typ == self.typ:
-            return orig.eval(func)
+        if typ == self.typ:
+            return func.builder.load(orig.get_ptr(func))
+        if typ.name == "UntypedPointer":
+            return func.builder.bitcast(orig.eval(func), typ.ir_type)
         error("Pointer conversions are not supported due to unsafe behavior",
               line=orig.position)
 
@@ -85,6 +87,17 @@ class Reference(Type_Base.Type):
     def gr(self, func, lhs, rhs):
         return lhs.typ.gr(func, lhs.as_varref(), rhs)
 
-    def assign(self, func, ptr, value, typ: Ast_Types.Type, first_assignment=False):
+    def get_assign_type(self, func, value):
+        if value.ret_type.roughly_equals(self):
+            return self
+        else:
+            return self.typ
+
+    def assign(self, func, ptr, value, typ: "Ast_Types.Type", first_assignment=False):
+        if value.ret_type.roughly_equals(self):
+            func.builder.store(value.eval(func), ptr.get_var(func).ptr)
+            return
+
+        actual_ptr = func.builder.load(ptr.get_var(func).ptr)
         val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
-        func.builder.store(val, ptr.get_var(func).ptr)
+        func.builder.store(val, actual_ptr)

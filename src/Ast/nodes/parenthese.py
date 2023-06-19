@@ -49,19 +49,22 @@ class ParenthBlock(ContainerNode):
             return
         self.children.append(child)
 
-    def _pass_as_pointer_changes(self, func):
+    def _pass_as_pointer_changes(self, func, expected_args):
         '''changes child elements to be passed as pointers if needed'''
         for c, child in enumerate(self.children):
             # TODO: THIS IS SHIT
-            if self.in_func_call and (child.ret_type.pass_as_ptr):
-                ptr = child.get_ptr(func)
-                self.evaled_children.append(ptr)
+            if self.in_func_call:
+                if c < len(expected_args):
+                    expected = expected_args[c]
+                    self.evaled_children.append(expected.pass_to(func, child))
+                else:
+                    self.evaled_children.append(child.ret_type.pass_to(func, child))
                 continue
             self.evaled_children.append(child.eval(func))
 
-    def eval(self, func):
+    def eval(self, func, expected_args=[]):
         self.evaled_children = []
-        self._pass_as_pointer_changes(func)
+        self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:
             return self.evaled_children[0]
         elif not self.in_func_call:

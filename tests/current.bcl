@@ -51,42 +51,42 @@ define takes_tuple(x: &(i32, i32)) -> i32 {
     return x[0] + x[1];
 }
 
-// struct TestStruct {
-//     x: i32,
-//     y: i32;
+struct TestStruct {
+    x: i32,
+    y: i32;
 
-//     define test() -> char {
-//         return 'F';
-//     }
+    define test() -> char {
+        return 'F';
+    }
 
-//     define testing(self) {
-//         println("gaming");
-//         println(self.x);
-//     }
+    define testing(self) {
+        println("gaming");
+        println(self.x);
+    }
 
-//     define tests(&self, x: i32) {
-//         self.testing();
-//         self.x = x;
-//         println(self.x);
-//         println();
-//     }
+    define tests(&self, x: i32) {
+        self.testing();
+        self.x = x;
+        println(self.x);
+        println();
+    }
 
-//     define __add__(self, x: i32) -> TestStruct {
-//         return TestStruct {x: (self.x+x), y: self.y};
-//     }
+    define __add__(self, x: i32) -> TestStruct {
+        return TestStruct {x: (self.x+x), y: self.y};
+    }
 
-//     define __iadd__(&self, other: i32) {
-//         self.x += other;
-//     }
+    define __iadd__(&self, other: i32) {
+        self.x += other;
+    }
 
-//     define __iadd__(&self, other: TestStruct) {
-//         self.x += other.x;
-//     }
+    define __iadd__(&self, other: TestStruct) {
+        self.x += other.x;
+    }
 
-//     define __eq__(self, other: i32) -> bool {
-//         return self.x == other;
-//     }
-// }
+    define __eq__(self, other: i32) -> bool {
+        return self.x == other;
+    }
+}
 
 define test_gen(w: i32) -> (i32, i32) {
     yield (420, 420);
@@ -106,7 +106,31 @@ define test_gen(w: i32) -> (i32, i32) {
 //     yield (420, 0);
 }
 
+define gaming_test_function() -> i32 {
+    if false {
+        return 12;
+    } else if true{
+        return 13;
+    } else {
+        return 54;
+    }
+}
+
+define random() -> (i16, i16);
+
+define malloc(size_bytes: size_t) -> UntypedPointer;
+define free(ptr: UntypedPointer);
+
 define main() {
+
+    pointer = malloc(4 as size_t);
+    i32_p = pointer as &i32;
+    i32_p = 12;
+    x_current = i32_p as i32;
+    print(x_current);
+    // println(x);
+    free(pointer);
+
     // println 10;
     // m = TestStruct {x: 123, y: 1232};
     // printf("m.x: %i\n", m.x);
@@ -115,42 +139,43 @@ define main() {
     // m.testing();
     // println();
     // m.tests(69420);
-    // printf("m.x: %i\n", m.x);
-    // j = m + 12000;
-    // printf("value of j.x: %i\n", j.x);
+    // // printf("m.x: %i\n", m.x);
+    // // j = m + 12000;
+    // // printf("value of j.x: %i\n", j.x);
 
-    p = 0..10;
-    // p.end += 12;
+    // p = 0..10;
+    // // p.end += 12;
 
-    // since P is the same range object each time, this
-    // for loop acts weird
+    // // since P is the same range object each time, this
+    // // for loop acts weird
 
-    for x in p {
-        for y in p {
-            printf("%i %i\n", x, y);
-        }
-    }
+    // for x in p {
+    //     for y in p {
+    //         printf("%i %i\n", x, y);
+    //     }
+    // }
 
-    println takes_tuple(&(2, 2));
+    // println takes_tuple(&(2, 2));
 
-    my_array = [0, 2, 4, 6, 8, 10, 12];
-    for x in my_array {
-        printf("Got %i from array: \"my_array\"\n", x);
-        x = 12;
-    }
+    // my_array = [0, 2, 4, 6, 8, 10, 12];
+    // for x in my_array {
+    //     printf("Got %i from array: \"my_array\"\n", x);
+    //     x = 12;
+    // }
 
-    for x in test_gen(2) {
-        print x[0];
-        print " WOWO ";
-        println x[1];
-    }
-    mp = test_gen(2);
+    // for x in test_gen(2) {
+    //     print x[0];
+    //     print " WOWO ";
+    //     println x[1];
+    // }
+    // mp = test_gen(2);
+    // lmnop = [m.test(); 5];
 
-    println(mp.next()[0]);
-    println(mp.next()[0]);
-    println(mp.next()[0]);
-    println(mp.next()[0]);
-    println(mp.next()[0]);
+    // println(mp.next()[0]);
+    // println(mp.next()[0]);
+    // println(mp.next()[0]);
+    // println(mp.next()[0]);
+    // println(mp.next()[0]);
 
 
 

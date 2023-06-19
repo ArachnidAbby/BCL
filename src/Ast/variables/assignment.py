@@ -40,7 +40,10 @@ class VariableAssign(ASTNode):
             self.is_declaration = True
 
         if self.block.get_variable(name).type.is_void():
-            self.block.get_variable(name).type = self.value.ret_type
+            # if self.value.ret_type.name == 'ref':  #! TEMP
+            #     self.block.get_variable(name).type = self.value.ret_type.typ
+            # else:
+            self.block.get_variable(name).type = self.value.ret_type.get_assign_type(func, self.value)
 
         var_search_tuple = (self.block.get_variable(name),
                             name)

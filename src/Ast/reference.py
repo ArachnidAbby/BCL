@@ -21,10 +21,7 @@ class Ref(ExpressionNode):
             self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
     def eval(self, func):
-        if isinstance(self.var.ret_type, Ast_Types.Reference):
-            return func.builder.load(self.var.get_ptr(func))
-        else:
-            return self.var.get_ptr(func)
+        return self.var.get_ptr(func)
 
     def get_var(self, func):
         return self.var.get_var(func)

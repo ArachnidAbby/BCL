@@ -244,7 +244,6 @@ class FunctionDef(ASTNode):
         current_block = self.builder.block
         self.builder.position_at_start(self.ir_entry)
         if self.yields:
-            # self.builder.position_at_start(self.yield_block)
             self.yield_consts.append(typ)
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             ptr = self.builder.gep(self.yield_struct_ptr,
@@ -269,12 +268,11 @@ class FunctionDef(ASTNode):
                     val = x[0].ptr
                 if not x[0].type.no_load:
                     ptr = self.builder.gep(self.yield_struct_ptr,
-                                            [ir.Constant(ir.IntType(32), 0),
+                                           [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
                     self.builder.store(val, ptr)
                     x[0].ptr = ptr
-                # x[0].is_constant = False
                 continue
 
     def alloc_stack_gen(self):
@@ -295,20 +293,15 @@ class FunctionDef(ASTNode):
         # TODO: REFACTOR
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
-                if x[0].type.pass_as_ptr:
-                    val = self.builder.load(x[0].ptr)
-                else:
-                    val = x[0].ptr
-                if not x[0].type.no_load:
-                    # if self.yields:
-                    #     ptr = self.builder.gep(self.yield_struct_ptr,
-                    #                            [ir.Constant(ir.IntType(32), 0),
-                    #                             ir.Constant(ir.IntType(32), 4),
-                    #                             ir.Constant(ir.IntType(32), c)])
-                    # else:
-                    ptr = self.builder.alloca(x[0].type.ir_type)
-                    self.builder.store(val, ptr)
-                    x[0].ptr = ptr
+                # if x[0].type.pass_as_ptr:
+                #     val = self.builder.load(x[0].ptr)
+                # else:
+                #     val = x[0].ptr
+                # if not x[0].type.no_load:
+                #     ptr = self.builder.alloca(x[0].type.ir_type)
+                #     self.builder.store(val, ptr)
+                #     x[0].ptr = ptr
+                x[0].type.recieve(self, x)
                 x[0].is_constant = False
                 continue
             else:
@@ -318,7 +311,6 @@ class FunctionDef(ASTNode):
         if self.has_no_body:
             return
         self.function_ir.attributes.add("nounwind")
-        # self.block.pre_eval(self)
 
         if not self.yields:
             self.alloc_stack()

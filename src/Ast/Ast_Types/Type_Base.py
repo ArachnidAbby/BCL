@@ -27,6 +27,7 @@ class Type:
     # Dynamic types change function definitions and the
     # matching of function args when calling
     is_dynamic = False
+    # ? should this be here still?
     functions: dict = {"NONSTATIC": []}
     # Is this type iterable, or does iterating return a new iterator?
     is_iterator = False
@@ -138,6 +139,9 @@ class Type:
     def call(self, func, lhs, args) -> ir.Instruction:
         error(f"type '{lhs.ret_type}' is not Callable", line=lhs.position)
 
+    def get_assign_type(self, func, value):
+        return self
+
     def assign(self, func, ptr, value, typ: Self, first_assignment=False):
         if self.read_only and not first_assignment:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
@@ -238,3 +242,20 @@ class Type:
 
     def iter_get_val(self, func, self_ptr, loc):
         error(f"{self.name} is not Iterable", line=loc)
+
+    def pass_to(self, func, item):
+        if self.pass_as_ptr:
+            return item.get_ptr(func)
+        return item.eval(func)
+
+    # TODO: Document this better
+    # or change code
+    def recieve(self, func, item):
+        if self.pass_as_ptr:
+            val = func.builder.load(item[0].ptr)
+        else:
+            val = item[0].ptr
+
+        ptr = func.builder.alloca(item[0].type.ir_type)
+        func.builder.store(val, ptr)
+        item[0].ptr = ptr

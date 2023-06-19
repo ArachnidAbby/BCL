@@ -12,6 +12,7 @@ from .Type_F32 import Float_32
 from .Type_I32 import Integer_32
 from .Type_Range import RangeType
 from .Type_StrLit import StringLiteral
+from .Type_UntypedPointer import UntypedPointer
 from .Type_Void import Void
 
 types_dict = {
@@ -42,7 +43,9 @@ types_dict = {
     'float': Float_32(),
 
     'Range': RangeType,
-    'strlit': StringLiteral
+    'strlit': StringLiteral,
+
+    'UntypedPointer': UntypedPointer
 }
 
 plat = platform.architecture()[0]
