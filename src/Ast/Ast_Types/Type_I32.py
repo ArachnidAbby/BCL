@@ -10,13 +10,14 @@ from . import Type_Base
 # TODO: Refactor this class name
 # Its a pain in the ass so do it when there is downtime.
 class Integer_32(Type_Base.Type):
-    __slots__ = ('ir_type', 'name', 'rang', 'signed')
+    __slots__ = ('ir_type', 'name', 'rang', 'signed', 'size')
 
     pass_as_ptr = False
     no_load = False
 
     def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647), signed=True):
         self.name = name
+        self.size = size
         self.signed = signed
         self.ir_type = ir.IntType(size)
         self.rang = rang
@@ -42,12 +43,14 @@ class Integer_32(Type_Base.Type):
             return orig.eval(func)
 
         if isinstance(typ, Integer_32):
+            if typ.size == self.size:
+                return orig.eval(func)
             if typ.size < self.size:
-                return func.builder.trunc(orig.eval(func), typ.size)
+                return func.builder.trunc(orig.eval(func), typ.ir_type)
             if typ.size > self.size:
                 if typ.signed:
-                    return func.builder.sext(orig.eval(func), typ.size)
-                return func.builder.zext(orig.eval(func), typ.size)
+                    return func.builder.sext(orig.eval(func), typ.ir_type)
+                return func.builder.zext(orig.eval(func), typ.ir_type)
 
         match (typ.name, self.name):
             case ('char', 'i8'):
