@@ -339,7 +339,7 @@ class FunctionDef(ASTNode):
         elif not self.has_return:
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
                          "return! Ensure that at least 1 return statement is" +
-                         " reachable!")
+                         " reachable!", line=self._position, full_line=True)
 
     def eval_generator(self, parent):
         self.ret_type = Ast_Types.Void()
