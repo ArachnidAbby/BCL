@@ -121,6 +121,7 @@ class Struct(Ast_Types.Type):
     # @classmethod
     def get_op_return(self, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
+        self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
             return
         return self.get_func(op_name, lhs, rhs).func_ret

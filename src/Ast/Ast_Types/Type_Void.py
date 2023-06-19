@@ -31,4 +31,5 @@ class Void(Type_Base.Type):
         return True
 
     def get_op_return(self, op: str, lhs, rhs):
+        self._simple_call_op_error_check(op, lhs, rhs)
         return Void()

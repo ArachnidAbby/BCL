@@ -42,6 +42,7 @@ class Array(Type_Base.Type):
         return orig.eval(func)
 
     def get_op_return(self, op, lhs, rhs):
+        self._simple_call_op_error_check(op, lhs, rhs)
         if op == "ind":
             return self.typ
 

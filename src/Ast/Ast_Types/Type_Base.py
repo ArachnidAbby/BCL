@@ -66,7 +66,14 @@ class Type:
     def __neq__(self, other):
         return other is None or self.name != other.name
 
+    def _simple_call_op_error_check(self, op, lhs, rhs):
+        '''Error check for non-callable types'''
+        if op == "call" and rhs.position.line > lhs.position.line:
+            error(f"{self} is not callable, perhaps you forgot a semicolon?",
+                  line=lhs.position)
+
     def get_op_return(self, op, lhs, rhs):
+        self._simple_call_op_error_check(op, lhs, rhs)
         pass
 
     def sum(self, func, lhs, rhs) -> ir.Instruction:

@@ -15,6 +15,7 @@ class TupleType(Type):
         self.ir_type = ir.LiteralStructType([member.ir_type for member in member_types])
 
     def get_op_return(self, op, lhs, rhs):
+        self._simple_call_op_error_check(op, lhs, rhs)
         if op == "ind":
             # assumes rhs is a Literal
             return self.member_types[rhs.value]

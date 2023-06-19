@@ -126,8 +126,9 @@ define main() {
     pointer = malloc(4 as size_t);
     i32_p = pointer as &i32;
     i32_p = 12;
-    x_current = i32_p as i32;
-    print(x_current);
+    println(i32_p as i32);
+    i32_p = 69420;
+    println(i32_p as i32);
     // println(x);
     free(pointer);
 
