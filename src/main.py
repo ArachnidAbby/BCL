@@ -52,7 +52,8 @@ def make_project(args: List[str]):
     shutil.copyfile(f"{PATH}/templates/{template}/src/main.bcl", f"{args[2]}/src/main.bcl")
     shutil.copyfile(f"{PATH}/templates/{template}/.gitignore", f"{args[2]}/.gitignore")
 
-if __name__ == "__main__":
+
+def main():
     args = sys.argv
 
     if "--dev" in args:
@@ -77,3 +78,7 @@ if __name__ == "__main__":
 
     else:
         print(f"Invalid sub-command: {args[1]}")
+
+
+if __name__ == "__main__":
+    main()

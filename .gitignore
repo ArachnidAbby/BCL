@@ -6,6 +6,11 @@
 __pycache__/
 env/
 
+# SetupTools
+Bens_Compiled_Language/
+build/
+*.egg-info
+
 ## sphinx-docs
 docs/build/
 
