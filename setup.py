@@ -5,7 +5,7 @@ with open("readme.md", "r", encoding="utf-8") as f:
 
 with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = f.read().split("\n")
-    requirements = [x.replace("git+","llvmlite @ git+") for x in requirements if x.startswith("#") and x!='']
+    requirements = [x for x in requirements if not x.startswith("#") and not x.startswith('git+') and x!='']
     print(requirements)
 
 setup(
@@ -22,7 +22,7 @@ setup(
     package_data={"libbcl": ["*.bcl"]},
     include_package_data=True,
     py_modules=["main", "bcl", "compile", "errors", "codegen", "linker", "lexer", "parser",
-                "parserbase", "Ast", "libbcl"],
+                "parserbase"],
     packages=find_packages(where="src"),  # find_packages(),
     install_requires=[requirements],
     python_requires='>=3.11',

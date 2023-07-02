@@ -5,6 +5,7 @@
 *.prof
 __pycache__/
 env/
+*.tar.gz
 
 # SetupTools
 Bens_Compiled_Language/

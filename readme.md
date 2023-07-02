@@ -6,6 +6,37 @@
 
 BCL (Ben's Compiled Language) is a compiled programming language that is inspired by python and other languages.
 
+# Installing via source
+
+To do this you will need:
+- LLVM 11 (will change to LLVM 14 later)
+- Python 3.11+
+- SetupTools (`pip install setuptools`)
+
+### Step 1
+
+Clone the git repo
+
+### Step 2
+
+run these commands
+
+```
+# Installing custom llvmlite fork that has lld for linking
+pip install git+github.com/spidertyler2005/llvmlite.git@master
+
+# Installing repo
+pip install .
+```
+
+### Step 3
+
+run `bcl <subcommand> <args>` to use BCL!
+
+### How to uninstall
+
+run `pip uninstall Bens_Compiled_Language`
+
 # Example code
 
 ```
