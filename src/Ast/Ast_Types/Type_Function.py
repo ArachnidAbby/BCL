@@ -113,7 +113,10 @@ class Function(Ast_Types.Type):
         return True
 
     def call(self, func, lhs, args):
-        args.children = self._fix_args(lhs, args, func)
+        # * prevent adding additional args multiple times
+        # * when doing .eval(func) multiple times
+        if len(args.children) != len(self.args):
+            args.children = self._fix_args(lhs, args, func)
         args.eval(func, expected_args=self.args)
         return func.builder.call(self.func_obj, args.evaled_children)
 

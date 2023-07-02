@@ -23,7 +23,7 @@ run these commands
 
 ```
 # Installing custom llvmlite fork that has lld for linking
-pip install git+github.com/spidertyler2005/llvmlite.git@master
+pip install git+github.com/spidertyler2005/llvmlite.git
 
 # Installing repo
 pip install .

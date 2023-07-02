@@ -67,6 +67,7 @@ class ParenthBlock(ContainerNode):
         self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:
             return self.evaled_children[0]
+        # Makes a tuple value
         elif not self.in_func_call:
             if self.ptr is None:
                 self.ptr = func.create_const_var(self.ret_type)

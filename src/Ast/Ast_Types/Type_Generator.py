@@ -16,10 +16,10 @@ class MockFunction:
         self.module = module
 
 
-def create_next_method(module, gen_typ):
+def create_next_method(module, gen_typ, name):
     function_ty = ir.FunctionType(gen_typ.typ.ir_type,
                                   (gen_typ.ir_type.as_pointer(), ))
-    func = ir.Function(module.module, function_ty, f"{gen_typ.name}.next")
+    func = ir.Function(module.module, function_ty, f"{name}.next")
     block = func.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
     arg = func.args[0]
@@ -65,7 +65,7 @@ class GeneratorType(Type):
 
     def create_next_method(self):
         mod = self.iter_function.module
-        func_obj = create_next_method(mod, self)
+        func_obj = create_next_method(mod, self, self.iter_function.func_name)
         self.next.func_obj = func_obj
 
     def add_members(self, consts, members):
