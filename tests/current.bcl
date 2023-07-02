@@ -129,6 +129,10 @@ define main() {
         }
     }
 
+    println(16**0.5);
+    println(20**3f);
+
+
     t = create_data(23);
 
     x = [t.next(); 3];

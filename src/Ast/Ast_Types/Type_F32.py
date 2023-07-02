@@ -1,6 +1,8 @@
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
+from Ast.nodes.parenthese import ParenthBlock
+from Ast.nodes.passthrough import PassNode
 from errors import error
 
 from . import Type_Base, definedtypes
@@ -49,7 +51,7 @@ class Float_32(Type_Base.Type):
     def get_op_return(self, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         match op.lower():
-            case 'sum' | 'sub' | 'mul' | 'div' | 'mod':
+            case 'sum' | 'sub' | 'mul' | 'div' | 'mod'|'pow':
                 return definedtypes.get_std_ret_type(lhs, rhs)
             case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr':
                 return Ast_Types.Type_Bool.Integer_1()
@@ -136,6 +138,20 @@ class Float_32(Type_Base.Type):
             return typ.gr(func, lhs, rhs)
         lhs, rhs = Float_32.convert_args(func, lhs, rhs)
         return func.builder.fcmp_ordered('>', lhs, rhs)
+
+    def pow(self, func, lhs, rhs):
+        desired_typ = definedtypes.get_std_ret_type(lhs, rhs)
+
+        pow_func = func.module.get_global("pow")
+        f64 = Float_32(name="f64", typ=ir.DoubleType())
+        arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, f64), f64)
+        arg2 = PassNode(rhs.position, (rhs.ret_type).convert_to(func, rhs, f64), f64)
+        args = ParenthBlock(lhs.position)
+        args.append_child(arg1)
+        args.append_child(arg2)
+        args.pre_eval(func)
+        output = PassNode(lhs.position, pow_func.call(func, None, args), f64)
+        return f64.convert_to(func, output, desired_typ)
 
     def truthy(self, func, val):
         return func.builder.fcmp_ordered('!=', val.eval(func),

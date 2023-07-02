@@ -286,7 +286,8 @@ def _as(self, func, lhs, rhs):
 # TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
 @operator(9, "Pow")
 def pow(self, func, lhs, rhs):
-    pass
+    return (lhs.ret_type).pow(func, lhs, rhs)
+
 
 
 @operator(1, "Sum")

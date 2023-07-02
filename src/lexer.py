@@ -33,6 +33,7 @@ class Lexer():
         self.lexer.add('IDIV', r'/{1,}\=')
         self.lexer.add('ISUB', r'\-\=')
         self.lexer.add('SUM', r'\+')
+        self.lexer.add('POW', r'\*\*')
         self.lexer.add('MUL', r'\*')
         self.lexer.add('DIV', r'/{1,}')
         self.lexer.add('SUB', r'\-')

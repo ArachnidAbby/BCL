@@ -5,6 +5,7 @@ from Ast.nodes.container import ContainerNode
 from Ast.nodes.expression import ExpressionNode
 from Ast.nodes.keyvaluepair import KeyValuePair
 from Ast.nodes.parenthese import ParenthBlock
+from Ast.nodes.passthrough import PassNode
 
 __all__ = ["ASTNode", "Block", "ContainerNode", "ExpressionNode",
-           "KeyValuePair", "ParenthBlock", "SrcPosition"]
+           "KeyValuePair", "ParenthBlock", "SrcPosition", "PassNode"]
