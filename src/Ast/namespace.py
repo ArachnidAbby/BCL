@@ -23,12 +23,17 @@ class NamespaceIndex(ExpressionNode):
         if self.star_idx:
             errors.error("'*' index can only used in an import statement",
                          line=self.left.position)
-        self.val = self.left.get_var(func)\
-                    .get_namespace_name(func,
-                                        self.right.var_name,
-                                        self.right.position)
+        var = self.left.get_var(func)
+        if var is None:
+            errors.error("Namespace does not exist",
+                         line=self.left.position)
+        self.val = var.get_namespace_name(func,
+                                          self.right.var_name,
+                                          self.right.position)
         if isinstance(self.val, ExpressionNode):
             self.ret_type = self.val.ret_type
+        else:
+            self.ret_type = self.val
 
     def get_var(self, func):
         self.pre_eval(func)

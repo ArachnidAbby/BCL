@@ -79,7 +79,7 @@ class Module(ASTNode):
         elif name in self.globals.keys():
             return self.globals[name]
 
-        errors.error(f"Namespace \"{name}\" cannot be " +
+        errors.error(f"Name \"{name}\" cannot be " +
                      f"found in module \"{self.mod_name}\"",
                      line=pos)
 
@@ -134,6 +134,8 @@ class Module(ASTNode):
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
+        if name in self.types:
+            return self.types[name]
 
         # imp instead of "import"
         # gbl instead of "global"

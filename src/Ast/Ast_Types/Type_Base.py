@@ -45,9 +45,9 @@ class Type:
     def __init__(self):
         pass
 
-    def get_namespace_name(self, func, name):
+    def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
-        errors.error(f"Cannot get from namespace {self}")
+        error(f"Cannot get {name} from namespace {self}", line=pos)
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:

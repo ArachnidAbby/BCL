@@ -148,6 +148,7 @@ define main() {
     joty = lmnop.x;
     joty + 10;
     lmnop.x + 10;
+    println(TestStruct::test());
 
 
     t = create_data(23);

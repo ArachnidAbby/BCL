@@ -65,6 +65,18 @@ class Struct(Ast_Types.Type):
         self.module = module
         self.rang = None
 
+    def get_namespace_name(self, func, name, pos):
+        for mem_name in self.members.keys():
+            if mem_name != name:
+                continue
+            val = self.members[mem_name]
+            if isinstance(val, Ast_Types.FunctionGroup) and not val.is_method:
+                return val
+
+        error(f"Name \"{name}\" cannot be " +
+              f"found in Type \"{self.struct_name}\"",
+              line=pos)
+
     def declare(self, mod):
         for name in self.members.keys():
             val = self.members[name]
