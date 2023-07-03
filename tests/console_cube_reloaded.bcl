@@ -6,8 +6,8 @@
 //   A modernized version of the console_cube program.
 //   This version uses more modern BCL syntax, features, etc.
 // ==================================================================
-import stdlib;
-import math;
+import stdlib::*;
+import math::*;
 
 define main() {
     screen : bool[60][45] = [[false; 60]; 45];

@@ -3,10 +3,11 @@
 // Date: 12/08/2022 (M/D/Y)
 // Link: https://github.com/FuzzyCat444/BCL-Cube/blob/main/cube.bcl
 // ==================================================================
-import stdlib;
+import stdlib::*;
 
 define main() {
-    screen : bool[60][45] = [[false; 60]; 45];
+    _ = [false; 60];
+    screen : bool[60][45] = [_; 45];
     vertices : f32[3][8] = [
         [1.0, -1.0, -1.0],
         [-1.0, -1.0, -1.0],
@@ -39,7 +40,7 @@ define main() {
         x_rot += 0.02;
         y_rot += 0.005;
 
-        screen = [[false; 60]; 45];
+        screen = [_; 45];
 
         edge_i : i32 = 0;
         while edge_i < 12 {
