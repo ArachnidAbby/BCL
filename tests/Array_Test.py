@@ -15,7 +15,7 @@ errors.SILENT_MODE = True
 class basictests(unittest.TestCase):
     def test_creation(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -29,7 +29,7 @@ class basictests(unittest.TestCase):
 
     def test_indexing(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -46,7 +46,7 @@ class basictests(unittest.TestCase):
     @unittest.expectedFailure
     def test_over_indexing(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -62,7 +62,7 @@ class basictests(unittest.TestCase):
 
     def test_functions(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -83,7 +83,7 @@ class basictests(unittest.TestCase):
 
     def test_index_assign(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -98,7 +98,7 @@ class basictests(unittest.TestCase):
 
     def test_math(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -113,7 +113,7 @@ class basictests(unittest.TestCase):
 
     def test_index_with_vars(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -128,7 +128,7 @@ class basictests(unittest.TestCase):
 
     def test_assign_with_vars(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [true; 200];
@@ -144,7 +144,7 @@ class basictests(unittest.TestCase):
 
     def test_arrays_of_structs(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct struct_for_array {
             x: bool,
@@ -175,7 +175,7 @@ class basictests(unittest.TestCase):
 
     def test_inplace_ops(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         define main() {
             x = [0; 200];

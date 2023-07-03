@@ -15,7 +15,7 @@ errors.SILENT_MODE = True
 class basictests(unittest.TestCase):
     def test_definition(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct TestStruct {
             x: f32,
@@ -29,7 +29,7 @@ class basictests(unittest.TestCase):
 
     def test_nested_definition(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         // nesting, but Container is above the definition of TestStruct
         struct Container {
@@ -48,7 +48,7 @@ class basictests(unittest.TestCase):
 
     def test_instantiation(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct TestStruct {
             x: f32,
@@ -66,7 +66,7 @@ class basictests(unittest.TestCase):
 
     def test_nested_instantiation(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct Container {
             x: TestStruct;
@@ -88,7 +88,7 @@ class basictests(unittest.TestCase):
 
     def test_member_access(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct TestStruct {
             x: f32,
@@ -109,7 +109,7 @@ class basictests(unittest.TestCase):
 
     def test_methods(self):
         test_code = """
-        import stdlib;
+        import stdlib::*;
 
         struct TestStruct {
             x: f32,

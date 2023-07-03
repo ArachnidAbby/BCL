@@ -80,7 +80,7 @@ def error(text: str, line=invalid_pos, full_line=False):
     if SILENT_MODE:
         sys.exit(1)
 
-    if line[0] != -1:
+    if line[0] != -1 and line[2]!='':
         code_line = show_error_spot(line, full_line)
     else:
         code_line = ""
@@ -110,7 +110,7 @@ def inline_warning(text: str, line=invalid_pos):
 
     print(ORANGE, end='')
     _print_text(text)
-    if line[0] != -1:
+    if line[0] != -1 and line[2]!='':
         print(f'|    Line: {line.line}')
         print(f'|    File: {line.source_name}')
     print(RESET, end='')
@@ -121,7 +121,7 @@ def warning(text: str, line=invalid_pos, full_line=False):
     if SILENT_MODE or SUPRESSED_WARNINGS:
         return
 
-    if line[0] != -1:
+    if line[0] != -1 and line[2]!='':
         code_line = show_error_spot(line, full_line, color=CODE214)
     else:
         code_line = ""
