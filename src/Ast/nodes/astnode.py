@@ -1,6 +1,7 @@
 from typing import Tuple
 
 from Ast.nodes.commontypes import SrcPosition
+import errors
 
 
 class ASTNode:
@@ -21,6 +22,9 @@ class ASTNode:
     is_operator: bool = False
     assignable: bool = False  # TODO: IMPLEMENT
     isconstant: bool = False
+
+    # whether or not names can be registered under the node.
+    is_namespace: bool = True
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self._position = position        # (line#, col#, len)
@@ -98,3 +102,16 @@ class ASTNode:
 
     def create_tree(self, parent_repr: str, **children) -> str:
         return self.create_tree_dict(parent_repr, children)
+
+    #! use get_var()
+    # def get_pointed(self, func):
+    #     '''Get the node pointed to by another node.
+    #     This is for intermediary nodes like a Namespace Index'''
+    #     return self
+
+    def get_namespace_name(self, func, name):
+        '''Getting a name from the namespace'''
+        errors.error(f"Cannot get from namespace {self}")
+
+    def register_namespace(self, func, obj, name):
+        errors.error(f"Cannot register namespace {name}")

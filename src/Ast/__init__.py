@@ -8,3 +8,4 @@ from Ast.math import *
 from Ast.nodes import *
 # from Ast.reference import *
 from Ast.structs import *
+from Ast.namespace import *

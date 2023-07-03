@@ -39,8 +39,15 @@ class Type:
     # Only allow indexes via literals
     literal_index = False
 
+    # Namespacing stuff that applies to nodes also applies to types
+    is_namespace = True
+
     def __init__(self):
         pass
+
+    def get_namespace_name(self, func, name):
+        '''Getting a name from the namespace'''
+        errors.error(f"Cannot get from namespace {self}")
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:

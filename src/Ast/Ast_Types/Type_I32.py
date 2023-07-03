@@ -170,6 +170,10 @@ class Integer_32(Type_Base.Type):
             return desired_typ.pow(func, lhs, rhs)
 
         pow_func = func.module.get_global("pow")
+        if pow_func is None:
+            error("Cannot find 'pow' function in the global namespace.\n" +
+                  "Try `import math::*;`",
+                  line=lhs.position)
         i64 = Integer_32(name="i64", size=64)
         i32 = Integer_32(name="i32", size=32)
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, i64), i64)

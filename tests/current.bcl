@@ -1,5 +1,5 @@
 #!./bcl compile --run --emit-binary
-import stdlib;
+import stdlib::*;
 
 // import SDL;
 
@@ -41,7 +41,7 @@ import stdlib;
 //     return 0;
 // }
 
-import math;
+import math::*;
 
 define tests() -> f32 {
     return 934f;
@@ -122,6 +122,7 @@ define malloc(size_bytes: size_t) -> UntypedPointer;
 define free(ptr: UntypedPointer);
 
 define main() {
+    // stdlib::println(12);
 
     define create_data(c: i32) -> i32 {
         for x in 0..c {

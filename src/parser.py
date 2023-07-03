@@ -60,7 +60,8 @@ class Parser(ParserBase):
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
-                                     "expr", "OPEN_SQUARE", "paren")
+                                     "expr", "OPEN_SQUARE", "paren",
+                                     "NAMEINDEX")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT")
 
@@ -71,9 +72,8 @@ class Parser(ParserBase):
             "expr": (self.parse_var_decl, self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
-                     self.parse_expr_list,
-                     self.parse_rangelit,
-                     self.parse_member_access),
+                     self.parse_expr_list, self.parse_rangelit,
+                     self.parse_member_access, self.namespace_index),
             "statement": (self.parse_statement, self.parse_combine_statements),
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
@@ -135,16 +135,44 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
+    @rule(0, "expr NAMEINDEX expr|MUL")
+    def namespace_index(self):
+        left = self.peek(0).value
+        right = self.peek(2).value
+        if not (isinstance(left, Ast.variables.reference.VariableRef)
+                or isinstance(left, Ast.namespace.NamespaceIndex)):
+            errors.error("Namespace index must be indexing a name or another namespace index",
+                         line=self.peek(0).pos)
+
+        if not (isinstance(right, Ast.variables.reference.VariableRef)
+                or (isinstance(right, str) and right=='*')):
+            errors.error("Index in a namespace index must be a name (or '*')",
+                         line=self.peek(2).pos)
+
+        pos = self.peek(0).pos
+
+        node = Ast.namespace.NamespaceIndex(pos, left, right)
+        if right == '*':
+            node.star_idx = True
+        self.replace(3, "expr", node)
+
     @rule(0, "$import expr SEMI_COLON")
     def parse_import_statment(self):
-        if not isinstance(self.peek(1).value,
-                          Ast.variables.reference.VariableRef):
+        mod = self.peek(1).value
+        if not (isinstance(mod, Ast.variables.reference.VariableRef)
+                or isinstance(mod, Ast.namespace.NamespaceIndex)):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
-        name = self.peek(1).value.var_name
         directories = self.module.location.split("/")[:-1]
         directory_path = '/'.join(directories)
+        using_namespace = False
+        if isinstance(mod, Ast.namespace.NamespaceIndex):
+            using_namespace = mod.star_idx
+            name = mod.as_file_path()
+        else:
+            name = self.peek(1).value.var_name
+
         filedir = f"{directory_path}/{name}.bcl"
         if not path.exists(filedir):
             libbcl_dir = path.dirname(__file__) + "/libbcl"
@@ -153,9 +181,12 @@ class Parser(ParserBase):
                 errors.error(f"Could not find module '{name}'",
                              line=self.peek(1).pos)
 
-        self.module.add_import(filedir, name)
+        self.module.add_import(filedir, name, using_namespace)
         errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
+        # self._cursor = max(self.start, self.start_min)
+        # self.do_move = False
+
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):

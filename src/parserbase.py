@@ -202,6 +202,8 @@ class ParserBase:
         if self.isEOF(self._cursor+index):
             return ParserToken("EOF", "EOF", SrcPosition.invalid(), False)
 
+        # print(self._cursor+index, len(self._tokens))
+
         return self.peek(index)
 
     def _consume(self, index: int, amount: int):
@@ -211,9 +213,12 @@ class ParserBase:
 
     def consume(self, index: int, amount: int):
         '''Consume a specific `amount` of tokens starting at `index`'''
-        self._consume(index=index, amount=amount)
+        self._consume(index, amount)
 
         self._cursor = max(self.start, self.start_min)
+        tokens_left = (len(self._tokens)-self._cursor)
+        if tokens_left < MAX_SIZE:
+            self.gen_ahead(tokens_left % MAX_SIZE)
         self.do_move = False
 
     def insert(self, index: int, name: str, value: Ast.nodes.ASTNode,

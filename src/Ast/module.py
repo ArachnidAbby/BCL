@@ -1,4 +1,5 @@
 import os
+from typing import NamedTuple
 import parser  # type: ignore
 
 from llvmlite import binding, ir  # type: ignore
@@ -25,17 +26,24 @@ def create_target_dirs(base_dir: str):
     os.makedirs(f"{base_dir}/target/o")
 
 
+class NamespaceInfo(NamedTuple):
+    obj: "Module"
+    using_namespace: bool = False
+
+
 class Module(ASTNode):
     __slots__ = ('location', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed')
+
+    is_namespace = True
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
         self.mod_name = name
         self.location = location
         self.globals: dict[str, object] = {}
-        self.imports: dict[str, "Module"] = {}
+        self.imports: dict[str, NamespaceInfo] = {}
         self.types: dict[str, "Type"] = {}   # type: ignore
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
@@ -54,12 +62,33 @@ class Module(ASTNode):
         self.children = pg.parse()
         self.parsed = True
         for imp in self.imports.values():
-            if not imp.parsed:
-                imp.parse()
+            if not imp.obj.parsed:
+                imp.obj.parse()
 
-    def add_import(self, file: str, name: str):
+    def get_namespace_name(self, func, name, pos):
+        '''Getting a name from the namespace'''
+        for imp, mod in zip(self.imports.keys(), self.imports.values()):
+            if imp == name:
+                return mod.obj
+            elif mod.using_namespace:
+                return mod.obj.get_namespace_name(func, name, pos)
+
+
+        if name in self.types.keys():
+            return self.types[name]
+        elif name in self.globals.keys():
+            return self.globals[name]
+
+        errors.error(f"Namespace \"{name}\" cannot be " +
+                     f"found in module \"{self.mod_name}\"",
+                     line=pos)
+
+    def register_namespace(self, func, obj, name):
+        errors.error(f"Cannot register namespace {name}")
+
+    def add_import(self, file: str, name: str, using_namespace: bool):
         if name in modules.keys():
-            self.imports[name] = modules[name]
+            self.imports[name] = NamespaceInfo(modules[name])
             return
 
         with open(file, 'r') as f:
@@ -67,7 +96,7 @@ class Module(ASTNode):
             tokens = Lexer().get_lexer().lex(src_str)
             new_module = Ast.module.Module(SrcPosition.invalid(), name,
                                            file, tokens)
-            self.imports[name] = new_module
+            self.imports[name] = NamespaceInfo(new_module, using_namespace)
 
     def create_type(self, name: str, typeobj: Ast.Type):
         self.types[name] = typeobj
@@ -76,8 +105,10 @@ class Module(ASTNode):
         if name in self.types.keys():
             return self.types[name]
         for imp in self.imports.values():
-            if name in imp.types.keys():
-                return imp.types[name]
+            if not imp.using_namespace:
+                continue
+            if name in imp.obj.types.keys():
+                return imp.obj.types[name]
         if name in Ast.Ast_Types.definedtypes.types_dict.keys():
             return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
 
@@ -99,18 +130,21 @@ class Module(ASTNode):
         errors.error(f"Cannot find '{name}' in module '{self.mod_name}'",
                      line=position)
 
-    def get_global(self, name: str) -> object | None:
+    def get_global(self, name: str, pos=SrcPosition.invalid()) -> object | None:
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
 
         # imp instead of "import"
         # gbl instead of "global"
-        for imp in self.imports.values():
-            if (gbl := imp.get_global(name)) is not None:
-                return gbl
+        if name in self.imports.keys():
+            return self.imports[name].obj
 
-        return None
+        for imp in self.imports.values():
+            if not imp.using_namespace:
+                continue
+            if (gbl := imp.obj.get_global(name, pos)) is not None:
+                return gbl
 
     def get_func_from_dict(self, name: str, funcs: dict, types: tuple,
                            position):
@@ -143,7 +177,7 @@ class Module(ASTNode):
     def get_import_globals(self):
         output = []
         for mod in self.imports.values():
-            output += mod.get_all_globals()
+            output += mod.obj.get_all_globals()
         return output
 
     def get_all_types(self) -> list[object]:
@@ -156,15 +190,15 @@ class Module(ASTNode):
     def get_import_types(self):
         output = []
         for mod in self.imports.values():
-            output += mod.get_all_types()
+            output += mod.obj.get_all_types()
         return output
 
     def post_parse(self, parent):
         self.post_parsed = True
         for mod in self.imports.values():
-            if not mod.post_parsed:
-                mod.post_parse(mod)
-                mod.post_parsed = True
+            if not mod.obj.post_parsed:
+                mod.obj.post_parse(mod)
+                mod.obj.post_parsed = True
 
         for c, child in enumerate(self.children):
             if not child.completed:
@@ -174,9 +208,9 @@ class Module(ASTNode):
     def pre_eval(self, parent):
         self.pre_evaled = True
         for mod in self.imports.values():
-            if not mod.pre_evaled:
-                mod.pre_eval(mod)
-                mod.pre_evaled = True
+            if not mod.obj.pre_evaled:
+                mod.obj.pre_eval(mod)
+                mod.obj.pre_evaled = True
 
         for c, child in enumerate(self.children):
             child.value.pre_eval(self)
@@ -184,9 +218,9 @@ class Module(ASTNode):
     def eval(self, parent):
         self.evaled = True
         for mod in self.imports.values():
-            if not mod.evaled:
-                mod.eval(mod)
-                mod.evaled = True
+            if not mod.obj.evaled:
+                mod.obj.eval(mod)
+                mod.obj.evaled = True
 
         for child in self.children:
             child.value.eval(self)
@@ -248,11 +282,11 @@ class Module(ASTNode):
         other_args["--emit-object"] = True
         objects = [f"{loc}/target/o/{self.mod_name}.o"]
         for mod in self.imports.values():
-            mod.save_ir(f"{loc}", other_args)
-            objects.append(f"{loc}/target/o/{mod.mod_name}.o")
+            mod.obj.save_ir(f"{loc}", other_args)
+            objects.append(f"{loc}/target/o/{mod.obj.mod_name}.o")
 
         if args["--emit-binary"]:
-            extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm'] # adds math.h
+            extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm']  # adds math.h
             linker.link_all(f"{loc}/target/output", objects, extra_args)
 
     # TODO: Create a seperate error parser
