@@ -181,11 +181,3 @@ class FunctionGroup(Ast_Types.Type):
 
     def assign(self, func, ptr, value, typ: Self, first_assignment=False):
         error("Variables cannot be set to a FunctionGroup", line=value.position)
-
-    @property
-    def type(self):
-        return self
-
-    @property
-    def ret_type(self):
-        return self

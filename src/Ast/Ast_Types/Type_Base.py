@@ -235,6 +235,10 @@ class Type:
         return ir.Constant(ir.IntType(1), 0)  # defaults false
 
     @property
+    def type(self):
+        return self
+
+    @property
     def ret_type(self):
         return self
 

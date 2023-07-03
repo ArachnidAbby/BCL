@@ -35,6 +35,13 @@ class NamespaceIndex(ExpressionNode):
         else:
             self.ret_type = self.val
 
+    def eval(self, func):
+        if isinstance(self.val, ExpressionNode):
+            return self.val.eval(func)
+
+        errors.error("Namespace cannot be evaluated like an expression",
+                     line=self.left.position)
+
     def get_var(self, func):
         self.pre_eval(func)
         return self.val

@@ -1,6 +1,8 @@
 from Ast import Ast_Types
+from Ast.Ast_Types import Type_Base
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
+from .varobject import VariableObj
 from errors import error
 
 
@@ -24,14 +26,17 @@ class VariableRef(ExpressionNode):
         if not self.block.validate_variable_exists(self.var_name, func.module):
             error(f"Undefined variable '{self.var_name}'", line=self.position)
 
-        self.ret_type = self.block.get_variable(self.var_name,
-                                                func.module).type
+        var = self.block.get_variable(self.var_name, func.module)
+        self.ret_type = var.type
         if self.ret_type.is_void():
             error(f"undefined variable '{self.var_name}'", line=self.position)
 
     def eval(self, func):
-        return self.block.get_variable(self.var_name, func.module)\
-            .get_value(func)
+        var = self.block.get_variable(self.var_name, func.module)
+        if not isinstance(var, VariableObj):
+            error("Types or Functions cannot be used as values",
+                  line=self.position)
+        return var.get_value(func)
 
     def get_ptr(self, func):
         var = self.block.get_variable(self.var_name, func.module)
