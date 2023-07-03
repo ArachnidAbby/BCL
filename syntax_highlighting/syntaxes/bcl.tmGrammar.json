@@ -33,8 +33,8 @@
             {
               "begin": "([a-zA-Z0-9_]+)\\s*(:)",
               "beginCaptures": {
-                "1": {"name": "variable.parameter.mylang"},
-                "2": {"name": "keyword.operator.type.annotation.mylang"}
+                "1": {"name": "variable.parameter.bcl"},
+                "2": {"name": "keyword.operator.type.annotation.bcl"}
               },
               "end": "(?=[,\\)])",
               "patterns": [
@@ -47,13 +47,13 @@
               "match": "(\\&*)([a-zA-Z0-9_]+)(?=[,\\)])",
               "captures" : {
                 "1": {"name": "keyword.operator.arithmetic.bcl"},
-                "2": {"name": "variable.parameter.mylang"}
+                "2": {"name": "variable.parameter.bcl"}
               }
             },
 
             {
              "match": ",",
-             "name": "punctuation.separator.parameter.mylang"
+             "name": "punctuation.separator.parameter.bcl"
             }
         ]
       },
@@ -79,7 +79,7 @@
             "begin": "([a-zA-Z0-9_]+)\\s*(:)",
             "beginCaptures": {
               "1": {"name": "support.variable.property.bcl"},
-              "2": {"name": "keyword.operator.type.annotation.mylang"}
+              "2": {"name": "keyword.operator.type.annotation.bclv"}
             },
             "end": "(?=[,\\}\\;])",
             "patterns": [
@@ -171,6 +171,13 @@
 
       "constants": {
         "patterns": [
+          {
+            "match": "(\\d+)([fiu]\\d+)",
+            "captures": {
+              "1": {"name": "constant.numeric.bcl"},
+              "2": {"name": "entity.name.type.numeric.bcl"}
+            }
+          },
           {"match": "\\d+((\\.\\d+f)|(\\.\\d+)|f)", "name": "constant.numeric.bcl"},
           {"match": "\\d+", "name": "constant.numeric.bcl"},
           {

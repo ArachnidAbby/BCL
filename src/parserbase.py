@@ -3,6 +3,7 @@ from typing import Any, Callable, NamedTuple
 
 import Ast
 import errors
+from Ast.Ast_Types import definedtypes
 from Ast.literals.numberliteral import Literal
 from Ast.literals.stringliteral import StrLiteral
 from Ast.nodes.commontypes import SrcPosition
@@ -163,6 +164,22 @@ class ParserBase:
             elif tok.name == "NUMBER_F":
                 val = Literal(pos, float(tok.value.strip('f')),
                               Ast.Ast_Types.Float_32())
+                fintok = ParserToken("expr", val, pos, True)
+            elif tok.name == "NUMBER_W_TYPE":
+                if 'i' in tok.value:
+                    lhs, rhs = tok.value.split('i')
+                    num_val = int(lhs)
+                    typ = definedtypes.types_dict[f'i{rhs}']
+                elif 'u' in tok.value:
+                    lhs, rhs = tok.value.split('u')
+                    num_val = int(lhs)
+                    typ = definedtypes.types_dict[f'u{rhs}']
+                else:
+                    lhs, rhs = tok.value.split('f')
+                    num_val = float(lhs)
+                    typ = definedtypes.types_dict[f'f{rhs}']
+
+                val = Literal(pos, num_val, typ)
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "CHAR":
                 val = Literal(pos, fix_char(tok.value.strip('\'')),

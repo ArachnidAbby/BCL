@@ -50,7 +50,7 @@ class BCLLexer(RegexLexer):
              r'(char)|(str)|(strlit)', Keyword.Type),
             (r'\s+(or)|(and)|(not)|(in)\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&]', Operator),
-            (r'[\{\};\(\)\:\[\]\,]', Punctuation),
+            (r'[\{\};\(\)\:\[\]\,(\-\>)]', Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
             (r'//.*$', Comment.Single),
             (r'\w[\w\d]*', Name.Other)

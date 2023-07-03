@@ -18,6 +18,10 @@ define println(x: i32) {
     printf("%i\n", x);
 }
 
+define println(x: i64) {
+    printf("%lld\n", x);
+}
+
 define println(x: bool) {
     if x {
         puts("true");

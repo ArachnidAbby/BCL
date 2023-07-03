@@ -129,6 +129,13 @@ define main() {
         }
     }
 
+    define testing_stuff(j: i64) {
+        println(j);
+    }
+
+    testing_stuff(29i64);
+    println(18f32);
+
     println(16**0.5);
     println(20**3f);
 
