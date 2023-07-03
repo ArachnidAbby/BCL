@@ -5,9 +5,13 @@ from llvmlite import ir  # type: ignore
 from Ast import Ast_Types
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock
+from Ast.variables.reference import VariableRef
 from Ast.nodes.commontypes import MemberInfo
 from Ast.reference import Ref
 from errors import error
+import Ast.math
+
+member_access_op = Ast.math.ops["access_member"]
 
 struct_op_overloads = {
     "sum": "__add__",
@@ -86,7 +90,7 @@ class Struct(Ast_Types.Type):
         return group
 
     # TODO: allow casting overloads
-    # "define __as__(&Self, x: othertype) -> Self;"
+    # "define __as__::<other_type>(&Self) -> other_type;"
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
         if typ == previous.ret_type:
@@ -106,19 +110,25 @@ class Struct(Ast_Types.Type):
 
     def get_func(self, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
-        args.children = [lhs, rhs]
+        name_var = VariableRef(lhs.position, name, None)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        args.children = [rhs]
         args.in_func_call = True
-        return self.members[name].get_function(lhs, args)
+        if name not in self.members.keys():
+            error(f"No function \"{name}\" Found", line=lhs.position)
+        return self.members[name].get_function(mem_access, args)
 
     def call_func(self, func, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
-        args.children = [lhs, rhs]
+        name_var = VariableRef(lhs.position, name, None)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        mem_access.pre_eval(func)
+        args.children = [rhs]
         args.in_func_call = True
         args.pre_eval(func)
-        return self.members[name].call(func, lhs, args)
+        mem_access.pre_eval(func)
+        return self.members[name].call(func, mem_access, args)
 
-    # TODO: implement this
-    # @classmethod
     def get_op_return(self, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
         self._simple_call_op_error_check(op, lhs, rhs)

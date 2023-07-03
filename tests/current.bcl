@@ -88,6 +88,10 @@ struct TestStruct {
     }
 }
 
+struct Wrapper {
+    x: TestStruct;
+}
+
 define test_gen(w: i32) -> (i32, i32) {
     yield (420, 420);
     yield (421, 420);
@@ -139,6 +143,11 @@ define main() {
 
     println(16**0.5);
     println(20**3f);
+
+    lmnop = Wrapper {x: TestStruct {x: 12, y: 10}};
+    joty = lmnop.x;
+    joty + 10;
+    lmnop.x + 10;
 
 
     t = create_data(23);
