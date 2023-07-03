@@ -59,6 +59,10 @@ struct TestStruct {
         return 'F';
     }
 
+    define goof_function(x: i32) -> i32 {
+        return x;
+    }
+
     define testing(self) {
         println("gaming");
         println(self.x);
@@ -149,11 +153,13 @@ define main() {
     joty + 10;
     lmnop.x + 10;
     println(TestStruct::test());
-    TestStruct;
+    // TestStruct;
     println();
+    20.println();
 
 
     t = create_data(23);
+    println(120583.TestStruct::goof_function());
 
     x = [t.next(); 3];
 

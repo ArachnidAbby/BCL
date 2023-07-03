@@ -285,7 +285,7 @@ class Parser(ParserBase):
                                        self.peek(2).value, self.module)
         self.replace(3, "structdef", struct)
 
-    @rule(0, "expr DOT expr")
+    @rule(0, "expr DOT expr !NAMEINDEX")
     def parse_member_access(self):
         op = Ast.math.ops['access_member'](self.peek(0).pos,
                                            self.peek(0).value,
