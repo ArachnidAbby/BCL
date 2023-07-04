@@ -38,35 +38,41 @@ class EnumType(Type):
 
     name = "Enum"
 
-    def __init__(self, name, namespace, pos, members: list[tuple[str, None | int, "SrcPosition"]]):
+    def __init__(self, name, namespace, pos, members: list[tuple[str, "SrcPosition"]]):
         self.enum_name = name
         self.namespace = namespace
-        self.members: dict[str, int] = {}
+        self.members: dict[str, int | None] = {}
 
-        # Get size and create members. Same way as C enums
-        max_size = 0
-        last_num = 0
-        for mem_name, val, val_pos in members:
-            if val is None:
-                val = last_num
-
+        for mem_name, val_pos in members:
             if mem_name in self.members.keys():
                 errors.error("Variant already defined",
                              line=val_pos)
+            self.members[mem_name] = None
+
+    def create_values(self, func, members: list[tuple[str, None | int, "SrcPosition"]], pos):
+        max_size = 0
+        last_num = 0
+        # Get size and create members. Same way as C enums
+        for mem_name, val, val_pos in members:
+
+            if val is None:
+                val = last_num
+            else:
+                val.pre_eval(func)
+                val = val.get_var(func).value
 
             self.members[mem_name] = val
             if val > int_sequence[max_size]:
                 max_size += 1
+                if max_size >= len(int_sequence):
+                    errors.error("Max bitsize of an enum is 64 bits.\n" +
+                                 "Please keep values within the u64 range.",
+                                 line=pos)
+                self.bitsize = int_sequence_sizes[max_size]
+                self.ir_type = int_types[int_sequence[max_size]]
 
             last_num = val + 1
 
-        if max_size >= len(int_sequence):
-            errors.error("Max bitsize of an enum is 64 bits.\n" +
-                         "Please keep values within the u64 range.",
-                         line=pos)
-
-        self.bitsize = int_sequence_sizes[max_size]
-        self.ir_type = int_types[int_sequence[max_size]]
 
     def convert_to(self, func, orig, typ):
         if typ == self:
@@ -101,6 +107,9 @@ class EnumType(Type):
 
     def get_namespace_name(self, func, name, pos):
         if name in self.members.keys():
+            if self.members[name] is None:
+                errors.error("Variant has yet to be initialized",
+                             line=pos)
             return Literal(pos, self.members[name], self)
 
         errors.error(f"Name \"{name}\" cannot be " +

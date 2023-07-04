@@ -24,15 +24,27 @@ class Definition(ASTNode):
 
         for member in members[0].children:
             if isinstance(member, KeyValuePair):
-                if not isinstance(member.value, Literal) \
-                        or not isinstance(member.value.ret_type, Integer_32):
-                    errors.error("Enum variants must be integers literals", line=member.value.position)
-                members_list.append((member.key.var_name, member.value.value, member.position))
+                members_list.append((member.key.var_name, member.key.position))
             elif isinstance(member, VariableRef):
-                members_list.append((member.var_name, None, member.position))
+                members_list.append((member.var_name, member.position))
             else:
                 errors.error("Enum variant names must be actual names.",
                              line=pos)
 
         self.enum_type = EnumType(name, module.mod_name, pos, members_list)
         module.create_type(self.enum_name, self.enum_type)
+
+    def post_parse(self, parent):
+        members_list = []
+
+        for member in self.members[0].children:
+            if isinstance(member, KeyValuePair):
+                if not member.value.isconstant \
+                        and not isinstance(member.value.ret_type, Integer_32):
+                    errors.error("Enum variants must be integers",
+                                 line=member.value.position)
+                members_list.append((member.key.var_name, member.value,
+                                     member.position))
+            elif isinstance(member, VariableRef):
+                members_list.append((member.var_name, None, member.position))
+        self.enum_type.create_values(self, members_list, self.position)
