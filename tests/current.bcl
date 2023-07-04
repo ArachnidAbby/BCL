@@ -43,15 +43,6 @@ import stdlib::*;
 
 import math::*;
 
-enum TestEnum {
-    ONE,
-    TWO,
-    THREE: 4,
-    FIVE,
-    SIX,
-    SEVEN: 11;
-}
-
 define tests() -> f32 {
     return 934f;
 }
@@ -138,8 +129,16 @@ define random() -> (i16, i16);
 define malloc(size_bytes: size_t) -> UntypedPointer;
 define free(ptr: UntypedPointer);
 
+enum TestEnum {
+    ONE,
+    TWO,
+    THREE: 4,
+    FIVE,
+    SIX,
+    SEVEN: 11;
+}
+
 define main() {
-    // stdlib::println(12);
     println(TestEnum::ONE as i32);
     println(TestEnum::TWO as i32);
     println(TestEnum::THREE as i32);
