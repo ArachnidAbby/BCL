@@ -4,7 +4,7 @@ from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 from Ast.math import MemberAccess
-from Ast.nodes import KeyValuePair, ParenthBlock
+from Ast.nodes import KeyValuePair, ParenthBlock, Block
 from Ast.variables.reference import VariableRef
 from Ast.nodes.commontypes import MemberInfo
 from Ast.reference import Ref
@@ -136,13 +136,11 @@ class Struct(Ast_Types.Type):
 
     def call_func(self, func, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
-        name_var = VariableRef(lhs.position, name, None)
+        name_var = VariableRef(lhs.position, name, Block.BLOCK_STACK[-1])
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
-        mem_access.pre_eval(func)
         args.children = [rhs]
         args.in_func_call = True
         args.pre_eval(func)
-        mem_access.pre_eval(func)
         return self.members[name].call(func, mem_access, args)
 
     def get_op_return(self, op: str, lhs, rhs):
