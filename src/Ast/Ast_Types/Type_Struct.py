@@ -45,7 +45,7 @@ class Struct(Ast_Types.Type):
     no_load = False
     has_members = True
 
-    # TODO: implement struct methods
+    # TODO: ADD __EQ__ CHECK FOR NAMESPACE
     def __init__(self, name: str, members: list[KeyValuePair], module):
         self.struct_name = name
         self.raw_members = members
@@ -60,7 +60,7 @@ class Struct(Ast_Types.Type):
             self.member_indexs.append(member_name)
             self.member_index_search[member_name] = c
 
-        self.ir_type = ir.global_context.get_identified_type(f"struct.{name}")
+        self.ir_type = ir.global_context.get_identified_type(f"{module.mod_name}.struct.{name}")
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
@@ -115,10 +115,14 @@ class Struct(Ast_Types.Type):
         error(f"{self.struct_name} has no conversions",  line=orig.position)
 
     def __eq__(self, other):
-        return super().__eq__(other) and other.struct_name == self.struct_name
+        return super().__eq__(other) \
+               and other.struct_name == self.struct_name \
+               and self.module.location == other.module.location
 
     def __neq__(self, other):
-        return super().__neq__(other) and other.struct_name != self.struct_name
+        return super().__neq__(other) \
+               and other.struct_name != self.struct_name \
+               and self.module.location != other.module.location
 
     def get_func(self, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
