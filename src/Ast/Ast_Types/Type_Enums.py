@@ -53,7 +53,7 @@ class EnumType(Type):
             if val > int_sequence[max_size]:
                 max_size += 1
 
-            last_num += 1
+            last_num = val + 1
 
         if max_size >= len(int_sequence):
             errors.error("Max bitsize of an enum is 64 bits.\n" +
@@ -99,5 +99,5 @@ class EnumType(Type):
             return Literal(pos, self.members[name], self)
 
         errors.error(f"Name \"{name}\" cannot be " +
-                     f"found in Type \"{self.enum_name}\"",
+                     f"found in Type \"{str(self)}\"",
                      line=pos)

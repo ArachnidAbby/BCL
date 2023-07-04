@@ -44,8 +44,12 @@ import stdlib::*;
 import math::*;
 
 enum TestEnum {
-    increible,
-    beble;
+    ONE,
+    TWO,
+    THREE: 4,
+    FIVE,
+    SIX,
+    SEVEN: 11;
 }
 
 define tests() -> f32 {
@@ -136,7 +140,14 @@ define free(ptr: UntypedPointer);
 
 define main() {
     // stdlib::println(12);
-    println(TestEnum::beble as i32);
+    println(TestEnum::ONE as i32);
+    println(TestEnum::TWO as i32);
+    println(TestEnum::THREE as i32);
+    println(TestEnum::FIVE as i32);
+    println(TestEnum::SIX as i32);
+    println(TestEnum::SEVEN as i32);
+
+
 
     define create_data(c: i32) -> i32 {
         for x in 0..c {
