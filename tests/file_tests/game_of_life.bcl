@@ -1,4 +1,4 @@
-import stdlib;
+import stdlib::*;
 
 define main() {
     board = [[false; 10]; 10]; // create a 10x10 array of bools

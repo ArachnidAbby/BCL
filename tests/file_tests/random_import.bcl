@@ -1,4 +1,5 @@
-import wire_world;
+import wire_world::*;
+import stdlib::*;
 
 struct test {
     x: i32,

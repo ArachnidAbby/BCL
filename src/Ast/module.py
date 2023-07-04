@@ -67,17 +67,15 @@ class Module(ASTNode):
 
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
+        if name in self.types.keys():
+            return self.types[name]
+        elif name in self.globals.keys():
+            return self.globals[name]
         for imp, mod in zip(self.imports.keys(), self.imports.values()):
             if imp == name:
                 return mod.obj
             elif mod.using_namespace:
                 return mod.obj.get_namespace_name(func, name, pos)
-
-
-        if name in self.types.keys():
-            return self.types[name]
-        elif name in self.globals.keys():
-            return self.globals[name]
 
         errors.error(f"Name \"{name}\" cannot be " +
                      f"found in module \"{self.mod_name}\"",
@@ -88,7 +86,7 @@ class Module(ASTNode):
 
     def add_import(self, file: str, name: str, using_namespace: bool):
         if name in modules.keys():
-            self.imports[name] = NamespaceInfo(modules[name])
+            self.imports[name] = NamespaceInfo(modules[name], using_namespace)
             return
 
         with open(file, 'r') as f:
@@ -130,7 +128,7 @@ class Module(ASTNode):
         errors.error(f"Cannot find '{name}' in module '{self.mod_name}'",
                      line=position)
 
-    def get_global(self, name: str, pos=SrcPosition.invalid()) -> object | None:
+    def get_global(self, name: str, pos=SrcPosition.invalid(), stack=None) -> object | None:
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
@@ -142,10 +140,18 @@ class Module(ASTNode):
         if name in self.imports.keys():
             return self.imports[name].obj
 
+        if stack is None:
+            stack = [self]
+        else:
+            stack.append(self)
+
         for imp in self.imports.values():
             if not imp.using_namespace:
                 continue
-            if (gbl := imp.obj.get_global(name, pos)) is not None:
+            if imp.obj in stack:
+                print("test", name)
+                continue
+            if (gbl := imp.obj.get_global(name, pos, stack=stack)) is not None:
                 return gbl
 
     def get_func_from_dict(self, name: str, funcs: dict, types: tuple,

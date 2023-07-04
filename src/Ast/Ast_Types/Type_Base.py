@@ -78,6 +78,9 @@ class Type:
         if op == "call" and rhs.position.line > lhs.position.line:
             error(f"{self} is not callable, perhaps you forgot a semicolon?",
                   line=lhs.position)
+        elif op == "call":
+            error(f"{self} is not callable",
+                  line=lhs.position)
 
     def get_op_return(self, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)

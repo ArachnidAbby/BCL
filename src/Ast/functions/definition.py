@@ -170,6 +170,7 @@ class FunctionDef(ASTNode):
         args = self.function_ir.args
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
+            # print(orig[1])
             var = VariableObj(orig[0], orig[1], True)
             self.block.variables[x] = var
             self.block.variables[x].ptr = args[c]
@@ -237,8 +238,8 @@ class FunctionDef(ASTNode):
         block = self.function_ir.append_basic_block("entry")
         self.builder = ir.IRBuilder(block)
         self.ir_entry = block
-        self.block.pre_eval(self)
         self._append_args()
+        self.block.pre_eval(self)
 
     def create_const_var(self, typ):
         current_block = self.builder.block
