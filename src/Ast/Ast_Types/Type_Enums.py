@@ -38,7 +38,7 @@ class EnumType(Type):
 
     name = "Enum"
 
-    def __init__(self, name, namespace, pos, members: list[tuple[str, None | int]]):
+    def __init__(self, name, namespace, pos, members: list[tuple[str, None | int, "SrcPosition"]]):
         self.enum_name = name
         self.namespace = namespace
         self.members: dict[str, int] = {}
@@ -46,9 +46,14 @@ class EnumType(Type):
         # Get size and create members. Same way as C enums
         max_size = 0
         last_num = 0
-        for mem_name, val in members:
+        for mem_name, val, val_pos in members:
             if val is None:
                 val = last_num
+
+            if mem_name in self.members.keys():
+                errors.error("Variant already defined",
+                             line=val_pos)
+
             self.members[mem_name] = val
             if val > int_sequence[max_size]:
                 max_size += 1

@@ -27,9 +27,9 @@ class Definition(ASTNode):
                 if not isinstance(member.value, Literal) \
                         or not isinstance(member.value.ret_type, Integer_32):
                     errors.error("Enum variants must be integers", line=pos)
-                members_list.append((member.key.var_name, member.value.value))
+                members_list.append((member.key.var_name, member.value.value, member.position))
             elif isinstance(member, VariableRef):
-                members_list.append((member.var_name, None))
+                members_list.append((member.var_name, None, member.position))
             else:
                 errors.error("Enum variant names must be actual names.",
                              line=pos)
