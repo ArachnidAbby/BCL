@@ -1,4 +1,3 @@
-from os import path
 from Ast import Ast_Types
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.expression import ExpressionNode

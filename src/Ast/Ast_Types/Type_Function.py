@@ -167,7 +167,6 @@ class FunctionGroup(Ast_Types.Type):
         for version in self.versions:
             if version.match_args(lhs, args):
                 return version
-        print(args)
         self.print_call_error(args)
 
     def print_call_error(self, rhs):

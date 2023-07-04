@@ -43,6 +43,11 @@ import stdlib::*;
 
 import math::*;
 
+enum TestEnum {
+    increible,
+    beble;
+}
+
 define tests() -> f32 {
     return 934f;
 }
@@ -131,6 +136,7 @@ define free(ptr: UntypedPointer);
 
 define main() {
     // stdlib::println(12);
+    println(TestEnum::beble as i32);
 
     define create_data(c: i32) -> i32 {
         for x in 0..c {

@@ -121,6 +121,8 @@ class Module(ASTNode):
         or function'''
         if name in self.globals:
             return self.globals[name]
+        if name in self.types:
+            return self.types[name]
 
         if name in self.imports:
             return self.imports[name]
@@ -149,7 +151,6 @@ class Module(ASTNode):
             if not imp.using_namespace:
                 continue
             if imp.obj in stack:
-                print("test", name)
                 continue
             if (gbl := imp.obj.get_global(name, pos, stack=stack)) is not None:
                 return gbl

@@ -222,7 +222,7 @@ class Struct(Ast_Types.Type):
               line=lhs.position)
 
     def __hash__(self):
-        return hash(self.name+self.struct_name)
+        return hash(self.name+self.struct_name+self.module.mod_name)
 
     def __repr__(self) -> str:
         return f'<Type: {self.name}--{self.struct_name}>'

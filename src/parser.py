@@ -56,7 +56,8 @@ class Parser(ParserBase):
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct', 'import', 'yield'
+            'as', 'for', 'in', 'struct', 'import', 'yield',
+            'enum'
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
@@ -93,7 +94,8 @@ class Parser(ParserBase):
                         self.parse_var_usage, self.parse_functions,
                         self.parse_func_with_return,
                         self.parse_func_double_return,
-                        self.parse_structs, self.parse_KV_pairs),
+                        self.parse_structs, self.parse_KV_pairs,
+                        self.parse_enums),
             "func_def_portion": (self.parse_funcdef_empty,
                                  self.parse_funcdef_with_body),
             "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit,
@@ -284,6 +286,25 @@ class Parser(ParserBase):
         struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1),
                                        self.peek(2).value, self.module)
         self.replace(3, "structdef", struct)
+
+    @rule(0, "$enum expr statement")
+    def parse_enums(self):
+        if not isinstance(self.peek(2).value, Ast.nodes.container.ContainerNode):
+            error("Enum definition body must be a block.`\n" +
+                  "enum MyEnum {\nvariant1,\nvariant2\nvariant3\n}\n`",
+                  line=self.peek(2).pos)
+
+        members = self.peek(2).value.children
+
+        if not isinstance(members[0], Ast.nodes.container.ContainerNode):
+            tmp = Ast.nodes.container.ContainerNode(members[0].position)
+            tmp.append_children(members[0])
+            members[0] = tmp
+
+        struct = Ast.enumdef.Definition(self.peek(0).pos, self.peek(1).value,
+                                        members, self.module)
+
+        self.replace(3, "enumdef", struct)
 
     @rule(0, "expr DOT expr !NAMEINDEX")
     def parse_member_access(self):
