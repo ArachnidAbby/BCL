@@ -47,7 +47,7 @@ class VariableAssign(ASTNode):
 
         var_search_tuple = (self.block.get_variable(name),
                             name)
-        if var_search_tuple not in func.variables:
+        if var_search_tuple not in func.variables and name not in func.args:
             variable = self.block.get_variable(name)
             func.variables.append((variable, name))
             if func.yields:
