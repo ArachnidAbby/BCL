@@ -74,6 +74,9 @@ class EnumType(Type):
 
             last_num = val + 1
 
+        self.bitsize = int_sequence_sizes[max_size]
+        self.ir_type = int_types[int_sequence[max_size]]
+
 
     def convert_to(self, func, orig, typ):
         if typ == self:
