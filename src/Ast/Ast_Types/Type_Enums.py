@@ -105,7 +105,7 @@ class EnumType(Type):
         errors.error(f"Cannot convert {str(self)} to {str(typ)}",
                      line=orig.position)
 
-    def get_op_return(self, op: str, lhs, rhs):
+    def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         match op.lower():
             case 'eq' | 'neq':

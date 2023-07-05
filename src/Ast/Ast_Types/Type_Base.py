@@ -5,6 +5,9 @@ from llvmlite import ir  # type: ignore
 
 from errors import error
 
+PUBLIC_VISIBILITY = 0
+VISIBILITY_PRIVATE = 1
+
 
 class Type:
     '''abstract type class that outlines the necessary
@@ -41,6 +44,7 @@ class Type:
 
     # Namespacing stuff that applies to nodes also applies to types
     is_namespace = True
+    visibility = PUBLIC_VISIBILITY
 
     def __init__(self):
         pass
@@ -82,7 +86,7 @@ class Type:
             error(f"{self} is not callable",
                   line=lhs.position)
 
-    def get_op_return(self, op, lhs, rhs):
+    def get_op_return(self, func, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         pass
 

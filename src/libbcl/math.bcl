@@ -4,36 +4,36 @@
 //   A simple math library with a few basic functions
 //   Binds math.h too
 // ======================================
-define max(x: i32, y:i32) -> i32 {
+public define max(x: i32, y:i32) -> i32 {
     if x>y { return x; }
     return y;
 }
 
-define max(x: f32, y:f32) -> f32 {
+public define max(x: f32, y:f32) -> f32 {
     if x>y { return x; }
     return y;
 }
 
 
-define min(x: i32, y:i32) -> i32 {
+public define min(x: i32, y:i32) -> i32 {
     if x<y { return x; }
     return y;
 }
 
-define min(x: f32, y:f32) -> f32 {
+public define min(x: f32, y:f32) -> f32 {
     if x<y { return x; }
     return y;
 }
 
 
-define factorial(num: i32) -> i32{
+public define factorial(num: i32) -> i32{
     if num > 1 {
         return num * factorial(num-1);
     }
     return num;
 }
 
-define abs(x : i32) -> i32 {
+public define abs(x : i32) -> i32 {
     if x < 0 {
         return -1 * x;
     }
@@ -41,7 +41,7 @@ define abs(x : i32) -> i32 {
 }
 
 
-define sign(x : i32) -> i32 {
+public define sign(x : i32) -> i32 {
     if x < 0 {
         return -1;
     }
@@ -49,37 +49,37 @@ define sign(x : i32) -> i32 {
 }
 
 // math.h binding
-define acos(x: f64) -> f64;
-define asin(x: f64) -> f64;
-define atan(x: f64) -> f64;
-define acos(x: f64) -> f64;
-define atan2(x: f64) -> f64;
+public define acos(x: f64) -> f64;
+public define asin(x: f64) -> f64;
+public define atan(x: f64) -> f64;
+public define acos(x: f64) -> f64;
+public define atan2(x: f64) -> f64;
 
-define cos(x: f64) -> f64;
-define cosh(x: f64) -> f64;
+public define cos(x: f64) -> f64;
+public define cosh(x: f64) -> f64;
 
-define sin(x: f64) -> f64;
-define sinh(x: f64) -> f64;
+public define sin(x: f64) -> f64;
+public define sinh(x: f64) -> f64;
 
-define tanh(x: f64) -> f64;
-
-
-define exp(x: f64) -> f64;
-define ldexp(x: f64, y: i32) -> f64;
+public define tanh(x: f64) -> f64;
 
 
-define log(x: f64) -> f64;
-define log10(x: f64) -> f64;
-define pow(x: f64, y: f64) -> f64;
-define sqrt(x: f64) -> f64;
-define ceil(x: f64) -> f64;
-define fabs(x: f64) -> f64;
-define floor(x: f64) -> f64;
-define fmod(x: f64) -> f64;
+public define exp(x: f64) -> f64;
+public define ldexp(x: f64, y: i32) -> f64;
+
+
+public define log(x: f64) -> f64;
+public define log10(x: f64) -> f64;
+public define pow(x: f64, y: f64) -> f64;
+public define sqrt(x: f64) -> f64;
+public define ceil(x: f64) -> f64;
+public define fabs(x: f64) -> f64;
+public define floor(x: f64) -> f64;
+public define fmod(x: f64) -> f64;
 
 
 // must be defined after fpow due to binding issues :)
-define pow(x: i64, pow: i32) -> i64 {
+public define pow(x: i64, pow: i32) -> i64 {
     output = 1 as i64;
     for _ in 0..pow {
         output *= x;

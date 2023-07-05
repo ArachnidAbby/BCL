@@ -74,7 +74,8 @@ class OperationNode(ExpressionNode):
         elif self.op.name in ('not', 'and', 'or'):
             self.ret_type = Ast_Types.Integer_1()
         else:
-            self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type,
+            self.ret_type = (self.lhs.ret_type).get_op_return(func,
+                                                              self.op_type,
                                                               self.lhs,
                                                               self.rhs)
 

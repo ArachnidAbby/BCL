@@ -3,6 +3,7 @@ from typing import Self
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
+from Ast.Ast_Types import Type_Base
 from Ast.math import MemberAccess
 from Ast.reference import Ref
 from errors import error
@@ -13,7 +14,9 @@ class Function(Ast_Types.Type):
     of a type class.'''
 
     __slots__ = ('func_name', 'module', 'args', 'func_ret',
-                 'contains_ellipsis', "func_obj", "is_method")
+                 'contains_ellipsis', "func_obj", "is_method",
+                 "visibility")
+
     name = "Function"
     pass_as_ptr = False
     no_load = False
@@ -28,6 +31,7 @@ class Function(Ast_Types.Type):
         self.func_obj = func_obj
         self.contains_ellipsis = False
         self.is_method = False
+        self.visibility = super().visibility
 
     def add_return(self, ret: Ast_Types.Type):
         self.func_ret = ret
@@ -39,6 +43,10 @@ class Function(Ast_Types.Type):
 
     def set_method(self, method, parent):
         self.is_method = method
+        return self
+
+    def set_visibility(self, value):
+        self.visibility = value
         return self
 
     def get_ir_types(self):
@@ -72,7 +80,7 @@ class Function(Ast_Types.Type):
         return super().__neq__(other) and \
             other.func_name != self.func_name
 
-    def get_op_return(self, op, lhs, rhs):
+    def get_op_return(self, func, op, lhs, rhs):
         if op != "call":
             return
         # rhs is the argument tuple
@@ -157,25 +165,34 @@ class FunctionGroup(Ast_Types.Type):
         for func in self.versions:
             func.declare(module)
 
-    def get_op_return(self, op, lhs, rhs):
+    def get_op_return(self, func, op, lhs, rhs):
         if op != "call":
             return
         # rhs is the argument tuple
-        return self.get_function(lhs, rhs).func_ret
+        return self.get_function(func, lhs, rhs).func_ret
 
-    def get_function(self, lhs, args):
+    def get_function(self, func, lhs, args):
+        private_matches = 0
         for version in self.versions:
             if version.match_args(lhs, args):
+                if version.visibility != Type_Base.PUBLIC_VISIBILITY and \
+                        version.module.location != func.module.location:
+                    private_matches += 1
+                    continue
                 return version
-        self.print_call_error(args)
+        self.print_call_error(lhs, args, private_matches)
 
-    def print_call_error(self, rhs):
+    def print_call_error(self, lhs, rhs, private_matches):
+        if private_matches > 0:
+            error("A valid version of this function does exist for these " +
+                  "arguments, but it is private", line=lhs.position)
+
         error("Invalid Argument types for function group with \n" +
               f" name: {self.func_name}\n args: ({', '.join([str(x.ret_type) for x in rhs])})",
               line=rhs.position)
 
     def call(self, func, lhs, args: tuple):
-        return self.get_function(lhs, args).call(func, lhs, args)
+        return self.get_function(func, lhs, args).call(func, lhs, args)
 
     def assign(self, func, ptr, value, typ: Self, first_assignment=False):
         error("Variables cannot be set to a FunctionGroup", line=value.position)

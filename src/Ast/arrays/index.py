@@ -49,7 +49,7 @@ class VariableIndexRef(ExpressionNode):
             error(f"Type \"{str(self.varref.ret_type)}\" can only have " +
                   "literal indexes", line=self.ind.position)
 
-        op_return = self.varref.ret_type.get_op_return('ind', None, self.ind)
+        op_return = self.varref.ret_type.get_op_return(func, 'ind', None, self.ind)
         if op_return is not None:
             self.ret_type = op_return
         else:

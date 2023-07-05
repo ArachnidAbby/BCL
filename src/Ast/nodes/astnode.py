@@ -4,6 +4,11 @@ from Ast.nodes.commontypes import SrcPosition
 import errors
 
 
+class Modifiers:
+    VISIBILITY_PUBLIC = 0  # Make sure to update this in Type_Base when needed (yay circular imports.)
+    VISIBILITY_PRIVATE = 1
+
+
 class ASTNode:
     '''Most basic Ast-Node that all others inherit from.
     This just provides standardization between Ast-Nodes.
@@ -17,17 +22,29 @@ class ASTNode:
     * eval -- returns ir.Instruction object or None.
     This is used when construction final ir code.
     '''
-    __slots__ = ('_position')
+    __slots__ = ('_position', 'modifiers')
 
     is_operator: bool = False
     assignable: bool = False  # TODO: IMPLEMENT
     isconstant: bool = False
+    can_have_modifiers: bool = False
 
     # whether or not names can be registered under the node.
     is_namespace: bool = True
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self._position = position        # (line#, col#, len)
+        self.modifiers = {"visibility": Modifiers.VISIBILITY_PRIVATE}
+
+    @property
+    def visibility(self):
+        return self.modifiers["visibility"]
+
+    def set_modifier(self, value, category):
+        if not self.can_have_modifiers:
+            errors.error("Modifier cannot be applied to this node",
+                         line=self.position)
+        self.modifiers[category] = value
 
     def is_expression(self):
         '''check whether or not a node is an expression'''

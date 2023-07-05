@@ -10,19 +10,19 @@
 // compile-time checks. Be careful when passing things in.
 
 // EXTERNAL DEFINITIONS
-define printf(x: strlit, ...);
-define puts(data: strlit);
+public define printf(x: strlit, ...);
+public define puts(data: strlit);
 
 //  PRINTLN()
-define println(x: i32) {
+public define println(x: i32) {
     printf("%i\n", x);
 }
 
-define println(x: i64) {
+public define println(x: i64) {
     printf("%lld\n", x);
 }
 
-define println(x: bool) {
+public define println(x: bool) {
     if x {
         puts("true");
     } else {
@@ -30,33 +30,33 @@ define println(x: bool) {
     }
 }
 
-define println(x: f32) {
+public define println(x: f32) {
     printf("%F\n", x as f64);
 }
 
-define println(x: f64) {
+public define println(x: f64) {
     printf("%F\n", x);
 }
 
-define println(x: char) {
+public define println(x: char) {
     printf("%c\n", x);
 }
 
-define println(x: strlit) {
+public define println(x: strlit) {
     puts(x);
 }
 
-define println() {
+public define println() {
     puts("");
 }
 
 
 // PRINT()
-define print(x: i32) {
+public define print(x: i32) {
     printf("%i", x);
 }
 
-define print(x: bool) {
+public define print(x: bool) {
     if x {
         printf("%s", "true");
     } else {
@@ -64,30 +64,30 @@ define print(x: bool) {
     }
 }
 
-define print(x: f32) {
+public define print(x: f32) {
     printf("%f", x as f64);
 }
 
-define print(x: f64) {
+public define print(x: f64) {
     printf("%f", x);
 }
 
-define print(x: char) {
+public define print(x: char) {
     printf("%c", x);
 }
 
-define print(x: strlit) {
+public define print(x: strlit) {
     printf("%s", x);
 }
 
 
 // SLEEP FUNCTIONS
-define usleep(microsec: i32);
-define sleep(seconds: i32);
+public define usleep(microsec: i32);
+public define sleep(seconds: i32);
 
 // EXIT
-define exit(exit_code: i32);
-define exit();
+public define exit(exit_code: i32);
+public define exit();
 
 
 // DEBUGGING

@@ -41,8 +41,8 @@ class Integer_1(Type_Base.Type):
                 error(f"Cannot convert 'bool' to type '{typ}'",
                       line=orig.position)
 
-    def get_op_return(self, op: str, lhs, rhs):
-        if x := super().get_op_return(op, lhs, rhs):
+    def get_op_return(self, func, op: str, lhs, rhs):
+        if x := super().get_op_return(func, op, lhs, rhs):
             return x
         match op.lower():
             case 'sum' | 'sub' | 'mul' | 'div' | 'mod':

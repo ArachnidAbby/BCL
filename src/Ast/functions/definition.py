@@ -44,9 +44,11 @@ class FunctionDef(ASTNode):
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start")
 
+    can_have_modifiers = True
+
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
                  block: Block, module):
-        self._position = pos
+        super().__init__(pos)
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
 
@@ -226,7 +228,8 @@ class FunctionDef(ASTNode):
                                              self.function_ir, self.module)
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
-                       .set_method(self.is_method, parent)
+                       .set_method(self.is_method, parent) \
+                       .set_visibility(self.visibility)
 
         parent.create_function(self.func_name, function_object)
 

@@ -44,8 +44,8 @@ class Reference(Type_Base.Type):
         error("Pointer conversions are not supported due to unsafe behavior",
               line=orig.position)
 
-    def get_op_return(self, op: str, lhs, rhs):
-        return self.typ.get_op_return(op, lhs, rhs)
+    def get_op_return(self, func, op: str, lhs, rhs):
+        return self.typ.get_op_return(func, op, lhs, rhs)
 
     def get_member_info(self, lhs, rhs):
         return self.typ.get_member_info(lhs, rhs)

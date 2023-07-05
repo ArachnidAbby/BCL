@@ -59,7 +59,7 @@ class Parser(ParserBase):
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
             'as', 'for', 'in', 'struct', 'import', 'yield',
-            'enum'
+            'enum', 'public'
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
@@ -82,7 +82,8 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement,
+            "KEYWORD": (self.parse_visibility_modifiers,
+                        self.parse_return_statement,
                         self.parse_return_statement_empty,
                         self.parse_math,
                         self.parse_import_statment,
@@ -192,6 +193,16 @@ class Parser(ParserBase):
         self.consume(0, 3)
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False
+
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON")
+    def parse_visibility_modifiers(self):
+        '''parsing finished sets of curly braces into blocks'''
+        val = self.peek(1).value
+        val.set_modifier(Ast.nodes.astnode.Modifiers.VISIBILITY_PUBLIC,
+                         "visibility")
+        name = self.peek(1).name
+
+        self.replace(2, name, val)
 
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")

@@ -12,15 +12,15 @@ PRINTF_ARGS = ()
 EXIT_ARGS = (Ast_Types.Integer_32(),)
 
 
-def _get_function(module, name: str, args: tuple, pos):
-    func = module.get_global(name)
-    if func is None:
+def _get_function(func, name: str, args: tuple, pos):
+    function = func.module.get_global(name)
+    if function is None:
         errors.error(f"Could not get function {name}, hint: import stdlib",
                      line=pos)
     args_fixed = ParenthBlock(pos)
     for arg in args:
         args_fixed.children.append(arg)
-    return func.get_function(VariableRef(pos, name, None), args_fixed)
+    return function.get_function(func, VariableRef(pos, name, None), args_fixed)
 
 
 # TODO: MAKE BETTER
@@ -41,8 +41,8 @@ def over_index_exception(func, name, index, pos):
     printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
     exit_args = (Ast_Types.Integer_32(),)
 
-    printf = _get_function(func.module, "printf", printf_args, pos)
-    exit_func = _get_function(func.module, "exit", exit_args, pos)
+    printf = _get_function(func, "printf", printf_args, pos)
+    exit_func = _get_function(func, "exit", exit_args, pos)
 
     func.builder.call(printf.func_obj, [fmt_bitcast.eval(func), index])
     func.builder.call(exit_func.func_obj,
@@ -58,8 +58,8 @@ def no_next_item(func, name):
     printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
     exit_args = (Ast_Types.Integer_32(),)
 
-    printf = _get_function(func.module, "printf", printf_args, SrcPosition.invalid())
-    exit_func = _get_function(func.module, "exit", exit_args, SrcPosition.invalid())
+    printf = _get_function(func, "printf", printf_args, SrcPosition.invalid())
+    exit_func = _get_function(func, "exit", exit_args, SrcPosition.invalid())
 
     func.builder.call(printf.func_obj, [fmt_bitcast.eval(func)])
     func.builder.call(exit_func.func_obj,

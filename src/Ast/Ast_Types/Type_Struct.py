@@ -132,7 +132,7 @@ class Struct(Ast_Types.Type):
         args.in_func_call = True
         if name not in self.members.keys():
             error(f"No function \"{name}\" Found", line=lhs.position)
-        return self.members[name].get_function(mem_access, args)
+        return self.members[name].get_function(self, mem_access, args)
 
     def call_func(self, func, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
@@ -143,7 +143,7 @@ class Struct(Ast_Types.Type):
         args.pre_eval(func)
         return self.members[name].call(func, mem_access, args)
 
-    def get_op_return(self, op: str, lhs, rhs):
+    def get_op_return(self, func, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
         self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
