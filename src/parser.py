@@ -38,6 +38,8 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("$PI", 0))
         ParserBase.CREATED_RULES.append(("CLOSE_SQUARE|expr", -1))
         ParserBase.CREATED_RULES.append(("$not expr", 0))
+        ParserBase.CREATED_RULES.append(("BNOT expr", 0))
+        ParserBase.CREATED_RULES.append(("expr AMP expr", 0))
         ParserBase.CREATED_RULES.append(("expr ISUM expr SEMI_COLON", 0))
         ParserBase.CREATED_RULES.append(("expr ISUB expr SEMI_COLON", 0))
         ParserBase.CREATED_RULES.append(("expr IMUL expr SEMI_COLON", 0))
@@ -64,7 +66,8 @@ class Parser(ParserBase):
                                      "expr", "OPEN_SQUARE", "paren",
                                      "NAMEINDEX")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
-                              "COLON", "DOUBLE_DOT")
+                              "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
+                              "BXOR", "BOR", "BNOT")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
@@ -106,7 +109,8 @@ class Parser(ParserBase):
             "paren": (self.parse_member_access,),
             "OPEN_SQUARE": (self.parse_array_literal_multi_element,
                             self.parse_array_literal,),
-            "AMP": (self.parse_varref, )
+            "AMP": (self.parse_varref, ),
+            "BNOT": (self.parse_math, )
         }
 
         self.blocks = deque(((None, 0),))
@@ -581,7 +585,7 @@ class Parser(ParserBase):
                                         self.blocks[-1][0])
         self.replace(1, "expr", var)
 
-    @rule(0, "AMP expr !OPEN_SQUARE")
+    @rule(-1, "!expr AMP expr !OPEN_SQUARE")
     def parse_varref(self):
         var = self.peek(1).value
         typ = Ast.reference.Ref(self.peek(0).pos, var)
@@ -641,9 +645,16 @@ class Parser(ParserBase):
                                         SrcPosition.invalid()))
             self.replace(2, "expr", op)
 
+        if self.check_group_lookahead(0, 'BNOT expr') and \
+                self.peek_safe(2).name != "DOUBLE_DOT":
+            op = Ast.math.ops['bitnot'](self.peek(0).pos, self.peek(1).value,
+                                        Ast.nodes.ExpressionNode(
+                                           SrcPosition.invalid()))
+            self.replace(2, "expr", op)
+
         if self.peek_safe(3).name in self.standard_expr_checks:
             return
-        # todo: add more operations
+
         # * Parse expressions
         if self.check_group(0, "expr ISUM expr SEMI_COLON"):
             op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,
@@ -666,6 +677,11 @@ class Parser(ParserBase):
                 self.peek(1).name in Ast.math.ops.keys():
             op_str = self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value,
+                                      self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr AMP expr'):
+            op = Ast.math.ops['band'](self.peek(0).pos, self.peek(0).value,
                                       self.peek(2).value)
             self.replace(3, "expr", op)
 

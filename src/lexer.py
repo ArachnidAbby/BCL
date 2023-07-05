@@ -44,8 +44,17 @@ class Lexer():
         self.lexer.add('NEQ', r'\!\=')
         self.lexer.add('GEQ', r'\>\=')
         self.lexer.add('LEQ', r'\<\=')
+        # bitwise ops
+        self.lexer.add('LSHIFT', r'\<\<')
+        self.lexer.add('RSHIFT', r'\>\>')
+        self.lexer.add('BXOR', r'\^')
+        self.lexer.add('BOR', r'\|')
+        self.lexer.add('BNOT', r'\~')
+
+        # Comp continue
         self.lexer.add('GR', r'\>')
         self.lexer.add('LE', r'\<')
+
         self.lexer.add('AMP', r'\&')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings

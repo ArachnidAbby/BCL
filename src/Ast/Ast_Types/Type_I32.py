@@ -8,7 +8,6 @@ from errors import error
 
 from . import Type_Base
 
-
 # TODO: Refactor this class name
 # Its a pain in the ass so do it when there is downtime.
 class Integer_32(Type_Base.Type):
@@ -26,6 +25,15 @@ class Integer_32(Type_Base.Type):
 
     def __call__(self):
         return self
+
+    def bitwise_op_check(self, func, other, symbol, convert=True):
+        if not isinstance(other.ret_type, Integer_32):
+            error(f"Right hand side of '{symbol}'operation must be an integer",
+                  line=other.position)
+        if not convert:
+            return other.eval(func)
+
+        return other.ret_type.convert_to(func, other, self)
 
     def convert_from(self, func, typ, previous):
         if typ.name in ('f32', 'f64'):
@@ -79,6 +87,8 @@ class Integer_32(Type_Base.Type):
                 return definedtypes.get_std_ret_type(lhs, rhs)
             case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr':
                 return Ast_Types.Type_Bool.Integer_1()
+            case 'lshift' | 'rshift' | 'bor' | 'bxor' | 'band' | 'bitnot':
+                return lhs.ret_type
 
     @staticmethod
     def convert_args(func, lhs, rhs) -> tuple:
@@ -114,6 +124,35 @@ class Integer_32(Type_Base.Type):
             return typ.div(func, lhs, rhs)
         lhs, rhs = Integer_32.convert_args(func, lhs, rhs)
         return func.builder.sdiv(lhs, rhs)
+
+    def lshift(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<', convert=False)
+        lhs_eval = lhs.eval(func)
+        return func.builder.shl(lhs_eval, rhs_eval)
+
+    def rshift(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<', convert=False)
+        lhs_eval = lhs.eval(func)
+        return func.builder.lshr(lhs_eval, rhs_eval)
+
+    def bit_or(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '|')
+        lhs_eval = lhs.eval(func)
+        return func.builder.or_(lhs_eval, rhs_eval)
+
+    def bit_xor(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '^')
+        lhs_eval = lhs.eval(func)
+        return func.builder.xor(lhs_eval, rhs_eval)
+
+    def bit_and(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '&')
+        lhs_eval = lhs.eval(func)
+        return func.builder.and_(lhs_eval, rhs_eval)
+
+    def bit_not(self, func, lhs, rhs):
+        lhs_eval = lhs.eval(func)
+        return func.builder.not_(lhs_eval)
 
     def mod(self, func, lhs, rhs):
         typ = definedtypes.get_std_ret_type(lhs, rhs)

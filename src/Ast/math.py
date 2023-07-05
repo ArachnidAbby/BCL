@@ -298,6 +298,31 @@ def pow(self, func, lhs, rhs):
     return (lhs.ret_type).pow(func, lhs, rhs)
 
 
+@operator(0, "Lshift")
+def lshift(self, func, lhs, rhs):
+    return (lhs.ret_type).lshift(func, lhs, rhs)
+
+@operator(0, "Rshift")
+def rshift(self, func, lhs, rhs):
+    return (lhs.ret_type).rshift(func, lhs, rhs)
+
+@operator(0, "Bor")
+def bor(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_or(func, lhs, rhs)
+
+@operator(0, "Bxor")
+def bxor(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_xor(func, lhs, rhs)
+
+@operator(0, "Band")
+def band(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_and(func, lhs, rhs)
+
+@operator(0, "bitnot")
+def bnot(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_not(func, lhs, rhs)
+
+
 
 @operator(1, "Sum")
 def sum(self, func, lhs, rhs):
@@ -326,49 +351,49 @@ def mod(self, func, lhs, rhs):
 # * comparators
 
 
-@operator(0, "eq")
+@operator(-1, "eq")
 def eq(self, func, lhs, rhs):
     return (lhs.ret_type).eq(func, lhs, rhs)
 
 
-@operator(0, "neq")
+@operator(-1, "neq")
 def neq(self, func, lhs, rhs):
     return (lhs.ret_type).neq(func, lhs, rhs)
 
 
-@operator(0, "le")
+@operator(-1, "le")
 def le(self, func, lhs, rhs):
     return (lhs.ret_type).le(func, lhs, rhs)
 
 
-@operator(0, "leq")
+@operator(-1, "leq")
 def leq(self, func, lhs, rhs):
     return (lhs.ret_type).leq(func, lhs, rhs)
 
 
-@operator(0, "gr")
+@operator(-1, "gr")
 def gr(self, func, lhs, rhs):
     return (lhs.ret_type).gr(func, lhs, rhs)
 
 
-@operator(0, "geq")
+@operator(-1, "geq")
 def geq(self, func, lhs, rhs):
     return (lhs.ret_type).geq(func, lhs, rhs)
 
 # * boolean ops
 
 
-@operator(-3, "or")
+@operator(-4, "or")
 def _or(self, func, lhs, rhs):
     return (lhs.ret_type)._or(func, lhs, rhs)
 
 
-@operator(-2, "and")
+@operator(-3, "and")
 def _and(self, func, lhs, rhs):
     return (lhs.ret_type)._and(func, lhs, rhs)
 
 
-@operator(-1, "not")
+@operator(-2, "not")
 def _not(self, func, lhs, rhs):
     return (lhs.ret_type)._not(func, lhs)
 

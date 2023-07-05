@@ -138,6 +138,8 @@ enum TestEnum {
     SEVEN: 11;
 }
 
+import test;
+
 define main() {
     println(TestEnum::ONE as i32);
     println(TestEnum::TWO as i32);
@@ -146,6 +148,17 @@ define main() {
     println(TestEnum::SIX as i32);
     println(TestEnum::SEVEN as i32);
 
+    println();
+    test::assert((12<<1)==24, "Right shift is broken");
+    test::assert((12<<1>>1)==12, "Right + Left shift doesn't yield original value?");
+    test::assert((1u8|1u8)==1u8, "Bitwise or is broken");
+    test::assert((3u8^1u8)==2u8, "Bitwise xor is broken");
+    test::assert((3u8&1u8)==1u8, "Bitwise and is broken");
+    test::assert((~1u8)==254, "Bitwise not is broken");
+
+
+
+    println();
 
 
     define create_data(c: i32) -> i32 {

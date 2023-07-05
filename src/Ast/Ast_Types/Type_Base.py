@@ -102,6 +102,30 @@ class Type:
         error(f"Operator '/' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
+    def lshift(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '<<' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def rshift(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '>>' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_xor(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '^' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_or(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '|' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_and(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '&' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def div(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '/' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
     def mod(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operator '%' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
