@@ -63,7 +63,7 @@ define get_neighbors(board: char[8][8], x: i32, y: i32) -> i32{
     return count;
 }
 
-define get_new(original: char, neighbors: i32) -> char {
+public define get_new(original: char, neighbors: i32) -> char {
     if original == '^' {
         return '*';
     } else if original == '*' {

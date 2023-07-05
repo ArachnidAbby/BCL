@@ -8,7 +8,7 @@ struct test {
 
 define strnlen(str: strlit, max: i32) -> i32;
 
-define poggers() {
+public define poggers() {
     println("SHOG");
     println("SOGGERS".strnlen(123123));
     println(get_new('#',2));
