@@ -63,8 +63,14 @@ conversion_priority_raw = [
     Type(),
     Integer_1(),
     Char(),
-    Integer_32(),
+    types_dict['i8'],
+    types_dict['i16'],
+    types_dict['i32'],
     types_dict['i64'],
+    types_dict['u8'],
+    types_dict['u16'],
+    types_dict['u32'],
+    types_dict['u64'],
     Float_32(),
     Float_32(name='f64', typ=ir.DoubleType())
 ]  # the further down the list this is, the higher priority
