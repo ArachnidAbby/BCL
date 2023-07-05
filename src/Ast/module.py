@@ -34,9 +34,11 @@ class NamespaceInfo(NamedTuple):
 class Module(ASTNode):
     __slots__ = ('location', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
-                 'evaled', 'ir_saved', 'types', 'post_parsed')
+                 'evaled', 'ir_saved', 'types', 'post_parsed',
+                 'scheduled_events', 'ran_schedule')
 
     is_namespace = True
+    ENUM_SCHEDULE_ID = 0
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -54,6 +56,8 @@ class Module(ASTNode):
         self.post_parsed = False
         self.evaled = False
         self.ir_saved = False
+        self.scheduled_events = [[], [], []]
+        self.ran_schedule = False
 
         modules[name] = self
 
@@ -64,6 +68,23 @@ class Module(ASTNode):
         for imp in self.imports.values():
             if not imp.obj.parsed:
                 imp.obj.parse()
+
+    def add_enum_to_schedule(self, enum_def):
+        self.scheduled_events[self.ENUM_SCHEDULE_ID].append(enum_def)
+
+    def do_scheduled(self):
+        if self.ran_schedule:
+            return
+
+        for bucket in self.scheduled_events:
+            for event in bucket:
+                event.scheduled(self)
+
+        self.ran_schedule = True
+
+        for imp in self.imports.values():
+            if not imp.obj.ran_schedule:
+                imp.obj.do_scheduled()
 
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''

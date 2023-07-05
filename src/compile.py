@@ -70,6 +70,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
                          line=pos, full_line=True)
 
     with timingContext('module created'):
+        module.do_scheduled()
         module.post_parse(None)
         module.pre_eval(None)
         module.eval(None)

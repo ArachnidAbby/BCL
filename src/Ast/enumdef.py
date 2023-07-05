@@ -33,8 +33,9 @@ class Definition(ASTNode):
 
         self.enum_type = EnumType(name, module.mod_name, pos, members_list)
         module.create_type(self.enum_name, self.enum_type)
+        module.add_enum_to_schedule(self)
 
-    def post_parse(self, parent):
+    def scheduled(self, parent):
         members_list = []
 
         for member in self.members[0].children:
