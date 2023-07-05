@@ -138,6 +138,12 @@ enum TestEnum {
     SEVEN: 11;
 }
 
+enum Flags {
+    A: 1,
+    B: 2,
+    C: 3;
+}
+
 import test;
 
 define main() {
@@ -148,16 +154,36 @@ define main() {
     println(TestEnum::SIX as i32);
     println(TestEnum::SEVEN as i32);
 
+    println("--------------------------------");
+    println("Testing bitwise ops on integers");
     println();
     test::assert((12<<1)==24, "Right shift is broken");
+    test::assert((12>>1)==6, "Left shift is broken");
     test::assert((12<<1>>1)==12, "Right + Left shift doesn't yield original value?");
     test::assert((1u8|1u8)==1u8, "Bitwise or is broken");
     test::assert((3u8^1u8)==2u8, "Bitwise xor is broken");
     test::assert((3u8&1u8)==1u8, "Bitwise and is broken");
     test::assert((~1u8)==254, "Bitwise not is broken");
+    println();
+    println("SUCCESS");
+    println("--------------------------------");
+    println("Testing bitwise ops on enums");
+    println();
+
+    test::assert((Flags::A<<1)==2, "Left shift is broken");
+    test::assert((Flags::B>>1)==1, "Right shift is broken");
+    test::assert((Flags::A|Flags::B)==3u8, "Bitwise or is broken");
+    test::assert((Flags::A|5)==5u8, "Bitwise or is broken (2)");
+    test::assert((Flags::A^Flags::C)==2u8, "Bitwise xor is broken");
+    test::assert((Flags::A^3)==2u8, "Bitwise xor is broken (2)");
+    test::assert((Flags::A&Flags::C)==1u8, "Bitwise and is broken");
+    test::assert((Flags::A&3)==1u8, "Bitwise and is broken (2)");
+    test::assert((~Flags::A)==254u8, "Bitwise not is broken");
 
 
-
+    println();
+    println("SUCCESS");
+    println("--------------------------------");
     println();
 
 

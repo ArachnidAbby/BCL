@@ -26,12 +26,10 @@ class Integer_32(Type_Base.Type):
     def __call__(self):
         return self
 
-    def bitwise_op_check(self, func, other, symbol, convert=True):
+    def bitwise_op_check(self, func, other, symbol):
         if not isinstance(other.ret_type, Integer_32):
             error(f"Right hand side of '{symbol}'operation must be an integer",
                   line=other.position)
-        if not convert:
-            return other.eval(func)
 
         return other.ret_type.convert_to(func, other, self)
 
@@ -126,12 +124,12 @@ class Integer_32(Type_Base.Type):
         return func.builder.sdiv(lhs, rhs)
 
     def lshift(self, func, lhs, rhs):
-        rhs_eval = self.bitwise_op_check(func, rhs, '<<', convert=False)
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<')
         lhs_eval = lhs.eval(func)
         return func.builder.shl(lhs_eval, rhs_eval)
 
     def rshift(self, func, lhs, rhs):
-        rhs_eval = self.bitwise_op_check(func, rhs, '<<', convert=False)
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<')
         lhs_eval = lhs.eval(func)
         return func.builder.lshr(lhs_eval, rhs_eval)
 

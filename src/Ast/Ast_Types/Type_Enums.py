@@ -50,6 +50,16 @@ class EnumType(Type):
                              line=val_pos)
             self.members[mem_name] = None
 
+    def bitwise_op_check(self, func, other, symbol):
+        if not isinstance(other.ret_type, Integer_32) \
+                and other.ret_type != self:
+            errors.error(f"Right hand side of '{symbol}'operation must be an integer or '{self}'",
+                  line=other.position)
+
+        i_type = Integer_32(size=self.bitsize, name=f"u{self.bitsize}",
+                            signed=False)
+        return other.ret_type.convert_to(func, other, i_type)
+
     def create_values(self, func, members: list[tuple[str, None | int, "SrcPosition"]], pos):
         max_size = 0
         last_num = 0
@@ -100,6 +110,9 @@ class EnumType(Type):
         match op.lower():
             case 'eq' | 'neq':
                 return Ast_Types.Type_Bool.Integer_1()
+            # bitwise ops supported because I like flags
+            case 'lshift' | 'rshift' | 'bor' | 'bxor' | 'band' | 'bitnot':
+                return Integer_32()
 
     def eq(self, func, lhs, rhs):
         if rhs.ret_type != self:
@@ -114,6 +127,35 @@ class EnumType(Type):
                          f"to \"{self}\" not \"{rhs.ret_type}\"",
                          line=rhs.position)
         return func.builder.icmp_signed('!=', lhs.eval(func), rhs.eval(func))
+
+    def lshift(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<')
+        lhs_eval = lhs.eval(func)
+        return func.builder.shl(lhs_eval, rhs_eval)
+
+    def rshift(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '<<')
+        lhs_eval = lhs.eval(func)
+        return func.builder.lshr(lhs_eval, rhs_eval)
+
+    def bit_or(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '|')
+        lhs_eval = lhs.eval(func)
+        return func.builder.or_(lhs_eval, rhs_eval)
+
+    def bit_xor(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '^')
+        lhs_eval = lhs.eval(func)
+        return func.builder.xor(lhs_eval, rhs_eval)
+
+    def bit_and(self, func, lhs, rhs):
+        rhs_eval = self.bitwise_op_check(func, rhs, '&')
+        lhs_eval = lhs.eval(func)
+        return func.builder.and_(lhs_eval, rhs_eval)
+
+    def bit_not(self, func, lhs, rhs):
+        lhs_eval = lhs.eval(func)
+        return func.builder.not_(lhs_eval)
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum_name == other.enum_name \
