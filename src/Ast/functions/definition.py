@@ -122,6 +122,7 @@ class FunctionDef(ASTNode):
         if self.is_method:
             args.children[0] = self.add_method_arg(args.children[0], parent)
         for arg in args:
+            arg.ensure_unmodified()
             self.args[arg.key.var_name] = \
                 [None, arg.get_type(self), True]  # type: ignore
             if arg.get_type(self).pass_as_ptr:

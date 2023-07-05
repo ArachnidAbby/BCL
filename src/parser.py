@@ -53,6 +53,8 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("SUB", 0))
         ParserBase.CREATED_RULES.append(("SUM", 0))
         ParserBase.CREATED_RULES.append(("statement_list|expr_list", 1))
+        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef", 2))
+
 
         super().__init__(*args, **kwargs)
         self.keywords = (
@@ -194,7 +196,7 @@ class Parser(ParserBase):
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False
 
-    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef")
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef|^|COMMA|CLOSE_PAREN")
     def parse_visibility_modifiers(self):
         '''parsing finished sets of curly braces into blocks'''
         val = self.peek(1).value

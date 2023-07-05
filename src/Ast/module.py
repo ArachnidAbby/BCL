@@ -245,6 +245,10 @@ class Module(ASTNode):
                 mod.obj.post_parse(mod)
                 mod.obj.post_parsed = True
 
+        for child in reversed(self.children):
+            if child.name == "EOF":
+                self.children.pop(-1)
+
         for c, child in enumerate(self.children):
             if not child.completed:
                 self.syntax_error_information(child, c)

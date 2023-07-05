@@ -6,7 +6,7 @@ from Ast import Ast_Types
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock, Block
 from Ast.variables.reference import VariableRef
-from Ast.nodes.commontypes import MemberInfo
+from Ast.nodes.commontypes import MemberInfo, Modifiers
 from Ast.reference import Ref
 from errors import error
 import Ast.math
@@ -39,7 +39,7 @@ class Struct(Ast_Types.Type):
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
-                 'ir_type', 'module', 'visibility')
+                 'ir_type', 'module', 'visibility', 'can_create_literal')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -49,10 +49,11 @@ class Struct(Ast_Types.Type):
     def __init__(self, name: str, members: list[KeyValuePair], module):
         self.struct_name = name
         self.raw_members = members
-        self.members: dict[str, Ast_Types.Type] = {}
+        self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}  # bool "is_public"
         self.member_indexs = []
         self.member_index_search = {}
         self.returnable = True
+        self.can_create_literal = True
         for c, member in enumerate(members):
 
             # populate member lists
@@ -70,7 +71,11 @@ class Struct(Ast_Types.Type):
         for mem_name in self.members.keys():
             if mem_name != name:
                 continue
-            val = self.members[mem_name]
+            val = self.members[mem_name][0]
+            vis = self.members[mem_name][1]
+            if not vis:
+                error("Member is private", line=pos)
+
             if isinstance(val, Ast_Types.FunctionGroup) and not val.is_method:
                 return val
 
@@ -95,13 +100,21 @@ class Struct(Ast_Types.Type):
                 self.returnable = False
 
             member_name = member.key.var_name
-            self.members[member_name] = member.get_type(func)
-        self.ir_type.set_body(*[x.ir_type for x in self.members.values()])
+
+            if member.visibility == Modifiers.VISIBILITY_PRIVATE \
+                    and self.visibility == Modifiers.VISIBILITY_PUBLIC:
+                self.can_create_literal = False
+
+            vis = member.visibility == Modifiers.VISIBILITY_PUBLIC
+            self.members[member_name] = (member.get_type(func), vis)
+
+
+        self.ir_type.set_body(*[x[0].ir_type for x in self.members.values()])
 
     def create_function(self, name: str, func_typ):
         if name not in self.members.keys():
-            self.members[name] = Ast_Types.FunctionGroup(name, self.module)
-        group = self.members[name]
+            self.members[name] = (Ast_Types.FunctionGroup(name, self.module), True)
+        group = self.members[name][0]
         group.add_function(func_typ)  # type: ignore
         return group
 
@@ -136,7 +149,7 @@ class Struct(Ast_Types.Type):
         args.in_func_call = True
         if name not in self.members.keys():
             error(f"No function \"{name}\" Found", line=lhs.position)
-        return self.members[name].get_function(self, mem_access, args)
+        return self.members[name][0].get_function(self, mem_access, args)
 
     def call_func(self, func, name, lhs, rhs):
         args = ParenthBlock(rhs.position)
@@ -145,7 +158,7 @@ class Struct(Ast_Types.Type):
         args.children = [rhs]
         args.in_func_call = True
         args.pre_eval(func)
-        return self.members[name].call(func, mem_access, args)
+        return self.members[name][0].call(func, mem_access, args)
 
     def get_op_return(self, func, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
@@ -199,15 +212,15 @@ class Struct(Ast_Types.Type):
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
             error("member not found!", line=rhs.position)
-        typ = self.members[rhs.var_name]
+        typ = self.members[rhs.var_name][0]
         is_ptr = not isinstance(typ, Ast_Types.FunctionGroup)
         return MemberInfo(not typ.read_only, is_ptr, typ)
 
     def get_member(self, func, lhs,
                    member_name_in: "Ast.variable.VariableRef"):
         member_name = member_name_in.var_name
-        if isinstance(self.members[member_name], Ast_Types.FunctionGroup):
-            return self.members[member_name]
+        if isinstance(self.members[member_name][0], Ast_Types.FunctionGroup):
+            return self.members[member_name][0]
         member_index = self.member_index_search[member_name]
         # ^ no need to check if it exists.
         # We do this when getting the return type

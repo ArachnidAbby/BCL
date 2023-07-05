@@ -3,6 +3,7 @@ from llvmlite import ir  # type: ignore
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
+from Ast.Ast_Types.Type_Struct import Struct
 
 
 class StructLiteral(ExpressionNode):
@@ -16,6 +17,15 @@ class StructLiteral(ExpressionNode):
 
     def pre_eval(self, func):
         self.ret_type = self.struct_name.as_type_reference(func)
+        if not isinstance(self.ret_type, Struct):
+            errors.error("Type is not a structure",
+                         line=self.position)
+
+        if not self.ret_type.can_create_literal and func.module.location != self.ret_type.module.location:
+            errors.error("Type has private members, cannot " +
+                         "create a struct literal from this type",
+                         line=self.position)
+
         # self.members.pre_eval(func)
         for child in self.members:
             if not isinstance(child, KeyValuePair):
@@ -26,7 +36,7 @@ class StructLiteral(ExpressionNode):
                 errors.error(f"{self.ret_type} has no member " +
                              f"\"{child.key.var_name}\"",
                              line=child.key.position);
-            if child.value.ret_type != self.ret_type.members[name]:
+            if child.value.ret_type != self.ret_type.members[name][0]:
                 errors.error(f"Expected type {self.ret_type.members[name]} " +
                              f"got {child.value.ret_type}",
                              line=child.value.position)

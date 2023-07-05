@@ -1,14 +1,16 @@
 from typing import Any
 
 from Ast.nodes import ASTNode
-from Ast.nodes.commontypes import SrcPosition
-
+from Ast.nodes.commontypes import SrcPosition, Modifiers
+import errors
 
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value')
     # type = NodeTypes.KV_PAIR
     # name = "kv_pair"
+
+    can_have_modifiers = True
 
     def __init__(self, pos: SrcPosition, k, v):
         super().__init__(pos)
@@ -17,6 +19,10 @@ class KeyValuePair(ASTNode):
 
     def validate_type(self, func):  # TODO: REMOVE, DUPLICATE
         return self.value.as_type_reference(func)
+
+    def ensure_unmodified(self):
+        if self.visibility == Modifiers.VISIBILITY_PUBLIC:
+            errors.error("Cannot have visibility modifier", line=self.position)
 
     def get_type(self, func) -> Any:
         '''Get and validate type'''

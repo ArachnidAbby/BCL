@@ -44,7 +44,7 @@ class ParserBase:
     '''
 
     CREATED_RULES: list[tuple[str, int]] = []
-    compiled_rules: dict[str, tuple] = {}
+    compiled_rules: dict[str, tuple] = {} # []
 
     def __init__(self, lex_stream, module):
         self._tokens = []
@@ -79,6 +79,8 @@ class ParserBase:
         elif '|' in wanting:  # `or` operation
             code = [self.single_compile(y, pos) for y in wanting.split('|')]
             return "("+(' or '.join(code))+")"
+        elif '^' in wanting:  # `or` operation
+            return f'input[{pos}].name=="EOF"'
         else:
             return f'input[{pos}].name=="{wanting}"'
 
@@ -135,7 +137,7 @@ class ParserBase:
 
     def isEOF(self, index) -> bool:
         '''Checks if the End-Of-File has been reached'''
-        return self.EOS and index >= (len(self._tokens))
+        return self.EOS and (index >= (len(self._tokens)) or self.peek(0).name == "EOF")
 
     def move_cursor(self, index: int = 1):
         '''Moves the cursor unless `!self.doMove` '''
@@ -193,7 +195,12 @@ class ParserBase:
             self._tokens.append(fintok)
             if c == amount-1:
                 return True
+
         self.EOS = True
+        if len(self._tokens)-self._cursor < MAX_SIZE:
+            fintok = ParserToken("EOF", "EOF", SrcPosition.invalid(), False)
+            self._tokens.append(fintok)
+            return True
         return False
 
     def peek_safe(self, index: int) -> ParserToken:
