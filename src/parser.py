@@ -67,7 +67,7 @@ class Parser(ParserBase):
                                      "NAMEINDEX")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
-                              "BXOR", "BOR", "BNOT")
+                              "BXOR", "BOR", "BNOT", "AMP")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),

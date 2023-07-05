@@ -76,7 +76,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] function returns
 - [x] function arguments
 - [x] variable declaration and assignment
-- [x] most Operators (excluding bitwise ops. Will be added in 1-2 updates.)
+- [x] most Operators (now with 100% more bitwise ops)
 - [x] boolean operators
 - [x] if and else statements
 - [x] while loops
@@ -109,7 +109,8 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] stdio library (VERY WIP)
 - [ ] run-time errors (Error type for errors as values.)
 - [ ] Option type
-- [ ] namespaces & enums
+- [x] namespaces
+- [x] enums
 
 
 # VSCode highlighting
