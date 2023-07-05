@@ -1,0 +1,23 @@
+// ==================================
+// Created: 07/04/2023
+// description:
+//   Contains basic testing stuff that is helpful.
+//   Stuff like `assert`
+// ===================================
+
+import stdlib::*;
+
+define assert(cond: bool, on_error: strlit) {
+    if not cond {
+        print("\u001b[31m");
+        println("Assertion failed:");
+        print("\t");
+        println(on_error);
+        print("\u001b[0m");
+        exit(2);
+    }
+}
+
+define assert(cond: bool) {
+    assert(cond, "N/A");
+}
