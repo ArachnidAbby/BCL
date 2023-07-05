@@ -46,11 +46,11 @@ class BCLLexer(RegexLexer):
             (r'\d+', Number),
             (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)',
              Keyword.Reserved),
-            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|' +
+            (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
-            (r'\s+(or)|(and)|(not)|(in)\s+', Operator.Word),
+            (r'\s+(or)|(and)|(not)|(in)|(as)\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&]', Operator),
-            (r'[\{\};\(\)\:\[\]\,(\-\>)]', Punctuation),
+            (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
             (r'//.*$', Comment.Single),
             (r'\w[\w\d]*', Name.Other)
