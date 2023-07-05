@@ -3,6 +3,7 @@ from llvmlite import ir
 from Ast.Ast_Types.Type_I32 import Integer_32
 import errors
 from Ast.literals.numberliteral import Literal
+from Ast import Ast_Types
 
 # Found using https://mathiasbynens.be/demo/integer-range
 # because I'm lazy
@@ -90,6 +91,26 @@ class EnumType(Type):
 
         errors.error(f"Cannot convert {str(self)} to {str(typ)}",
                      line=orig.position)
+
+    def get_op_return(self, op: str, lhs, rhs):
+        self._simple_call_op_error_check(op, lhs, rhs)
+        match op.lower():
+            case 'eq' | 'neq':
+                return Ast_Types.Type_Bool.Integer_1()
+
+    def eq(self, func, lhs, rhs):
+        if rhs.ret_type != self:
+            errors.error(f"Can only compare \"{self}\" " +
+                         f"to \"{self}\" not \"{rhs.ret_type}\"",
+                         line=rhs.position)
+        return func.builder.icmp_signed('==', lhs.eval(func), rhs.eval(func))
+
+    def neq(self, func, lhs, rhs):
+        if rhs.ret_type != self:
+            errors.error(f"Can only compare \"{self}\" " +
+                         f"to \"{self}\" not \"{rhs.ret_type}\"",
+                         line=rhs.position)
+        return func.builder.icmp_signed('!=', lhs.eval(func), rhs.eval(func))
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum_name == other.enum_name \
