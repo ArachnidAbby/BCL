@@ -96,6 +96,12 @@ class OperationNode(ExpressionNode):
         else:
             self.pre_eval_math(func)
 
+    def get_ptr(self, func):
+        if self.op.name == 'as' and isinstance(self.ret_type, Ast_Types.Reference):
+            return self.eval(func)
+        else:
+            return super().get_ptr(func)
+
     def eval(self, func):
         if not self.shunted:
             return RPN_to_node(shunt(self)).eval(func)
@@ -282,7 +288,8 @@ def member_access(self, func, lhs, rhs):
 
 @operator(10, "as", pre_eval_right=False)
 def _as(self, func, lhs, rhs):
-    return (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
+    out = (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
+    return out
 
 
 # TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
