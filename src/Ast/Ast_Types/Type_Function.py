@@ -7,6 +7,7 @@ from Ast.Ast_Types import Type_Base
 from Ast.math import MemberAccess
 from Ast.reference import Ref
 from errors import error
+from Ast.nodes.commontypes import Modifiers
 
 
 class Function(Ast_Types.Type):
@@ -175,7 +176,7 @@ class FunctionGroup(Ast_Types.Type):
         private_matches = 0
         for version in self.versions:
             if version.match_args(lhs, args):
-                if version.visibility != Type_Base.PUBLIC_VISIBILITY and \
+                if version.visibility != Modifiers.VISIBILITY_PUBLIC and \
                         version.module.location != func.module.location:
                     private_matches += 1
                     continue

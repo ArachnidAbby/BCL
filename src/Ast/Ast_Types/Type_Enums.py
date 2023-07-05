@@ -35,7 +35,8 @@ int_types = {
 
 
 class EnumType(Type):
-    __slots__ = ("ir_type", "enum_name", "members", "namespace", "bitsize")
+    __slots__ = ("ir_type", "enum_name", "members", "namespace", "bitsize",
+                 "visibility")
 
     name = "Enum"
 
@@ -49,6 +50,11 @@ class EnumType(Type):
                 errors.error("Variant already defined",
                              line=val_pos)
             self.members[mem_name] = None
+
+        self.visibility = super().visibility
+
+    def set_visibility(self, value):
+        self.visibility = value
 
     def bitwise_op_check(self, func, other, symbol):
         if not isinstance(other.ret_type, Integer_32) \

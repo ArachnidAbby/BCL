@@ -10,6 +10,8 @@ import errors
 class Definition(ASTNode):
     __slots__ = ('enum_name', 'members', 'enum_type', 'module')
 
+    can_have_modifiers = True
+
     def __init__(self, pos, name, members, module):
         super().__init__(pos)
 
@@ -36,6 +38,7 @@ class Definition(ASTNode):
         module.add_enum_to_schedule(self)
 
     def scheduled(self, parent):
+        self.enum_type.set_visibility(self.visibility)
         members_list = []
 
         for member in self.members[0].children:

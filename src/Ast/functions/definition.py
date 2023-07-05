@@ -7,7 +7,7 @@ from Ast import Ast_Types
 from Ast.functions.yieldstatement import YieldStatement
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import SrcPosition, Modifiers
 from Ast.reference import Ref
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
@@ -161,6 +161,10 @@ class FunctionDef(ASTNode):
                            "You will not be able to free this memory!\n" +
                            "Please keep this in mind",
                            line=ret_line)
+        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE:
+            errors.error("Function is public while the return type is private. \n" +
+                         "This makes it impossible for external callers to handle the return.",
+                         line=ret_line)
 
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and

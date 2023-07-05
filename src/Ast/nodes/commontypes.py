@@ -25,6 +25,10 @@ class MemberInfo(NamedTuple):
     is_pointer: bool
     typ: Any  # can't fully qualify this because circular imports
 
+class Modifiers:
+    VISIBILITY_PUBLIC = 0  # Make sure to update this in Type_Base when needed (yay circular imports.)
+    VISIBILITY_PRIVATE = 1
+
 
 GenericNode = Union["ASTNode", "ExpressionNode"]  # NOQA: F821 # type: ignore
 # no way around the previous hack as far as I know

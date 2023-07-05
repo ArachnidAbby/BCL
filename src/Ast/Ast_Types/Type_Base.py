@@ -5,8 +5,7 @@ from llvmlite import ir  # type: ignore
 
 from errors import error
 
-PUBLIC_VISIBILITY = 0
-PRIVATE_VISIBILITY = 1
+from Ast.nodes.commontypes import Modifiers
 
 
 class Type:
@@ -44,7 +43,7 @@ class Type:
 
     # Namespacing stuff that applies to nodes also applies to types
     is_namespace = True
-    visibility = PUBLIC_VISIBILITY
+    visibility = Modifiers.VISIBILITY_PUBLIC
 
     def __init__(self):
         pass

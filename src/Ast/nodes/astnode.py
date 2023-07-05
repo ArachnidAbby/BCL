@@ -1,12 +1,7 @@
 from typing import Tuple
 
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import SrcPosition, Modifiers
 import errors
-
-
-class Modifiers:
-    VISIBILITY_PUBLIC = 0  # Make sure to update this in Type_Base when needed (yay circular imports.)
-    VISIBILITY_PRIVATE = 1
 
 
 class ASTNode:
