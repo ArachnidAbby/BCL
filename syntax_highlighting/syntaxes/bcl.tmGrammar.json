@@ -144,6 +144,10 @@
             "name": "keyword.control.bcl"
           },
           {
+            "match": "\\b((public))\\b",
+            "name": "keyword.other.bcl"
+          },
+          {
             "match": "\\b((or)|(and)|(not)|(in)|(as))\\b",
             "name": "keyword.operator.bcl"
           },
