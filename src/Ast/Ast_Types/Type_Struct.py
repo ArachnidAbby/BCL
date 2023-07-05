@@ -88,7 +88,7 @@ class Struct(Ast_Types.Type):
 
     def declare(self, mod):
         for name in self.members.keys():
-            val = self.members[name]
+            val = self.members[name][0]
             if isinstance(val, Ast_Types.FunctionGroup):
                 val.declare(mod)
 
