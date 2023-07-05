@@ -1,4 +1,4 @@
-from Ast.nodes.astnode import ASTNode
+from Ast.nodes.astnode import ASTNode, Modifiers
 from Ast.nodes.block import Block
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode

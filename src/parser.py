@@ -194,7 +194,7 @@ class Parser(ParserBase):
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False
 
-    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON")
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef")
     def parse_visibility_modifiers(self):
         '''parsing finished sets of curly braces into blocks'''
         val = self.peek(1).value

@@ -8,7 +8,7 @@ import Ast.functions.standardfunctions
 import errors
 import linker
 from Ast import Ast_Types
-from Ast.nodes import ASTNode, SrcPosition
+from Ast.nodes import ASTNode, SrcPosition, Modifiers
 from lexer import Lexer
 
 modules: dict[str, "Module"] = {}
@@ -39,6 +39,7 @@ class Module(ASTNode):
 
     is_namespace = True
     ENUM_SCHEDULE_ID = 0
+    STRUCT_SCHEDULE_ID = 1
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -72,6 +73,9 @@ class Module(ASTNode):
     def add_enum_to_schedule(self, enum_def):
         self.scheduled_events[self.ENUM_SCHEDULE_ID].append(enum_def)
 
+    def add_struct_to_schedule(self, struct_def):
+        self.scheduled_events[self.STRUCT_SCHEDULE_ID].append(struct_def)
+
     def do_scheduled(self):
         if self.ran_schedule:
             return
@@ -89,7 +93,11 @@ class Module(ASTNode):
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
         if name in self.types.keys():
-            return self.types[name]
+            t = self.types[name]
+            if t.visibility == Modifiers.VISIBILITY_PRIVATE \
+                    and func.module.location != self.location:
+                errors.error("Type is private", line=pos)
+            return t
         elif name in self.globals.keys():
             return self.globals[name]
         for imp, mod in zip(self.imports.keys(), self.imports.values()):
@@ -127,7 +135,10 @@ class Module(ASTNode):
             if not imp.using_namespace:
                 continue
             if name in imp.obj.types.keys():
-                return imp.obj.types[name]
+                t = imp.obj.types[name]
+                if t.visibility == Modifiers.VISIBILITY_PRIVATE:
+                    errors.error("Type is private", line=position)
+                return t
         if name in Ast.Ast_Types.definedtypes.types_dict.keys():
             return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
 
@@ -156,7 +167,11 @@ class Module(ASTNode):
         if name in self.globals:
             return self.globals[name]
         if name in self.types:
-            return self.types[name]
+            t = self.types[name]
+            if t.visibility == Modifiers.VISIBILITY_PRIVATE \
+                    and stack is not None:
+                errors.error("Type is private", line=pos)
+            return t
 
         # imp instead of "import"
         # gbl instead of "global"

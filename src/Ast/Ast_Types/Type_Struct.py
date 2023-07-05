@@ -39,7 +39,7 @@ class Struct(Ast_Types.Type):
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
-                 'ir_type', 'module')
+                 'ir_type', 'module', 'visibility')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -64,6 +64,7 @@ class Struct(Ast_Types.Type):
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
+        self.visibility = super().visibility
 
     def get_namespace_name(self, func, name, pos):
         for mem_name in self.members.keys():
@@ -76,6 +77,9 @@ class Struct(Ast_Types.Type):
         error(f"Name \"{name}\" cannot be " +
               f"found in Type \"{self.struct_name}\"",
               line=pos)
+
+    def set_visibility(self, value):
+        self.visibility = value
 
     def declare(self, mod):
         for name in self.members.keys():

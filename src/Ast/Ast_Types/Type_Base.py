@@ -6,7 +6,7 @@ from llvmlite import ir  # type: ignore
 from errors import error
 
 PUBLIC_VISIBILITY = 0
-VISIBILITY_PRIVATE = 1
+PRIVATE_VISIBILITY = 1
 
 
 class Type:

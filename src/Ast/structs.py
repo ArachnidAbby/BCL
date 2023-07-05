@@ -9,6 +9,8 @@ from Ast.nodes.container import ContainerNode
 class StructDef(ASTNode):
     __slots__ = ("struct_name", "block", "struct_type", "block", "module")
 
+    can_have_modifiers = True
+
     def __init__(self, pos: SrcPosition, name, block, module):
         super().__init__(pos)
         if name.value in Ast_Types.types_dict.keys():
@@ -27,6 +29,7 @@ class StructDef(ASTNode):
         self.struct_type = Ast_Types.Struct(self.struct_name, members, module)
         module.types[self.struct_name] = self.struct_type
         self.module = module
+        module.add_struct_to_schedule(self)
 
     @property
     def ir_type(self):
@@ -50,6 +53,9 @@ class StructDef(ASTNode):
 
     def create_function(self, name: str, func_obj):
         self.struct_type.create_function(name, func_obj)
+
+    def scheduled(self, mod):
+        self.struct_type.set_visibility(self.visibility)
 
     def post_parse(self, module):
         self.struct_type.define(self)
