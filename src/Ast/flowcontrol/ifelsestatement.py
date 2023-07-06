@@ -8,7 +8,7 @@ class IfElseStatement(ASTNode):
 
     def __init__(self, pos: SrcPosition, cond: ASTNode, if_block: ASTNode,
                  else_block: ASTNode):
-        self._position = pos
+        super().__init__(pos)
         self.cond = cond
         self.if_block = if_block
         self.else_block = else_block
@@ -39,7 +39,7 @@ class IfElseStatement(ASTNode):
         yield from obj.children
         Block.BLOCK_STACK.pop()
 
-    def eval(self, func):
+    def eval_impl(self, func):
         cond = self.cond.ret_type.truthy(func, self.cond)
         bfor = func.has_return
         ifreturns = False

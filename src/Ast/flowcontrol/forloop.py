@@ -42,7 +42,7 @@ class ForLoop(ASTNode):
 
         self.block.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         orig_block_name = func.builder.block._name
         self.varptr = func.create_const_var(self.iter_type.get_iter_return(self.iterable.position))
         self.block.variables[self.var.var_name].ptr = self.varptr

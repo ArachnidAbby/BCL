@@ -39,7 +39,7 @@ class FunctionCall(ExpressionNode):
 
         self.function = self.func_name.get_var(func).ret_type
 
-    def eval(self, func):
+    def eval_impl(self, func):
         return self.function.call(func, self.func_name, self.paren)
 
     def repr_as_tree(self) -> str:

@@ -36,7 +36,7 @@ class ArrayLiteral(ExpressionNode):
                              Ast_Types.Integer_32())
         self.ret_type = Ast_Types.Array(array_size, typ)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         # Allocate for array and then munually
         # populate items if it isn't an array
         # of literal values.

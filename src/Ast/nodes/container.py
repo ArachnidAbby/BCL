@@ -29,7 +29,7 @@ class ContainerNode(ASTNode):
         for child in self.children:
             child.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         for child in self.children:
             child.eval(func)
 

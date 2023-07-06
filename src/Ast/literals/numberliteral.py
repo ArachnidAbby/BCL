@@ -15,7 +15,7 @@ class Literal(ExpressionNode):
         self.value = value
         self.ret_type = typ
 
-    def eval(self, func) -> ir.Constant:
+    def eval_impl(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
 
     def __str__(self) -> str:

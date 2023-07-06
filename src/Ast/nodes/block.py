@@ -37,7 +37,7 @@ class Block(ContainerNode):
             x.pre_eval(func)
         self.BLOCK_STACK.pop()
 
-    def eval(self, func):
+    def eval_impl(self, func):
         if len(self.children) == 0:
             self.last_instruction = not func.ret_type.is_void()
             return

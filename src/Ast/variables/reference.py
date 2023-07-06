@@ -31,7 +31,7 @@ class VariableRef(ExpressionNode):
         if self.ret_type.is_void():
             error(f"undefined variable '{self.var_name}'", line=self.position)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         var = self.block.get_variable(self.var_name, func.module)
         if not isinstance(var, VariableObj):
             error("Types or Functions cannot be used as values",

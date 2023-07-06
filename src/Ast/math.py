@@ -103,7 +103,7 @@ class OperationNode(ExpressionNode):
         else:
             return super().get_ptr(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         if not self.shunted:
             return RPN_to_node(shunt(self)).eval(func)
         else:

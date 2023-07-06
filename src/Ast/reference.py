@@ -20,7 +20,7 @@ class Ref(ExpressionNode):
         else:
             self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         return self.var.get_ptr(func)
 
     def get_var(self, func):

@@ -22,7 +22,7 @@ class RangeLiteral(ExpressionNode):
         self.start.pre_eval(func)
         self.end.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         start = self.start.eval(func)
         end = self.end.eval(func)
         ptr = self.get_ptr(func)

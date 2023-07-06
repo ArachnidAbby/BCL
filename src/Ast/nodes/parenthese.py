@@ -62,7 +62,7 @@ class ParenthBlock(ContainerNode):
                 continue
             self.evaled_children.append(child.eval(func))
 
-    def eval(self, func, expected_args=[]):
+    def eval_impl(self, func, expected_args=[]):
         self.evaled_children = []
         self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:

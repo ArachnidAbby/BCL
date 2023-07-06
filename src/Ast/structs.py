@@ -68,7 +68,7 @@ class StructDef(ASTNode):
         for stmt in self._yield_functions():
             stmt.pre_eval(self)
 
-    def eval(self, module):
+    def eval_impl(self, module):
         for stmt in self._yield_functions():
             stmt.eval(self)
 

@@ -41,7 +41,7 @@ class StructLiteral(ExpressionNode):
                              f"got {child.value.ret_type}",
                              line=child.value.position)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         ptr = func.create_const_var(self.ret_type)
         zero_const = ir.Constant(ir.IntType(64), 0)
         idx_lookup = {name: idx for idx, name in

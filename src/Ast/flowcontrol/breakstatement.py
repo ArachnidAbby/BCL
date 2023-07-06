@@ -5,7 +5,7 @@ from Ast.nodes import ASTNode, Block
 class BreakStatement(ASTNode):
     __slots__ = ()
 
-    def eval(self, func):
+    def eval_impl(self, func):
         if func.inside_loop is None:
             errors.error("Cannot use 'break' outside of loop scope",
                          line=self.position)

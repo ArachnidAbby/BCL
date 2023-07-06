@@ -22,7 +22,7 @@ class WhileStatement(ASTNode):
         self.cond.pre_eval(func)
         self.block.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         # cond = self.cond.eval(func)
         orig_block_name = func.builder.block._name
         body_name = f'{orig_block_name}.while'

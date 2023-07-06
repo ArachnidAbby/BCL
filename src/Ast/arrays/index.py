@@ -118,7 +118,7 @@ class VariableIndexRef(ExpressionNode):
     def get_var(self, func):
         return self.varref.get_var(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         return self.varref.ret_type.index(func, self)
 
     def __repr__(self) -> str:

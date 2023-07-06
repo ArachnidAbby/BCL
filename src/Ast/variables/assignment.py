@@ -78,7 +78,7 @@ class VariableAssign(ASTNode):
         if self.block.validate_variable(name):
             self.block.get_variable(name).is_constant = False
 
-    def eval(self, func):
+    def eval_impl(self, func):
         self.value.pre_eval(func)
         ptr = self.var_name
         self.set_not_constant(func)

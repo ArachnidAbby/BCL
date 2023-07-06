@@ -212,11 +212,20 @@ class Module(ASTNode):
         group.add_function(function_object)  # type: ignore
         return group
 
-    def get_all_globals(self) -> list[object]:
+    def get_all_globals(self, stack=None) -> list[object]:
         '''get all functions for linking'''
         output: list[object] = []
         for func in self.globals.values():
             output.append(func)
+
+        if stack is None:
+            stack = [self]
+        elif self in stack:
+            return output
+
+        for mod in self.imports.values():
+            if mod.using_namespace:
+                output += mod.obj.get_all_globals(stack)
         return output
 
     def get_import_globals(self):
@@ -264,7 +273,7 @@ class Module(ASTNode):
         for c, child in enumerate(self.children):
             child.value.pre_eval(self)
 
-    def eval(self, parent):
+    def eval_impl(self, parent):
         self.evaled = True
         for mod in self.imports.values():
             if not mod.obj.evaled:

@@ -316,7 +316,7 @@ class FunctionDef(ASTNode):
             else:
                 x[0].define(self, x[1], c)
 
-    def eval(self, parent):
+    def eval_impl(self, parent):
         if self.has_no_body:
             return
         self.function_ir.attributes.add("nounwind")

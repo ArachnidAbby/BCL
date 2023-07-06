@@ -17,7 +17,7 @@ class ASTNode:
     * eval -- returns ir.Instruction object or None.
     This is used when construction final ir code.
     '''
-    __slots__ = ('_position', 'modifiers')
+    __slots__ = ('_position', 'modifiers', '_instruction')
 
     is_operator: bool = False
     assignable: bool = False  # TODO: IMPLEMENT
@@ -30,6 +30,7 @@ class ASTNode:
     def __init__(self, position: SrcPosition, *args, **kwargs):
         self._position = position        # (line#, col#, len)
         self.modifiers = {"visibility": Modifiers.VISIBILITY_PRIVATE}
+        self._instruction = None
 
     @property
     def visibility(self):
@@ -55,8 +56,14 @@ class ASTNode:
         the contents of a node
         '''
 
-    def eval(self, func):
+    def eval_impl(self, func):
         '''eval step, often returns ir.Instruction'''
+
+    def eval(self, func, *args, **kwargs):
+        '''eval step, often returns ir.Instruction'''
+        self._instruction = self.eval_impl(func, *args, **kwargs)
+
+        return self._instruction
 
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         current_pos = self._position

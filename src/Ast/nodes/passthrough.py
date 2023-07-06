@@ -11,5 +11,5 @@ class PassNode(ExpressionNode):
         self.instr = instr
         self.ret_type = typ
 
-    def eval(self, func):
+    def eval_impl(self, func):
         return self.instr

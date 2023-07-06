@@ -27,7 +27,7 @@ class YieldStatement(ASTNode):
                          f"\"{str(func.yield_type)}\"",
                          line=self.value.position)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         orig_block_name = func.builder.block._name
 
         yield_after = func.builder.append_basic_block(

@@ -30,7 +30,7 @@ class ReturnStatement(ASTNode):
                          f" of '{func.ret_type}'. Return statement returned" +
                          f" '{self.expr.ret_type}'", line=self.position)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         func.has_return = True
         self._check_valid_type(func)
 

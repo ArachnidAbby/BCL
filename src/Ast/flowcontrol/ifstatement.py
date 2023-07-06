@@ -21,7 +21,7 @@ class IfStatement(ASTNode):
         self.cond.pre_eval(func)
         self.block.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         cond = self.cond.ret_type.truthy(func, self.cond)
         bfor = func.has_return
 

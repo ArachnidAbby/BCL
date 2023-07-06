@@ -35,7 +35,7 @@ class NamespaceIndex(ExpressionNode):
         else:
             self.ret_type = self.val
 
-    def eval(self, func):
+    def eval_impl(self, func):
         if isinstance(self.val, ExpressionNode):
             return self.val.eval(func)
 

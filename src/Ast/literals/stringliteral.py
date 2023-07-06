@@ -19,7 +19,7 @@ class StrLiteral(ExpressionNode):
                              Ast_Types.Integer_32())
         self.ret_type = Ast_Types.StringLiteral(array_size)
 
-    def eval(self, func) -> ir.Constant:
+    def eval_impl(self, func) -> ir.Constant:
         ZERO = ir.Constant(ir.IntType(32), 0)
 
         encoded_string = self.value.encode("utf-8")
