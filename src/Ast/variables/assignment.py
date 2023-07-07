@@ -9,7 +9,7 @@ from errors import error
 class VariableAssign(ASTNode):
     '''Handles Variable Assignment and Variable Instantiation.'''
     __slots__ = ('value', 'block', 'is_declaration', 'var_name',
-                 'explicit_typ', 'typ')
+                 'explicit_typ', 'typ', 'evaled_value')
 
     def __init__(self, pos: SrcPosition, ptr: ExpressionNode, value,
                  block, typ=Void()):
@@ -19,6 +19,7 @@ class VariableAssign(ASTNode):
         self.var_name = ptr
         self.is_declaration = False
         self.value = value
+        self.evaled_value = None
         self.block = block
         self.explicit_typ = typ != Void  # TODO: GROSS AS FUCK
         self.typ = typ
@@ -68,6 +69,9 @@ class VariableAssign(ASTNode):
         if not self.var_name.assignable:
             error("Cannot assign value to non-assignable variable/member",
                   line=self.var_name.position)
+
+        # if self.typ.needs_dispose:
+        #     func.register_dispose(self)
 
     def set_not_constant(self, func):
         '''set a variable object's is_constant attribute to False'''

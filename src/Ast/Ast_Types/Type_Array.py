@@ -2,13 +2,14 @@ from llvmlite import ir  # type: ignore
 
 from Ast.Ast_Types import Type_I32
 from Ast.nodes.commontypes import MemberInfo
+from Ast.nodes.passthrough import PassNode
 from errors import error
 
 from . import Type_Base
 
 
 class Array(Type_Base.Type):
-    __slots__ = ('size', 'typ', 'ir_type')
+    __slots__ = ('size', 'typ', 'ir_type', 'needs_dispose')
     name = "array"
     pass_as_ptr = True
     no_load = False
@@ -16,6 +17,7 @@ class Array(Type_Base.Type):
 
     def __init__(self, size, typ):
         self.typ = typ
+        self.needs_dispose = typ.needs_dispose
 
         if not size.isconstant:
             error("size of array type must be a int-literal",
@@ -109,6 +111,16 @@ class Array(Type_Base.Type):
         func.builder.store(ir.Constant(ir.IntType(32), self.size), size_ptr)
 
         return ptr
+
+    def dispose(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        array_ptr = ptr.get_ptr(func)
+        for i in range(self.size):
+            index = ir.Constant(int_type, i)
+            p = func.builder.gep(array_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, self.typ, ptr=p)
+            self.typ.dispose(func, node)
 
 
 class ItemIterator(Type_Base.Type):

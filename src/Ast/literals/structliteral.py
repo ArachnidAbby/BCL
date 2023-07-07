@@ -49,7 +49,9 @@ class StructLiteral(ExpressionNode):
         for child in self.members:
             index = ir.Constant(ir.IntType(32), idx_lookup[child.key.var_name])
             item_ptr = func.builder.gep(ptr, [zero_const, index])
-            func.builder.store(child.value.eval(func), item_ptr)
+            value = child.value.eval_impl(func)
+            child.value._instruction = value
+            func.builder.store(value, item_ptr)
         self.ptr = ptr
         return func.builder.load(ptr)
 

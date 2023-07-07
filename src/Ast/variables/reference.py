@@ -16,6 +16,7 @@ class VariableRef(ExpressionNode):
     '''
     __slots__ = ('block', 'var_name', 'from_global')
     assignable = True
+    do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, name: str, block):
         super().__init__(pos)

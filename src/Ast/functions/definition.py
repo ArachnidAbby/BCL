@@ -42,7 +42,7 @@ class FunctionDef(ASTNode):
                  "is_method", "raw_args", "yields", "yield_type",
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
-                 "yield_start")
+                 "yield_start", "dispose_queue")
 
     can_have_modifiers = True
 
@@ -82,6 +82,8 @@ class FunctionDef(ASTNode):
         self.yield_after_blocks = []
         self.yield_consts = []
 
+        self.dispose_queue = []
+
         self._validate_args(args)  # validate arguments
 
         # construct args lists
@@ -114,6 +116,9 @@ class FunctionDef(ASTNode):
                          "Key-Value pair, Reference, or Variable name.",
                          line=arg.position)
             return  # type: ignore
+
+    def register_dispose(self, node):
+        self.dispose_queue.append(node)
 
     def _construct_args(self, args: ParenthBlock, parent):
         '''Construct the lists of args required when building this function'''
@@ -312,7 +317,6 @@ class FunctionDef(ASTNode):
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
                 x[0].is_constant = False
-                continue
             else:
                 x[0].define(self, x[1], c)
 
@@ -336,6 +340,7 @@ class FunctionDef(ASTNode):
             self.eval_generator(parent)
 
         if self.ret_type.is_void() and not self.has_return:
+            self.dispose_stack()
             self.builder.ret_void()
         elif not self.has_return:
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
@@ -390,6 +395,10 @@ class FunctionDef(ASTNode):
         self.builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
         block_addr = ir.BlockAddress(self.yield_function, self.yield_start)
         self.builder.store(block_addr, state_ptr)
+
+    def dispose_stack(self):
+        for node in self.dispose_queue:
+            node.ret_type.dispose(self, node)
 
     @property
     def has_no_body(self) -> bool:

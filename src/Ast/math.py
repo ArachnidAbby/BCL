@@ -217,6 +217,7 @@ def operator(precedence: int, name: str, right=False,
 
 class MemberAccess(OperationNode):
     __slots__ = ("assignable", "is_pointer")
+    do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
         super().__init__(pos, op, lhs, rhs, shunted)

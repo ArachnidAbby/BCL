@@ -15,6 +15,7 @@ class Integer_32(Type_Base.Type):
 
     pass_as_ptr = False
     no_load = False
+    needs_dispose = True
 
     def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647), signed=True):
         self.name = name

@@ -8,6 +8,7 @@ class NamespaceIndex(ExpressionNode):
     '''Index a namespace like this: `namespace::function``'''
     __slots__ = ("left", "right", "val", "star_idx")
     isconstant = True
+    do_register_dispose = False
 
     def __init__(self, pos, left, right):
         super().__init__(pos)

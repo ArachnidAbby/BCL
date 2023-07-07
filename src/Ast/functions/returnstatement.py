@@ -40,6 +40,8 @@ class ReturnStatement(ASTNode):
                                              ir.Constant(ir.IntType(32), 0)])
             func.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
+        func.dispose_stack()
+
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:

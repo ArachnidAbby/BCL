@@ -118,7 +118,9 @@ class EnumType(Type):
                 return Ast_Types.Type_Bool.Integer_1()
             # bitwise ops supported because I like flags
             case 'lshift' | 'rshift' | 'bor' | 'bxor' | 'band' | 'bitnot':
-                return Integer_32()
+                i_type = Integer_32(size=self.bitsize, name=f"u{self.bitsize}",
+                                    signed=False)
+                return i_type
 
     def eq(self, func, lhs, rhs):
         if rhs.ret_type != self:

@@ -43,6 +43,7 @@ class Type:
 
     # Namespacing stuff that applies to nodes also applies to types
     is_namespace = True
+    needs_dispose = False
     visibility = Modifiers.VISIBILITY_PUBLIC
 
     def __init__(self):
@@ -213,10 +214,6 @@ class Type:
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
-    def cleanup(self, func, ptr): # TODO: IMPLEMENT
-        '''code to run on the closing of a function'''
-        print("cleanup")
-
     def __hash__(self):
         return hash(self.name)
 
@@ -229,7 +226,7 @@ class Type:
     def __call__(self) -> Self:
         return self
 
-    def eval(self, foo):  # ? Why is this here
+    def eval_impl(self, foo):  # ? Why is this here
         '''Does nothing'''
         pass
 
@@ -307,3 +304,14 @@ class Type:
         ptr = func.builder.alloca(item[0].type.ir_type)
         func.builder.store(val, ptr)
         item[0].ptr = ptr
+
+    def add_ref_count(self, func, ptr):
+        pass
+
+    def pop_ref_count(self, func, ptr):
+        pass
+
+    def dispose(self, func, ptr):
+        '''code to run on the closing of a function'''
+        self.pop_ref_count(func, ptr)
+        print(f"dispose {func.func_name} {self}")

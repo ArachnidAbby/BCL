@@ -46,7 +46,8 @@ class ArrayLiteral(ExpressionNode):
             for c, item in enumerate(self.value):
                 index = ir.Constant(ir.IntType(32), c)
                 item_ptr = func.builder.gep(ptr, [zero_const, index])
-                evaled = item.eval(func)
+                evaled = item.eval_impl(func)
+                item._instruction = evaled
                 func.builder.store(evaled, item_ptr)
             self.ptr = ptr
             return func.builder.load(ptr)

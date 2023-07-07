@@ -1,11 +1,12 @@
 from Ast import Ast_Types
+from Ast.nodes.passthrough import PassNode
 from errors import error
 
 from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type", "has_members")
+    __slots__ = ("typ", "ir_type", "has_members", "needs_dispose")
 
     name = 'ref'
     pass_as_ptr = False
@@ -14,6 +15,7 @@ class Reference(Type_Base.Type):
 
     def __init__(self, typ):
         self.typ = typ
+        self.needs_dispose = typ.needs_dispose
 
         self.ir_type = typ.ir_type.as_pointer()
         self.has_members = self.typ.has_members
@@ -50,8 +52,7 @@ class Reference(Type_Base.Type):
     def get_member_info(self, lhs, rhs):
         return self.typ.get_member_info(lhs, rhs)
 
-    def get_member(self, func, lhs,
-                   member_name_in: "Ast.variable.VariableRef"):
+    def get_member(self, func, lhs, member_name_in):
         return self.typ.get_member(func, lhs.as_varref(), member_name_in)
 
     def sum(self, func, lhs, rhs):
@@ -93,7 +94,8 @@ class Reference(Type_Base.Type):
         else:
             return self.typ
 
-    def assign(self, func, ptr, value, typ: "Ast_Types.Type", first_assignment=False):
+    def assign(self, func, ptr, value, typ: "Ast_Types.Type",
+               first_assignment=False):
         if value.ret_type.roughly_equals(self):
             func.builder.store(value.eval(func), ptr.get_var(func).ptr)
             return
@@ -101,3 +103,8 @@ class Reference(Type_Base.Type):
         actual_ptr = func.builder.load(ptr.get_var(func).ptr)
         val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
         func.builder.store(val, actual_ptr)
+
+    def dispose(self, func, ptr):
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self.typ)
+        self.typ.dispose(func, node)
