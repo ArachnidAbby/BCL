@@ -192,6 +192,7 @@ class Type:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
                   line=ptr.position)
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
+        value.ret_type.add_ref_count(func, value)
         func.builder.store(val, ptr.get_ptr(func))
 
     def isum(self, func, ptr, rhs):

@@ -11,7 +11,7 @@ class UntypedPointer(Type):
 
     no_load = True
     read_only = True
-    returnable = False
+    returnable = True
 
     def convert_to(self, func, orig, typ):
         if self.roughly_equals(typ):

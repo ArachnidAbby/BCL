@@ -84,9 +84,14 @@ class VariableAssign(ASTNode):
 
     def eval_impl(self, func):
         self.value.pre_eval(func)
+        self.value.overwrite_eval = True
         ptr = self.var_name
         self.set_not_constant(func)
         typ = self.var_name.ret_type
+        if not self.is_declaration and typ.needs_dispose:
+            typ.dispose(func, ptr)
+        elif typ.needs_dispose:
+            func.register_dispose(ptr)
         typ.assign(func, ptr, self.value, typ,
                    first_assignment=self.is_declaration)
 

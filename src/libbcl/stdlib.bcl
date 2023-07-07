@@ -13,6 +13,11 @@
 public define printf(x: strlit, ...);
 public define puts(data: strlit);
 
+public define malloc(size: size_t) -> UntypedPointer;
+public define free(ptr: UntypedPointer);
+public define strnlen(str: strlit, max: size_t) -> size_t;
+
+
 //  PRINTLN()
 public define println(x: i32) {
     printf("%i\n", x);

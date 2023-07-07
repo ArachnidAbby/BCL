@@ -10,6 +10,14 @@ from errors import error
 from Ast.nodes.commontypes import Modifiers
 
 
+class MockFunction:
+    __slots__ = ("builder", "module")
+
+    def __init__(self, builder, module):
+        self.builder = builder
+        self.module = module
+
+
 class Function(Ast_Types.Type):
     '''abstract type class that outlines the necessary features
     of a type class.'''

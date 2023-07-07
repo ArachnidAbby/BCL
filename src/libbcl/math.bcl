@@ -4,6 +4,9 @@
 //   A simple math library with a few basic functions
 //   Binds math.h too
 // ======================================
+
+import basemath::*;
+
 public define max(x: i32, y:i32) -> i32 {
     if x>y { return x; }
     return y;
@@ -70,19 +73,8 @@ public define ldexp(x: f64, y: i32) -> f64;
 
 public define log(x: f64) -> f64;
 public define log10(x: f64) -> f64;
-public define pow(x: f64, y: f64) -> f64;
 public define sqrt(x: f64) -> f64;
 public define ceil(x: f64) -> f64;
 public define fabs(x: f64) -> f64;
 public define floor(x: f64) -> f64;
 public define fmod(x: f64) -> f64;
-
-
-// must be defined after fpow due to binding issues :)
-public define pow(x: i64, pow: i32) -> i64 {
-    output = 1 as i64;
-    for _ in 0..pow {
-        output *= x;
-    }
-    return output;
-}

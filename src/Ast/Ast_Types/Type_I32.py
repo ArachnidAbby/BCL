@@ -15,7 +15,7 @@ class Integer_32(Type_Base.Type):
 
     pass_as_ptr = False
     no_load = False
-    needs_dispose = True
+    needs_dispose = False
 
     def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647), signed=True):
         self.name = name
@@ -26,6 +26,18 @@ class Integer_32(Type_Base.Type):
 
     def __call__(self):
         return self
+
+    def get_namespace_name(self, func, name, pos):
+        from Ast.literals.numberliteral import Literal
+        if name == "MAX":
+            return Literal(pos, self.rang[1], self)
+
+        if name == "MIN":
+            return Literal(pos, self.rang[0], self)
+
+        error(f"Name \"{name}\" cannot be " +
+              f"found in Type \"{str(self)}\"",
+              line=pos)
 
     def bitwise_op_check(self, func, other, symbol):
         if not isinstance(other.ret_type, Integer_32):

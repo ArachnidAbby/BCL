@@ -7,7 +7,7 @@ from errors import error
 class ExpressionNode(ASTNode):
     '''Acts as an Expression in the AST.
     This means it has a value and return type'''
-    __slots__ = ("ret_type", "ptr", '__evaled')
+    __slots__ = ("ret_type", "ptr", '__evaled', 'overwrite_eval')
     do_register_dispose = True
 
     def __init__(self, position: SrcPosition, *args, **kwargs):
@@ -15,6 +15,7 @@ class ExpressionNode(ASTNode):
         self._position = position
         self.ptr = None
         self.__evaled = False
+        self.overwrite_eval = False
         super().__init__(position, *args, **kwargs)
 
     def get_ptr(self, func):
@@ -27,7 +28,7 @@ class ExpressionNode(ASTNode):
         return self.ptr
 
     def eval(self, func, *args, **kwargs):
-        if self.do_register_dispose and self.ret_type is not None and self.ret_type.needs_dispose and not self.__evaled:
+        if self.do_register_dispose and self.ret_type is not None and self.ret_type.needs_dispose and not self.__evaled and not self.overwrite_eval:
             self.__evaled = True
             self.get_ptr(func)
             self.__evaled = False

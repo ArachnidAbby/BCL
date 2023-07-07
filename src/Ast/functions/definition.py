@@ -42,7 +42,7 @@ class FunctionDef(ASTNode):
                  "is_method", "raw_args", "yields", "yield_type",
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
-                 "yield_start", "dispose_queue")
+                 "yield_start", "dispose_queue", "parent")
 
     can_have_modifiers = True
 
@@ -55,6 +55,7 @@ class FunctionDef(ASTNode):
         self.builder = None   # llvmlite.ir.IRBuilder object once created
         self.block = block  # body of the function Ast.Block
         self.module = module  # Module the object is contained in
+        self.parent = None
         self.is_ret_set = False  # is the return value set?
         # Not to be confused with "is_ret_set",
         # this is used for ensuring that a `return` always accessible
@@ -191,6 +192,8 @@ class FunctionDef(ASTNode):
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.args.keys():
             return self.get_variable(var_name, module)
+        elif self.parent is not None:
+            return self.parent.validate_variable_exists(var_name, module)
         elif module is not None:
             return module.get_global(var_name)
 
@@ -202,6 +205,8 @@ class FunctionDef(ASTNode):
             orig = self.args[var_name]
             var = VariableObj(orig[0], orig[1], True)
             return var
+        elif self.parent is not None:
+            return self.parent.get_variable(var_name, module)
         elif module is not None:
             return module.get_global(var_name)
 

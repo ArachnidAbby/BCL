@@ -1,4 +1,5 @@
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.Ast_Types import Type_Function# type: ignore
 
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
@@ -26,20 +27,36 @@ class StructLiteral(ExpressionNode):
                          "create a struct literal from this type",
                          line=self.position)
 
+        used_names = []
+        missing_members = []
+
         # self.members.pre_eval(func)
         for child in self.members:
             if not isinstance(child, KeyValuePair):
                 errors.error("Invalid Syntax:", line=child.position)
             child.value.pre_eval(func)
             name = child.key.var_name
+            used_names.append(name)
             if name not in self.ret_type.members.keys():
                 errors.error(f"{self.ret_type} has no member " +
                              f"\"{child.key.var_name}\"",
-                             line=child.key.position);
+                             line=child.key.position)
             if child.value.ret_type != self.ret_type.members[name][0]:
                 errors.error(f"Expected type {self.ret_type.members[name]} " +
                              f"got {child.value.ret_type}",
                              line=child.value.position)
+
+        for x in self.ret_type.members.keys():
+            ty = self.ret_type.members[x][0]
+            if isinstance(ty, Type_Function.Function) or isinstance(ty, Type_Function.FunctionGroup):
+                continue
+            if x not in used_names:
+                missing_members.append(x)
+
+        if len(missing_members) > 0:
+            missing_str = ", ".join([f"\"{x}\"" for x in missing_members])
+            errors.error(f"Missing required members: {missing_str} ",
+                         line=self.position)
 
     def eval_impl(self, func):
         ptr = func.create_const_var(self.ret_type)

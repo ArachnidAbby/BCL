@@ -126,8 +126,8 @@ define gaming_test_function() -> i32 {
 
 define random() -> (i16, i16);
 
-define malloc(size_bytes: size_t) -> UntypedPointer;
-define free(ptr: UntypedPointer);
+// define malloc(size_bytes: size_t) -> UntypedPointer;
+// define free(ptr: UntypedPointer);
 
 enum TestEnum {
     ONE,
@@ -153,6 +153,8 @@ define main() {
     println(TestEnum::FIVE as i32);
     println(TestEnum::SIX as i32);
     println(TestEnum::SEVEN as i32);
+    println(i32::MAX);
+    println(i32::MIN);
 
     println("--------------------------------");
     println("Testing bitwise ops on integers");
@@ -164,6 +166,8 @@ define main() {
     test::assert((3u8^1u8)==2u8, "Bitwise xor is broken");
     test::assert((3u8&1u8)==1u8, "Bitwise and is broken");
     test::assert((~1u8)==254, "Bitwise not is broken");
+
+
     println();
     println("SUCCESS");
     println("--------------------------------");
@@ -201,13 +205,13 @@ define main() {
     println(18f32);
 
     println(16**0.5);
-    println(20**3f);
+    println(20**3f); // 26
 
     lmnop = Wrapper {x: TestStruct {x: 12, y: 10}};
     joty = lmnop.x;
     joty + 10;
-    lmnop.x + 10;
-    println(TestStruct::test());
+    lmnop.x + 10; //32
+    println(TestStruct::test()); //33
     // TestStruct;
     println();
     20.println();
@@ -216,16 +220,16 @@ define main() {
     t = create_data(23);
     println(120583.TestStruct::goof_function());
 
-    x = [t.next(); 3];
+    x = [t.next(); 3]; //38
 
     pointer = malloc(4 as size_t);
     i32_p = pointer as &i32;
     i32_p = 12;
-    println(i32_p as i32);
+    println(i32_p as i32); //30-31 +9 // 41
     i32_p = 69420;
     println(i32_p as i32);
     // println(x);
-    free(pointer);
+    free(pointer); //45
 
     // println 10;
     // m = TestStruct {x: 123, y: 1232};

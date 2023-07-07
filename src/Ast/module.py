@@ -191,6 +191,9 @@ class Module(ASTNode):
             if (gbl := imp.obj.get_global(name, pos, stack=stack)) is not None:
                 return gbl
 
+        if name in Ast.Ast_Types.definedtypes.types_dict.keys():
+            return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
+
     def get_func_from_dict(self, name: str, funcs: dict, types: tuple,
                            position):
         if types in funcs.keys():

@@ -2,18 +2,10 @@ from llvmlite import ir
 
 import Ast.exception
 from Ast.Ast_Types.Type_Base import Type
-from Ast.Ast_Types.Type_Function import Function, FunctionGroup
+from Ast.Ast_Types.Type_Function import Function, FunctionGroup, MockFunction
 from Ast.Ast_Types.Type_Reference import Reference
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from errors import error
-
-
-class MockFunction:
-    __slots__ = ("builder", "module")
-
-    def __init__(self, builder, module):
-        self.builder = builder
-        self.module = module
 
 
 def create_next_method(module, gen_typ, name):
