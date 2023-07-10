@@ -1,0 +1,63 @@
+import stdlib::*;
+import exitcodes::*;
+
+public struct Optional::<T> {
+    // private members
+    _is_none: bool,
+    data: T;
+
+    // constructor for None
+    /// Get a None value
+    public define none() -> Optional::<T> {
+        return Optional::<T> {
+            _is_none: true,
+            // create a byte array initialized to all zeros,
+            // cast that to an Unsafe/Untyped pointer then recast and deref
+            // (TYPE)::SIZEOF should return a constant, so it is fine to use in
+            // an array instantiation
+            data: &[0u8; T::SIZEOF] as UntypedPointer as &T as T
+        };
+    }
+
+    /// Wrap a value in an Optional
+    public define wrap(val: T) -> Optional::<T>{
+        return Optional::<T> {
+            _is_none: false,
+            data: val
+        };
+    }
+
+    /// check if the value is None
+    public define is_none(self) -> bool {
+        return self._is_none;
+    }
+
+    /// get the wrapped value if not None
+    /// if the value is None, the program terminates.
+    public define unwrap(self) -> T {
+        if self._is_none {
+            println("Unwrap of Optional failed, value was None");
+            exit(ExitCodes::Optional_UnwrapError as i32);
+        }
+
+        return self.data;
+    }
+
+    public define unwrap_or(self, backup_value: T) -> T {
+        if self._is_none {
+            return backup_value;
+        }
+
+        return self.data;
+    }
+
+
+    public define except(self, output: strlit) -> T {
+        if self._is_none {
+            println(output);
+            exit(ExitCodes::Optional_UnwrapError as i32);
+        }
+
+        return self.data;
+    }
+}

@@ -145,10 +145,15 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
-    @rule(0, "expr OPEN_TYPEPARAM expr_list GR")
+    @rule(0, "expr OPEN_TYPEPARAM expr_list|expr GR")
     def parse_generic(self):
         left = self.peek(0).value
         right = self.peek(2).value
+
+        if self.peek(2).name=="expr":
+            right = Ast.nodes.ParenthBlock(self.peek(2).pos)
+            right.append_child(self.peek(2).value)
+
         pos = self.peek(0).pos
         if not (isinstance(left, Ast.variables.reference.VariableRef)
                 or isinstance(left, Ast.namespace.NamespaceIndex)):
@@ -369,16 +374,9 @@ class Parser(ParserBase):
         if self.simple_check(-1, "KEYWORD") and \
                 self.peek(-1).value not in self.keywords:
             return
-        amount = self.peek(3).value
-        if not isinstance(amount, Ast.literals.numberliteral.Literal) or \
-                self.peek(3).value.ret_type.name != "i32":
-            errors.error("Array literal size must be an i32",
-                         line=self.peek(3).pos)
-        if amount.value <= 0:
-            errors.error("Array literal size must be greater than '0'",
-                         line=self.peek(3).pos)
-        exprs = [self.peek(1).value] * amount.value
-        literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+
+        exprs = [self.peek(1).value]
+        literal = Ast.ArrayLiteral(self.peek(0).pos, exprs, repeat=self.peek(3).value)
         self.replace(5, "expr", literal)
 
     @rule(0, "expr OPEN_SQUARE expr CLOSE_SQUARE")

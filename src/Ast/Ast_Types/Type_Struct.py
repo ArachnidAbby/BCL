@@ -88,11 +88,10 @@ class Struct(Ast_Types.Type):
             return self.versions[params]
 
         new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
-        print(new_name)
 
         new_ty = Struct(new_name, self.raw_members, self.module,
                         False, self.definition)
-        new_ty.members = self.members
+        # new_ty.members = self.members
 
         for c, key in enumerate(self.definition.generic_args.keys()):
             self.definition.generic_args[key] = params[c]
@@ -118,6 +117,9 @@ class Struct(Ast_Types.Type):
         if self.is_generic:
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
                   line=pos)
+
+        if x := self.global_namespace_names(func, name, pos):
+            return x
 
         for mem_name in self.members.keys():
             if mem_name != name:

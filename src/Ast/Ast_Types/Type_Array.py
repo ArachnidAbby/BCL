@@ -27,7 +27,7 @@ class Array(Type_Base.Type):
 
         if self.size <= 0:
             error("Array size must be > 0", line=size.position)
-        elif size.ret_type != Type_I32.Integer_32():
+        elif not isinstance(size.ret_type, Type_I32.Integer_32):
             error("Array size must be an integer", line=size.position)
 
         self.ir_type = ir.ArrayType(typ.ir_type, self.size)
@@ -39,7 +39,7 @@ class Array(Type_Base.Type):
 
     def convert_to(self, func, orig, typ):
         if typ != self:
-            error(f"Cannot convert 'Array<{orig.ir_type.element}>' " +
+            error(f"Cannot convert {self}' " +
                   f"to type '{typ}'", line=orig.position)
         return orig.eval(func)
 

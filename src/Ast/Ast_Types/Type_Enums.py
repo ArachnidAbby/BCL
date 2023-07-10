@@ -180,6 +180,9 @@ class EnumType(Type):
         return f"{self.enum_name}(u{self.bitsize})"
 
     def get_namespace_name(self, func, name, pos):
+        if x := self.global_namespace_names(func, name, pos):
+            return x
+
         if name in self.members.keys():
             if self.members[name] is None:
                 errors.error("Variant has yet to be initialized",

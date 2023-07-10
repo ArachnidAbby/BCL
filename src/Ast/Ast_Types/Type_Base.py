@@ -50,8 +50,20 @@ class Type:
     def __init__(self):
         pass
 
+    def global_namespace_names(self, func, name, pos):
+        from Ast.literals.numberliteral import Literal
+        from Ast.Ast_Types.Type_I32 import Integer_32
+        if name == "SIZEOF":
+            target_data = func.module.target_machine.target_data
+            size = self.ir_type.get_abi_size(target_data)
+            ty = Integer_32(name="u64", size=64, signed=False)
+            val = Literal(pos, size, ty)
+            return val
+
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
+        if x := self.global_namespace_names(func, name, pos):
+            return x
         error(f"Cannot get {name} from namespace {self}", line=pos)
 
     def pass_type_params(self, func, params, pos):

@@ -35,7 +35,7 @@ class Module(ASTNode):
     __slots__ = ('location', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed',
-                 'scheduled_events', 'ran_schedule')
+                 'scheduled_events', 'ran_schedule', 'target_machine')
 
     is_namespace = True
     ENUM_SCHEDULE_ID = 0
@@ -51,6 +51,8 @@ class Module(ASTNode):
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.target = binding.Target.from_triple(self.module.triple)
+        self.target_machine = self.target.create_target_machine(force_elf=True,
+                                                   codemodel="default")
         self.children = tokens
         self.parsed = False
         self.pre_evaled = False
@@ -228,8 +230,12 @@ class Module(ASTNode):
 
         for mod in self.imports.values():
             if mod.using_namespace:
+                stack.append(self)
                 output += mod.obj.get_all_globals(stack)
         return output
+
+    def __eq__(self, other):
+        return self.location == other.location
 
     def get_import_globals(self):
         output = []
@@ -297,8 +303,9 @@ class Module(ASTNode):
     def save_ir(self, loc, args={}):
         if self.ir_saved:
             return
-        target = self.target.create_target_machine(force_elf=True,
-                                                   codemodel="default")
+
+        target = self.target_machine
+        
         module_pass = binding.ModulePassManager()
         # * commented out optimizations may be re-added later on
         # pass_manager = binding.PassManagerBuilder()

@@ -9,6 +9,8 @@
 // Direct Usage of printf will not do any kind of fancy
 // compile-time checks. Be careful when passing things in.
 
+import optional::*;
+
 // EXTERNAL DEFINITIONS
 public define printf(x: strlit, ...);
 public define puts(data: strlit);
@@ -16,6 +18,9 @@ public define puts(data: strlit);
 public define malloc(size: size_t) -> UntypedPointer;
 public define free(ptr: UntypedPointer);
 public define strnlen(str: strlit, max: size_t) -> size_t;
+
+public define random() -> i32;
+public define srandom(seed: i32);
 
 
 //  PRINTLN()

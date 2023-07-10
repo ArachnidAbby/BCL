@@ -11,19 +11,34 @@ from Ast.nodes.commontypes import SrcPosition
 
 
 class ArrayLiteral(ExpressionNode):
-    __slots__ = ('value', 'literal')
+    __slots__ = ('value', 'literal', 'repeat')
     isconstant = False
 
-    def __init__(self, pos: SrcPosition, value: list[Any]):
+    def __init__(self, pos: SrcPosition, value: list[Any], repeat=None):
         super().__init__(pos)
         self.value = value
         self.ptr = None
+        self.repeat = repeat
         # whether or not this array is only full of literals
         self.literal = True
 
     def pre_eval(self, func):
         self.value[0].pre_eval(func)
         typ = self.value[0].ret_type
+
+        if self.repeat is not None:
+            amount = self.repeat.get_var(func)
+            amount.pre_eval(func)
+            if not self.repeat.isconstant or \
+                    not (self.repeat.ret_type, Ast_Types.Integer_32):
+                errors.error("Array literal size must be an i32",
+                             line=self.position)
+
+            if amount.value <= 0:
+                errors.error("Array literal size must be greater than '0'",
+                             line=self.position)
+            self.value = self.value * amount.value
+            self.repeat = None
 
         for x in self.value:
             x.pre_eval(func)

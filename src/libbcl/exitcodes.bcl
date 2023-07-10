@@ -1,0 +1,11 @@
+
+/// A standard set of exit codes
+/// This only extends to the standard library.
+/// Custom exit codes are obviously not listed
+public enum ExitCodes {
+    // values included for ease of searching,
+    // despite these being the default values
+    IndexOutOfBounds: 1,
+    Generator_EndOfValues: 2,
+    Optional_UnwrapError: 3;
+}

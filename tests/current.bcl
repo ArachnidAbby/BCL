@@ -42,6 +42,7 @@ import stdlib::*;
 // }
 
 import math::*;
+import optional::*;
 
 define tests() -> f32 {
     return 934f;
@@ -124,8 +125,6 @@ define gaming_test_function() -> i32 {
     }
 }
 
-define random() -> (i16, i16);
-
 // define malloc(size_bytes: size_t) -> UntypedPointer;
 // define free(ptr: UntypedPointer);
 
@@ -148,12 +147,23 @@ import test;
 
 
 struct Gumby::<T, U> {
-    E: T;
+    one: T,
+    two: U;
     define new() -> Gumby::<T, U>{
         return Gumby::<T, U> {
-            E: 12
+            one: 12,
+            two: 69
         };
     }
+}
+
+define get_value() -> Optional::<i32> {
+    x = random();
+    if x > i32::MAX / 2 {
+        return Optional::<i32>::wrap(x);
+    }
+
+    return Optional::<i32>::none();
 }
 
 define main() {
@@ -166,7 +176,17 @@ define main() {
     println(i32::MAX);
     println(i32::MIN);
     Gumby::<i32, i32>::new();
+    println(Gumby::<i32, i32>::SIZEOF as i32);
 
+    srandom(59548548892080984);
+
+    for _ in 0..20 {
+        my_optional_value = get_value();
+        val = my_optional_value.unwrap_or(0);
+        print("RANDOM VALUE ");
+        println(val);
+    }
+    
     println("--------------------------------");
     println("Testing bitwise ops on integers");
     println();

@@ -28,6 +28,9 @@ class Integer_32(Type_Base.Type):
         return self
 
     def get_namespace_name(self, func, name, pos):
+        if x := self.global_namespace_names(func, name, pos):
+            return x
+
         from Ast.literals.numberliteral import Literal
         if name == "MAX":
             return Literal(pos, self.rang[1], self)
