@@ -44,6 +44,7 @@ class Type:
     # Namespacing stuff that applies to nodes also applies to types
     is_namespace = True
     needs_dispose = False
+    is_generic = False
     visibility = Modifiers.VISIBILITY_PUBLIC
 
     def __init__(self):
@@ -52,6 +53,10 @@ class Type:
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
         error(f"Cannot get {name} from namespace {self}", line=pos)
+
+    def pass_type_params(self, func, params, pos):
+        print(pos)
+        error(f"Type is not Generic: {self}", line=pos)
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
@@ -234,7 +239,7 @@ class Type:
     def declare(self, mod):
         '''re-declare an ir-type in a module'''
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         return self
 
     def get_member_info(self, lhs, rhs):

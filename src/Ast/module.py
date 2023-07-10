@@ -128,7 +128,7 @@ class Module(ASTNode):
     def create_type(self, name: str, typeobj: Ast.Type):
         self.types[name] = typeobj
 
-    def get_type(self, name, position) -> Ast.Ast_Types.Type:  # type: ignore
+    def get_type_by_name(self, name, position) -> Ast.Ast_Types.Type:  # type: ignore
         if name in self.types.keys():
             return self.types[name]
         for imp in self.imports.values():

@@ -39,8 +39,8 @@ class Ref(ExpressionNode):
     def __str__(self) -> str:
         return f"&{str(self.var)}"
 
-    def as_type_reference(self, func):
-        return Ast_Types.Reference(self.var.as_type_reference(func))
+    def as_type_reference(self, func, allow_generics=False):
+        return Ast_Types.Reference(self.var.as_type_reference(func, allow_generics=allow_generics))
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Reference",

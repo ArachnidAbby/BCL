@@ -115,9 +115,9 @@ class ParenthBlock(ContainerNode):
                                 children=self.children,
                                 return_type=self.ret_type)
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         if len(self.children) == 1:
-            return self.children[0].as_type_reference(func)
+            return self.children[0].as_type_reference(func, allow_generics=allow_generics)
         else:
-            members = [child.as_type_reference(func) for child in self.children]
+            members = [child.as_type_reference(func, allow_generics=allow_generics) for child in self.children]
             return Ast_Types.TupleType(members)

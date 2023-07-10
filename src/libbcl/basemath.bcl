@@ -8,6 +8,7 @@
 
 // from math.h
 public define pow(x: f64, y: f64) -> f64;
+public define fmod(x: f64) -> f64;
 
 
 // must be defined after fpow due to binding issues :)

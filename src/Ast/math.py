@@ -113,14 +113,14 @@ class OperationNode(ExpressionNode):
     def __str__(self) -> str:
         return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         if not self.shunted:
-            return RPN_to_node(shunt(self)).as_type_reference_defer(func)
+            return RPN_to_node(shunt(self)).as_type_reference_defer(func, allow_generics)
         else:
-            return self.as_type_reference_defer(func)
+            return self.as_type_reference_defer(func, allow_generics)
 
-    def as_type_reference_defer(self, func):
-        return super().as_type_reference(func)
+    def as_type_reference_defer(self, func, allow_generics):
+        return super().as_type_reference(func, allow_generics)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Math Expression",

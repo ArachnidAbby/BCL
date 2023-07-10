@@ -128,7 +128,7 @@ class ASTNode:
     #     This is for intermediary nodes like a Namespace Index'''
     #     return self
 
-    def get_namespace_name(self, func, name):
+    def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
         errors.error(f"Cannot get from namespace {self}")
 

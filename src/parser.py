@@ -66,7 +66,7 @@ class Parser(ParserBase):
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
                                      "expr", "OPEN_SQUARE", "paren",
-                                     "NAMEINDEX")
+                                     "NAMEINDEX", "OPEN_TYPEPARAM")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
                               "BXOR", "BOR", "BNOT", "AMP")
@@ -79,7 +79,8 @@ class Parser(ParserBase):
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
                      self.parse_expr_list, self.parse_rangelit,
-                     self.parse_member_access, self.namespace_index),
+                     self.parse_member_access, self.namespace_index,
+                     self.parse_generic),
             "statement": (self.parse_statement, self.parse_combine_statements),
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
@@ -144,12 +145,26 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
+    @rule(0, "expr OPEN_TYPEPARAM expr_list GR")
+    def parse_generic(self):
+        left = self.peek(0).value
+        right = self.peek(2).value
+        pos = self.peek(0).pos
+        if not (isinstance(left, Ast.variables.reference.VariableRef)
+                or isinstance(left, Ast.namespace.NamespaceIndex)):
+            errors.error("Namespace index must be indexing a name or another namespace index",
+                         line=self.peek(0).pos)
+
+        node = Ast.generics.GenericSpecify(pos, left, right)
+        self.replace(4, "expr", node)
+
     @rule(0, "expr NAMEINDEX expr|MUL")
     def namespace_index(self):
         left = self.peek(0).value
         right = self.peek(2).value
         if not (isinstance(left, Ast.variables.reference.VariableRef)
-                or isinstance(left, Ast.namespace.NamespaceIndex)):
+                or isinstance(left, Ast.namespace.NamespaceIndex)
+                or isinstance(left, Ast.generics.GenericSpecify)):
             errors.error("Namespace index must be indexing a name or another namespace index",
                          line=self.peek(0).pos)
 

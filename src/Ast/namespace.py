@@ -47,7 +47,7 @@ class NamespaceIndex(ExpressionNode):
         self.pre_eval(func)
         return self.val
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         if isinstance(self.val, Ast_Types.Type):
             return self.val
         errors.error("Not a type", line=self.position)

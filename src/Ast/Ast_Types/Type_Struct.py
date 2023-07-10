@@ -39,14 +39,16 @@ class Struct(Ast_Types.Type):
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
-                 'ir_type', 'module', 'visibility', 'can_create_literal')
+                 'ir_type', 'module', 'visibility', 'can_create_literal', 'is_generic',
+                 'versions', 'definition')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
     has_members = True
 
     # TODO: ADD __EQ__ CHECK FOR NAMESPACE
-    def __init__(self, name: str, members: list[KeyValuePair], module):
+    def __init__(self, name: str, members: list[KeyValuePair], module,
+                 is_generic, definition):
         self.struct_name = name
         self.raw_members = members
         self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}  # bool "is_public"
@@ -54,6 +56,9 @@ class Struct(Ast_Types.Type):
         self.member_index_search = {}
         self.returnable = True
         self.can_create_literal = True
+        self.versions = {}
+        self.is_generic = is_generic
+        self.definition = definition
         for c, member in enumerate(members):
 
             # populate member lists
@@ -61,13 +66,59 @@ class Struct(Ast_Types.Type):
             self.member_indexs.append(member_name)
             self.member_index_search[member_name] = c
 
-        self.ir_type = ir.global_context.get_identified_type(f"{module.mod_name}.struct.{name}")
+        if not self.is_generic:
+            self.ir_type = ir.global_context.get_identified_type(f"{module.mod_name}.struct.{name}")
+        else:
+            self.ir_type = None
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
         self.visibility = super().visibility
 
+    def pass_type_params(self, func, params, pos):
+
+        params_types = []
+
+        for ty in params:
+            params_types.append(ty.as_type_reference(func))
+
+        params = tuple(params_types)
+
+        if params in self.versions.keys():
+            return self.versions[params]
+
+        new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
+        print(new_name)
+
+        new_ty = Struct(new_name, self.raw_members, self.module,
+                        False, self.definition)
+        new_ty.members = self.members
+
+        for c, key in enumerate(self.definition.generic_args.keys()):
+            self.definition.generic_args[key] = params[c]
+
+        self.definition.struct_type = new_ty
+        self.definition.is_generic = False
+
+        self.versions[params] = new_ty
+
+        self.definition.post_parse(self.module)
+        self.definition.pre_eval(self.module)
+        self.definition.eval(self.module)
+
+        for c, key in enumerate(self.definition.generic_args.keys()):
+            self.definition.generic_args[key] = None
+
+        self.definition.struct_type = self
+        self.definition.is_generic = True
+
+        return new_ty
+
     def get_namespace_name(self, func, name, pos):
+        if self.is_generic:
+            error(f"Must pass type parameters\n hint: `{self}::<T>`",
+                  line=pos)
+
         for mem_name in self.members.keys():
             if mem_name != name:
                 continue
@@ -87,12 +138,22 @@ class Struct(Ast_Types.Type):
         self.visibility = value
 
     def declare(self, mod):
+        if self.is_generic:
+            for ver in self.versions:
+                self.versions[ver].declare(mod)
+            return
+
         for name in self.members.keys():
             val = self.members[name][0]
             if isinstance(val, Ast_Types.FunctionGroup):
                 val.declare(mod)
 
     def define(self, func):
+        if self.is_generic:
+            for ver in self.versions:
+                self.versions[ver].define(func)
+            return
+
         for member in self.raw_members:
             # when encountering an unreturnable type, make this struct
             # unreturnable

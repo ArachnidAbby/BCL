@@ -146,6 +146,16 @@ enum Flags {
 
 import test;
 
+
+struct Gumby::<T, U> {
+    E: T;
+    define new() -> Gumby::<T, U>{
+        return Gumby::<T, U> {
+            E: 12
+        };
+    }
+}
+
 define main() {
     println(TestEnum::ONE as i32);
     println(TestEnum::TWO as i32);
@@ -155,6 +165,7 @@ define main() {
     println(TestEnum::SEVEN as i32);
     println(i32::MAX);
     println(i32::MIN);
+    Gumby::<i32, i32>::new();
 
     println("--------------------------------");
     println("Testing bitwise ops on integers");

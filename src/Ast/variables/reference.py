@@ -56,11 +56,16 @@ class VariableRef(ExpressionNode):
         self.ret_type = self.ret_type.typ
         return self
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         '''Get this variable's name as a Type
         This is useful for static type declaration.
         '''
-        return func.module.get_type(self.var_name, self.position)()
+        typ = func.get_type_by_name(self.var_name, self.position)()
+        if typ.is_generic and not allow_generics:
+            error(f"Type is generic. Add type params. {typ}",
+                  line=self.position)
+
+        return typ
 
     def __repr__(self) -> str:
         return f"<VariableRef to '{self.var_name}'>"

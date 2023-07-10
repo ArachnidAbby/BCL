@@ -29,7 +29,7 @@ class Parent(Protocol):
         #* optional
         pass
 
-    def get_type(self):
+    def get_type_by_name(self):
         pass
 
 
@@ -97,6 +97,12 @@ class FunctionDef(ASTNode):
 
     def get_unique_name(self, name: str) -> str:
         return self.module.get_unique_name(f"{self.func_name}.local.{name}")
+
+    def get_type_by_name(self, var_name, pos):
+        if self.parent is not None:
+            return self.parent.get_type_by_name(var_name, pos)
+
+        return self.module.get_type_by_name(var_name, pos)
 
     def create_function(self, name, function_obj):
         if name not in self.block.variables.keys():

@@ -7,6 +7,11 @@
 
 import basemath::*;
 
+/// Align 
+public define align(num: i32, step: i32) -> i32{
+    return num - num%step;
+}
+
 public define max(x: i32, y:i32) -> i32 {
     if x>y { return x; }
     return y;
@@ -77,4 +82,3 @@ public define sqrt(x: f64) -> f64;
 public define ceil(x: f64) -> f64;
 public define fabs(x: f64) -> f64;
 public define floor(x: f64) -> f64;
-public define fmod(x: f64) -> f64;
