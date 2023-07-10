@@ -9,7 +9,8 @@ BCL (Ben's Compiled Language) is a compiled programming language that is inspire
 # Installing via source
 
 To do this you will need:
-- LLVM 11 (will change to LLVM 14 later)
+- LLVM 14 (or LLVM11 if using alternative fork)
+- Conda
 - Python 3.11+
 - SetupTools (`pip install setuptools`)
 
@@ -21,9 +22,20 @@ Clone the git repo
 
 run these commands
 
-```
-# Installing custom llvmlite fork that has lld for linking
-pip install git+github.com/spidertyler2005/llvmlite.git
+
+```sh
+# libs required to compile llvmlite from source/custom fork
+## linux gcc stuff, I couldn't get it to compile without this
+conda install -c conda-forge libstdcxx-ng=12
+## llvm14 install (change 14 to 11 if needed)
+conda install -y -q -c numba/label/dev llvmdev="14.*" libxml2
+## llvm uses cmake
+conda install cmake
+
+# Installing custom llvmlite fork that has lld for linking (LLVM14)
+pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
+# Alternatively, if this doesn't work install (LLVM11)
+pip install git+https://github.com/spidertyler2005/llvmlite.git
 
 # Installing repo
 pip install .
