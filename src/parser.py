@@ -611,8 +611,11 @@ class Parser(ParserBase):
                                         self.blocks[-1][0])
         self.replace(1, "expr", var)
 
-    @rule(-1, "!expr AMP expr !OPEN_SQUARE")
+    @rule(-1, "!expr AMP expr")
     def parse_varref(self):
+        if self.peek_safe(2).name in ("OPEN_SQUARE", "OPEN_TYPEPARAM"):
+            return
+
         var = self.peek(1).value
         typ = Ast.reference.Ref(self.peek(0).pos, var)
         self.replace(2, "expr", typ)

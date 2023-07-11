@@ -1,0 +1,71 @@
+import stdlib;
+
+public struct Box::<T> {
+    data: UntypedPointer, // &T
+    ref_count: UntypedPointer; // &i64 (signed in case the count goes negative)
+
+    public define new(data: T) -> Box::<T> {
+        data_ptr = stdlib::malloc(T::SIZEOF);
+        data_ptr_typed = data_ptr as &T;
+
+        ref_ptr = stdlib::malloc(i64::SIZEOF);
+        ref_ptr_typed = ref_ptr as &i64;
+
+        ref_ptr_typed = 1i64;
+        data_ptr_typed = data;
+
+        x = Box::<T> {
+            data: data_ptr,
+            ref_count: ref_ptr
+        };
+        stdlib::println("wonkers");
+
+        return x;
+    }
+
+    // public because of some dumb reasons that are necessary for op overloading
+    // will fix soon
+    /// Do not execute manually, breaks safety
+    public define __increase_ref_count__(&self) {
+        ref_ptr_typed = self.ref_count as &i64;
+        ref_ptr_typed = 1 + ref_ptr_typed as i64;
+        stdlib::print("Append ref count: ");
+        stdlib::println(ref_ptr_typed as i64); 
+    }
+
+    public define unwrap(self) -> T {
+        ref_count = self.ref_count as &i64 as i64;
+        if ref_count<=0 {
+            stdlib::println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
+        }
+
+        return self.data as &T as T;
+    }
+
+    public define wrap(&self, data: T) {
+        data_ptr = self.data as &T;
+        ref_count = self.ref_count as &i64 as i64;
+
+        if ref_count<=0 {
+            stdlib::println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
+        }
+
+        data_ptr = data;
+    }
+
+    /// Do not execute manually, breaks safety
+    public define __dispose__(&self) {
+        ref_count_ptr = self.ref_count as &i64;
+        ref_count_ptr -= 1;
+        ref_count = ref_count_ptr as i64;
+        stdlib::print("dipose ref count:");
+        stdlib::println(ref_count);
+
+
+        if ref_count <= 0 {
+            stdlib::free(self.data);
+            stdlib::free(self.ref_count);
+            stdlib::println("Removed");
+        }
+    }
+}

@@ -332,6 +332,7 @@ class Module(ASTNode):
         if args["--emit-ast"]:
             print(self.repr_as_tree())
         llir = str(self.module)
+        # mod = llir
         mod = binding.parse_assembly(llir)
         module_pass.run(mod)
         create_target_dirs(loc)

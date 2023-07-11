@@ -1,7 +1,8 @@
 
 from typing import Self
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.nodes.passthrough import PassNode# type: ignore
 
 from errors import error
 
@@ -209,27 +210,45 @@ class Type:
         if self.read_only and not first_assignment:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
                   line=ptr.position)
+        
+
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
-        value.ret_type.add_ref_count(func, value)
+
+        node = PassNode(value.position, value._instruction, value.ret_type)
+
+        value.ret_type.add_ref_count(func, node)
+
         func.builder.store(val, ptr.get_ptr(func))
 
     def isum(self, func, ptr, rhs):
-        final_value = self.sum(func, ptr, rhs)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        final_value = self.sum(func, node, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
     def isub(self, func, ptr, rhs):
-        final_value = self.sub(func, ptr, rhs)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        final_value = self.sub(func, node, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
     def imul(self, func, ptr, rhs):
-        final_value = self.mul(func, ptr, rhs)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        final_value = self.mul(func, node, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
     def idiv(self, func, ptr, rhs):
-        final_value = self.div(func, ptr, rhs)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        final_value = self.div(func, node, rhs)
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 

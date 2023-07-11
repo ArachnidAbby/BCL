@@ -13,6 +13,7 @@ class UntypedPointer(Type):
     read_only = True
     returnable = True
     needs_dispose = True
+    ref_counted = True
 
     def convert_to(self, func, orig, typ):
         if self.roughly_equals(typ):

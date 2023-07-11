@@ -95,6 +95,9 @@ class Struct(Ast_Types.Type):
         new_ty = Struct(new_name, self.raw_members, self.module,
                         False, self.definition)
         # new_ty.members = self.members
+        generic_args_previous = self.definition.generic_args
+
+        self.definition.generic_args = {**generic_args_previous}
 
         for c, key in enumerate(self.definition.generic_args.keys()):
             self.definition.generic_args[key] = params[c]
@@ -108,8 +111,8 @@ class Struct(Ast_Types.Type):
         self.definition.pre_eval(self.module)
         self.definition.eval(self.module)
 
-        for c, key in enumerate(self.definition.generic_args.keys()):
-            self.definition.generic_args[key] = None
+        # for c, key in enumerate(self.definition.generic_args.keys()):
+        self.definition.generic_args = generic_args_previous
 
         self.definition.struct_type = self
         self.definition.is_generic = True
@@ -215,7 +218,7 @@ class Struct(Ast_Types.Type):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
-            rhs_pos = (-1,-1,-1, "")
+            rhs_pos = (-1,-1, 0, "d")
         args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, None)
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
@@ -319,12 +322,16 @@ class Struct(Ast_Types.Type):
               line=lhs.position)
 
     def add_ref_count(self, func, ptr):
-        int_type = ir.IntType(64)
-        zero_const = ir.Constant(int_type, 0)
-        tuple_ptr = ptr.get_ptr(func)
+        if func.func_name in ("__increase_ref_count__", "__dispose__") and func.parent is self.definition:
+            return
 
-        func = self.get_func("__increase_ref_count__", ptr, None, ret_none=True)
-        if func is not None:
+        int_type = ir.IntType(64)
+        int32_type = ir.IntType(32)
+        zero_const = ir.Constant(int_type, 0)
+        struct_ptr = ptr.get_ptr(func)
+
+        function = self.get_func("__increase_ref_count__", ptr, None, ret_none=True)
+        if function is not None:
             self.call_func(func, "__increase_ref_count__", ptr, None)
 
         for c, typ_tuple in enumerate(self.members.values()):
@@ -333,18 +340,22 @@ class Struct(Ast_Types.Type):
                 continue
             if not typ.ref_counted:
                 continue
-            index = ir.Constant(int_type, c)
-            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            index = ir.Constant(int32_type, c)
+            p = func.builder.gep(struct_ptr, [zero_const, index])
             node = PassNode(ptr.position, None, typ, ptr=p)
             typ.add_ref_count(func, node)
 
     def dispose(self, func, ptr):
+        if func.func_name in ("__increase_ref_count__", "__dispose__") and func.parent is self.definition:
+            return
         int_type = ir.IntType(64)
-        zero_const = ir.Constant(int_type, 0)
-        tuple_ptr = ptr.get_ptr(func)
+        int32_type = ir.IntType(32)
 
-        func = self.get_func("__dispose__", ptr, None, ret_none=True)
-        if func is not None:
+        zero_const = ir.Constant(int_type, 0)
+        struct_ptr = ptr.get_ptr(func)
+
+        function = self.get_func("__dispose__", ptr, None, ret_none=True)
+        if function is not None:
             self.call_func(func, "__dispose__", ptr, None)
 
         for c, typ_tuple in enumerate(self.members.values()):
@@ -353,8 +364,8 @@ class Struct(Ast_Types.Type):
                 continue
             if not typ.needs_dispose:
                 continue
-            index = ir.Constant(int_type, c)
-            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            index = ir.Constant(int32_type, c)
+            p = func.builder.gep(struct_ptr, [zero_const, index])
             node = PassNode(ptr.position, None, typ, ptr=p)
             typ.dispose(func, node)
 

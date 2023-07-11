@@ -166,27 +166,64 @@ define get_value() -> Optional::<i32> {
     return Optional::<i32>::none();
 }
 
+import box::*;
+
+define random_box_test(my_arg: &Box::<i32>) -> Box::<i32> {
+    println("disposing func");
+    return my_arg as Box::<i32>;
+}
+
 define main() {
-    println(TestEnum::ONE as i32);
-    println(TestEnum::TWO as i32);
-    println(TestEnum::THREE as i32);
-    println(TestEnum::FIVE as i32);
-    println(TestEnum::SIX as i32);
-    println(TestEnum::SEVEN as i32);
-    println(i32::MAX);
-    println(i32::MIN);
-    Gumby::<i32, i32>::new();
+
+    println("started");
+
+    j = Box::<i32>::new(10);
+
+    box_array = [Box::<i32>::new(10); 10];
+
+    for x in box_array {
+        
+    }
+
+    println("running func");
+    j = random_box_test(&j);
+
+    println(j.unwrap());
+
+    j.wrap(69);
+
+    println(j.unwrap());
+
+    println();
+    println();
+
+    j = Box::<i32>::new(15);
+
+    println();
+    println();
+
+    // box2 = my_box;
+
+    // println(TestEnum::ONE as i32);
+    // println(TestEnum::TWO as i32);
+    // println(TestEnum::THREE as i32);
+    // println(TestEnum::FIVE as i32);
+    // println(TestEnum::SIX as i32);
+    // println(TestEnum::SEVEN as i32);
+    // println(i32::MAX);
+    // println(i32::MIN);
+    // Gumby::<i32, i32>::new();
     println(Gumby::<i32, i32>::SIZEOF as i32);
 
-    srandom(59548548892080984);
+    // srandom(59548548892080984);
 
-    for _ in 0..20 {
-        my_optional_value = get_value();
-        val = my_optional_value.unwrap_or(0);
-        print("RANDOM VALUE ");
-        println(val);
-    }
-    
+    // for _ in 0..20 {
+    //     my_optional_value = get_value();
+    //     val = my_optional_value.unwrap_or(0);
+    //     print("RANDOM VALUE ");
+    //     println(val);
+    // }
+
     println("--------------------------------");
     println("Testing bitwise ops on integers");
     println();

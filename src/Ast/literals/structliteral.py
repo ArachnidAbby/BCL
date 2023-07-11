@@ -70,7 +70,8 @@ class StructLiteral(ExpressionNode):
             child.value._instruction = value
             func.builder.store(value, item_ptr)
         self.ptr = ptr
-        return func.builder.load(ptr)
+        self._instruction = func.builder.load(ptr)
+        return self._instruction
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,

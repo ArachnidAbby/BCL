@@ -1,4 +1,5 @@
 from llvmlite import ir
+from Ast.nodes.passthrough import PassNode
 
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
@@ -40,15 +41,18 @@ class ReturnStatement(ASTNode):
                                              ir.Constant(ir.IntType(32), 0)])
             func.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
-        func.dispose_stack()
+        ret_val = None
+        if not func.ret_type.is_void():
+            node = PassNode(self.expr.position, self.expr.eval(func), self.expr.ret_type)
+            self.expr.ret_type.add_ref_count(func, node)
+            ret_val = self.expr._instruction
 
-        self.expr.ret_type.add_ref_count(func, self.expr)
-        self.expr.overwrite_eval = True
+        func.dispose_stack()
 
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:
-            func.builder.ret(self.expr.eval(func))
+            func.builder.ret(ret_val)
         Block.BLOCK_STACK[-1].ended = True
 
     def repr_as_tree(self) -> str:

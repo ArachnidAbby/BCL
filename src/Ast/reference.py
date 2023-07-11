@@ -8,7 +8,7 @@ class Ref(ExpressionNode):
     It returns a ptr uppon `eval`'''
     __slots__ = ('var', )
     assignable = True
-    do_register_dispose = True
+    do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, var):
         super().__init__(pos)
@@ -22,8 +22,8 @@ class Ref(ExpressionNode):
             self.ret_type = Ast_Types.Reference(self.var.ret_type)
 
     def eval_impl(self, func):
-        self.var.ret_type.add_ref_count(func, self.var)
-        self.var.overwrite_eval = True
+        # self.var.ret_type.add_ref_count(func, self.var)
+        # self.var.overwrite_eval = True
         return self.var.get_ptr(func)
 
     def get_var(self, func):

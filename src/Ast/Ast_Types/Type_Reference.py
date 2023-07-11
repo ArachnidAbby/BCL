@@ -1,6 +1,7 @@
 from Ast import Ast_Types
 from Ast.nodes.passthrough import PassNode
 from errors import error
+from llvmlite import ir
 
 from . import Type_Base
 
@@ -41,6 +42,7 @@ class Reference(Type_Base.Type):
 
     def convert_to(self, func, orig, typ):
         if typ == self.typ:
+            self.add_ref_count(func, orig)
             return func.builder.load(orig.get_ptr(func))
         if typ.name == "UntypedPointer":
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
@@ -108,11 +110,28 @@ class Reference(Type_Base.Type):
     def add_ref_count(self, func, ptr):
         if not self.ref_counted:
             return
-        val = func.builder.load(ptr.get_ptr(func))
-        node = PassNode(ptr.position, val, self.typ, val)
+
+        ptr_ptr = ptr.get_ptr(func)
+        val = func.builder.load(ptr_ptr)
+        ptr_val = val
+
+        if not isinstance(val.type, ir.PointerType):
+            ptr_val = ptr_ptr
+            val = ptr_ptr
+
+        node = PassNode(ptr.position, val, self.typ, ptr_val)
         self.typ.add_ref_count(func, node)
 
     def dispose(self, func, ptr):
-        val = func.builder.load(ptr.get_ptr(func))
-        node = PassNode(ptr.position, val, self.typ, val)
+        ptr_ptr = ptr.get_ptr(func)
+        val = func.builder.load(ptr_ptr)
+        ptr_val = val
+
+        if not isinstance(val.type, ir.PointerType):
+            ptr_val = ptr_ptr
+            val = ptr_ptr
+            print("WOW, INCREDIBLE")
+
+        print(ptr_val, val)
+        node = PassNode(ptr.position, None, self.typ, ptr=ptr_val)
         self.typ.dispose(func, node)

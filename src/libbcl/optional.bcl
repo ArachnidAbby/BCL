@@ -36,7 +36,7 @@ public struct Optional::<T> {
     /// if the value is None, the program terminates.
     public define unwrap(self) -> T {
         if self._is_none {
-            println("Unwrap of Optional failed, value was None");
+            println("\u001b[31mUnwrap of Optional failed, value was None\u001b[0m");
             exit(ExitCodes::Optional_UnwrapError as i32);
         }
 

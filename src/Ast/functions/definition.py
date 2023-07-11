@@ -310,7 +310,9 @@ class FunctionDef(ASTNode):
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
                     node = PassNode(SrcPosition.invalid(), None, x[0].type, ptr)
+                    self.block.BLOCK_STACK.append(self.block)
                     x[0].type.add_ref_count(self, node)
+                    self.block.BLOCK_STACK.pop()
                     self.register_dispose(node)
                     x[0].ptr = ptr
                 x[0].is_constant = False
@@ -332,7 +334,9 @@ class FunctionDef(ASTNode):
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
                 node = PassNode(SrcPosition.invalid(), None, x[0].type, x[0].ptr)
+                self.block.BLOCK_STACK.append(self.block)
                 x[0].type.add_ref_count(self, node)
+                self.block.BLOCK_STACK.pop()
                 self.register_dispose(node)
                 x[0].is_constant = False
             else:
@@ -415,8 +419,12 @@ class FunctionDef(ASTNode):
         self.builder.store(block_addr, state_ptr)
 
     def dispose_stack(self):
+        self.block.BLOCK_STACK.append(self.block)
+
         for node in self.dispose_queue:
             node.ret_type.dispose(self, node)
+
+        self.block.BLOCK_STACK.pop()
 
     @property
     def has_no_body(self) -> bool:
