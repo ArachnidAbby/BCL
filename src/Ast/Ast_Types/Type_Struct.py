@@ -5,6 +5,7 @@ from llvmlite import ir  # type: ignore
 from Ast import Ast_Types
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock, Block
+from Ast.nodes.passthrough import PassNode
 from Ast.variables.reference import VariableRef
 from Ast.nodes.commontypes import MemberInfo, Modifiers
 from Ast.reference import Ref
@@ -40,7 +41,7 @@ class Struct(Ast_Types.Type):
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
                  'ir_type', 'module', 'visibility', 'can_create_literal', 'is_generic',
-                 'versions', 'definition')
+                 'versions', 'definition', 'needs_dispose', 'ref_counted')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -55,6 +56,8 @@ class Struct(Ast_Types.Type):
         self.member_indexs = []
         self.member_index_search = {}
         self.returnable = True
+        self.needs_dispose = False
+        self.ref_counted = False
         self.can_create_literal = True
         self.versions = {}
         self.is_generic = is_generic
@@ -169,8 +172,12 @@ class Struct(Ast_Types.Type):
                 self.can_create_literal = False
 
             vis = member.visibility == Modifiers.VISIBILITY_PUBLIC
-            self.members[member_name] = (member.get_type(func), vis)
+            typ = member.get_type(func)
+            self.members[member_name] = (typ, vis)
 
+            self.returnable = self.returnable and typ.returnable
+            self.needs_dispose = self.needs_dispose or typ.needs_dispose
+            self.ref_counted = self.ref_counted or typ.ref_counted
 
         self.ir_type.set_body(*[x[0].ir_type for x in self.members.values()])
 
@@ -204,21 +211,33 @@ class Struct(Ast_Types.Type):
                and other.struct_name != self.struct_name \
                and self.module.location != other.module.location
 
-    def get_func(self, name, lhs, rhs):
-        args = ParenthBlock(rhs.position)
+    def get_func(self, name, lhs, rhs, ret_none=False):
+        if rhs is not None:
+            rhs_pos = rhs.position
+        else:
+            rhs_pos = (-1,-1,-1, "")
+        args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, None)
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
-        args.children = [rhs]
+        if rhs is not None:
+            args.children = [rhs]
         args.in_func_call = True
         if name not in self.members.keys():
+            if ret_none:
+                return None
             error(f"No function \"{name}\" Found", line=lhs.position)
         return self.members[name][0].get_function(self, mem_access, args)
 
     def call_func(self, func, name, lhs, rhs):
-        args = ParenthBlock(rhs.position)
+        if rhs is not None:
+            rhs_pos = rhs.position
+        else:
+            rhs_pos = (-1,-1,-1, "")
+        args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, Block.BLOCK_STACK[-1])
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
-        args.children = [rhs]
+        if rhs is not None:
+            args.children = [rhs]
         args.in_func_call = True
         args.pre_eval(func)
         return self.members[name][0].call(func, mem_access, args)
@@ -298,6 +317,46 @@ class Struct(Ast_Types.Type):
     def put(self, func, lhs, value):
         error(f"Operation 'put-at' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
+
+    def add_ref_count(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        tuple_ptr = ptr.get_ptr(func)
+
+        func = self.get_func("__increase_ref_count__", ptr, None, ret_none=True)
+        if func is not None:
+            self.call_func(func, "__increase_ref_count__", ptr, None)
+
+        for c, typ_tuple in enumerate(self.members.values()):
+            typ = typ_tuple[0]
+            if isinstance(typ, Ast_Types.FunctionGroup):
+                continue
+            if not typ.ref_counted:
+                continue
+            index = ir.Constant(int_type, c)
+            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, typ, ptr=p)
+            typ.add_ref_count(func, node)
+
+    def dispose(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        tuple_ptr = ptr.get_ptr(func)
+
+        func = self.get_func("__dispose__", ptr, None, ret_none=True)
+        if func is not None:
+            self.call_func(func, "__dispose__", ptr, None)
+
+        for c, typ_tuple in enumerate(self.members.values()):
+            typ = typ_tuple[0]
+            if isinstance(typ, Ast_Types.FunctionGroup):
+                continue
+            if not typ.needs_dispose:
+                continue
+            index = ir.Constant(int_type, c)
+            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, typ, ptr=p)
+            typ.dispose(func, node)
 
     def __hash__(self):
         return hash(self.name+self.struct_name+self.module.mod_name)

@@ -45,6 +45,7 @@ class Type:
     is_namespace = True
     needs_dispose = False
     is_generic = False
+    ref_counted = False
     visibility = Modifiers.VISIBILITY_PUBLIC
 
     def __init__(self):
@@ -324,6 +325,7 @@ class Type:
         item[0].ptr = ptr
 
     def add_ref_count(self, func, ptr):
+        # print(f"add_ref_count {func.func_name} {self}")
         pass
 
     def pop_ref_count(self, func, ptr):
@@ -332,4 +334,4 @@ class Type:
     def dispose(self, func, ptr):
         '''code to run on the closing of a function'''
         self.pop_ref_count(func, ptr)
-        print(f"dispose {func.func_name} {self}")
+        # print(f"dispose {func.func_name} {self}")

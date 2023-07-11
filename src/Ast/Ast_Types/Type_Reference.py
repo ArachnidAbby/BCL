@@ -6,7 +6,7 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type", "has_members", "needs_dispose")
+    __slots__ = ("typ", "ir_type", "has_members", "needs_dispose", "ref_counted")
 
     name = 'ref'
     pass_as_ptr = False
@@ -16,6 +16,7 @@ class Reference(Type_Base.Type):
     def __init__(self, typ):
         self.typ = typ
         self.needs_dispose = typ.needs_dispose
+        self.ref_counted = typ.ref_counted
 
         self.ir_type = typ.ir_type.as_pointer()
         self.has_members = self.typ.has_members
@@ -104,7 +105,14 @@ class Reference(Type_Base.Type):
         val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
         func.builder.store(val, actual_ptr)
 
+    def add_ref_count(self, func, ptr):
+        if not self.ref_counted:
+            return
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self.typ, val)
+        self.typ.add_ref_count(func, node)
+
     def dispose(self, func, ptr):
         val = func.builder.load(ptr.get_ptr(func))
-        node = PassNode(ptr.position, val, self.typ)
+        node = PassNode(ptr.position, val, self.typ, val)
         self.typ.dispose(func, node)

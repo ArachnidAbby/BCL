@@ -9,7 +9,7 @@ from . import Type_Base
 
 
 class Array(Type_Base.Type):
-    __slots__ = ('size', 'typ', 'ir_type', 'needs_dispose')
+    __slots__ = ('size', 'typ', 'ir_type', 'needs_dispose', 'ref_counted')
     name = "array"
     pass_as_ptr = True
     no_load = False
@@ -18,6 +18,7 @@ class Array(Type_Base.Type):
     def __init__(self, size, typ):
         self.typ = typ
         self.needs_dispose = typ.needs_dispose
+        self.ref_counted = typ.ref_counted
 
         if not size.isconstant:
             error("size of array type must be a int-literal",
@@ -111,6 +112,20 @@ class Array(Type_Base.Type):
         func.builder.store(ir.Constant(ir.IntType(32), self.size), size_ptr)
 
         return ptr
+
+    def add_ref_count(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        array_ptr = ptr.get_ptr(func)
+
+        if not self.ref_counted:
+            pass
+
+        for i in range(self.size):
+            index = ir.Constant(int_type, i)
+            p = func.builder.gep(array_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, self.typ, ptr=p)
+            self.typ.add_ref_count(func, node)
 
     def dispose(self, func, ptr):
         int_type = ir.IntType(64)

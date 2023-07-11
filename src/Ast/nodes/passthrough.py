@@ -15,3 +15,8 @@ class PassNode(ExpressionNode):
 
     def eval_impl(self, func):
         return self.instr
+
+    def get_ptr(self, func):
+        if self.ptr is None:
+            super().get_ptr(func)
+        return self.ptr

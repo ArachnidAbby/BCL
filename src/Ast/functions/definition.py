@@ -1,6 +1,7 @@
 from typing import Protocol
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast import Ast_Types
@@ -308,6 +309,9 @@ class FunctionDef(ASTNode):
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
+                    node = PassNode(SrcPosition.invalid(), None, x[0].type, ptr)
+                    x[0].type.add_ref_count(self, node)
+                    self.register_dispose(node)
                     x[0].ptr = ptr
                 x[0].is_constant = False
                 continue
@@ -327,6 +331,9 @@ class FunctionDef(ASTNode):
                 #     self.builder.store(val, ptr)
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
+                node = PassNode(SrcPosition.invalid(), None, x[0].type, x[0].ptr)
+                x[0].type.add_ref_count(self, node)
+                self.register_dispose(node)
                 x[0].is_constant = False
             else:
                 x[0].define(self, x[1], c)

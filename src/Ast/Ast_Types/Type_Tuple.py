@@ -1,16 +1,26 @@
 from llvmlite import ir
 
 from Ast.Ast_Types.Type_Base import Type
+from Ast.nodes.passthrough import PassNode
 
 
 class TupleType(Type):
-    __slots__ = ('ir_type', 'member_types', 'size')
+    __slots__ = ('ir_type', 'member_types', 'size', 'returnable',
+                 'needs_dispose', 'ref_counted')
 
     literal_index = True
     name = "Tuple"
 
     def __init__(self, member_types):
         self.member_types = member_types
+        self.returnable = True
+        self.needs_dispose = False
+        self.ref_counted = False
+        for typ in member_types:
+            self.returnable = self.returnable and typ.returnable
+            self.needs_dispose = self.needs_dispose or typ.needs_dispose
+            self.ref_counted = self.ref_counted or typ.ref_counted
+
         self.size = len(member_types)
         self.ir_type = ir.LiteralStructType([member.ir_type for member in member_types])
 
@@ -36,3 +46,40 @@ class TupleType(Type):
 
     def put(self, func, lhs, value):
         return func.builder.store(value.eval(func), lhs.get_ptr(func))
+
+    def add_ref_count(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        tuple_ptr = ptr.get_ptr(func)
+        for i in range(self.size):
+            index = ir.Constant(int_type, i)
+            typ = self.member_types[i]
+            if not typ.ref_counted:
+                continue
+            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, typ, ptr=p)
+            typ.add_ref_count(func, node)
+
+    def pop_ref_count(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        tuple_ptr = ptr.get_ptr(func)
+        for i in range(self.size):
+            index = ir.Constant(int_type, i)
+            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            typ = self.member_types[i]
+            node = PassNode(ptr.position, None, typ, ptr=p)
+            typ.pop_ref_count(func, node)
+
+    def dispose(self, func, ptr):
+        int_type = ir.IntType(64)
+        zero_const = ir.Constant(int_type, 0)
+        tuple_ptr = ptr.get_ptr(func)
+        for i in range(self.size):
+            index = ir.Constant(int_type, i)
+            typ = self.member_types[i]
+            if not typ.needs_dispose:
+                continue
+            p = func.builder.gep(tuple_ptr, [zero_const, index])
+            node = PassNode(ptr.position, None, typ, ptr=p)
+            typ.dispose(func, node)

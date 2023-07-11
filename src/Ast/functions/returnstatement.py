@@ -42,6 +42,9 @@ class ReturnStatement(ASTNode):
 
         func.dispose_stack()
 
+        self.expr.ret_type.add_ref_count(func, self.expr)
+        self.expr.overwrite_eval = True
+
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:
