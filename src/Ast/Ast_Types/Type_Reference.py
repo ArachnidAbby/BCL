@@ -130,8 +130,6 @@ class Reference(Type_Base.Type):
         if not isinstance(val.type, ir.PointerType):
             ptr_val = ptr_ptr
             val = ptr_ptr
-            print("WOW, INCREDIBLE")
 
-        print(ptr_val, val)
         node = PassNode(ptr.position, None, self.typ, ptr=ptr_val)
         self.typ.dispose(func, node)

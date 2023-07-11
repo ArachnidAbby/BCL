@@ -1,5 +1,6 @@
 from llvmlite import ir
-from Ast.Ast_Types import Type_Function# type: ignore
+from Ast.Ast_Types import Type_Function
+from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
@@ -66,9 +67,12 @@ class StructLiteral(ExpressionNode):
         for child in self.members:
             index = ir.Constant(ir.IntType(32), idx_lookup[child.key.var_name])
             item_ptr = func.builder.gep(ptr, [zero_const, index])
+
             value = child.value.eval_impl(func)
+            node = PassNode(child.value.position, value, child.value.ret_type, item_ptr)
             child.value._instruction = value
             func.builder.store(value, item_ptr)
+            child.value.ret_type.add_ref_count(func, node)
         self.ptr = ptr
         self._instruction = func.builder.load(ptr)
         return self._instruction

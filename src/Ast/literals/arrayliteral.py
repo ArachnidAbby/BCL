@@ -1,7 +1,8 @@
 
 from typing import Any
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast import Ast_Types
@@ -61,9 +62,18 @@ class ArrayLiteral(ExpressionNode):
             for c, item in enumerate(self.value):
                 index = ir.Constant(ir.IntType(32), c)
                 item_ptr = func.builder.gep(ptr, [zero_const, index])
-                evaled = item.eval_impl(func)
+                # item.overwrite_eval = True
+                evaled = item.eval(func)
+                if item.do_register_dispose and item.ret_type.needs_dispose:
+                    dispose_node = PassNode(item.position, evaled, item.ret_type, item.ptr)
+                    func.register_dispose(dispose_node)
+
+                item.ptr = None
                 item._instruction = evaled
                 func.builder.store(evaled, item_ptr)
+                node = PassNode(item.position, evaled, item.ret_type, item_ptr)
+
+                item.ret_type.add_ref_count(func, node)
             self.ptr = ptr
             return func.builder.load(ptr)
 

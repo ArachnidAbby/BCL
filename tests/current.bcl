@@ -173,16 +173,30 @@ define random_box_test(my_arg: &Box::<i32>) -> Box::<i32> {
     return my_arg as Box::<i32>;
 }
 
+struct ContainsBox {
+    x: Box::<i32>;
+
+    define __dispose__(self) {
+        println("DISPOSING AND POSING");
+    }
+}
+
 define main() {
 
     println("started");
 
     j = Box::<i32>::new(10);
 
+    OhNo = ContainsBox {
+        x: j
+    };
+
     box_array = [Box::<i32>::new(10); 10];
 
+    box_array[0] = Box::<i32>::new(11);
+
     for x in box_array {
-        
+        println(x.unwrap());
     }
 
     println("running func");

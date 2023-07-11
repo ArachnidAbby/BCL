@@ -210,7 +210,6 @@ class Type:
         if self.read_only and not first_assignment:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
                   line=ptr.position)
-        
 
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
 
