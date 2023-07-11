@@ -177,7 +177,7 @@ struct ContainsBox {
     x: Box::<i32>;
 
     define __dispose__(self) {
-        println("DISPOSING AND POSING");
+        // println("DISPOSING AND POSING");
     }
 }
 
@@ -191,13 +191,13 @@ define main() {
         x: j
     };
 
-    box_array = [Box::<i32>::new(10); 10];
+    // box_array = [Box::<i32>::new(10); 10];
 
-    box_array[0] = Box::<i32>::new(11);
+    // box_array[0] = Box::<i32>::new(11);
 
-    for x in box_array {
-        println(x.unwrap());
-    }
+    // for x in box_array {
+    //     println(x.unwrap());
+    // }
 
     println("running func");
     j = random_box_test(&j);
@@ -304,12 +304,20 @@ define main() {
 
     x = [t.next(); 3]; //38
 
-    pointer = malloc(4 as size_t);
+    pointer = malloc(i32::SIZEOF * 2); // UntypedPointer
+
+    ahead = pointer[i32::SIZEOF] as &i32;
+
+    ahead = 34500000;
+
     i32_p = pointer as &i32;
     i32_p = 12;
     println(i32_p as i32); //30-31 +9 // 41
     i32_p = 69420;
     println(i32_p as i32);
+
+    println(ahead as i32);
+
     // println(x);
     free(pointer); //45
 

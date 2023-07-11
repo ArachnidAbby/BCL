@@ -19,6 +19,9 @@ def check_in_range(rang, arrayrang):
 
 
 def check_valid_literal_range(lhs, rhs):
+    if not lhs.ret_type.generate_bounds_check:
+        return
+
     return rhs.isconstant and \
         (lhs.ret_type.size-1 < rhs.value or rhs.value < 0)
 
@@ -83,6 +86,9 @@ class VariableIndexRef(ExpressionNode):
         if self.ind.isconstant:  # don't generate checks for constants
             return
 
+        if not self.varref.ret_type.generate_bounds_check:
+            return
+
         if self.varref.ret_type.literal_index:
             error(f"Type \"{str(self.varref.ret_type)}\" can only have " +
                   "literal indexes", line=self.ind.position)
@@ -109,6 +115,9 @@ class VariableIndexRef(ExpressionNode):
         self.check_valid_literal(self.varref, self.ind)
         if self.generate_runtime_check(func):
             return
+        if self.varref.ret_type.name == "UntypedPointer":
+            return func.builder.gep(self.varref.get_ptr(func),
+                                [self.ind.eval(func)])
         return func.builder.gep(self.varref.get_ptr(func),
                                 [ZERO_CONST, self.ind.eval(func)])
 

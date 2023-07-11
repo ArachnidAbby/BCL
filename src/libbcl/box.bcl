@@ -23,16 +23,6 @@ public struct Box::<T> {
         return x;
     }
 
-    // public because of some dumb reasons that are necessary for op overloading
-    // will fix soon
-    /// Do not execute manually, breaks safety
-    public define __increase_ref_count__(&self) {
-        ref_ptr_typed = self.ref_count as &i64;
-        ref_ptr_typed = 1 + ref_ptr_typed as i64;
-        stdlib::print("Append ref count: ");
-        stdlib::println(ref_ptr_typed as i64); 
-    }
-
     public define unwrap(self) -> T {
         ref_count = self.ref_count as &i64 as i64;
         if ref_count<=0 {
@@ -53,19 +43,29 @@ public struct Box::<T> {
         data_ptr = data;
     }
 
+    // public because of some dumb reasons that are necessary for op overloading
+    // will fix soon
+    /// Do not execute manually, breaks safety
+    public define __increase_ref_count__(&self) {
+        ref_ptr_typed = self.ref_count as &i64;
+        ref_ptr_typed = 1 + ref_ptr_typed as i64;
+        // stdlib::print("Append ref count: ");
+        // stdlib::println(ref_ptr_typed as i64); 
+    }
+
     /// Do not execute manually, breaks safety
     public define __dispose__(&self) {
         ref_count_ptr = self.ref_count as &i64;
         ref_count_ptr -= 1;
         ref_count = ref_count_ptr as i64;
-        stdlib::print("dipose ref count:");
-        stdlib::println(ref_count);
+        // stdlib::print("dipose ref count:");
+        // stdlib::println(ref_count);
 
 
         if ref_count <= 0 {
             stdlib::free(self.data);
             stdlib::free(self.ref_count);
-            stdlib::println("Removed");
+            // stdlib::println("Removed");
         }
     }
 }

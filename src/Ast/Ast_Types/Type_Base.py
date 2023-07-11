@@ -48,6 +48,7 @@ class Type:
     is_generic = False
     ref_counted = False
     visibility = Modifiers.VISIBILITY_PUBLIC
+    generate_bounds_check = True
 
     def __init__(self):
         pass
