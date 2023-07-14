@@ -5,6 +5,7 @@ from llvmlite import ir
 import Ast.Ast_Types.Type_Range
 from Ast.nodes import ExpressionNode
 from Ast.nodes.commontypes import SrcPosition
+import errors
 
 
 class RangeLiteral(ExpressionNode):
@@ -21,6 +22,14 @@ class RangeLiteral(ExpressionNode):
     def pre_eval(self, func):
         self.start.pre_eval(func)
         self.end.pre_eval(func)
+
+        if self.start.ret_type.name != "i32":
+            errors.error("Start of range literal must be an i32",
+                         self.start.position)
+
+        if self.end.ret_type.name != "i32":
+            errors.error("End of range literal must be an i32",
+                         self.end.position)
 
     def eval_impl(self, func):
         start = self.start.eval_impl(func)

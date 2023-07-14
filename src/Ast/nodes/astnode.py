@@ -65,6 +65,9 @@ class ASTNode:
 
         return self._instruction
 
+    def reset(self):
+        self._instruction = None
+
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         current_pos = self._position
         new_pos: list[int] = list(self._position)

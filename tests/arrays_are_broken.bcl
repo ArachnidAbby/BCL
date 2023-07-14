@@ -1,0 +1,12 @@
+import stdlib::*;
+
+define main() {
+    x = [[10; 100]; 10];
+
+    my_func(&x);
+}
+
+define my_func(x: &i32[100][10]) {
+    p = 10;
+    x[0][p] = 125;
+}

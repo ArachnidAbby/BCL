@@ -11,12 +11,13 @@ from Ast.nodes.container import ContainerNode
 
 class StructDef(ASTNode):
     __slots__ = ("struct_name", "block", "struct_type", "block", "module",
-                 "is_generic", "generic_args")
+                 "is_generic", "generic_args", "raw_name")
 
     can_have_modifiers = True
 
     def __init__(self, pos: SrcPosition, name, block, module):
         super().__init__(pos)
+        self.raw_name = name
         if isinstance(name.value, GenericSpecify):
             self.is_generic = True
             self.generic_args = {x.var_name: None for x in name.value.params}
@@ -56,6 +57,7 @@ class StructDef(ASTNode):
 
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
+            print(self.generic_args[var_name], type(self.generic_args[var_name]))
             return self.generic_args[var_name]
 
         return self.module.get_type_by_name(var_name, pos)
@@ -97,6 +99,9 @@ class StructDef(ASTNode):
 
     def scheduled(self, mod):
         self.struct_type.set_visibility(self.visibility)
+
+    def reset(self):
+        self.block.reset()
 
     def post_parse(self, module):
         self.struct_type.define(self)

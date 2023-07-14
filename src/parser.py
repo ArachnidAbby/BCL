@@ -75,7 +75,8 @@ class Parser(ParserBase):
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
             "OPEN_CURLY_USED": (self.parse_finished_blocks,
                                 self.parse_struct_literal),
-            "expr": (self.parse_var_decl, self.parse_array_index,
+            "expr": (self.parse_var_decl,
+                     self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
                      self.parse_expr_list, self.parse_rangelit,
@@ -85,6 +86,7 @@ class Parser(ParserBase):
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
+            "MUL": (self.parse_deref, ),
             "KEYWORD": (self.parse_visibility_modifiers,
                         self.parse_return_statement,
                         self.parse_return_statement_empty,
@@ -145,7 +147,13 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
-    @rule(0, "expr OPEN_TYPEPARAM expr_list|expr GR")
+    @rule(-1, "!expr MUL expr")
+    def parse_deref(self):
+        deref = Ast.Deref(self.peek(0).pos,
+                          self.peek(1).value)
+        self.replace(2, "expr", deref)
+
+    @rule(0, "expr OPEN_TYPEPARAM expr_list|expr GR|RSHIFT")
     def parse_generic(self):
         left = self.peek(0).value
         right = self.peek(2).value
@@ -161,7 +169,15 @@ class Parser(ParserBase):
                          line=self.peek(0).pos)
 
         node = Ast.generics.GenericSpecify(pos, left, right)
-        self.replace(4, "expr", node)
+
+        is_rshift = self.peek(3).name == "RSHIFT"
+        if is_rshift:
+            rshift_pos = self.peek(3).pos
+            self._tokens[self._cursor + 3] = ParserToken("GR", ">", (rshift_pos[0], rshift_pos[1]+1, 1, rshift_pos[3]), False)
+            self.replace(3, "expr", node)
+        else:
+            print(left)
+            self.replace(4, "expr", node)
 
     @rule(0, "expr NAMEINDEX expr|MUL")
     def namespace_index(self):
@@ -472,7 +488,7 @@ class Parser(ParserBase):
                                                         func_name,
                                                         self.peek(2).value,
                                                         None, self.module)
-            func.ret_type = self.peek(4).value
+            func.ret_raw = self.peek(4).value
             func.is_ret_set = True
             # self.start_min = self._cursor
             self.replace(5, "func_def_portion", func)

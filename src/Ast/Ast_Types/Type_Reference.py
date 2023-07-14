@@ -105,6 +105,8 @@ class Reference(Type_Base.Type):
 
         actual_ptr = func.builder.load(ptr.get_var(func).ptr)
         val = value.ret_type.convert_to(func, value, typ.typ)  # type: ignore
+        node = PassNode(value.position, value._instruction, value.ret_type)
+        value.ret_type.add_ref_count(func, node)
         func.builder.store(val, actual_ptr)
 
     def add_ref_count(self, func, ptr):
@@ -133,3 +135,20 @@ class Reference(Type_Base.Type):
 
         node = PassNode(ptr.position, None, self.typ, ptr=ptr_val)
         self.typ.dispose(func, node)
+
+    def get_deref_return(self, func, node):
+        return self.typ
+
+    def index(self, func, lhs, rhs):
+        # ptr = lhs.get_ptr(func)
+        # val = func.builder.load(ptr)
+
+        # varref = PassNode(lhs.position, val, self.typ, ptr=ptr)
+        return self.typ.index(func, lhs, rhs)
+
+    def deref(self, func, node):
+        ptr = node.eval(func)
+
+        # new_node = PassNode(node.position, None, node.ret_type, ptr)
+        # self.add_ref_count(func, node)
+        return func.builder.load(ptr)

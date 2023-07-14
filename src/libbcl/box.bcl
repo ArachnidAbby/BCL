@@ -6,13 +6,13 @@ public struct Box::<T> {
 
     public define new(data: T) -> Box::<T> {
         data_ptr = stdlib::malloc(T::SIZEOF);
-        data_ptr_typed = data_ptr as &T;
+        // data_ptr_typed = data_ptr as &T;
 
         ref_ptr = stdlib::malloc(i64::SIZEOF);
         ref_ptr_typed = ref_ptr as &i64;
 
         ref_ptr_typed = 1i64;
-        data_ptr_typed = data;
+        data_ptr.store(&data);
 
         x = Box::<T> {
             data: data_ptr,
@@ -48,24 +48,26 @@ public struct Box::<T> {
     /// Do not execute manually, breaks safety
     public define __increase_ref_count__(&self) {
         ref_ptr_typed = self.ref_count as &i64;
-        ref_ptr_typed = 1 + ref_ptr_typed as i64;
-        // stdlib::print("Append ref count: ");
-        // stdlib::println(ref_ptr_typed as i64); 
+        ref_ptr_typed = 1 + *ref_ptr_typed;
+        self.data.retake(self.data as &T);
+        stdlib::print("Append ref count: ");
+        stdlib::println(ref_ptr_typed as i64);
     }
 
     /// Do not execute manually, breaks safety
     public define __dispose__(&self) {
         ref_count_ptr = self.ref_count as &i64;
         ref_count_ptr -= 1;
-        ref_count = ref_count_ptr as i64;
-        // stdlib::print("dipose ref count:");
-        // stdlib::println(ref_count);
-
+        ref_count = *ref_count_ptr;
+        stdlib::print("dipose ref count:");
+        stdlib::println(ref_count);
+        self.data.release(self.data as &T);
 
         if ref_count <= 0 {
+            self.data.release(self.data as &T);
             stdlib::free(self.data);
             stdlib::free(self.ref_count);
-            // stdlib::println("Removed");
+            stdlib::println("Removed");
         }
     }
 }

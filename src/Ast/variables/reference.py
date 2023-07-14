@@ -23,6 +23,10 @@ class VariableRef(ExpressionNode):
         self.var_name = name
         self.block = block
 
+    def reset(self):
+        super().reset()
+        self.from_global = None
+
     def pre_eval(self, func):
         if not self.block.validate_variable_exists(self.var_name, func.module):
             error(f"Undefined variable '{self.var_name}'", line=self.position)

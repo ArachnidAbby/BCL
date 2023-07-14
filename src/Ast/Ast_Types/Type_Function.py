@@ -1,9 +1,12 @@
 from typing import Self
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Reference import Reference
+from Ast.Ast_Types.Type_Void import Void# type: ignore
 
-from Ast import Ast_Types
-from Ast.Ast_Types import Type_Base
+# from Ast import Ast_Types
+# from Ast.Ast_Types import Type_Base
 from Ast.math import MemberAccess
 from Ast.reference import Ref
 from errors import error
@@ -18,7 +21,7 @@ class MockFunction:
         self.module = module
 
 
-class Function(Ast_Types.Type):
+class Function(Type):
     '''abstract type class that outlines the necessary features
     of a type class.'''
 
@@ -35,14 +38,14 @@ class Function(Ast_Types.Type):
         self.func_name = name
         self.module = module
         self.args = args
-        self.func_ret: Ast_Types.Type = Ast_Types.Void()
+        self.func_ret: Type = Void()
         # Contains the actually llvm function
         self.func_obj = func_obj
         self.contains_ellipsis = False
         self.is_method = False
         self.visibility = super().visibility
 
-    def add_return(self, ret: Ast_Types.Type):
+    def add_return(self, ret: Type):
         self.func_ret = ret
         return self
 
@@ -73,6 +76,11 @@ class Function(Ast_Types.Type):
                                self.contains_ellipsis)
         ir.Function(module.module, fnty,
                     name=module.get_unique_name(self.func_obj.name))
+
+        if self.func_ret.name != "Generator":
+            return
+
+        self.func_ret.declare(module)
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
@@ -106,7 +114,7 @@ class Function(Ast_Types.Type):
     def _fix_args(self, lhs, args, func=None):
         if isinstance(lhs, MemberAccess) and self.is_method:
             if func is not None:
-                if isinstance(self.args[0], Ast_Types.Reference):
+                if isinstance(self.args[0], Reference):
                     return [Ref(lhs.lhs.position, lhs.lhs), *args.children]
             return [lhs.lhs, *args.children]
         else:
@@ -120,8 +128,8 @@ class Function(Ast_Types.Type):
         if self.contains_ellipsis and len(args_used) < len(self.args):
             return False
 
-        for func_arg, passed_arg in zip(self.args, args_used):
-            if isinstance(lhs, MemberAccess) and self.is_method:
+        for c, (func_arg, passed_arg) in enumerate(zip(self.args, args_used)):
+            if isinstance(lhs, MemberAccess) and self.is_method and c==0:
                 continue
             if not func_arg.roughly_equals(passed_arg.ret_type):
                 return False
@@ -149,7 +157,7 @@ class Function(Ast_Types.Type):
         return self
 
 
-class FunctionGroup(Ast_Types.Type):
+class FunctionGroup(Type):
     '''Function Group
     Functions of the same name are said to belong to the same group.
     *test*

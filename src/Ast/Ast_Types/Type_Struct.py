@@ -1,13 +1,15 @@
+from copy import copy
 from typing import Self
 
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
+from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock, Block
 from Ast.nodes.passthrough import PassNode
 from Ast.variables.reference import VariableRef
-from Ast.nodes.commontypes import MemberInfo, Modifiers
+from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
 from Ast.reference import Ref
 from errors import error
 import Ast.math
@@ -96,7 +98,6 @@ class Struct(Ast_Types.Type):
                         False, self.definition)
         # new_ty.members = self.members
         generic_args_previous = self.definition.generic_args
-
         self.definition.generic_args = {**generic_args_previous}
 
         for c, key in enumerate(self.definition.generic_args.keys()):
@@ -104,6 +105,7 @@ class Struct(Ast_Types.Type):
 
         self.definition.struct_type = new_ty
         self.definition.is_generic = False
+        self.definition.reset()
 
         self.versions[params] = new_ty
 
@@ -112,7 +114,11 @@ class Struct(Ast_Types.Type):
         self.definition.eval(self.module)
 
         # for c, key in enumerate(self.definition.generic_args.keys()):
+        print(self.definition.generic_args)
         self.definition.generic_args = generic_args_previous
+        print(generic_args_previous)
+        print(self.definition.generic_args)
+
 
         self.definition.struct_type = self
         self.definition.is_generic = True
@@ -218,7 +224,7 @@ class Struct(Ast_Types.Type):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
-            rhs_pos = (-1,-1, 0, "d")
+            rhs_pos = SrcPosition.invalid()
         args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, None)
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
@@ -235,7 +241,7 @@ class Struct(Ast_Types.Type):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
-            rhs_pos = (-1,-1,-1, "")
+            rhs_pos = SrcPosition.invalid()
         args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, Block.BLOCK_STACK[-1])
         mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)

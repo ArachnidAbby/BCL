@@ -20,6 +20,18 @@ class Block(ContainerNode):
         self.ended = False
         self.parent = parent
 
+    def reset(self):
+        super().reset()
+        self.variables: dict[str, object] = {}
+        self.BLOCK_STACK.append(self)
+        for x in self.children:
+            x.reset()
+        self.BLOCK_STACK.pop()
+        # {name: VarObj, ...} -- recursive import uppon proper type annotation
+        self.builder = None
+        self.last_instruction = False
+        self.ended = False
+
     def append_nested_vars(self):
         '''append vars for nested blocks'''
         if len(self.BLOCK_STACK) != 0:

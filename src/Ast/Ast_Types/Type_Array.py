@@ -1,11 +1,28 @@
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast import exception# type: ignore
 
 from Ast.Ast_Types import Type_I32
-from Ast.nodes.commontypes import MemberInfo
+from Ast.literals.numberliteral import Literal
+from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
 from errors import error
 
 from . import Type_Base
+
+
+ZERO_CONST = ir.Constant(ir.IntType(64), 0)
+
+
+def check_in_range(rang, arrayrang):
+    return rang[0] in arrayrang and rang[1] in arrayrang
+
+
+def check_valid_literal_range(lhs, rhs):
+    if not lhs.ret_type.generate_bounds_check:
+        return
+
+    return rhs.isconstant and \
+        (lhs.ret_type.size-1 < rhs.value or rhs.value < 0)
 
 
 class Array(Type_Base.Type):
@@ -78,8 +95,58 @@ class Array(Type_Base.Type):
     def __hash__(self):
         return hash(f"{self.name}--|{self.size}|")
 
-    def index(self, func, lhs):
-        return func.builder.load(lhs.get_ptr(func))
+    def index(self, func, lhs, rhs):
+        self.generate_runtime_check(func, lhs, rhs)
+        return func.builder.gep(lhs.get_ptr(func),
+                                [ZERO_CONST, rhs.eval(func)])
+
+    def _out_of_bounds(self, func, lhs, rhs, val):
+        '''creates the code for runtime bounds checking'''
+        size = Literal(SrcPosition.invalid(), self.size-1,
+                       Type_I32.Integer_32())
+        zero = Literal(SrcPosition.invalid(), 0, Type_I32.Integer_32())
+        cond = rhs.ret_type.le(func, size, rhs)
+        cond2 = rhs.ret_type.gr(func, zero, rhs)
+        condcomb = func.builder.or_(cond, cond2)
+        with func.builder.if_then(condcomb) as _:
+            exception.over_index_exception(func, lhs,
+                                           val, lhs.position)
+        return
+
+    def generate_runtime_check(self, func, lhs, rhs):
+        '''generates the runtime bounds checking
+        depending on the node type of the index operand'''
+        if rhs.isconstant:  # don't generate checks for constants
+            return
+
+        # if isinstance(rhs, OperationNode) and \
+        #         rhs.ret_type.rang is not None:
+        #     rang = rhs.ret_type.rang
+        #     arrayrang = range(0, lhs.ret_type.size)
+        #     if check_in_range(rang, arrayrang):
+        #         return func.builder.gep(lhs.get_ptr(func),
+        #                                 [ZERO_CONST, rhs.eval(func)])
+
+        # elif rhs.get_var(func).range is not None:
+        #     rang = rhs.get_var(func).range
+        #     arrayrang = range(0, lhs.ret_type.size)
+        #     in_range = check_in_range(rang, arrayrang)
+        #     if isinstance(rhs, VariableRef) and in_range:
+        #         return func.builder.gep(lhs.get_ptr(func),
+        #                                 [ZERO_CONST, rhs.eval(func)])
+
+        ind_rang = rhs.ret_type.rang
+        array_rang = range(0, self.size)
+
+        if ind_rang is not None and check_in_range(ind_rang, array_rang):
+            return func.builder.gep(lhs.get_ptr(func),
+                                    [ZERO_CONST, rhs.eval(func)])
+
+        ptr = func.builder.gep(lhs.get_ptr(func),
+                               [ZERO_CONST, rhs.eval(func)])
+        val = func.builder.load(ptr)
+        self._out_of_bounds(func, lhs, rhs, val)
+        return ptr
 
     def put(self, func, lhs, value):
         return func.builder.store(value.eval(func), lhs.get_ptr(func))

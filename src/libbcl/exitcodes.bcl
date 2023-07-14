@@ -7,5 +7,6 @@ public enum ExitCodes {
     // despite these being the default values
     IndexOutOfBounds: 1,
     Generator_EndOfValues: 2,
-    Optional_UnwrapError: 3;
+    Optional_UnwrapError: 3,
+    VectorIndexOutOfBounds: 4;
 }

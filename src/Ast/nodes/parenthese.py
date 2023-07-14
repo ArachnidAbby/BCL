@@ -22,6 +22,15 @@ class ParenthBlock(ContainerNode):
         self.evaled_children = []
         self.contains_ellipsis = False
 
+    def reset(self):
+        super().reset()
+        self.in_func_call = False
+        self.ptr = None
+        self.ret_type = Ast_Types.Void()
+        self.evaled_children = []
+        for child in self.children:
+            child.reset()
+
     def pre_eval(self, func):
         for child in self.children:
             child.pre_eval(func)
@@ -95,12 +104,18 @@ class ParenthBlock(ContainerNode):
         #           "one value", line=self.position)
 
         if self.ptr is None:
-            val = self.eval(func)
-
             if len(self.children) == 1:
-                self.ptr = func.create_const_var(self.ret_type)
-                func.builder.store(val, self.ptr)
+                self.ptr = self.children[0].get_ptr(func)
         return self.ptr
+
+    def get_var(self):
+        if len(self.children) == 1:
+            return self.children[0]
+
+        return self
+
+    def get_value(self, func):
+        return self.children[0].get_value(func)
 
     @property
     def is_empty(self) -> bool:

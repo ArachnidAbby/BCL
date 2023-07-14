@@ -70,7 +70,6 @@ class Type:
         error(f"Cannot get {name} from namespace {self}", line=pos)
 
     def pass_type_params(self, func, params, pos):
-        print(pos)
         error(f"Type is not Generic: {self}", line=pos)
 
     @classmethod
@@ -193,7 +192,7 @@ class Type:
     def _not(self, func, rhs):
         return func.builder.not_(rhs.ret_type.truthy(func, rhs))
 
-    def index(self, func, lhs) -> ir.Instruction:
+    def index(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operation 'index' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
@@ -354,3 +353,9 @@ class Type:
         '''code to run on the closing of a function'''
         self.pop_ref_count(func, ptr)
         # print(f"dispose {func.func_name} {self}")
+
+    def get_deref_return(self, func, node):
+        error(f"Cannot dereference type, {self}", line=node.position)
+
+    def deref(self, func, node):
+        error(f"Cannot dereference type, {self}", line=node.position)

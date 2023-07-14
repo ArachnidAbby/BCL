@@ -4,6 +4,9 @@ from Ast.Ast_Types.Type_Base import Type
 from Ast.nodes.passthrough import PassNode
 
 
+ZERO_CONST = ir.Constant(ir.IntType(64), 0)
+
+
 class TupleType(Type):
     __slots__ = ('ir_type', 'member_types', 'size', 'returnable',
                  'needs_dispose', 'ref_counted')
@@ -41,8 +44,9 @@ class TupleType(Type):
     def __str__(self) -> str:
         return f"({','.join((str(mem) for mem in self.member_types))})"
 
-    def index(self, func, lhs):
-        return func.builder.load(lhs.get_ptr(func))
+    def index(self, func, lhs, rhs):
+        return func.builder.gep(lhs.get_ptr(func),
+                                [ZERO_CONST, rhs.eval(func)])
 
     def put(self, func, lhs, value):
         return func.builder.store(value.eval(func), lhs.get_ptr(func))

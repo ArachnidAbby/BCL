@@ -1,4 +1,5 @@
 from Ast import Ast_Types
+from Ast.generics import GenericSpecify
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.expression import ExpressionNode
 import errors
@@ -20,11 +21,20 @@ class NamespaceIndex(ExpressionNode):
             errors.error("Cannot get names from a `*` namespace index",
                          line=pos)
 
+    def reset(self):
+        super().reset()
+        self.left.reset()
+        self.right.reset()
+        self.val = None
+
     def pre_eval(self, func):
         if self.star_idx:
             errors.error("'*' index can only used in an import statement",
                          line=self.left.position)
         var = self.left.get_var(func)
+        if isinstance(var, GenericSpecify):
+            var = var.as_type_reference(func, True)
+
         if var is None:
             errors.error("Namespace does not exist",
                          line=self.left.position)

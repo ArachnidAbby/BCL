@@ -95,6 +95,13 @@ class VariableAssign(ASTNode):
         typ.assign(func, ptr, self.value, typ,
                    first_assignment=self.is_declaration)
 
+    def reset(self):
+        super().reset()
+        # self.is_declaration = False
+        self.evaled_value = None
+        self.value.reset()
+        self.var_name.reset()
+
     def repr_as_tree(self) -> str:
         return self.create_tree("Variable Assignment",
                                 value=self.value,

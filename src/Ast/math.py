@@ -2,6 +2,7 @@ from collections import deque
 from typing import Any, Callable, Final, NamedTuple
 
 from llvmlite import ir
+from Ast.Ast_Types.Type_Void import Void
 
 import errors
 from Ast import Ast_Types  # type: ignore
@@ -41,6 +42,12 @@ class OperationNode(ExpressionNode):
         self.rhs = rhs
         self.shunted = shunted
         self.op = op
+
+    def reset(self):
+        super().reset()
+        self.lhs.reset()
+        self.rhs.reset()
+        self.ret_type = Void()
 
     @property
     def op_type(self):
@@ -223,6 +230,10 @@ class MemberAccess(OperationNode):
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
         self.is_pointer = False
+
+    def reset(self):
+        super().reset()
+
 
     def pre_eval_math(self, func):
         self.lhs.pre_eval(func)

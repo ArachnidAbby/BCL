@@ -15,6 +15,7 @@ import optional::*;
 public define printf(x: strlit, ...);
 public define puts(data: strlit);
 
+public define memcpy(dest: UntypedPointer, source: UntypedPointer, size: size_t) -> UntypedPointer;
 public define malloc(size: size_t) -> UntypedPointer;
 public define free(ptr: UntypedPointer);
 public define strnlen(str: strlit, max: size_t) -> size_t;
@@ -33,6 +34,10 @@ public define println(x: i64) {
 }
 
 public define println(x: u64) {
+    printf("%llu\n", x);
+}
+
+public define println(x: UntypedPointer) {
     printf("%llu\n", x);
 }
 

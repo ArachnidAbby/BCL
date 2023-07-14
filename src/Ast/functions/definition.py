@@ -43,7 +43,7 @@ class FunctionDef(ASTNode):
                  "is_method", "raw_args", "yields", "yield_type",
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
-                 "yield_start", "dispose_queue", "parent")
+                 "yield_start", "dispose_queue", "parent", "ret_raw")
 
     can_have_modifiers = True
 
@@ -52,7 +52,7 @@ class FunctionDef(ASTNode):
         super().__init__(pos)
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
-
+        self.ret_raw = Ast_Types.Void()
         self.builder = None   # llvmlite.ir.IRBuilder object once created
         self.block = block  # body of the function Ast.Block
         self.module = module  # Module the object is contained in
@@ -96,6 +96,33 @@ class FunctionDef(ASTNode):
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
 
+    def reset(self):
+        super().reset()
+        self.has_return = False
+        self.yields = False
+        self.yield_type = None
+        self.yield_gen_type = None
+        self.yield_struct_ptr = None
+        self.yield_function = None
+        self.yield_block = None
+        self.yield_start = None
+        self.builder = None
+        self.parent = None
+        self.yield_after_blocks = []
+        self.yield_consts = []
+        self.ir_entry = None
+        self.variables = []
+
+        self.ret_type = self.ret_raw
+
+        self.dispose_queue = []
+        self.args: dict[str, ExpressionNode] = dict()
+        # list of all the args' ir types
+        self.args_ir: tuple[ir.Type, ...] = ()
+        # list of all the args' Ast_Types.Type return types
+        self.args_types: tuple[Ast_Types.Type, ...] = ()
+        self.block.reset()
+
     def get_unique_name(self, name: str) -> str:
         return self.module.get_unique_name(f"{self.func_name}.local.{name}")
 
@@ -133,6 +160,7 @@ class FunctionDef(ASTNode):
         args_ir = []
         args_types = []
         if self.is_method:
+            old_arg_0 = args.children[0]
             args.children[0] = self.add_method_arg(args.children[0], parent)
         for arg in args:
             arg.ensure_unmodified()
@@ -145,6 +173,9 @@ class FunctionDef(ASTNode):
             args_types.append(arg.get_type(self))
             if arg.get_type(self).is_dynamic:
                 self.contains_dynamic = True
+
+        if self.is_method:
+            args.children[0] = old_arg_0
 
         self.args_ir = tuple(args_ir)
         self.args_types = tuple(args_types)
@@ -163,8 +194,8 @@ class FunctionDef(ASTNode):
     def _validate_return(self, func):
         ret_line = SrcPosition.invalid()
         if self.is_ret_set:
-            ret_line = self.ret_type.position
-            self.ret_type = self.ret_type.as_type_reference(self)
+            ret_line = self.ret_raw.position
+            self.ret_type = self.ret_raw.as_type_reference(self)
         if (not self.ret_type.returnable) and self.block is not None:
             errors.error(f"Function {self.func_name} cannot return a " +
                          "reference to a local variable or value.",
@@ -309,11 +340,6 @@ class FunctionDef(ASTNode):
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
-                    node = PassNode(SrcPosition.invalid(), None, x[0].type, ptr)
-                    self.block.BLOCK_STACK.append(self.block)
-                    x[0].type.add_ref_count(self, node)
-                    self.block.BLOCK_STACK.pop()
-                    self.register_dispose(node)
                     x[0].ptr = ptr
                 x[0].is_constant = False
                 continue
@@ -333,11 +359,6 @@ class FunctionDef(ASTNode):
                 #     self.builder.store(val, ptr)
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
-                node = PassNode(SrcPosition.invalid(), None, x[0].type, x[0].ptr)
-                self.block.BLOCK_STACK.append(self.block)
-                x[0].type.add_ref_count(self, node)
-                self.block.BLOCK_STACK.pop()
-                self.register_dispose(node)
                 x[0].is_constant = False
             else:
                 x[0].define(self, x[1], c)
@@ -406,6 +427,7 @@ class FunctionDef(ASTNode):
         self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
         self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
+        self.dispose_stack()
 
     def populate_yield_struct(self):
         continue_ptr = self.builder.gep(self.yield_struct_ptr,

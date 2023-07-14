@@ -60,6 +60,15 @@ class GeneratorType(Type):
         func_obj = create_next_method(mod, self, self.iter_function.func_name)
         self.next.func_obj = func_obj
 
+    def declare(self, module):
+        self.next.declare(module)
+
+        fnty = ir.FunctionType(ir.VoidType(),
+                               (self.ir_type.as_pointer(),))
+
+        ir.Function(module.module, fnty,
+                    name=module.get_unique_name(self.iter_function.yield_function.name))
+
     def add_members(self, consts, members):
         # Doing the dangerous thing and setting the elements directly
         # Not doing this causes an error... probably for good reason...

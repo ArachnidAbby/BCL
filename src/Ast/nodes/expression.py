@@ -50,6 +50,15 @@ class ExpressionNode(ASTNode):
         '''
         return self
 
+    def reset(self):
+        super().reset()
+        self.ptr = None
+        self.__evaled = False
+        self.overwrite_eval = False
+
+    def get_value(self, func):
+        return self
+
     def as_type_reference(self, func, allow_generics=False):
         '''Get this expresion as the reference to a type'''
         error(f"invalid type: {str(self)}", line=self.position)

@@ -167,6 +167,7 @@ define get_value() -> Optional::<i32> {
 }
 
 import box::*;
+import vector::*;
 
 define random_box_test(my_arg: &Box::<i32>) -> Box::<i32> {
     println("disposing func");
@@ -185,33 +186,62 @@ define main() {
 
     println("started");
 
-    j = Box::<i32>::new(10);
 
+    // example_vec = Vector::<i64>::new(10i64);
+    // println("gaming");
+    // println();
+
+    // example_vec.append(12i64);
+    // println();
+    // example_vec.append(2i64);
+    // println("laming");
+    // example_vec.put(0i64, 10i64);
+    // println("puted");
+    // test_val = example_vec.get(0i64);
+    // println("get");
+    // test_val_2 = example_vec.get(1i64);
+    // println("get 2");
+
+    // print("Vec value: ");
+    // println(test_val);
+
+    // print("Vec value 2: ");
+    // println(test_val_2);
+
+    // p = example_vec.iter();
+
+    // for item in p {
+    //     println(item);
+    // }
+
+
+    j = Box::<i32>::new(10);
+    Box::<i64>::new(10i64);
     OhNo = ContainsBox {
         x: j
     };
 
     // box_array = [Box::<i32>::new(10); 10];
 
-    // box_array[0] = Box::<i32>::new(11);
+    box_in_a_box = Box::<Box::<i32> >::new(j);
 
     // for x in box_array {
     //     println(x.unwrap());
     // }
 
-    println("running func");
-    j = random_box_test(&j);
+    // println("running func");
+    // j = random_box_test(&j);
 
-    println(j.unwrap());
+    // println(j.unwrap());
 
-    j.wrap(69);
+    // j.wrap(69);
 
-    println(j.unwrap());
+    // println(j.unwrap());
 
     println();
     println();
 
-    j = Box::<i32>::new(15);
+    // j = Box::<i32>::new(15);
 
     println();
     println();

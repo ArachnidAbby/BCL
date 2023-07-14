@@ -161,11 +161,11 @@ class ParserBase:
             pos = SrcPosition(tok.source_pos.lineno, tok.source_pos.colno,
                               len(tok.value), self.module.location)
             if tok.name == "NUMBER":
-                val = Literal(pos, int(tok.value), Ast.Ast_Types.Integer_32())
+                val = Literal(pos, int(tok.value), definedtypes.types_dict['i32'])
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "NUMBER_F":
                 val = Literal(pos, float(tok.value.strip('f')),
-                              Ast.Ast_Types.Float_32())
+                              definedtypes.types_dict['f32'])
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "NUMBER_W_TYPE":
                 if 'i' in tok.value:
