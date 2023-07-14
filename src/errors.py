@@ -48,7 +48,7 @@ class BCLLexer(RegexLexer):
              Keyword.Reserved),
             (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
-            (r'\s+(or)|(and)|(not)|(in)|(as)\s+', Operator.Word),
+            (r'\s+((or)|(and)|(not)|(in)|(as))\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&\^\~\|(\<\<)(\>\>)]', Operator),
             (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
@@ -95,7 +95,7 @@ def error(text: str, line=invalid_pos, full_line=False):
     _print_text(text)
     if line[0] != -1:
         print(f'|    Line: {line[0]}')
-        print(f'|    File: {line.source_name}')
+        print(f'|    File: {line.source_name}:{line[0]}:{line[1]}')
         print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
