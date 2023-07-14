@@ -92,7 +92,7 @@ class Module(ASTNode):
             if not imp.obj.ran_schedule:
                 imp.obj.do_scheduled()
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos, stack=None):
         '''Getting a name from the namespace'''
         if name in self.types.keys():
             t = self.types[name]
@@ -102,14 +102,22 @@ class Module(ASTNode):
             return t
         elif name in self.globals.keys():
             return self.globals[name]
+
+        if stack is None:
+            stack = [self]
+        else:
+            stack.append(self)
+
         for imp, mod in zip(self.imports.keys(), self.imports.values()):
             if imp == name:
                 return mod.obj
+            elif mod.obj in stack:
+                continue
             elif mod.using_namespace:
-                return mod.obj.get_namespace_name(func, name, pos)
+                return mod.obj.get_namespace_name(func, name, pos, stack)
 
         errors.error(f"Name \"{name}\" cannot be " +
-                     f"found in module \"{self.mod_name}\"",
+                     f"found in module \"{stack[0].mod_name}\"",
                      line=pos)
 
     def register_namespace(self, func, obj, name):
@@ -235,7 +243,7 @@ class Module(ASTNode):
         return output
 
     def __eq__(self, other):
-        return self.location == other.location
+        return isinstance(other, Module) and self.location == other.location
 
     def get_import_globals(self):
         output = []
@@ -305,7 +313,7 @@ class Module(ASTNode):
             return
 
         target = self.target_machine
-        
+
         module_pass = binding.ModulePassManager()
         # * commented out optimizations may be re-added later on
         # pass_manager = binding.PassManagerBuilder()
