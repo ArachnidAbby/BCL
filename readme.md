@@ -55,7 +55,7 @@ run `pip uninstall Bens_Compiled_Language`
 //  fizzbuzz program
 // ===================
 
-import stdlib; // will later be an auto-import
+import stdlib::*; // will later be an auto-import
 
 define main() {
     for i in 0..100 {
@@ -103,12 +103,12 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] struct functions
 - [x] struct methods
 - [x] struct operator overloading
-- [ ] struct generic typing
+- [x] struct generic typing
 - [ ] protocol types
 - [x] generator functions/iterators
 - [x] `import` statement with the ability to import modules/packages (WIP, needs namespaces)
 - [x] compile a folder or file instead of hardcoded test string.
-- [ ] heap allocation with garbage collection
+- [x] heap allocation with garbage collection (`Box::<T>`)
 - [ ] `del` or `free` statement (only work when GC is off, otherwise they decrease the ref count by 1)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
@@ -117,10 +117,10 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] standard math library (VERY VERY WIP)
 - [x] string (literal)
 - [ ] strings (mutable)
-- [ ] vectors
+- [ ] vectors (WIP)
 - [x] stdio library (VERY WIP)
 - [ ] run-time errors (Error type for errors as values.)
-- [ ] Option type
+- [x] Option type (`Optional::<T>`)
 - [x] namespaces
 - [x] enums
 
