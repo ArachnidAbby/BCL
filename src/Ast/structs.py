@@ -57,7 +57,6 @@ class StructDef(ASTNode):
 
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
-            print(self.generic_args[var_name], type(self.generic_args[var_name]))
             return self.generic_args[var_name]
 
         return self.module.get_type_by_name(var_name, pos)

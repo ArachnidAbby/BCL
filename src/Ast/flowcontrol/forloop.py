@@ -28,7 +28,9 @@ class ForLoop(ASTNode):
             child.post_parse(func)
 
     def pre_eval(self, func):
+        print("pow")
         self.iterable.pre_eval(func)
+        print(self.iterable, "wow")
 
         if self.iterable.ret_type.is_iterator:
             self.iter_type = self.iterable.ret_type

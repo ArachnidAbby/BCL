@@ -25,5 +25,4 @@ class Deref(ExpressionNode):
     def get_ptr(self, func):
         if isinstance(self.ret_type, Reference):
             return self.eval(func)
-        print("OH NOES", self.ref)
         return self.ref.eval(func)

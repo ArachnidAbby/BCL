@@ -113,12 +113,7 @@ class Struct(Ast_Types.Type):
         self.definition.pre_eval(self.module)
         self.definition.eval(self.module)
 
-        # for c, key in enumerate(self.definition.generic_args.keys()):
-        print(self.definition.generic_args)
         self.definition.generic_args = generic_args_previous
-        print(generic_args_previous)
-        print(self.definition.generic_args)
-
 
         self.definition.struct_type = self
         self.definition.is_generic = True

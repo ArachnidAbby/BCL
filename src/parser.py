@@ -176,7 +176,6 @@ class Parser(ParserBase):
             self._tokens[self._cursor + 3] = ParserToken("GR", ">", (rshift_pos[0], rshift_pos[1]+1, 1, rshift_pos[3]), False)
             self.replace(3, "expr", node)
         else:
-            print(left)
             self.replace(4, "expr", node)
 
     @rule(0, "expr NAMEINDEX expr|MUL")
@@ -227,7 +226,7 @@ class Parser(ParserBase):
                              line=self.peek(1).pos)
 
         self.module.add_import(filedir, name, using_namespace)
-        errors.inline_warning("Notice: import statements may be buggy")
+        # errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False

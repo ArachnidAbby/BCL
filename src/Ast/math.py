@@ -233,7 +233,8 @@ class MemberAccess(OperationNode):
 
     def reset(self):
         super().reset()
-
+        self.lhs.reset()
+        self.rhs.reset()
 
     def pre_eval_math(self, func):
         self.lhs.pre_eval(func)
@@ -255,6 +256,7 @@ class MemberAccess(OperationNode):
             self.assignable = member_info.mutable
             self.is_pointer = member_info.is_pointer
             self.ret_type = member_info.typ
+            print(self.ret_type, self.lhs, self.rhs)
 
     def _get_global_func(self, module, name: str):
         return module.get_global(name)

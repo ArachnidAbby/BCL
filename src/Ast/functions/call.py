@@ -16,6 +16,12 @@ class FunctionCall(ExpressionNode):
         self.paren = parenth
         self.args_types = None
 
+    def reset(self):
+        self.paren.reset()
+        self.func_name.reset()
+        self.args_types = None
+        self.ret_type = Ast_Types.Void()
+
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):
             self.paren.in_func_call = True

@@ -16,6 +16,7 @@ public define printf(x: strlit, ...);
 public define puts(data: strlit);
 
 public define memcpy(dest: UntypedPointer, source: UntypedPointer, size: size_t) -> UntypedPointer;
+public define memmove(dest: UntypedPointer, source: UntypedPointer, size: size_t) -> UntypedPointer;
 public define malloc(size: size_t) -> UntypedPointer;
 public define free(ptr: UntypedPointer);
 public define strnlen(str: strlit, max: size_t) -> size_t;
@@ -73,6 +74,10 @@ public define println() {
 // PRINT()
 public define print(x: i32) {
     printf("%i", x);
+}
+
+public define print(x: i64) {
+    printf("%lli", x);
 }
 
 public define print(x: bool) {

@@ -7,7 +7,8 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type", "has_members", "needs_dispose", "ref_counted")
+    __slots__ = ("typ", "ir_type", "has_members")#,
+                #"needs_dispose", "ref_counted")
 
     name = 'ref'
     pass_as_ptr = False
@@ -16,8 +17,8 @@ class Reference(Type_Base.Type):
 
     def __init__(self, typ):
         self.typ = typ
-        self.needs_dispose = typ.needs_dispose
-        self.ref_counted = typ.ref_counted
+        # self.needs_dispose = typ.needs_dispose
+        # self.ref_counted = typ.ref_counted
 
         self.ir_type = typ.ir_type.as_pointer()
         self.has_members = self.typ.has_members
@@ -42,7 +43,7 @@ class Reference(Type_Base.Type):
 
     def convert_to(self, func, orig, typ):
         if typ == self.typ:
-            self.add_ref_count(func, orig)
+            # self.add_ref_count(func, orig)
             return func.builder.load(orig.get_ptr(func))
         if typ.name == "UntypedPointer":
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
@@ -109,7 +110,7 @@ class Reference(Type_Base.Type):
         value.ret_type.add_ref_count(func, node)
         func.builder.store(val, actual_ptr)
 
-    def add_ref_count(self, func, ptr):
+    def _add_ref_count(self, func, ptr):
         if not self.ref_counted:
             return
 
@@ -124,7 +125,7 @@ class Reference(Type_Base.Type):
         node = PassNode(ptr.position, val, self.typ, ptr_val)
         self.typ.add_ref_count(func, node)
 
-    def dispose(self, func, ptr):
+    def _dispose(self, func, ptr):
         ptr_ptr = ptr.get_ptr(func)
         val = func.builder.load(ptr_ptr)
         ptr_val = val

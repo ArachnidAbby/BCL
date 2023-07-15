@@ -1,72 +1,72 @@
 import stdlib;
 
+struct inner_Box::<T> {
+    data: T,
+    ref_count: i64;
+}
+
 public struct Box::<T> {
-    data: UntypedPointer, // &T
-    ref_count: UntypedPointer; // &i64 (signed in case the count goes negative)
+    inner: UntypedPointer; // &inner_Box::<T>
+    // ref_count: UntypedPointer, // &i64 (signed in case the count goes negative)
 
     public define new(data: T) -> Box::<T> {
-        data_ptr = stdlib::malloc(T::SIZEOF);
-        // data_ptr_typed = data_ptr as &T;
+        inner_ptr = stdlib::malloc(inner_Box::<T>::SIZEOF);
+        inner_data = inner_Box::<T> {
+            data: data,
+            ref_count: 1i64
+        };
 
-        ref_ptr = stdlib::malloc(i64::SIZEOF);
-        ref_ptr_typed = ref_ptr as &i64;
-
-        ref_ptr_typed = 1i64;
-        data_ptr.store(&data);
+        inner_ptr.store(&inner_data);
 
         x = Box::<T> {
-            data: data_ptr,
-            ref_count: ref_ptr
+            inner: inner_ptr
         };
-        stdlib::println("wonkers");
+        // stdlib::println("wonkers");
 
         return x;
     }
 
     public define unwrap(self) -> T {
-        ref_count = self.ref_count as &i64 as i64;
-        if ref_count<=0 {
+        inner_data = self.inner as &inner_Box::<T>;
+        if *inner_data.ref_count<=0 {
             stdlib::println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
         }
 
-        return self.data as &T as T;
+        return inner_data.data;
     }
 
     public define wrap(&self, data: T) {
-        data_ptr = self.data as &T;
-        ref_count = self.ref_count as &i64 as i64;
+        inner_data = self.inner as &inner_Box::<T>;
 
-        if ref_count<=0 {
+        if *inner_data.ref_count<=0 {
             stdlib::println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
         }
 
-        data_ptr = data;
+        *inner_data.data = data;
     }
 
     // public because of some dumb reasons that are necessary for op overloading
     // will fix soon
     /// Do not execute manually, breaks safety
     public define __increase_ref_count__(&self) {
-        ref_ptr_typed = self.ref_count as &i64;
-        ref_ptr_typed = 1 + *ref_ptr_typed;
-        self.data.retake(self.data as &T);
-        stdlib::print("Append ref count: ");
-        stdlib::println(ref_ptr_typed as i64);
+        inner_data = self.inner as &inner_Box::<T>;
+        *inner_data.ref_count += 1i64;
+        self.inner.retake(&inner_data);
+        // stdlib::print("increasing, ref count: ");
+        // stdlib::println(*inner_data.ref_count);
     }
 
     /// Do not execute manually, breaks safety
     public define __dispose__(&self) {
-        ref_count_ptr = self.ref_count as &i64;
-        ref_count_ptr -= 1;
-        ref_count = *ref_count_ptr;
-        stdlib::print("dipose ref count:");
-        stdlib::println(ref_count);
-        self.data.release(self.data as &T);
+        inner_data = self.inner as &inner_Box::<T>;
+        *inner_data.ref_count -= 1i64;
+        // stdlib::print("diposing, ref count:");
+        // stdlib::println(*inner_data.ref_count);
+        self.inner.release(&inner_data);
 
-        if ref_count <= 0 {
-            self.data.release(self.data as &T);
-            stdlib::free(self.data);
-            stdlib::free(self.ref_count);
+        if *inner_data.ref_count <= 0 {
+            // self.data.release(self.data as &T);
+            stdlib::free(self.inner);
             stdlib::println("Removed");
         }
     }
