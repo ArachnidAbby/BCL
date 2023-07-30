@@ -35,11 +35,13 @@ class Module(ASTNode):
     __slots__ = ('location', 'globals', 'imports', 'children',
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed',
-                 'scheduled_events', 'ran_schedule', 'target_machine')
+                 'scheduled_events', 'ran_schedule', 'target_machine',
+                 'scheduled_templates')
 
     is_namespace = True
     ENUM_SCHEDULE_ID = 0
     STRUCT_SCHEDULE_ID = 1
+    TEMPLATE_SCHEDULE_ID = 2
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -60,6 +62,7 @@ class Module(ASTNode):
         self.evaled = False
         self.ir_saved = False
         self.scheduled_events = [[], [], []]
+        self.scheduled_templates = []
         self.ran_schedule = False
 
         modules[name] = self
@@ -77,6 +80,9 @@ class Module(ASTNode):
 
     def add_struct_to_schedule(self, struct_def):
         self.scheduled_events[self.STRUCT_SCHEDULE_ID].append(struct_def)
+
+    def add_template_to_schedule(self, generic):
+        self.scheduled_templates.append(generic)
 
     def do_scheduled(self):
         if self.ran_schedule:
@@ -242,6 +248,9 @@ class Module(ASTNode):
                 output += mod.obj.get_all_globals(stack)
         return output
 
+    def copy(self):
+        return self
+
     def __eq__(self, other):
         return isinstance(other, Module) and self.location == other.location
 
@@ -279,6 +288,26 @@ class Module(ASTNode):
             if not child.completed:
                 self.syntax_error_information(child, c)
             child.value.post_parse(self)
+
+    def fullfill_templates(self, stack=None):
+        if stack is None:
+            stack = [self]
+        else:
+            if self in stack:
+                return
+            stack.append(self)
+
+        for mod in self.imports.values():
+            mod.obj.fullfill_templates(stack=stack)
+
+        for child in reversed(self.children):
+            if child.name == "EOF":
+                self.children.pop(-1)
+
+        for c, child in enumerate(self.children):
+            if not child.completed:
+                self.syntax_error_information(child, c)
+            child.value.fullfill_templates(self)
 
     def pre_eval(self, parent):
         self.pre_evaled = True

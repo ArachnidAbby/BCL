@@ -16,11 +16,23 @@ class FunctionCall(ExpressionNode):
         self.paren = parenth
         self.args_types = None
 
+    def copy(self):
+        out = FunctionCall(self._position, self.func_name.copy(), self.paren.copy())
+        return out
+
     def reset(self):
         self.paren.reset()
         self.func_name.reset()
         self.args_types = None
         self.ret_type = Ast_Types.Void()
+
+    def fullfill_templates(self, func):
+        self.paren.fullfill_templates(func)
+        self.func_name.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.paren.post_parse(func)
+        self.func_name.post_parse(func)
 
     def pre_eval(self, func):
         if isinstance(self.paren, ParenthBlock):

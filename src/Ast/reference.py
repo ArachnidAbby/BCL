@@ -14,6 +14,15 @@ class Ref(ExpressionNode):
         super().__init__(pos)
         self.var = var
 
+    def copy(self):
+        return Ref(self._position, self.var.copy())
+
+    def fullfill_templates(self, func):
+        self.var.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.var.post_parse(func)
+
     def pre_eval(self, func):
         self.var.pre_eval(func)
         if isinstance(self.var.ret_type, Ast_Types.Reference):

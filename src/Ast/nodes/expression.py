@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.commontypes import SrcPosition
@@ -18,6 +19,9 @@ class ExpressionNode(ASTNode):
         self.overwrite_eval = False
         super().__init__(position, *args, **kwargs)
 
+    def copy(self):
+        return self
+
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
         if self.ptr is None:
@@ -26,6 +30,9 @@ class ExpressionNode(ASTNode):
             # self._instruction = val
             func.builder.store(val, self.ptr)
         return self.ptr
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
 
     def eval(self, func, *args, **kwargs):
         if self.do_register_dispose and self.ret_type is not None and self.ret_type.needs_dispose and not self.__evaled and not self.overwrite_eval:

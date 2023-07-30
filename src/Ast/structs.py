@@ -1,4 +1,5 @@
 import Ast.Ast_Types as Ast_Types
+from Ast.Ast_Types.Type_Void import Void
 from Ast.generics import GenericSpecify
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
@@ -15,26 +16,29 @@ class StructDef(ASTNode):
 
     can_have_modifiers = True
 
-    def __init__(self, pos: SrcPosition, name, block, module):
+    def __init__(self, pos: SrcPosition, name, block, module,
+                 register=True):
         super().__init__(pos)
         self.raw_name = name
-        if isinstance(name.value, GenericSpecify):
+        if isinstance(name, GenericSpecify):
             self.is_generic = True
-            self.generic_args = {x.var_name: None for x in name.value.params}
-            self.struct_name = name.value.left.var_name
-        elif isinstance(name.value, VariableRef):
+            self.generic_args = {x.var_name: (Void(), None) for x in name.params}
+            self.struct_name = name.left.var_name
+            name.in_definition = True
+        elif isinstance(name, VariableRef):
             self.is_generic = False
             self.generic_args = {}
-            self.struct_name = name.value.var_name
+            self.struct_name = name.var_name
         else:
             errors.error(f"Invalid type name: {name.value.var_name}",
-                         line=name.pos, full_line=True)
+                         line=name.position, full_line=True)
 
         if self.struct_name in Ast_Types.types_dict.keys():
             errors.error(f"Type name already in use: {self.struct_name}",
-                         line=name.pos, full_line=True)
+                         line=name.position, full_line=True)
 
         self.block = block
+        self.block.parent = self
         members = []
         if isinstance(self.block.children[0], ContainerNode):
             members = self.block.children[0].children
@@ -43,10 +47,21 @@ class StructDef(ASTNode):
         else:
             errors.error("The first statement in a struct definition MUST " +
                          "be a list of members", line=self.block.children[0].pos)
-        self.struct_type = Ast_Types.Struct(self.struct_name, members, module, self.is_generic, self)
-        module.types[self.struct_name] = self.struct_type
-        self.module = module
+
+        if register:
+            self.struct_type = Ast_Types.Struct(self.struct_name, members, module, self.is_generic, self)
+            module.types[self.struct_name] = self.struct_type
         module.add_struct_to_schedule(self)
+        self.module = module
+        # if self.is_generic:
+        #     module.add_template_to_schedule(self)
+
+    def copy(self):
+        out = StructDef(self._position, self.raw_name.copy(),
+                        self.block.copy(), self.module, register=False)
+        out.modifiers = self.modifiers
+        out.block.parent = out
+        return out
 
     @property
     def ir_type(self):
@@ -57,7 +72,7 @@ class StructDef(ASTNode):
 
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
-            return self.generic_args[var_name]
+            return self.generic_args[var_name][0]
 
         return self.module.get_type_by_name(var_name, pos)
 
@@ -78,7 +93,7 @@ class StructDef(ASTNode):
         '''Methods use this to get the names of types
         '''
         if var_name in self.generic_args.keys():
-            var = self.generic_args[var_name]
+            var = self.generic_args[var_name][0]
             return var
         elif module is not None:
             return module.get_global(var_name)
@@ -98,28 +113,52 @@ class StructDef(ASTNode):
 
     def scheduled(self, mod):
         self.struct_type.set_visibility(self.visibility)
+        self.fullfill_templates(mod)
 
     def reset(self):
         self.block.reset()
 
+    def fullfill_templates(self, func):
+        if not self.is_generic:
+            for stmt in self.block:
+                if isinstance(stmt, FunctionDef):
+                    stmt.parent = self
+                stmt.fullfill_templates(self)
+
+        for version in self.struct_type.versions.values():
+            version[2].fullfill_templates(version[2])
+
     def post_parse(self, module):
-        self.struct_type.define(self)
+        if not self.is_generic:
+            self.struct_type.define(self)
+
+        for version in self.struct_type.versions.values():
+            version[2].post_parse(version[2])
 
         if self.is_generic:
             return
 
         for stmt in self._yield_functions():
-            # stmt.func_name = f"{stmt.func_name}"
             stmt.parent = self
             stmt.post_parse(self)
 
     def pre_eval(self, module):
+        # if self.is_generic:
+        #     self.post_parse(module)
+
+        for version in self.struct_type.versions.values():
+            version[2].pre_eval(version[2])
+
         if self.is_generic:
             return
         for stmt in self._yield_functions():
             stmt.pre_eval(self)
 
     def eval_impl(self, module):
+
+        for version in self.struct_type.versions.values():
+            version[2].eval(version[2])
+
         if self.is_generic:
             return
 

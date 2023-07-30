@@ -19,6 +19,17 @@ class RangeLiteral(ExpressionNode):
         self.end = end
         self.ptr = None
 
+    def copy(self):
+        out = RangeLiteral(self._position, self.start.copy(), self.end.copy())
+
+    def fullfill_templates(self, func):
+        self.start.fullfill_templates(func)
+        self.end.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.start.post_parse(func)
+        self.end.post_parse(func)
+
     def pre_eval(self, func):
         self.start.pre_eval(func)
         self.end.pre_eval(func)

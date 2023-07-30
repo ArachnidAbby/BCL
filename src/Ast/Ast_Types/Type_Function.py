@@ -115,7 +115,9 @@ class Function(Type):
         if isinstance(lhs, MemberAccess) and self.is_method:
             if func is not None:
                 if isinstance(self.args[0], Reference):
-                    return [Ref(lhs.lhs.position, lhs.lhs), *args.children]
+                    ref = Ref(lhs.lhs.position, lhs.lhs)
+                    ref.pre_eval(func)
+                    return [ref, *args.children]
             return [lhs.lhs, *args.children]
         else:
             return args.children
@@ -139,9 +141,11 @@ class Function(Type):
     def call(self, func, lhs, args):
         # * prevent adding additional args multiple times
         # * when doing .eval(func) multiple times
+        orig_args = args.children
         if len(args.children) != len(self.args):
             args.children = self._fix_args(lhs, args, func)
         args.eval(func, expected_args=self.args)
+        args.children = orig_args
         return func.builder.call(self.func_obj, args.evaled_children)
 
     def __hash__(self):

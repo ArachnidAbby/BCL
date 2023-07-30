@@ -4,9 +4,11 @@ from typing import Self
 from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
+from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
 from Ast.nodes import KeyValuePair, ParenthBlock, Block
+from Ast.nodes.container import ContainerNode
 from Ast.nodes.passthrough import PassNode
 from Ast.variables.reference import VariableRef
 from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
@@ -42,8 +44,9 @@ class Struct(Ast_Types.Type):
 
     __slots__ = ('struct_name', 'members', 'methods', 'member_indexs', 'size',
                  'rang', 'member_index_search', 'returnable', 'raw_members',
-                 'ir_type', 'module', 'visibility', 'can_create_literal', 'is_generic',
-                 'versions', 'definition', 'needs_dispose', 'ref_counted')
+                 'ir_type', 'module', 'visibility', 'can_create_literal',
+                 'is_generic', 'versions', 'definition', 'needs_dispose',
+                 'ref_counted', 'declared')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -78,6 +81,7 @@ class Struct(Ast_Types.Type):
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
+        self.declared = False
         self.visibility = super().visibility
 
     def pass_type_params(self, func, params, pos):
@@ -88,35 +92,53 @@ class Struct(Ast_Types.Type):
             params_types.append(ty.as_type_reference(func))
 
         params = tuple(params_types)
+        # print(params)
+
+        if Void() in params:
+            return self
 
         if params in self.versions.keys():
-            return self.versions[params]
+            return self.versions[params][0]
 
         new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
 
-        new_ty = Struct(new_name, self.raw_members, self.module,
-                        False, self.definition)
         # new_ty.members = self.members
-        generic_args_previous = self.definition.generic_args
-        self.definition.generic_args = {**generic_args_previous}
+        generic_args = {**self.definition.generic_args}
 
         for c, key in enumerate(self.definition.generic_args.keys()):
-            self.definition.generic_args[key] = params[c]
+            generic_args[key] = (params[c], func)
 
-        self.definition.struct_type = new_ty
-        self.definition.is_generic = False
-        self.definition.reset()
+        # self.definition.struct_type = new_ty
+        # self.definition.is_generic = False
+        # self.definition.reset()
 
-        self.versions[params] = new_ty
+        def_copy = self.definition.copy()
+        def_copy.is_generic = False
+        def_copy.struct_name = new_name
+        def_copy.generic_args = generic_args
+        members = []
+        if isinstance(def_copy.block.children[0], ContainerNode):
+            members = def_copy.block.children[0].children
+        elif isinstance(def_copy.block.children[0], KeyValuePair):
+            members = [def_copy.block.children[0]]
+        new_ty = Struct(new_name, members, self.module,
+                        False, def_copy)
+        def_copy.struct_type = new_ty
 
-        self.definition.post_parse(self.module)
-        self.definition.pre_eval(self.module)
-        self.definition.eval(self.module)
+        self.versions[params] = (new_ty, generic_args, def_copy)
 
-        self.definition.generic_args = generic_args_previous
+        self.definition.fullfill_templates(self.module)
 
-        self.definition.struct_type = self
-        self.definition.is_generic = True
+        # print(len(self.versions.keys()), self.versions.keys())
+
+        # self.definition.post_parse(self.module)
+        # self.definition.pre_eval(self.module)
+        # self.definition.eval(self.module)
+
+        # self.definition.generic_args = generic_args_previous
+
+        # self.definition.struct_type = self
+        # self.definition.is_generic = True
 
         return new_ty
 
@@ -125,7 +147,11 @@ class Struct(Ast_Types.Type):
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
                   line=pos)
 
+        # print("getting size")
+        # print(self.ir_type.elements)
         if x := self.global_namespace_names(func, name, pos):
+            # print("getting size")
+            # print(self.ir_type.elements)
             return x
 
         for mem_name in self.members.keys():
@@ -147,9 +173,14 @@ class Struct(Ast_Types.Type):
         self.visibility = value
 
     def declare(self, mod):
+        if self.declared:
+            return
+
+        self.declared = True
+
         if self.is_generic:
             for ver in self.versions:
-                self.versions[ver].declare(mod)
+                self.versions[ver][0].declare(mod)
             return
 
         for name in self.members.keys():
@@ -158,10 +189,15 @@ class Struct(Ast_Types.Type):
                 val.declare(mod)
 
     def define(self, func):
-        if self.is_generic:
-            for ver in self.versions:
-                self.versions[ver].define(func)
-            return
+        # if self.declared:
+        #     return
+
+        # self.declared = True
+
+        # if self.is_generic:
+        #     for ver in self.versions:
+        #         self.versions[ver][0].define(func)
+        #     return
 
         for member in self.raw_members:
             # when encountering an unreturnable type, make this struct

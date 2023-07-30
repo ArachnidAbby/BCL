@@ -44,5 +44,8 @@ class VariableObj:
             return func.builder.load(self.ptr)
         return self.ptr
 
+    def get_namespace_name(self, func, name, pos):
+        self.type.get_namespace_name(func, name, pos)
+
     def __repr__(self) -> str:
         return f'VAR: |{self.ptr}, {self.type}, {self.is_constant}|'

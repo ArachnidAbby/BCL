@@ -13,6 +13,15 @@ class Deref(ExpressionNode):
         self.ref = ref
         self.assignable = True
 
+    def copy(self):
+        return Deref(self._position, self.ref.copy())
+
+    def fullfill_templates(self, func):
+        self.ref.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.ref.post_parse(func)
+
     def pre_eval(self, func):
         self.ref.pre_eval(func)
 

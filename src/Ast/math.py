@@ -43,6 +43,9 @@ class OperationNode(ExpressionNode):
         self.shunted = shunted
         self.op = op
 
+    def copy(self):
+        return OperationNode(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+
     def reset(self):
         super().reset()
         self.lhs.reset()
@@ -92,6 +95,25 @@ class OperationNode(ExpressionNode):
     def right_handed_position(self):
         '''get the position of the right handed element. This is recursive'''
         return self.rhs.position
+
+    def fullfill_templates(self, func):
+        self.lhs.fullfill_templates(func)
+        self.rhs.fullfill_templates(func)
+
+    def post_parse_math(self, func):
+        self.lhs.post_parse(func)
+        self.rhs.post_parse(func)
+
+    def post_parse(self, func):
+        if not self.shunted:
+            new = RPN_to_node(shunt(self))
+            self.shunted = True
+            self.lhs = new.lhs
+            self.rhs = new.rhs
+            self.op = new.op
+            self.post_parse(func)
+        else:
+            self.post_parse_math(func)
 
     def pre_eval(self, func):
         if not self.shunted:
@@ -231,6 +253,12 @@ class MemberAccess(OperationNode):
         self.assignable = True
         self.is_pointer = False
 
+    def copy(self):
+        out = MemberAccess(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+        out.assignable = self.assignable
+        out.is_pointer = self.is_pointer
+        return out
+
     def reset(self):
         super().reset()
         self.lhs.reset()
@@ -256,7 +284,7 @@ class MemberAccess(OperationNode):
             self.assignable = member_info.mutable
             self.is_pointer = member_info.is_pointer
             self.ret_type = member_info.typ
-            print(self.ret_type, self.lhs, self.rhs)
+            # print(self.ret_type, self.lhs, self.rhs)
 
     def _get_global_func(self, module, name: str):
         return module.get_global(name)

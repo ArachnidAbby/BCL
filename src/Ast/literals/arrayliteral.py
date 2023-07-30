@@ -23,6 +23,18 @@ class ArrayLiteral(ExpressionNode):
         # whether or not this array is only full of literals
         self.literal = True
 
+    def copy(self):
+        out = ArrayLiteral(self._position, [val.copy() for val in self.value], self.repeat)
+        return out
+
+    def fullfill_templates(self, func):
+        for x in self.value:
+            x.fullfill_templates(func)
+
+    def post_parse(self, func):
+        for x in self.value:
+            x.post_parse(func)
+
     def pre_eval(self, func):
         self.value[0].pre_eval(func)
         typ = self.value[0].ret_type
@@ -31,7 +43,7 @@ class ArrayLiteral(ExpressionNode):
             amount = self.repeat.get_var(func)
             amount.pre_eval(func)
             if not self.repeat.isconstant or \
-                    not (self.repeat.ret_type, Ast_Types.Integer_32):
+                    not isinstance(self.repeat.ret_type, Ast_Types.Integer_32):
                 errors.error("Array literal size must be an i32",
                              line=self.position)
 

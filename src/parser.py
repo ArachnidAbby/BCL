@@ -168,7 +168,7 @@ class Parser(ParserBase):
             errors.error("Namespace index must be indexing a name or another namespace index",
                          line=self.peek(0).pos)
 
-        node = Ast.generics.GenericSpecify(pos, left, right)
+        node = Ast.generics.GenericSpecify(pos, left, right, self.module, self.blocks[-1][0])
 
         is_rshift = self.peek(3).name == "RSHIFT"
         if is_rshift:
@@ -300,12 +300,13 @@ class Parser(ParserBase):
 
         values = self.peek(1).value
         if self.peek(1).name == "kv_pair":
-            values = Ast.nodes.ContainerNode(self.peek(1).pos)
-            values.append_child(self.peek(1).value)
+            block[0].append_child(self.peek(1).value)
+        else:
+            block[0].children = values.children
         self.start = self.blocks[-1][1]
         struct_literal = Ast.StructLiteral(self.peek(-1).pos,
                                            self.peek(-1).value,
-                                           values)
+                                           block[0])
         self.replace(4, "expr", struct_literal, i=-1)
 
     @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
@@ -335,7 +336,7 @@ class Parser(ParserBase):
 
     @rule(0, "$struct expr statement")
     def parse_structs(self):
-        struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1),
+        struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1).value,
                                        self.peek(2).value, self.module)
         self.replace(3, "structdef", struct)
 

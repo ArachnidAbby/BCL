@@ -21,11 +21,22 @@ class NamespaceIndex(ExpressionNode):
             errors.error("Cannot get names from a `*` namespace index",
                          line=pos)
 
+    def copy(self):
+        out = NamespaceIndex(self._position, self.left.copy(), self.right.copy())
+        out.star_idx = self.star_idx
+        return out
+
     def reset(self):
         super().reset()
         self.left.reset()
         self.right.reset()
         self.val = None
+
+    def fullfill_templates(self, func):
+        self.left.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.left.post_parse(func)
 
     def pre_eval(self, func):
         if self.star_idx:

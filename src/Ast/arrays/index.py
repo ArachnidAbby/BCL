@@ -39,6 +39,13 @@ class VariableIndexRef(ExpressionNode):
         self.ind = ind
         self.size = 0
 
+    def copy(self):
+        return VariableIndexRef(self._position, self.varref.copy(), self.ind.copy())
+
+    def fullfill_templates(self, func):
+        self.varref.fullfill_templates(func)
+        self.ind.fullfill_templates(func)
+
     def pre_eval(self, func):
         self.varref.pre_eval(func)
 

@@ -1,6 +1,7 @@
 import stdlib::*;
 import exitcodes::*;
 
+
 public struct Vector::<T> {
     array_ptr: UntypedPointer, // &UntypedPointer -> &T[...]
     allocated_size: UntypedPointer, // &size_t
@@ -56,6 +57,7 @@ public struct Vector::<T> {
             yield self.get(i);
             i+=1i64;
         }
+        return;
     }
 
 

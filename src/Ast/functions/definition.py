@@ -1,6 +1,8 @@
 from typing import Protocol
 
 from llvmlite import ir
+from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Void import Void
 from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
@@ -95,6 +97,21 @@ class FunctionDef(ASTNode):
         self.args_ir: tuple[ir.Type, ...] = ()
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
+
+    def copy(self):
+        if self.block is not None:
+            val = FunctionDef(self._position, self.func_name, self.raw_args.copy(),
+                              self.block.copy(), self.module)
+            self.block.parent = val
+        else:
+            val = FunctionDef(self._position, self.func_name, self.raw_args.copy(),
+                              None, self.module)
+
+        if not isinstance(self.ret_raw, Void):
+            val.ret_raw = self.ret_raw.copy()
+        val.modifiers = self.modifiers
+        val.is_ret_set = self.is_ret_set
+        return val
 
     def reset(self):
         super().reset()
@@ -247,6 +264,14 @@ class FunctionDef(ASTNode):
             return self.parent.get_variable(var_name, module)
         elif module is not None:
             return module.get_global(var_name)
+
+    def fullfill_templates(self, func):
+        if self.block is not None:
+            self.block.parent = self
+            self.block.fullfill_templates(func)
+        self.raw_args.fullfill_templates(func)
+        if not isinstance(self.ret_raw, Type):
+            self.ret_raw.fullfill_templates(func)
 
     def post_parse(self, parent: Parent):
         if self.block is not None:

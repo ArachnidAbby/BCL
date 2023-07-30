@@ -8,7 +8,7 @@ import errors
 
 
 class Definition(ASTNode):
-    __slots__ = ('enum_name', 'members', 'enum_type', 'module')
+    __slots__ = ('enum_name', 'members', 'enum_type', 'module', 'raw_name')
 
     can_have_modifiers = True
 
@@ -19,6 +19,7 @@ class Definition(ASTNode):
         if not isinstance(name, VariableRef):
             errors.error("Enum name must be a variable-like name",
                          line=name.position)
+        self.raw_name = name
         self.enum_name = name.var_name
         self.module = module
 
@@ -36,6 +37,15 @@ class Definition(ASTNode):
         self.enum_type = EnumType(name, module.mod_name, pos, members_list)
         module.create_type(self.enum_name, self.enum_type)
         module.add_enum_to_schedule(self)
+
+    def copy(self):
+        out = Definition(self._position, self.raw_name.copy(),
+                         self.members.copy(), self.module)
+        out.modifiers = self.modifiers
+        return out
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
 
     def scheduled(self, parent):
         self.enum_type.set_visibility(self.visibility)

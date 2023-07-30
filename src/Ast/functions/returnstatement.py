@@ -14,6 +14,24 @@ class ReturnStatement(ASTNode):
         self._position = pos
         self.expr = expr
 
+    def copy(self):
+        if self.expr is None:
+            expr_copy = None
+        else:
+            expr_copy = self.expr.copy()
+        out = ReturnStatement(self._position, expr_copy)
+        return out
+
+    def fullfill_templates(self, func):
+        if self.expr is None:
+            return
+        self.expr.fullfill_templates(func)
+
+    def post_parse(self, func):
+        if self.expr is None:
+            return
+        self.expr.post_parse(func)
+
     def pre_eval(self, func):
         if self.expr is None:
             return

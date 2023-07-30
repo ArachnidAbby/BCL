@@ -17,6 +17,15 @@ class StructLiteral(ExpressionNode):
         self.members = members
         self.struct_name = name
 
+    def copy(self):
+        return StructLiteral(self._position, self.struct_name.copy(), self.members.copy())
+
+    def fullfill_templates(self, func):
+        self.members.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.members.post_parse(func)
+
     def pre_eval(self, func):
         self.ret_type = self.struct_name.as_type_reference(func)
         if not isinstance(self.ret_type, Struct):
@@ -43,7 +52,7 @@ class StructLiteral(ExpressionNode):
                              f"\"{child.key.var_name}\"",
                              line=child.key.position)
             if child.value.ret_type != self.ret_type.members[name][0]:
-                errors.error(f"Expected type {self.ret_type.members[name]} " +
+                errors.error(f"Expected type {self.ret_type.members[name][0]} " +
                              f"got {child.value.ret_type}",
                              line=child.value.position)
 

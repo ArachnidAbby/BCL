@@ -169,61 +169,69 @@ define get_value() -> Optional::<i32> {
 import box::*;
 import vector::*;
 
-define random_box_test(my_arg: &Box::<i32>) -> Box::<i32> {
-    println("disposing func");
-    return my_arg as Box::<i32>;
+define random_box_test(my_arg: &Box::<i64>) -> Box::<i64> {
+    return *my_arg;
 }
 
 struct ContainsBox {
-    x: Box::<i32>;
+    x: &Box::<i64>;
 
     define __dispose__(self) {
-        // println("DISPOSING AND POSING");
+        println("DISPOSING AND POSING");
     }
 }
 
 define main() {
-
     println("started");
 
+    example_vec: Vector::<i64> = Vector::<i64>::new(10i64);
 
-    // example_vec = Vector::<i64>::new(10i64);
-    // println("gaming");
-    // println();
+    example_vec.append(12i64);
+    example_vec.append(2i64);
+    example_vec.put(0i64, 10i64);
+    test_val = example_vec.get(0i64);
+    test_val_2 = example_vec.get(1i64);
 
-    // example_vec.append(12i64);
-    // println();
-    // example_vec.append(2i64);
-    // println("laming");
-    // example_vec.put(0i64, 10i64);
-    // println("puted");
-    // test_val = example_vec.get(0i64);
-    // println("get");
-    // test_val_2 = example_vec.get(1i64);
-    // println("get 2");
 
-    // print("Vec value: ");
-    // println(test_val);
+    print("Vec value: ");
+    println(test_val);
 
-    // print("Vec value 2: ");
-    // println(test_val_2);
+    print("Vec value 2: ");
+    println(test_val_2);
 
-    // p = example_vec.iter();
+    // example_vec.pop(0i64);
 
-    // for item in p {
-    //     println(item);
+    test_val = example_vec.get(0i64);
+
+    print("Vec value: ");
+    println(test_val);
+
+    // // should error at runtime
+    test_val = example_vec.get(1i64);
+
+    print("Vec value: ");
+    println(test_val);
+
+    // while example_vec.length() {
+
     // }
+    p = example_vec.iter();
+    // example_vec::SIZEOF;
+
+    for item in example_vec.iter() {
+        println(item);
+    }
 
 
-    j = Box::<i32>::new(10);
+    j = Box::<i64>::new(10i64);
     Box::<i64>::new(10i64);
     OhNo = ContainsBox {
-        x: j
+        x: &j
     };
 
     // box_array = [Box::<i32>::new(10); 10];
 
-    box_in_a_box = Box::<Box::<i32> >::new(j);
+    // box_in_a_box = Box::<Box::<i32>>::new(j);
 
     // for x in box_array {
     //     println(x.unwrap());
@@ -429,6 +437,7 @@ define main() {
     // if (10f>9) * 2f {
     //     println("hi");
     // }
+    println("END");
 }
 
 // struct parent {

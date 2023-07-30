@@ -20,6 +20,20 @@ class Block(ContainerNode):
         self.ended = False
         self.parent = parent
 
+    def simple_copy(self):
+        out = Block(self._position)
+        out.children = [child.copy() for child in self.children if child is not None]
+        return out
+
+    def copy(self):
+        out = Block(self._position)
+        if len(self.BLOCK_STACK) != 0:
+            out.parent = self.BLOCK_STACK[-1]
+        self.BLOCK_STACK.append(out)
+        out.children = [child.copy() for child in self.children if child is not None]
+        self.BLOCK_STACK.pop()
+        return out
+
     def reset(self):
         super().reset()
         self.variables: dict[str, object] = {}
@@ -37,6 +51,10 @@ class Block(ContainerNode):
         if len(self.BLOCK_STACK) != 0:
             self.variables = {**self.variables,
                               **self.BLOCK_STACK[-1].variables}
+
+    def fullfill_templates(self, func):
+        for child in self:
+            child.fullfill_templates(func)
 
     def post_parse(self, func):
         for child in self:

@@ -22,6 +22,13 @@ class ParenthBlock(ContainerNode):
         self.evaled_children = []
         self.contains_ellipsis = False
 
+    def copy(self):
+        out = ParenthBlock(self._position)
+        out.children = [child.copy() for child in self.children]
+        out.in_func_call = self.in_func_call
+        out.contains_ellipsis = self.contains_ellipsis
+        return out
+
     def reset(self):
         super().reset()
         self.in_func_call = False

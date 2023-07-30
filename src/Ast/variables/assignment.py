@@ -1,5 +1,5 @@
 from Ast.Ast_Types import Void
-from Ast.nodes import ASTNode, ExpressionNode
+from Ast.nodes import ASTNode, ExpressionNode, block
 from Ast.nodes.commontypes import SrcPosition
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
@@ -23,6 +23,12 @@ class VariableAssign(ASTNode):
         self.block = block
         self.explicit_typ = typ != Void  # TODO: GROSS AS FUCK
         self.typ = typ
+
+    def copy(self):
+        out = VariableAssign(self._position, self.var_name.copy(), self.value.copy(), block.Block.BLOCK_STACK[-1])
+        out.explicit_typ = self.explicit_typ
+        out.typ = self.typ
+        return out
 
     def create_new_var(self, func):
         '''create new variable if it does not exist.
@@ -54,6 +60,12 @@ class VariableAssign(ASTNode):
             if func.yields:
                 func.yield_gen_type.add_members(func.yield_consts,
                                                 [x[0].type for x in func.variables])
+
+    def fullfill_templates(self, func):
+        self.value.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.value.post_parse(func)
 
     def pre_eval(self, func):
         self.value.pre_eval(func)

@@ -17,6 +17,17 @@ class KeyValuePair(ASTNode):
         self.key = k
         self.value = v
 
+    def copy(self):
+        return KeyValuePair(self._position, self.key.copy(), self.value.copy())
+
+    def fullfill_templates(self, func):
+        self.key.fullfill_templates(func)
+        self.value.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.key.post_parse(func)
+        self.value.post_parse(func)
+
     def validate_type(self, func):  # TODO: REMOVE, DUPLICATE
         return self.value.as_type_reference(func)
 

@@ -243,4 +243,4 @@ class Integer_32(Type_Base.Type):
 
     def truthy(self, func, val):
         return func.builder.icmp_signed('!=', val.eval(func),
-                                        ir.Constant(self.ir_type, int(0)))
+                                        ir.Constant(self.ir_type, 0))

@@ -10,7 +10,14 @@ class YieldStatement(ASTNode):
         super().__init__(pos)
         self.value = value
 
+    def fullfill_templates(self, func):
+        self.value.fullfill_templates(func)
+
+    def copy(self):
+        return YieldStatement(self._position, self.value.copy())
+
     def post_parse(self, func):
+        self.value.post_parse(func)
         if not func.yields:
             func.yields = True
             func.ret_type = Ast_Types.GeneratorType(func, func.ret_type)

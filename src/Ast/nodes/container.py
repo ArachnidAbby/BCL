@@ -21,6 +21,17 @@ class ContainerNode(ASTNode):
     def __len__(self) -> int:
         return len(self.children)
 
+    def copy(self):
+        out = ContainerNode(self._position)
+
+        out.children = [child.copy() for child in self.children]
+
+        return out
+
+    def fullfill_templates(self, func):
+        for child in self.children:
+            child.fullfill_templates(func)
+
     def post_parse(self, parent):
         for child in self.children:
             child.post_parse(parent)

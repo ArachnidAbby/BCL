@@ -14,6 +14,12 @@ class StrLiteral(ExpressionNode):
         super().__init__(pos)
         self.value = value
 
+    def copy(self):
+        return StrLiteral(self._position, self.value)
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
+
     def pre_eval(self, func):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
                              Ast_Types.Integer_32())

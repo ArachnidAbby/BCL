@@ -15,6 +15,12 @@ class Literal(ExpressionNode):
         self.value = value
         self.ret_type = typ
 
+    def copy(self):
+        return Literal(self._position, self.value, self.ret_type)
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
+
     def eval_impl(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
 

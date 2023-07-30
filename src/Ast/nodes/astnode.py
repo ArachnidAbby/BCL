@@ -3,8 +3,10 @@ from typing import Tuple
 from Ast.nodes.commontypes import SrcPosition, Modifiers
 import errors
 
+from abc import ABC, abstractmethod
 
-class ASTNode:
+
+class ASTNode(ABC):
     '''Most basic Ast-Node that all others inherit from.
     This just provides standardization between Ast-Nodes.
 
@@ -46,6 +48,10 @@ class ASTNode:
         '''check whether or not a node is an expression'''
         return False
 
+    @abstractmethod
+    def fullfill_templates(self, func):
+        pass
+
     def post_parse(self, parent):
         '''Happens before pre_eval but after parsing
         This creates globals. Ex: functions
@@ -67,6 +73,10 @@ class ASTNode:
 
     def reset(self):
         self._instruction = None
+
+    @abstractmethod
+    def copy(self):
+        return self
 
     def merge_pos(self, positions: Tuple[SrcPosition, ...]) -> SrcPosition:
         current_pos = self._position

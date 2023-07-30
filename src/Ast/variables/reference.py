@@ -1,6 +1,6 @@
 from Ast import Ast_Types
 from Ast.Ast_Types import Type_Base
-from Ast.nodes import ExpressionNode
+from Ast.nodes import ExpressionNode, block
 from Ast.nodes.commontypes import SrcPosition
 from .varobject import VariableObj
 from errors import error
@@ -23,9 +23,20 @@ class VariableRef(ExpressionNode):
         self.var_name = name
         self.block = block
 
+    def copy(self):
+        last_block = None
+        if len(block.Block.BLOCK_STACK) != 0:
+            last_block = block.Block.BLOCK_STACK[-1]
+
+        out = VariableRef(self._position, self.var_name, last_block)
+        return out
+
     def reset(self):
         super().reset()
         self.from_global = None
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
 
     def pre_eval(self, func):
         if not self.block.validate_variable_exists(self.var_name, func.module):
