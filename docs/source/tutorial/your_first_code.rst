@@ -57,7 +57,7 @@ open an issue on the `github page <https://github.com/spidertyler2005/BCL>`__. T
     }
 
 ########################
-Step 4: Compile and Run
+Step 3: Compile and Run
 ########################
 
 Currently compilation in BCL is a little complicated.
