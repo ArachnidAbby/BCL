@@ -75,7 +75,7 @@ class BCLLexer(RegexLexer):
             (r'[\s\n]+', Whitespace),
             (r'\"(\\.|[^"\\])*\"', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)',
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)|(while)',
              Keyword.Reserved),
             (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
