@@ -47,6 +47,7 @@ This will rerun the code for each element.
     define main() {
         // an array with 7 elements
         x = [0; 7];
+        // x will look like this: [0, 0, 0, 0, 0, 0, 0]
     }
 
 .. note::

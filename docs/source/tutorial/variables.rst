@@ -220,6 +220,10 @@ or codeblocks that are nested inside the one it was defined in. Once a code bloc
 it's variables become invisible and no longer exist. Although, do note, they won't be freed from memory until
 the function returns/finishes running.
 
+.. note::
+
+    Freeing memory just means we tell the computer that we aren't using it anymore.
+
 .. code-block:: bcl
 
     define main() {

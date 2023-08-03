@@ -25,6 +25,7 @@ Welcome to BCL's documentation!
    tutorial/if-else.rst
    tutorial/loops.rst
    tutorial/array.rst
+   tutorial/creating_types.rst
 
 Indices and tables
 ==================

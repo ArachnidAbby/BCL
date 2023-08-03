@@ -2,7 +2,7 @@ Functions
 ==========
 
 Functions are a way to avoid repeating blocks of code. They can be very helpful!
-We have actually already used several!
+We have actually already used several! Functions work similarly to how they work in math.
 
 ###################
 Calling a Function

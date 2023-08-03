@@ -1,6 +1,12 @@
 Math Operations
 ================
 
+.. note::
+
+    Don't worry about memorizing these.
+    The important ones are listed at the top of this document.
+    Just try to know the basic ones from math.
+
 There are different kind of math operations in BCL.
 
 
