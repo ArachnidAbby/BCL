@@ -27,7 +27,7 @@ copyright = '2022, Benjamin A.'
 author = 'Benjamin A.'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.7.0-alpha'
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +35,7 @@ release = '0.1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinx.ext.intersphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -73,15 +73,15 @@ class BCLLexer(RegexLexer):
     tokens = {
         'root': [
             (r'[\s\n]+', Whitespace),
-            (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
+            (r'\"(\\.|[^"\\])*\"', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)',
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)',
              Keyword.Reserved),
-            (r'(i8)|(i16)|(i32)|(i64)|(f64)|(f128)|(bool)|' +
+            (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
-            (r'\s+(or)|(and)|(not)|(in)\s+', Operator.Word),
-            (r'[\=\+\-\*\\\%\%\<\>]', Operator),
-            (r'[\{\};\(\)\:\[\]\,]', Punctuation),
+            (r'\s+((or)|(and)|(not)|(in)|(as))\s+', Operator.Word),
+            (r'[\=\+\-\*\\\%\%\<\>\&\^\~\|(\<\<)(\>\>)]', Operator),
+            (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
             (r'[a-zA-Z0-9_]+(?=\(.*\))', Name.Function),
             (r'//.*$', Comment.Single),
             (r'\w[\w\d]*', Name.Other)
