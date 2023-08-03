@@ -50,10 +50,10 @@ a variant as having a specific value.
 
     enum States {
         // each item here is called a "variant"
-        WORKING,  // language gives a value of 0
-        BUGGY: 22,    // language gives a value of 22
-        CRASHING, // language gives a value of 23
-        INVALID: 42;  // language gives a value of 42
+        WORKING,     // language gives a value of 0
+        BUGGY: 22,   // language gives a value of 22
+        CRASHING,    // language gives a value of 23
+        INVALID: 42; // language gives a value of 42
     }
 
 .. note::
@@ -66,6 +66,34 @@ a variant as having a specific value.
     Just note, having a :code:`SIZEOF` as a variant will make it impossible to
     access that variant.
 
+--------------
+Using an Enum
+--------------
+
+With enums you use the :doc:`namespace operator </tutorial/math_operations>` to get a variant.
+
+.. code-block:: bcl
+
+    enum States {
+        // each item here is called a "variant"
+        WORKING,     // language gives a value of 0
+        BUGGY: 22,   // language gives a value of 22
+        CRASHING,    // language gives a value of 23
+        INVALID: 42; // language gives a value of 42
+    }
+
+    define main() {
+        program_state = States::WORKING;
+
+        // we can use the as operator to change the
+        // enum variant into an integer number.
+        state_number = program_state as i32;
+        // We can't do this the other way
+        // around, since an integer may not be
+        // a valid variant.
+
+        println(state_number);
+    }
 
 #############
 Struct Types
@@ -80,6 +108,9 @@ We want a user datatype that contains both pieces of information.
 ------------------
 Defining a Struct
 ------------------
+
+Think of this definition like a blueprint for making future "instances". We can use the blueprint to build
+this pieces of data that have this type.
 
 .. code-block:: bcl
 
@@ -97,7 +128,12 @@ Instantiating a Struct
 Now, unlike an enum, you can't do anything with the type itself.
 You must "instantiate" it to access the data.
 
-Instantiation means that we create some data of a type (usually a struct type).
+Instantiation means that we create some data of a type (usually a struct type). Continueing with the
+blueprint analogy, instantiation means fullfilling the blueprint. We use the blueprint to build some data
+to some specification.
+
+Our :code:`User` struct for example can be instantiated and all of those instances must follow the defined
+blueprint. All the instances must hold an :code:`age` and :code:`grade_level`.
 
 
 .. code-block:: bcl
@@ -126,7 +162,9 @@ Getting Data From a Struct
 
 Now, what makes a struct useful is that we can get data back out of it.
 We can also store data into it. Each instance holds seperate data, but follows the same
-schematic. That means they all have the same members.
+schematic.
+
+For this we use the :doc:`Member Access Operator </tutorial/math_operations>` which is the :code:`.` symbol in BCL.
 
 .. code-block:: bcl
     :emphasize-lines: 14, 24, 25
