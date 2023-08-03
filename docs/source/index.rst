@@ -20,6 +20,7 @@ Welcome to BCL's documentation!
    tutorial/index.rst
    tutorial/your_first_code.rst
    tutorial/variables.rst
+   tutorial/math_operations.rst
    tutorial/functions.rst
    tutorial/if-else.rst
    tutorial/loops.rst

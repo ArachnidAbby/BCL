@@ -3,6 +3,10 @@ Variables
 
 In this lesson we will cover the basics of variables and datatypes.
 
+A variable is a way to store data for later use. Variables can be changed (they are mutable) at any time.
+One of the only limitations of a variable is that it must store the same kind of data at all times. It cannot store
+your laundry list, then store your age, it can only store one *type* of data.
+
 ##########################
 Defining a basic variable
 ##########################
@@ -85,57 +89,7 @@ Variables can be used in math expressions, just like any other value/expression.
     * numbers
     * strings (The stuff in quotes)
 
-
-------------------------------------------
-Here is a list of all the math operations
-------------------------------------------
-
-Order of operations does apply. If you aren't sure what the order will be when compiled,
-then you can put some expressions in parenthese, :code:`(10+10) * 2` for example.
-
-
-* Multiplication :code:`*`
-* Division :code:`/`
-* Subtraction :code:`-`
-* Addition :code:`+`
-* Exponentiation (raise to a power) :code:`**`
-* Is equal to :code:`==`
-* Is not equal to :code:`!=`
-* Is less than :code:`<`
-* Is greater than :code:`>`
-* Is less than or equal to :code:`<=`
-* Is greater than or equal to :code:`>=`
-
-Logic Operators
-^^^^^^^^^^^^^^^^
-
-These work on boolean (see section on data types).
-Although, nearly all types do have a "truthiness". This just determines what a value should become if we
-want it to act like a boolean. For example, ints are truthy if not zero, otherwise they are falsey.
-
-* And :code:`and`
-* Or :code:`or`
-* Not :code:`not` (prefix)
-
----------------------------
-Stuff we learn about later
----------------------------
-
-* Indexing :code:`[index]` (postfix)
-* Reference :code:`&` (prefix)
-* Dereference :code:`*` (prefix)
-
-Bitwise operation
-^^^^^^^^^^^^^^^^^^
-
-These work on bits directly. These work like logic gates for each bit (except for left and right shift).
-
-* Xor :code:`^`
-* And :code:`&`
-* Or  :code:`|`
-* Left Shift :code:`<<`
-* Right Shift :code:`>>`
-* Not :code:`~` (prefix)
+The next lesson has a full list of different math operations in BCL.
 
 ----
 
@@ -181,14 +135,16 @@ References/Pointers
 
 .. tip::
 
-    Memory refers to your computers RAM, not hardrive's storage.
+    Memory refers to your computers RAM, not your hardrive's storage.
     Memory is split up into different addresses (just a number) and
     each address holds 8 bits (1 byte) of information. There are exceptions to this, but generally
-    this is how it works. Think of it like an array of bytes.
+    this is how it works. You can think of a pointer like having the address to someone's house, but
+    not actually having the house itself. You know where you can find the house, but you yourself do not
+    have the house.
 
 References point to a piece of data that exists somewhere else in your computers memory. References can be confusing.
 Most times in the language, a reference is automatically "dereferenced" meaning we go out and get that data which is pointed to.
-Sometimes, it isn't, this is places like function calls.
+Sometimes, it isn't, this is in places like function calls.
 
 If this is confusing, don't worry, we will have a seperate lesson on it. It isn't super important for beginners.
 
@@ -232,7 +188,8 @@ You can tell a variable to be a specific type. You can only do this the first ti
 
 .. important::
 
-    You cannot "Shadow" variables in BCL. If you don't know what that means, then don't worry about it.
+    You cannot "Shadow" variables in BCL. This just means two *different* variables in the same scope
+    cannot share the same name.
 
 
 .. code-block:: bcl
@@ -251,7 +208,8 @@ You can tell a variable to be a specific type. You can only do this the first ti
     }
 
 BCL will automatically convert between datatypes if necessary and if possible.
-We can't convert a string to an int for example.
+We can't convert a string to an int for example. But, a smaller int can be automatically
+converted to a bigger one.
 
 ###############
 Variable scope

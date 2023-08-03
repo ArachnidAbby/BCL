@@ -149,7 +149,7 @@ We can also give data back to the caller using the :code:`return` statement.
     }
 
 One important thing to note about return is the fact that it tells
-the function to immediately stop running.
+the function to immediately stop running while also giving back a value to the caller.
 
 Let me give you an example.
 
@@ -169,7 +169,7 @@ Side Notes
 ###########
 
 Functions can be confusing for some. Which I can understand. It took me several months to learn how return works
-when I first started writting code. It is an important concept so do take the time to learn it!
+when I first started writing code. It is an important concept so do take the time to learn it!
 
 And, do note, that functions will get slightly more complicated later on. Specifically when we learn about methods
 and generators. For now, don't worry about those.
