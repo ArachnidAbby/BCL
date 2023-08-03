@@ -29,6 +29,7 @@ def create_target_dirs(base_dir: str):
 class NamespaceInfo(NamedTuple):
     obj: "Module"
     using_namespace: bool = False
+    is_public: bool = False
 
 
 class Module(ASTNode):
@@ -109,15 +110,20 @@ class Module(ASTNode):
         elif name in self.globals.keys():
             return self.globals[name]
 
+        private_imports = False
+
         if stack is None:
             stack = [self]
         else:
+            private_imports = True
             stack.append(self)
 
         for imp, mod in zip(self.imports.keys(), self.imports.values()):
             if imp == name:
                 return mod.obj
             elif mod.obj in stack:
+                continue
+            elif not mod.is_public and private_imports:
                 continue
             elif mod.using_namespace:
                 return mod.obj.get_namespace_name(func, name, pos, stack)
@@ -129,9 +135,10 @@ class Module(ASTNode):
     def register_namespace(self, func, obj, name):
         errors.error(f"Cannot register namespace {name}")
 
-    def add_import(self, file: str, name: str, using_namespace: bool):
+    def add_import(self, file: str, name: str, using_namespace: bool,
+                   is_public=False):
         if name in modules.keys():
-            self.imports[name] = NamespaceInfo(modules[name], using_namespace)
+            self.imports[name] = NamespaceInfo(modules[name], using_namespace, is_public)
             return
 
         with open(file, 'r') as f:
@@ -139,24 +146,42 @@ class Module(ASTNode):
             tokens = Lexer().get_lexer().lex(src_str)
             new_module = Ast.module.Module(SrcPosition.invalid(), name,
                                            file, tokens)
-            self.imports[name] = NamespaceInfo(new_module, using_namespace)
+            self.imports[name] = NamespaceInfo(new_module, using_namespace, is_public)
 
     def create_type(self, name: str, typeobj: Ast.Type):
         self.types[name] = typeobj
 
-    def get_type_by_name(self, name, position) -> Ast.Ast_Types.Type:  # type: ignore
+    def get_type_by_name(self, name, position, stack=None) -> Ast.Ast_Types.Type:  # type: ignore
+        private_imports = False
+        if stack is None:
+            stack = [self]
+        else:
+            if self in stack:
+                return
+            private_imports = True
+            stack.append(self)
+
         if name in self.types.keys():
-            return self.types[name]
+            typ = self.types[name]
+            if (private_imports) and typ.visibility == Modifiers.VISIBILITY_PRIVATE:
+                errors.error(f"Type is private (From module, {self.mod_name})",
+                             line=position)
+            return typ
+
         for imp in self.imports.values():
             if not imp.using_namespace:
                 continue
-            if name in imp.obj.types.keys():
-                t = imp.obj.types[name]
-                if t.visibility == Modifiers.VISIBILITY_PRIVATE:
-                    errors.error("Type is private", line=position)
-                return t
+            if private_imports and not imp.is_public:
+                continue
+            typ = imp.obj.get_type_by_name(name, position, stack=stack)
+            if typ is not None:
+                return typ
+
         if name in Ast.Ast_Types.definedtypes.types_dict.keys():
             return Ast.Ast_Types.definedtypes.types_dict[name]   # type: ignore
+
+        if private_imports:
+            return
 
         errors.error(f"Cannot find type '{name}' in module " +
                      f"'{self.mod_name}'", line=position)
@@ -194,15 +219,19 @@ class Module(ASTNode):
         if name in self.imports.keys():
             return self.imports[name].obj
 
+        private_imports = False
         if stack is None:
             stack = [self]
         else:
+            private_imports = True
             stack.append(self)
 
         for imp in self.imports.values():
             if not imp.using_namespace:
                 continue
             if imp.obj in stack:
+                continue
+            if private_imports and not imp.is_public:
                 continue
             if (gbl := imp.obj.get_global(name, pos, stack=stack)) is not None:
                 return gbl

@@ -147,7 +147,7 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
-    @rule(-1, "!expr MUL expr")
+    @rule(-1, "!expr MUL expr !NAMEINDEX")
     def parse_deref(self):
         deref = Ast.Deref(self.peek(0).pos,
                           self.peek(1).value)
@@ -208,6 +208,10 @@ class Parser(ParserBase):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
+        is_public = False
+        if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
+            is_public = True
+
         directories = self.module.location.split("/")[:-1]
         directory_path = '/'.join(directories)
         using_namespace = False
@@ -225,7 +229,7 @@ class Parser(ParserBase):
                 errors.error(f"Could not find module '{name}'",
                              line=self.peek(1).pos)
 
-        self.module.add_import(filedir, name, using_namespace)
+        self.module.add_import(filedir, name, using_namespace, is_public)
         # errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
         # self._cursor = max(self.start, self.start_min)
