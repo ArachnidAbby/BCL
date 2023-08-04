@@ -1,7 +1,7 @@
 from llvmlite import ir
 from Ast import exception# type: ignore
 
-from Ast.Ast_Types import Type_I32
+from Ast.Ast_Types import Type_Bool, Type_I32
 from Ast.literals.numberliteral import Literal
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
@@ -11,6 +11,7 @@ from . import Type_Base
 
 
 ZERO_CONST = ir.Constant(ir.IntType(64), 0)
+u64_ty = Type_I32.Integer_32(size=64, signed=False, rang=Type_I32.I64_RANGE)
 
 
 def check_in_range(rang, arrayrang):
@@ -65,6 +66,122 @@ class Array(Type_Base.Type):
         self._simple_call_op_error_check(op, lhs, rhs)
         if op == "ind":
             return self.typ
+
+        if op == 'eq' or op == 'neq':
+            if lhs.ret_type != rhs.ret_type:
+                error(f"{self} can only be compared to {self}",
+                      line=rhs.position)
+            return Type_Bool.Integer_1()
+
+    def eq(self, func, lhs, rhs):
+        lhs_ptr = lhs.get_ptr(func)
+        rhs_ptr = rhs.get_ptr(func)
+
+        comp_start = func.builder.append_basic_block(name=f"compare-eq{self}")
+        func.builder.branch(comp_start)
+        func.builder.position_at_end(comp_start)
+
+        bool_ty = ir.IntType(1)
+        ind_ptr = func.create_const_var(u64_ty)
+        func.builder.store(ir.Constant(u64_ty.ir_type, 0), ind_ptr)
+
+        loop_block = func.builder.append_basic_block(name="item_loop")
+        neq_block = func.builder.append_basic_block(name="item_neq")
+        eq_block = func.builder.append_basic_block(name="item_eq")
+        after_block = func.builder.append_basic_block(name="success")
+
+        size = ir.Constant(u64_ty.ir_type, self.size)
+
+        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0), size)
+        func.builder.cbranch(cond, loop_block, after_block)
+
+        func.builder.position_at_end(loop_block)
+        index = func.builder.load(ind_ptr)
+        ileft_ptr = func.builder.gep(lhs_ptr, [ZERO_CONST, index])
+        iright_ptr = func.builder.gep(rhs_ptr, [ZERO_CONST, index])
+        ileft_val = func.builder.load(ileft_ptr)
+        iright_val = func.builder.load(iright_ptr)
+
+        lnode = PassNode(lhs.position, ileft_val, self.typ,
+                         ptr=ileft_ptr)
+        rnode = PassNode(rhs.position, iright_val, self.typ,
+                         ptr=iright_ptr)
+
+        ret = self.typ.get_op_return(func, 'eq', lnode, rnode)
+        val = self.typ.eq(func, lnode, rnode)
+        cond = ret.truthy(func, PassNode(SrcPosition.invalid(), val, ret))
+        func.builder.cbranch(cond, eq_block, neq_block)
+
+        func.builder.position_at_end(neq_block)
+        func.builder.branch(after_block)
+
+        func.builder.position_at_end(eq_block)
+        new_index = func.builder.add(ir.Constant(u64_ty.ir_type, 1), index)
+        func.builder.store(new_index, ind_ptr)
+        cond = func.builder.icmp_unsigned('<', new_index, size)
+        func.builder.cbranch(cond, loop_block, after_block)
+
+        func.builder.position_at_end(after_block)
+        out = func.builder.phi(bool_ty)
+        out.add_incoming(ir.Constant(bool_ty, 1), eq_block)
+        out.add_incoming(ir.Constant(bool_ty, 1), comp_start)
+        out.add_incoming(ir.Constant(bool_ty, 0), neq_block)
+        return out
+
+    def neq(self, func, lhs, rhs):
+        lhs_ptr = lhs.get_ptr(func)
+        rhs_ptr = rhs.get_ptr(func)
+
+        comp_start = func.builder.append_basic_block(name=f"compare-neq{self}")
+        func.builder.branch(comp_start)
+        func.builder.position_at_end(comp_start)
+
+        bool_ty = ir.IntType(1)
+        ind_ptr = func.create_const_var(u64_ty)
+        func.builder.store(ir.Constant(u64_ty.ir_type, 0), ind_ptr)
+
+        loop_block = func.builder.append_basic_block(name="item_loop")
+        neq_block = func.builder.append_basic_block(name="item_neq")
+        eq_block = func.builder.append_basic_block(name="item_eq")
+        after_block = func.builder.append_basic_block(name="success")
+
+        size = ir.Constant(u64_ty.ir_type, self.size)
+
+        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0), size)
+        func.builder.cbranch(cond, loop_block, after_block)
+
+        func.builder.position_at_end(loop_block)
+        index = func.builder.load(ind_ptr)
+        ileft_ptr = func.builder.gep(lhs_ptr, [ZERO_CONST, index])
+        iright_ptr = func.builder.gep(rhs_ptr, [ZERO_CONST, index])
+        ileft_val = func.builder.load(ileft_ptr)
+        iright_val = func.builder.load(iright_ptr)
+
+        lnode = PassNode(lhs.position, ileft_val, self.typ,
+                         ptr=ileft_ptr)
+        rnode = PassNode(rhs.position, iright_val, self.typ,
+                         ptr=iright_ptr)
+
+        ret = self.typ.get_op_return(func, 'eq', lnode, rnode)
+        val = self.typ.eq(func, lnode, rnode)
+        cond = ret.truthy(func, PassNode(SrcPosition.invalid(), val, ret))
+        func.builder.cbranch(cond, eq_block, neq_block)
+
+        func.builder.position_at_end(neq_block)
+        func.builder.branch(after_block)
+
+        func.builder.position_at_end(eq_block)
+        new_index = func.builder.add(ir.Constant(u64_ty.ir_type, 1), index)
+        func.builder.store(new_index, ind_ptr)
+        cond = func.builder.icmp_unsigned('<', new_index, size)
+        func.builder.cbranch(cond, loop_block, after_block)
+
+        func.builder.position_at_end(after_block)
+        out = func.builder.phi(bool_ty)
+        out.add_incoming(ir.Constant(bool_ty, 0), eq_block)
+        out.add_incoming(ir.Constant(bool_ty, 0), comp_start)
+        out.add_incoming(ir.Constant(bool_ty, 1), neq_block)
+        return out
 
     def get_member_info(self, lhs, rhs):
         match rhs.var_name:

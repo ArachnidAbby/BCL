@@ -149,7 +149,4 @@ class Reference(Type_Base.Type):
 
     def deref(self, func, node):
         ptr = node.eval(func)
-
-        # new_node = PassNode(node.position, None, node.ret_type, ptr)
-        # self.add_ref_count(func, node)
         return func.builder.load(ptr)
