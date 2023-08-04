@@ -46,7 +46,7 @@ class Struct(Ast_Types.Type):
                  'rang', 'member_index_search', 'returnable', 'raw_members',
                  'ir_type', 'module', 'visibility', 'can_create_literal',
                  'is_generic', 'versions', 'definition', 'needs_dispose',
-                 'ref_counted', 'declared')
+                 'ref_counted')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -81,7 +81,6 @@ class Struct(Ast_Types.Type):
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
-        self.declared = False
         self.visibility = super().visibility
 
     def pass_type_params(self, func, params, pos):
@@ -92,7 +91,6 @@ class Struct(Ast_Types.Type):
             params_types.append(ty.as_type_reference(func))
 
         params = tuple(params_types)
-        # print(params)
 
         if Void() in params:
             return self
@@ -102,15 +100,10 @@ class Struct(Ast_Types.Type):
 
         new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
 
-        # new_ty.members = self.members
         generic_args = {**self.definition.generic_args}
 
         for c, key in enumerate(self.definition.generic_args.keys()):
             generic_args[key] = (params[c], func)
-
-        # self.definition.struct_type = new_ty
-        # self.definition.is_generic = False
-        # self.definition.reset()
 
         def_copy = self.definition.copy()
         def_copy.is_generic = False
@@ -128,17 +121,6 @@ class Struct(Ast_Types.Type):
         self.versions[params] = (new_ty, generic_args, def_copy)
 
         self.definition.fullfill_templates(self.module)
-
-        # print(len(self.versions.keys()), self.versions.keys())
-
-        # self.definition.post_parse(self.module)
-        # self.definition.pre_eval(self.module)
-        # self.definition.eval(self.module)
-
-        # self.definition.generic_args = generic_args_previous
-
-        # self.definition.struct_type = self
-        # self.definition.is_generic = True
 
         return new_ty
 
@@ -173,11 +155,6 @@ class Struct(Ast_Types.Type):
         self.visibility = value
 
     def declare(self, mod):
-        if self.declared:
-            return
-
-        self.declared = True
-
         if self.is_generic:
             for ver in self.versions:
                 self.versions[ver][0].declare(mod)
@@ -189,16 +166,6 @@ class Struct(Ast_Types.Type):
                 val.declare(mod)
 
     def define(self, func):
-        # if self.declared:
-        #     return
-
-        # self.declared = True
-
-        # if self.is_generic:
-        #     for ver in self.versions:
-        #         self.versions[ver][0].define(func)
-        #     return
-
         for member in self.raw_members:
             # when encountering an unreturnable type, make this struct
             # unreturnable

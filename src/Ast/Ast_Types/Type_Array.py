@@ -110,7 +110,7 @@ class Array(Type_Base.Type):
         condcomb = func.builder.or_(cond, cond2)
         with func.builder.if_then(condcomb) as _:
             exception.over_index_exception(func, lhs,
-                                           val, lhs.position)
+                                           rhs, lhs.position)
         return
 
     def generate_runtime_check(self, func, lhs, rhs):
@@ -118,22 +118,6 @@ class Array(Type_Base.Type):
         depending on the node type of the index operand'''
         if rhs.isconstant:  # don't generate checks for constants
             return
-
-        # if isinstance(rhs, OperationNode) and \
-        #         rhs.ret_type.rang is not None:
-        #     rang = rhs.ret_type.rang
-        #     arrayrang = range(0, lhs.ret_type.size)
-        #     if check_in_range(rang, arrayrang):
-        #         return func.builder.gep(lhs.get_ptr(func),
-        #                                 [ZERO_CONST, rhs.eval(func)])
-
-        # elif rhs.get_var(func).range is not None:
-        #     rang = rhs.get_var(func).range
-        #     arrayrang = range(0, lhs.ret_type.size)
-        #     in_range = check_in_range(rang, arrayrang)
-        #     if isinstance(rhs, VariableRef) and in_range:
-        #         return func.builder.gep(lhs.get_ptr(func),
-        #                                 [ZERO_CONST, rhs.eval(func)])
 
         ind_rang = rhs.ret_type.rang
         array_rang = range(0, self.size)

@@ -8,6 +8,19 @@ from errors import error
 
 from . import Type_Base
 
+
+# Ranges
+U8_RANGE = (0, 255)
+U16_RANGE = (0, 65535)
+U32_RANGE = (0, 4294967295)
+U64_RANGE = (0, 18446744073709551615)
+
+I8_RANGE = (-128, 127)
+I16_RANGE = (-32768, 32767)
+I32_RANGE = (-2147483648, 2147483647)
+I64_RANGE = (-9223372036854775808, 9223372036854775807)
+
+
 # TODO: Refactor this class name
 # Its a pain in the ass so do it when there is downtime.
 class Integer_32(Type_Base.Type):
@@ -17,7 +30,7 @@ class Integer_32(Type_Base.Type):
     no_load = False
     needs_dispose = False
 
-    def __init__(self, size=32, name='i32', rang=(-2147483648, 2147483647), signed=True):
+    def __init__(self, size=32, name='i32', rang=I32_RANGE, signed=True):
         self.name = name
         self.size = size
         self.signed = signed

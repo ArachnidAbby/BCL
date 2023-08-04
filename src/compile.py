@@ -54,6 +54,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
         import Ast.functions.standardfunctions
         import lexer as lex
+        from Ast import Ast_Types
 
     with timingContext('lexing finished'):
         tokens = lex.Lexer().get_lexer().lex(src_str)
@@ -70,6 +71,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
                          line=pos, full_line=True)
 
     with timingContext('module created'):
+        Ast_Types.definedtypes.types_dict['strlit'] = Ast_Types.definedtypes.types_dict['strlit'](module)
         module.fullfill_templates()
         module.do_scheduled()
         module.post_parse(None)

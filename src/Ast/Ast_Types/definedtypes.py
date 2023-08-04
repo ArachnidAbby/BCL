@@ -9,7 +9,7 @@ from Ast.nodes import ExpressionNode
 from .Type_Bool import Integer_1
 from .Type_Char import Char
 from .Type_F32 import Float_32
-from .Type_I32 import Integer_32
+from .Type_I32 import I16_RANGE, I64_RANGE, I8_RANGE, U16_RANGE, U32_RANGE, U64_RANGE, U8_RANGE, Integer_32
 from .Type_Range import RangeType
 from .Type_StrLit import StringLiteral
 from .Type_UntypedPointer import UntypedPointer
@@ -21,22 +21,22 @@ types_dict = {
     'char': Char(),
 
     "u8": Integer_32(8, 'u8',
-                     (0, 255), False),
+                     U8_RANGE, False),
     "u16": Integer_32(16, 'u16',
-                      (0, 65535), False),
+                      U16_RANGE, False),
     "u32": Integer_32(32, "u32",
-                      (0, 4294967295), False),
+                      U32_RANGE, False),
     'u64': Integer_32(64, 'u64',
-                      (0, 18446744073709551615), False),
+                      U64_RANGE, False),
 
     "i8": Integer_32(8, 'i8',
-                     (-128, 127)),
+                     I8_RANGE),
     "i16": Integer_32(16, 'i16',
-                      (-32768, 32767)),
+                      I16_RANGE),
     "i32": Integer_32(),
     "int": Integer_32(),
     'i64': Integer_32(64, 'i64',
-                      (-9223372036854775808, 9223372036854775807)),
+                      I64_RANGE),
 
     'f32': Float_32(),
     'f64': Float_32(name='f64', typ=ir.DoubleType()),

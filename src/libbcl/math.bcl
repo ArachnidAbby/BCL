@@ -5,7 +5,7 @@
 //   Binds math.h too
 // ======================================
 
-import basemath::*;
+public import basemath::*;
 
 /// Align
 public define align(num: i32, step: i32) -> i32{

@@ -25,6 +25,9 @@ def _get_function(func, name: str, args: tuple, pos):
 
 # TODO: MAKE BETTER
 def over_index_exception(func, name, index, pos):
+    from Ast.Ast_Types import definedtypes
+    strlit_ty = definedtypes.types_dict["strlit"]
+
     over_index_fmt = (f"{errors.RED}Invalid index '%i' for array" +
                       f" '{str(name)}'\n\tLine: {pos[0]}{errors.RESET} \n")
     # formatted_str = over_index_fmt.encode("utf8")
@@ -38,7 +41,7 @@ def over_index_exception(func, name, index, pos):
 
     fmt_bitcast = stringliteral.StrLiteral(pos, over_index_fmt)
 
-    printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
+    printf_args = (strlit_ty, Ast_Types.Integer_32())
     exit_args = (Ast_Types.Integer_32(),)
 
     printf = _get_function(func, "printf", printf_args, pos)
@@ -50,12 +53,14 @@ def over_index_exception(func, name, index, pos):
 
 
 def no_next_item(func, name):
+    from Ast.Ast_Types import definedtypes
     over_index_fmt = (f"{errors.RED}No next item available" +
                       f" '{str(name)}'\n\tLine: N/A{errors.RESET} \n")
+    strlit_ty = definedtypes.types_dict["strlit"]
 
     fmt_bitcast = stringliteral.StrLiteral(SrcPosition.invalid(), over_index_fmt)
 
-    printf_args = (Ast_Types.StringLiteral(), Ast_Types.Integer_32())
+    printf_args = (strlit_ty, Ast_Types.Integer_32())
     exit_args = (Ast_Types.Integer_32(),)
 
     printf = _get_function(func, "printf", printf_args, SrcPosition.invalid())

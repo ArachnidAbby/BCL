@@ -184,6 +184,19 @@ struct ContainsBox {
 define main() {
     println("started");
 
+    println("1-2".length);
+    println("hi"=="hi");
+    println("Hoi"=="Boi");
+    println("joi" == "15");
+    println(""=="");
+
+    println("1-2".length);
+    println("hi"!="hi");
+    println("Hoi"!="Boi");
+    println("joi" != "15");
+    println(""!="");
+    // println("Pogging"[10]);
+
     example_vec: Vector::<i64> = Vector::<i64>::new(10i64);
 
     example_vec.append(12i64);
