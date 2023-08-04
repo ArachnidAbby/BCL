@@ -33,7 +33,7 @@ class Deref(ExpressionNode):
         return self.ref.ret_type.deref(func, self.ref)
 
     def get_lifetime(self, func):
-        return Lifetimes.FUNCTION
+        return self.ref.get_lifetime(func)
 
     def get_ptr(self, func):
         if isinstance(self.ret_type, Reference):

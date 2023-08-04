@@ -60,7 +60,7 @@ class RangeLiteral(ExpressionNode):
         return self.ptr
 
     def get_lifetime(self, func):
-        return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def _put_at(self, func, ptr, idx, val):
         val_ptr = func.builder.gep(ptr, (ir.Constant(ir.IntType(64), 0),

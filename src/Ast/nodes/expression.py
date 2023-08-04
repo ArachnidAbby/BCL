@@ -59,7 +59,7 @@ class ExpressionNode(ASTNode):
 
     # @abstractmethod
     def get_lifetime(self, func) -> Lifetimes:
-        pass
+        return Lifetimes.UNKNOWN
 
     def reset(self):
         super().reset()

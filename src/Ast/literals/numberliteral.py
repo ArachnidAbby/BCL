@@ -25,7 +25,7 @@ class Literal(ExpressionNode):
         return ir.Constant(self.ir_type, self.value)
 
     def get_lifetime(self, func):
-        return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def __str__(self) -> str:
         return str(self.value)

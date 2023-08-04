@@ -65,7 +65,7 @@ class VariableRef(ExpressionNode):
 
     def get_lifetime(self, func):
         var = self.get_var(func)
-        if var.is_arg:
+        if var.is_arg and var.type.checks_lifetime:
             return Lifetimes.LONG
         return Lifetimes.FUNCTION
 

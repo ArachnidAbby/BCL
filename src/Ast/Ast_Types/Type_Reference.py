@@ -7,13 +7,13 @@ from . import Type_Base
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type", "has_members")#,
-                #"needs_dispose", "ref_counted")
+    __slots__ = ("typ", "ir_type", "has_members")
 
     name = 'ref'
     pass_as_ptr = False
     no_load = False
     returnable = False
+    checks_lifetime = True
 
     def __init__(self, typ):
         self.typ = typ

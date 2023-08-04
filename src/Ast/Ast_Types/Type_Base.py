@@ -27,6 +27,7 @@ class Type:
     has_members = False
     # is this type allowed to be the return type of a function
     returnable = True
+    checks_lifetime = False
     # Dynamic types change function definitions and the
     # matching of function args when calling
     is_dynamic = False

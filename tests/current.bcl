@@ -185,8 +185,8 @@ struct LifetimeTest {
     x: &i32;
 }
 
-define testing_lifetimes(x: LifetimeTest, ptr: &i32) -> LifetimeTest {
-    x.x = &ptr;
+define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
+    *x.x = 8;
     return x;
 }
 
@@ -199,7 +199,7 @@ define main() {
     println("joi" == "15");
     println(""=="");
 
-    println("1-2".length);
+    println("1--2".length);
     println("hi"!="hi");
     println("Hoi"!="Boi");
     println("joi" != "15");

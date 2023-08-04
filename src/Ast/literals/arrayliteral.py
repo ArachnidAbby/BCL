@@ -92,7 +92,7 @@ class ArrayLiteral(ExpressionNode):
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
 
     def get_lifetime(self, func):
-        return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
         x = self.merge_pos([x.position for x in self.value])  # type: ignore

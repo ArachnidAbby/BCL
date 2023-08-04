@@ -87,8 +87,8 @@ class StructLiteral(ExpressionNode):
         return self._instruction
 
     def get_lifetime(self, func):
-        if self.ret_type.returnable:
-            return Lifetimes.LONG
+        # if self.ret_type.returnable:
+        #     return Lifetimes.LONG
         return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
