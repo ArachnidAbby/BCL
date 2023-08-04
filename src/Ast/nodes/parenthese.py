@@ -4,7 +4,7 @@ from llvmlite import ir
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes import ContainerNode
-from Ast.nodes.commontypes import GenericNode, SrcPosition
+from Ast.nodes.commontypes import GenericNode, Lifetimes, SrcPosition
 from Ast.nodes.keyvaluepair import KeyValuePair
 from errors import error
 
@@ -120,6 +120,11 @@ class ParenthBlock(ContainerNode):
             return self.children[0]
 
         return self
+
+    def get_lifetime(self, func) -> Lifetimes:
+        if len(self.children) > 0:
+            return Lifetimes.FUNCTION
+        return self.children[0].get_lifetime()
 
     def get_value(self, func):
         return self.children[0].get_value(func)

@@ -2,6 +2,7 @@
 such as `SrcPosition` named tuple
 '''
 
+from enum import Enum
 from typing import Any, NamedTuple, Union
 
 
@@ -29,6 +30,13 @@ class MemberInfo(NamedTuple):
 class Modifiers:
     VISIBILITY_PUBLIC = 0
     VISIBILITY_PRIVATE = 1
+
+
+class Lifetimes(Enum):
+    UNKNOWN = 0
+    LOCAL = 1
+    FUNCTION = 2
+    LONG = 3
 
 
 GenericNode = Union["ASTNode", "ExpressionNode"]  # NOQA: F821 # type: ignore

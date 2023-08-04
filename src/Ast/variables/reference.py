@@ -1,7 +1,7 @@
 from Ast import Ast_Types
 from Ast.Ast_Types import Type_Base
 from Ast.nodes import ExpressionNode, block
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from .varobject import VariableObj
 from errors import error
 
@@ -62,6 +62,12 @@ class VariableRef(ExpressionNode):
 
     def get_var(self, func):
         return self.block.get_variable(self.var_name, func.module)
+
+    def get_lifetime(self, func):
+        var = self.get_var(func)
+        if var.is_arg:
+            return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def get_function(self, func):
         return func.module.get_function(self.var_name, self.position)

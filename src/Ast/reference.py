@@ -1,6 +1,6 @@
 from Ast import Ast_Types
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class Ref(ExpressionNode):
@@ -43,6 +43,9 @@ class Ref(ExpressionNode):
 
     def get_ptr(self, func):
         return self.eval(func)
+
+    def get_lifetime(self, func):
+        return self.var.get_lifetime(func)
 
     def __repr__(self) -> str:
         return f"<Ref to '{self.var}'>"

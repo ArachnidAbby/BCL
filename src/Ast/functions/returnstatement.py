@@ -4,7 +4,7 @@ from Ast.nodes.passthrough import PassNode
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.block import Block
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class ReturnStatement(ASTNode):
@@ -64,6 +64,9 @@ class ReturnStatement(ASTNode):
             node = PassNode(self.expr.position, self.expr.eval(func), self.expr.ret_type)
             self.expr.ret_type.add_ref_count(func, node)
             ret_val = self.expr._instruction
+            if self.expr.get_lifetime(func) != Lifetimes.LONG and not self.expr.ret_type.returnable:
+                errors.error(f"{str(self.expr.ret_type)} is not returnable",
+                             line=self.expr.position)
 
         func.dispose_stack()
 

@@ -181,6 +181,15 @@ struct ContainsBox {
     }
 }
 
+struct LifetimeTest {
+    x: &i32;
+}
+
+define testing_lifetimes(x: LifetimeTest, ptr: &i32) -> LifetimeTest {
+    x.x = &ptr;
+    return x;
+}
+
 define main() {
     println("started");
 

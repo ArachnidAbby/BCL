@@ -1,7 +1,7 @@
 from Ast import Ast_Types
 from Ast.math import MemberAccess
 from Ast.nodes import ExpressionNode, ParenthBlock
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class FunctionCall(ExpressionNode):
@@ -59,6 +59,9 @@ class FunctionCall(ExpressionNode):
 
     def eval_impl(self, func):
         return self.function.call(func, self.func_name, self.paren)
+
+    def get_lifetime(self, func):
+        return Lifetimes.FUNCTION
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Function Call",

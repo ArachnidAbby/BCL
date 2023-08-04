@@ -4,7 +4,7 @@ from llvmlite import ir
 
 import Ast.Ast_Types.Type_Range
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 import errors
 
 
@@ -58,6 +58,9 @@ class RangeLiteral(ExpressionNode):
         if self.ptr is None:
             self.ptr = func.create_const_var(self.ret_type)
         return self.ptr
+
+    def get_lifetime(self, func):
+        return Lifetimes.LONG
 
     def _put_at(self, func, ptr, idx, val):
         val_ptr = func.builder.gep(ptr, (ir.Constant(ir.IntType(64), 0),

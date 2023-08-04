@@ -4,6 +4,7 @@ from Ast.nodes import ASTNode
 from Ast.nodes.commontypes import SrcPosition, Modifiers
 import errors
 
+
 class KeyValuePair(ASTNode):
     '''Key-Value pairs for use in things like structs, functions, etc.'''
     __slots__ = ('key', 'value')

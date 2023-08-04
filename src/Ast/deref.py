@@ -1,4 +1,5 @@
 from Ast.Ast_Types.Type_Reference import Reference
+from Ast.nodes.commontypes import Lifetimes
 from Ast.nodes.expression import ExpressionNode
 
 
@@ -30,6 +31,9 @@ class Deref(ExpressionNode):
 
     def eval_impl(self, func):
         return self.ref.ret_type.deref(func, self.ref)
+
+    def get_lifetime(self, func):
+        return Lifetimes.FUNCTION
 
     def get_ptr(self, func):
         if isinstance(self.ret_type, Reference):

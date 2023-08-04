@@ -4,7 +4,7 @@ from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from Ast.Ast_Types.Type_Struct import Struct
 
 
@@ -85,6 +85,11 @@ class StructLiteral(ExpressionNode):
         self.ptr = ptr
         self._instruction = func.builder.load(ptr)
         return self._instruction
+
+    def get_lifetime(self, func):
+        if self.ret_type.returnable:
+            return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,

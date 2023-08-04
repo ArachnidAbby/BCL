@@ -30,7 +30,7 @@ class StructDef(ASTNode):
             self.generic_args = {}
             self.struct_name = name.var_name
         else:
-            errors.error(f"Invalid type name: {name.value.var_name}",
+            errors.error(f"Invalid type name: {name}",
                          line=name.position, full_line=True)
 
         if self.struct_name in Ast_Types.types_dict.keys():

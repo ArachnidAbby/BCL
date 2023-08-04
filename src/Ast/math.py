@@ -10,7 +10,7 @@ from Ast.Ast_Types.Type_Reference import Reference
 # from Ast import exception
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 # from Ast.variable import VariableRef
 
@@ -150,6 +150,12 @@ class OperationNode(ExpressionNode):
 
     def as_type_reference_defer(self, func, allow_generics):
         return super().as_type_reference(func, allow_generics)
+
+    def get_lifetime(self, func):
+        if self.op.name == "as":
+            return self.lhs.get_lifetime(func)
+
+        return Lifetimes.FUNCTION
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Math Expression",
@@ -300,6 +306,13 @@ class MemberAccess(OperationNode):
             errors.error("Has no members", line=self.position)
 
         return (lhs.ret_type).get_member(func, lhs, rhs)
+
+    def get_var(self, func):
+        self.ptr = self.get_ptr(func)
+        return self
+
+    def get_lifetime(self, func):
+        return self.lhs.get_lifetime(func)
 
     def using_global(self, func) -> bool:
         rhs = self.rhs

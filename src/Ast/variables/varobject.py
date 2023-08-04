@@ -7,7 +7,7 @@ from ..Ast_Types import Type_Base
 
 class VariableObj:
     '''Represents a variable.'''
-    __slots__ = ("ptr", "type", "is_constant", "range")
+    __slots__ = ("ptr", "type", "is_constant", "range", "is_arg")
 
     def __init__(self, ptr, typ, is_constant):
         self.ptr = ptr
@@ -16,6 +16,7 @@ class VariableObj:
         if isinstance(typ, str):
             self.type = Type_Base.types_dict[typ]()
         self.is_constant = is_constant
+        self.is_arg = is_constant
         self.range = self.type.rang
 
     @property

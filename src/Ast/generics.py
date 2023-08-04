@@ -1,5 +1,6 @@
 
 from Ast.nodes import block
+from Ast.nodes.commontypes import Lifetimes
 from Ast.nodes.expression import ExpressionNode
 import errors
 
@@ -42,6 +43,9 @@ class GenericSpecify(ExpressionNode):
     def eval(self, func):
         errors.error("Cannot use a type as an expression",
                      line=self.position)
+
+    def get_lifetime(self, func):
+        return Lifetimes.LONG
 
     def get_var(self, func):
         return self

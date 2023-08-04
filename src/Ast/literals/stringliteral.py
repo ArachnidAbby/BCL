@@ -3,7 +3,7 @@ from llvmlite import ir  # type: ignore
 from Ast import Ast_Types
 from Ast.literals.numberliteral import Literal
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class StrLiteral(ExpressionNode):
@@ -24,6 +24,9 @@ class StrLiteral(ExpressionNode):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
                              Ast_Types.Integer_32())
         self.ret_type = Ast_Types.definedtypes.types_dict['strlit']
+
+    def get_lifetime(self, func):
+        return Lifetimes.FUNCTION
 
     def eval_impl(self, func) -> ir.Constant:
         ZERO = ir.Constant(ir.IntType(32), 0)

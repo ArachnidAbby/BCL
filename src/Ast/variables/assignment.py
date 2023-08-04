@@ -91,6 +91,7 @@ class VariableAssign(ASTNode):
             return
 
         name = self.var_name.var_name
+        # ? Should this still be here
         if self.block.validate_variable(name):
             self.block.get_variable(name).is_constant = False
 
@@ -104,6 +105,10 @@ class VariableAssign(ASTNode):
             typ.dispose(func, ptr)
         if typ.needs_dispose and self.is_declaration:
             func.register_dispose(ptr)
+
+        if ptr.get_lifetime(func).value > self.value.get_lifetime(func).value and not typ.returnable:
+            error("Cannot store short-lived data in a long-lived variable",
+                  line=self.value.position)
         typ.assign(func, ptr, self.value, typ,
                    first_assignment=self.is_declaration)
 

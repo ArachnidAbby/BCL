@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from errors import error
 
 
@@ -56,6 +56,10 @@ class ExpressionNode(ASTNode):
         The default is to have something return itself.
         '''
         return self
+
+    # @abstractmethod
+    def get_lifetime(self, func) -> Lifetimes:
+        pass
 
     def reset(self):
         super().reset()

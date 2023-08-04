@@ -3,7 +3,7 @@ from typing import Any
 from llvmlite import ir  # type: ignore
 
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class Literal(ExpressionNode):
@@ -23,6 +23,9 @@ class Literal(ExpressionNode):
 
     def eval_impl(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
+
+    def get_lifetime(self, func):
+        return Lifetimes.LONG
 
     def __str__(self) -> str:
         return str(self.value)

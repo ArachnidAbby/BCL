@@ -213,11 +213,11 @@ class FunctionDef(ASTNode):
         if self.is_ret_set:
             ret_line = self.ret_raw.position
             self.ret_type = self.ret_raw.as_type_reference(self)
-        if (not self.ret_type.returnable) and self.block is not None:
-            errors.error(f"Function {self.func_name} cannot return a " +
-                         "reference to a local variable or value.",
-                         line=ret_line)
-        elif not self.ret_type.returnable:
+        # if (not self.ret_type.returnable) and self.block is not None:
+        #     errors.error(f"Function {self.func_name} cannot return a " +
+        #                  "reference to a local variable or value.",
+        #                  line=ret_line)
+        if not self.ret_type.returnable and self.block is None:
             errors.warning("THIS IS NOT AN ERROR\n" +
                            "You are binding a function that returns a heap pointer.\n" +
                            "You will not be able to free this memory!\n" +

@@ -8,7 +8,7 @@ import errors
 from Ast import Ast_Types
 from Ast.literals.numberliteral import Literal
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class ArrayLiteral(ExpressionNode):
@@ -90,6 +90,9 @@ class ArrayLiteral(ExpressionNode):
             return func.builder.load(ptr)
 
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
+
+    def get_lifetime(self, func):
+        return Lifetimes.LONG
 
     def get_position(self) -> SrcPosition:
         x = self.merge_pos([x.position for x in self.value])  # type: ignore

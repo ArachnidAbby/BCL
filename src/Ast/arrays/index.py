@@ -6,7 +6,7 @@ from Ast import Ast_Types, exception
 from Ast.literals.numberliteral import Literal
 from Ast.math import OperationNode
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from Ast.reference import Ref
 from Ast.variables.reference import VariableRef
 from errors import error
@@ -92,6 +92,9 @@ class VariableIndexRef(ExpressionNode):
             return self.ptr
 
         return func.builder.load(self.ptr)
+
+    def get_lifetime(self, func):
+        return self.varref.get_lifetime(func)
 
     def __repr__(self) -> str:
         return f"<index of `{self.varref}`>"
