@@ -417,12 +417,20 @@ class Module(ASTNode):
         other_args["--emit-object"] = True
         objects = [f"{loc}/target/o/{self.mod_name}.o"]
         for mod in self.imports.values():
+            mod.obj.declare_builtins()
             mod.obj.save_ir(f"{loc}", other_args)
             objects.append(f"{loc}/target/o/{mod.obj.mod_name}.o")
 
         if args["--emit-binary"]:
             extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm']  # adds math.h
             linker.link_all(f"{loc}/target/output", objects, extra_args)
+
+    def declare_builtins(self):
+        if self.ir_saved:
+            return
+
+        for typ in Ast.Ast_Types.definedtypes.needs_declare:
+            typ.declare(self)
 
     # TODO: Create a seperate error parser
     def syntax_error_information(self, child, c: int):

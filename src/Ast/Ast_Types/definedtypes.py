@@ -48,6 +48,9 @@ types_dict = {
     'UntypedPointer': UntypedPointer()
 }
 
+needs_declare = [
+]
+
 plat = platform.architecture()[0]
 if plat == "32bit":
     errors.developer_info("Size_t = u32")

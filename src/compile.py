@@ -72,6 +72,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
     with timingContext('module created'):
         Ast_Types.definedtypes.types_dict['strlit'] = Ast_Types.definedtypes.types_dict['strlit'](module)
+        Ast_Types.definedtypes.needs_declare.append(Ast_Types.definedtypes.types_dict['strlit'])
         module.fullfill_templates()
         module.do_scheduled()
         module.post_parse(None)

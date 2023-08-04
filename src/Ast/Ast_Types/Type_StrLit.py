@@ -114,8 +114,8 @@ class StringLiteral(Type_Base.Type):
         self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
 
     def declare(self, module):
-        eq_typ = self.equal_func.type
-        neq_typ = self.nequal_func.type
+        eq_typ = self.equal_func.ftype
+        neq_typ = self.nequal_func.ftype
 
         ir.Function(module.module, eq_typ, "strlit.__meth.__eq__")
         ir.Function(module.module, neq_typ, "strlit.__meth.__neq__")
