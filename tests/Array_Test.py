@@ -60,6 +60,23 @@ class basictests(unittest.TestCase):
         compile.compile(test_code, file,
                         compile.DEFAULT_ARGS)
 
+    @unittest.expectedFailure
+    def test_non_int_index(self):
+        test_code = """
+        import stdlib::*;
+
+        define main() {
+            x = [true; 200];
+            y = [[true; 200]; 200];
+            println(x[19]);
+            println(y[12][200f]); // index of invalid type
+        }
+        """
+
+        file = Path(f'{p}/random/arrays/test_non_int_index.ll')
+        compile.compile(test_code, file,
+                        compile.DEFAULT_ARGS)
+
     def test_functions(self):
         test_code = """
         import stdlib::*;

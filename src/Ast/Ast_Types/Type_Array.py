@@ -234,7 +234,11 @@ class Array(Type_Base.Type):
         '''generates the runtime bounds checking
         depending on the node type of the index operand'''
         if rhs.isconstant:  # don't generate checks for constants
-            return
+            if rhs.value in range(0, self.size):
+                return
+            error("Literal index out of range.\n" +
+                  f"Index must be between 0 and {self.size-1}",
+                  line=rhs.position)
 
         ind_rang = rhs.ret_type.rang
         array_rang = range(0, self.size)
