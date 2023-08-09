@@ -157,6 +157,12 @@ class OperationNode(ExpressionNode):
 
         return Lifetimes.FUNCTION
 
+    def get_coupled_lifetimes(self, func) -> list:
+        if self.op.name == "as":
+            return self.lhs.get_coupled_lifetimes(func)
+
+        return []
+
     def repr_as_tree(self) -> str:
         return self.create_tree("Math Expression",
                                 lhs=self.lhs,
@@ -283,7 +289,7 @@ class MemberAccess(OperationNode):
                 self.ret_type = possible_func
                 self.assignable = False
             elif lhs.ret_type.has_members:
-                errors.error("member not found! 22", line=rhs.position)
+                errors.error("member not found!", line=rhs.position)
             else:
                 errors.error("Has no members", line=self.position)
         else:

@@ -35,6 +35,9 @@ class Deref(ExpressionNode):
     def get_lifetime(self, func):
         return self.ref.get_lifetime(func)
 
+    def get_coupled_lifetimes(self, func) -> list:
+        return self.ref.get_coupled_lifetimes(func)
+
     def get_ptr(self, func):
         if isinstance(self.ret_type, Reference):
             return self.eval(func)
