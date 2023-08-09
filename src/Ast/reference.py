@@ -47,6 +47,9 @@ class Ref(ExpressionNode):
     def get_lifetime(self, func):
         return self.var.get_lifetime(func)
 
+    def get_coupled_lifetimes(self, func) -> list:
+        return self.var.get_coupled_lifetimes(func)
+
     def __repr__(self) -> str:
         return f"<Ref to '{self.var}'>"
 

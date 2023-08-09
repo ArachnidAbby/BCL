@@ -61,6 +61,11 @@ class ExpressionNode(ASTNode):
     def get_lifetime(self, func) -> Lifetimes:
         return Lifetimes.UNKNOWN
 
+    def get_coupled_lifetimes(self, func) -> list:
+        '''Used in a few circumstances to get arguments that need to
+        have their lifetimes coupled together.'''
+        return []
+
     def reset(self):
         super().reset()
         self.ptr = None

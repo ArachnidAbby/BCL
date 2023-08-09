@@ -45,7 +45,8 @@ class FunctionDef(ASTNode):
                  "is_method", "raw_args", "yields", "yield_type",
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
-                 "yield_start", "dispose_queue", "parent", "ret_raw")
+                 "yield_start", "dispose_queue", "parent", "ret_raw",
+                 "function_ty")
 
     can_have_modifiers = True
 
@@ -179,10 +180,10 @@ class FunctionDef(ASTNode):
         if self.is_method:
             old_arg_0 = args.children[0]
             args.children[0] = self.add_method_arg(args.children[0], parent)
-        for arg in args:
+        for idx, arg in enumerate(args):
             arg.ensure_unmodified()
             self.args[arg.key.var_name] = \
-                [None, arg.get_type(self), True]  # type: ignore
+                [None, arg.get_type(self), True, idx]  # type: ignore
             if arg.get_type(self).pass_as_ptr:
                 args_ir.append(arg.get_type(self).ir_type.as_pointer())
             else:
@@ -239,7 +240,7 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
             # print(orig[1])
-            var = VariableObj(orig[0], orig[1], True)
+            var = VariableObj(orig[0], orig[1], True, orig[3])
             self.block.variables[x] = var
             self.block.variables[x].ptr = args[c]
             self.variables.append((self.block.variables[x], x))
@@ -258,7 +259,7 @@ class FunctionDef(ASTNode):
         '''
         if var_name in self.args.keys():
             orig = self.args[var_name]
-            var = VariableObj(orig[0], orig[1], True)
+            var = VariableObj(orig[0], orig[1], True, orig[3])
             return var
         elif self.parent is not None:
             return self.parent.get_variable(var_name, module)
@@ -308,6 +309,8 @@ class FunctionDef(ASTNode):
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \
                        .set_visibility(self.visibility)
+
+        self.function_ty = function_object
 
         parent.create_function(self.func_name, function_object)
 

@@ -146,6 +146,7 @@ class StringLiteral(Type_Base.Type):
             case "length":
                 return MemberInfo(False, False, u64_ty)
             case _:
+                return None
                 error("member not found!", line=rhs.position)
 
     def get_size(self, func, ptr):
@@ -162,6 +163,7 @@ class StringLiteral(Type_Base.Type):
                 ptr = lhs.get_ptr(func)
                 return self.get_size(func, ptr)
             case _:
+                return None
                 error("member not found!", line=rhs.position)
 
     def index(self, func, lhs, rhs):

@@ -34,8 +34,15 @@ class UntypedPointer(Type):
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in ("store", "release", "retake"):
+            return None
             errors.error("member not found!", line=rhs.position)
-        typ = store_func
+        typ = None
+        if rhs.var_name == "store":
+            typ = store_func
+        elif rhs.var_name == "release":
+            typ = release_func
+        elif rhs.var_name == "retake":
+            typ = retake_func
         return MemberInfo(not typ.read_only, False, typ)
 
     def get_member(self, func, lhs,
@@ -120,7 +127,7 @@ class ReleaseFunction(StoreFunction):
         args_used = rhs.children
         old_name = func.func_name
         func.func_name = "release"
-        args_used[0].ret_type._dipose(func, args_used[0])
+        args_used[0].ret_type._dispose(func, args_used[0])
         func.func_name = old_name
 
 

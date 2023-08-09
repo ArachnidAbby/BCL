@@ -82,6 +82,13 @@ class VariableAssign(ASTNode):
             error("Cannot assign value to non-assignable variable/member",
                   line=self.var_name.position)
 
+        var_life = self.var_name.get_coupled_lifetimes(func)
+        val_lifetimes = self.value.get_coupled_lifetimes(func)
+
+        if len(var_life) != 0:
+            for lifetime in val_lifetimes:
+                func.function_ty.couple_lifetimes(var_life[0], lifetime)
+
         # if self.typ.needs_dispose:
         #     func.register_dispose(self)
 

@@ -98,6 +98,7 @@ class GeneratorType(Type):
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name != "next":
+            return None
             error("member not found!", line=rhs.position)
         typ = self.next
         return MemberInfo(not typ.read_only, False, typ)

@@ -274,7 +274,7 @@ class MemberAccess(OperationNode):
         self.lhs.pre_eval(func)
         lhs = self.lhs
         rhs = self.rhs
-        if not lhs.ret_type.has_members:
+        if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
             # get function if struct doesn't contain members.
             # global functions can still use the member access syntax on structs
             # possible_func = self._get_global_func(func.module, rhs.var_name)
@@ -282,6 +282,8 @@ class MemberAccess(OperationNode):
             if possible_func is not None:
                 self.ret_type = possible_func
                 self.assignable = False
+            elif lhs.ret_type.has_members:
+                errors.error("member not found! 22", line=rhs.position)
             else:
                 errors.error("Has no members", line=self.position)
         else:
@@ -294,6 +296,9 @@ class MemberAccess(OperationNode):
 
     def _get_global_func(self, module, name: str):
         return module.get_global(name)
+
+    def get_coupled_lifetimes(self, func) -> list:
+        return self.lhs.get_coupled_lifetimes(func)
 
     def get_ptr(self, func):
         lhs = self.lhs
@@ -318,7 +323,7 @@ class MemberAccess(OperationNode):
         rhs = self.rhs
         lhs = self.lhs
         possible_func = rhs.get_var(func)
-        return possible_func is not None and not lhs.ret_type.has_members
+        return (possible_func is not None and (not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None))
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self.lhs.position,

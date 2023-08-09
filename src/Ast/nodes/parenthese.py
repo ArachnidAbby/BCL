@@ -122,9 +122,12 @@ class ParenthBlock(ContainerNode):
         return self
 
     def get_lifetime(self, func) -> Lifetimes:
-        if len(self.children) > 0:
+        if len(self.children) > 1:
             return Lifetimes.FUNCTION
-        return self.children[0].get_lifetime()
+        return self.children[0].get_lifetime(func)
+
+    def get_coupled_lifetimes(self, func):
+        return [child.get_coupled_lifetimes(func) for child in self.children]
 
     def get_value(self, func):
         return self.children[0].get_value(func)

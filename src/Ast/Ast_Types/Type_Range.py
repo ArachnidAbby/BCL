@@ -35,6 +35,7 @@ class RangeType(Type):
             case "end":
                 return MemberInfo(False, False, Integer_32())
             case _:
+                return None
                 error("member not found!", line=rhs.position)
 
     def get_member(self, func, lhs,

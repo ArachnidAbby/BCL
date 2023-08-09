@@ -227,7 +227,7 @@ class Array(Type_Base.Type):
         condcomb = func.builder.or_(cond, cond2)
         with func.builder.if_then(condcomb) as _:
             exception.over_index_exception(func, lhs,
-                                           rhs, lhs.position)
+                                           val, lhs.position)
         return
 
     def generate_runtime_check(self, func, lhs, rhs):
@@ -240,8 +240,9 @@ class Array(Type_Base.Type):
         array_rang = range(0, self.size)
 
         if ind_rang is not None and check_in_range(ind_rang, array_rang):
-            return func.builder.gep(lhs.get_ptr(func),
-                                    [ZERO_CONST, rhs.eval(func)])
+            return
+            # return func.builder.gep(lhs.get_ptr(func),
+            #                         [ZERO_CONST, rhs.eval(func)])
 
         ptr = func.builder.gep(lhs.get_ptr(func),
                                [ZERO_CONST, rhs.eval(func)])

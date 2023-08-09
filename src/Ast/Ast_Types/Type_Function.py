@@ -27,7 +27,7 @@ class Function(Type):
 
     __slots__ = ('func_name', 'module', 'args', 'func_ret',
                  'contains_ellipsis', "func_obj", "is_method",
-                 "visibility")
+                 "visibility", "lifetime_groups")
 
     name = "Function"
     pass_as_ptr = False
@@ -43,7 +43,25 @@ class Function(Type):
         self.func_obj = func_obj
         self.contains_ellipsis = False
         self.is_method = False
+        self.lifetime_groups = []
         self.visibility = super().visibility
+
+    def couple_lifetimes(self, arg1_id, arg2_id):
+        coupling = (arg1_id, arg2_id)
+        if coupling not in self.lifetime_groups:
+            self.lifetime_groups.append(coupling)
+
+    def lifetime_checks(self, func, args):
+        # print("POGGERS")
+        for group in self.lifetime_groups:
+            arg0_lifetime = args[group[0]].get_lifetime(func)
+            arg1_lifetime = args[group[1]].get_lifetime(func)
+            if arg0_lifetime.value > arg1_lifetime.value:
+                pos = args[group[0]].merge_pos([args[group[1]].position])
+                error(f"Arguments {group[0]} and {group[1]} have a coupled " +
+                      f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
+                      "must have a lifetime less than or\n" +
+                      f"equal to argument: \"{args[group[1]]}\"", line=pos)
 
     def add_return(self, ret: Type):
         self.func_ret = ret
@@ -145,6 +163,7 @@ class Function(Type):
         if len(args.children) != len(self.args):
             args.children = self._fix_args(lhs, args, func)
         args.eval(func, expected_args=self.args)
+        self.lifetime_checks(func, args.children)
         args.children = orig_args
         return func.builder.call(self.func_obj, args.evaled_children)
 

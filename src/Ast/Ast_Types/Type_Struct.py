@@ -300,6 +300,7 @@ class Struct(Ast_Types.Type):
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
+            return None
             error("member not found!", line=rhs.position)
         typ = self.members[rhs.var_name][0]
         is_ptr = not isinstance(typ, Ast_Types.FunctionGroup)
