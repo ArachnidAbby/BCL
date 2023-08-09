@@ -61,7 +61,7 @@ class Function(Type):
                 error(f"Arguments {group[0]} and {group[1]} have a coupled " +
                       f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
                       "must have a lifetime less than or\n" +
-                      f"equal to argument: \"{args[group[1]]}\"", line=pos)
+                      f"equal to argument: \"{args[group[1]]}\"", line=[args[group[0]].position, args[group[1]].position])
 
     def add_return(self, ret: Type):
         self.func_ret = ret

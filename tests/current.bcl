@@ -194,9 +194,9 @@ define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
     return x;
 }
 
-// define indirection(val: &LifetimeTest) {
-//     val.set(&22);
-// }
+define indirection(val: &LifetimeTest) {
+    val.set(&22);
+}
 
 define main() {
     w = LifetimeTest {x: &10};

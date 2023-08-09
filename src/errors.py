@@ -80,22 +80,34 @@ def error(text: str, line=invalid_pos, full_line=False):
     if SILENT_MODE:
         sys.exit(1)
 
-    if line[0] != -1 and line[2]!='':
+    file_name = ""
+    line_no = -1
+    col = -1
+
+    if not isinstance(line, list) and line[0] != -1 and line[2]!='':
         code_line = show_error_spot(line, full_line)
+        file_name = line.source_name
+        line_no = line[0]
+        col = line[1]
+    elif isinstance(line, list) and line[0][0] != -1 and line[0][2]!='':
+        code_line = show_error_spot(line, full_line)
+        file_name = line[0].source_name
+        line_no = line[0][0]
+        col = line[0][1]
     else:
         code_line = ""
 
     largest = min(max(
         [len(x) for x in f"| {text}".split('\n')] +
-        [len(f"|    Line: {line[0]}")] +
+        [len(f"|    Line: {line_no}")] +
         [len(code_line.split('\n')[0])]
     ), 45)
     print(f'{RED}#{"-"*(largest//4)}')
 
     _print_text(text)
     if line[0] != -1:
-        print(f'|    Line: {line[0]}')
-        print(f'|    File: {line.source_name}:{line[0]}:{line[1]}')
+        print(f'|    Line: {line_no}')
+        print(f'|    File: {file_name}:{line_no}:{col}')
         print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
@@ -185,16 +197,35 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
 
 def show_error_spot(position: SrcPosition,
                     use_full_line: bool, color=RED) -> str:
-    if position[0] == -1:
+    if not isinstance(position, list) and position[0] == -1:
         return ""
+    elif isinstance(position, list) and position[0][0] == -1:
+        return ""
+
     full_line = ""
-    with open(position.source_name, 'r') as fp:
+    line_no = -1
+    file = ""
+    if isinstance(position, list):
+        file = position[0].source_name
+        line_no = position[0][0]
+    else:
+        file = position.source_name
+        line_no = position[0]
+
+    with open(file, 'r') as fp:
         for i, line in enumerate(fp):
-            if i == position[0]-1:
+            if not isinstance(position, list) and i == line_no-1:
+                full_line = line.strip('\n')
+                break
+            elif isinstance(position, list) and i == line_no-1:
                 full_line = line.strip('\n')
                 break
     if use_full_line:
         underline = "^"*len(full_line)
+    elif isinstance(position, list):
+        underline = ""
+        for pos in position:
+            underline += " "*(pos[1]-1-len(underline)) + "^"*pos[2]
     else:
         underline = " "*(position[1]-1) + "^"*position[2]
     full_line_len = len(full_line)
