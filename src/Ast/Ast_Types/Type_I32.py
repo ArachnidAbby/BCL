@@ -2,6 +2,7 @@ from llvmlite import ir  # type: ignore
 
 from Ast import Ast_Types
 from Ast.Ast_Types import definedtypes
+from Ast.Ast_Types.Type_Alias import Alias
 from Ast.nodes.parenthese import ParenthBlock
 from Ast.nodes.passthrough import PassNode
 from errors import error
@@ -108,7 +109,9 @@ class Integer_32(Type_Base.Type):
         error(f"Cannot convert 'i32' to type '{typ}'", line=orig.position)
 
     def roughly_equals(self, other):
-        return isinstance(other, Integer_32) and self.size == other.size and self.signed == other.signed
+        return (isinstance(other, Integer_32) or
+                (isinstance(other, Alias) and isinstance(other.aliased_typ, Integer_32))) and \
+               self.size == other.size and self.signed == other.signed
 
     def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)

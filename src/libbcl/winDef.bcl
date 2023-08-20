@@ -1,0 +1,3 @@
+public typedef PVOID = UntypedPointer;
+public typedef HANDLE = PVOID;
+public typedef HINSTANCE = HANDLE;

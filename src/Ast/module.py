@@ -43,6 +43,7 @@ class Module(ASTNode):
     ENUM_SCHEDULE_ID = 0
     STRUCT_SCHEDULE_ID = 1
     TEMPLATE_SCHEDULE_ID = 2
+    ALIAS_SCHEDULE_ID = 3
 
     def __init__(self, pos: SrcPosition, name, location, tokens):
         super().__init__(pos)
@@ -62,7 +63,7 @@ class Module(ASTNode):
         self.post_parsed = False
         self.evaled = False
         self.ir_saved = False
-        self.scheduled_events = [[], [], []]
+        self.scheduled_events = [[], [], [], []]
         self.scheduled_templates = []
         self.ran_schedule = False
 
@@ -81,6 +82,9 @@ class Module(ASTNode):
 
     def add_struct_to_schedule(self, struct_def):
         self.scheduled_events[self.STRUCT_SCHEDULE_ID].append(struct_def)
+
+    def add_alias_to_schedule(self, alias_def):
+        self.scheduled_events[self.ALIAS_SCHEDULE_ID].append(alias_def)
 
     def add_template_to_schedule(self, generic):
         self.scheduled_templates.append(generic)

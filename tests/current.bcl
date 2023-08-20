@@ -194,12 +194,26 @@ define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
     return x;
 }
 
-define indirection(val: &LifetimeTest) {
-    val.set(&22);
+// define indirection(val: &LifetimeTest) {
+//     val.set(&22);
+// }
+
+typedef INT = i32;
+
+typedef IBOX = Box::<i32>;
+import winDef;
+
+define test_typedef(_: INT) -> INT {
+    return 10;
+}
+
+define test_typedef_gen(_: IBOX){
 }
 
 define main() {
     w = LifetimeTest {x: &10};
+
+    println(test_typedef(22));
     // indirection(&w);
 
     println("started");

@@ -61,7 +61,7 @@ class Parser(ParserBase):
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
             'as', 'for', 'in', 'struct', 'import', 'yield',
-            'enum', 'public'
+            'enum', 'public', 'typedef'
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
@@ -87,7 +87,8 @@ class Parser(ParserBase):
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
             "MUL": (self.parse_deref, ),
-            "KEYWORD": (self.parse_visibility_modifiers,
+            "KEYWORD": (self.parse_typedef,
+                        self.parse_visibility_modifiers,
                         self.parse_return_statement,
                         self.parse_return_statement_empty,
                         self.parse_math,
@@ -146,6 +147,19 @@ class Parser(ParserBase):
             if not found:
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
+
+    @rule(0, "$typedef expr SET_VALUE expr SEMI_COLON")
+    def parse_typedef(self):
+        if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
+            errors.error("Typedef name must be a variable name.",
+                         line=self.peek(1).pos)
+
+        pos = self.peek(0).pos
+        node = Ast.variables.typedef.TypeDefinition(pos,
+                                                    self.peek(1).value.var_name,
+                                                    self.peek(3).value,
+                                                    self.module)
+        self.replace(5, 'statement', node)
 
     @rule(-1, "!expr MUL expr !NAMEINDEX")
     def parse_deref(self):
@@ -244,7 +258,6 @@ class Parser(ParserBase):
         name = self.peek(1).name
 
         self.replace(2, name, val)
-
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):
