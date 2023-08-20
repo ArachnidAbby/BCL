@@ -61,7 +61,12 @@ class VariableRef(ExpressionNode):
         return var.ptr
 
     def get_var(self, func):
-        return self.block.get_variable(self.var_name, func.module)
+        old_block = self.block
+        if self.block is None:
+            self.block = func
+        var = self.block.get_variable(self.var_name, func.module)
+        self.block = old_block
+        return var
 
     def get_lifetime(self, func):
         var = self.get_var(func)
