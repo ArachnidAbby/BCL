@@ -13,6 +13,8 @@ To do this you will need:
 - Conda
 - Python 3.11+
 - SetupTools (`pip install setuptools`)
+- Git (required for pip)
+- Visual Studio (When on windows)
 
 ### Step 1
 
@@ -22,6 +24,9 @@ Clone the git repo
 
 run these commands
 
+#### Step 2.1 (ALL)
+This is for all platforms.
+**There is only one linux exclusive command.**
 
 ```sh
 # libs required to compile llvmlite from source/custom fork
@@ -31,13 +36,36 @@ conda install -c conda-forge libstdcxx-ng=12
 conda install -y -q -c numba/label/dev llvmdev="14.*" libxml2
 ## llvm uses cmake
 conda install cmake
+```
 
+#### Step 2.2 (WINDOWS)
+
+Installing llvm 11
+
+```sh
+# when using a different version of visual studio, do:
+set CMAKE_GENERATOR=Visual Studio 17 2022 # an example version of visual studio.
+# Install LLVM11. I haven't found a way to use 14 on windows.
+pip install git+https://github.com/spidertyler2005/llvmlite.git
+```
+
+#### Step 2.2 (LINUX)
+
+Installing llvmlite 14 or 11
+
+```sh
 # Installing custom llvmlite fork that has lld for linking (LLVM14)
 pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
 # Alternatively, if this doesn't work install (LLVM11)
 pip install git+https://github.com/spidertyler2005/llvmlite.git
+```
 
-# Installing repo
+#### Step 2.3 (ALL)
+
+installing BCL
+
+```sh
+# Installing BCL
 pip install .
 ```
 
