@@ -6,8 +6,12 @@ from typing import List
 
 import compile
 import errors
+import platform
 
 PATH = os.path.dirname(os.path.realpath(__file__))
+
+if platform.system() == "Windows":
+    os.system("")
 
 HELP = """Commands:
 
