@@ -72,8 +72,10 @@ class NamespaceIndex(ExpressionNode):
         return self.get_var(func).get_lifetime(func)
 
     def as_type_reference(self, func, allow_generics=False):
+        self.pre_eval(func)
         if isinstance(self.val, Ast_Types.Type):
             return self.val
+        print(self.val)
         errors.error("Not a type", line=self.position)
 
     def as_file_path(self):
