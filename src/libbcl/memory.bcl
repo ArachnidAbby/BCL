@@ -1,0 +1,21 @@
+import box::*;
+import stdlib::*;
+
+// For better self-documentation of a function's intent
+// usually used for function bound from other languages.
+public struct RawHeapPtr::<T> {
+    ptr: UntypedPointer; // Really &T, but pointer pointers don't exist usually, so we use UntypedPointer in case.
+
+    public define to_box(self) -> Box::<T> {
+        return Box::<T>::from_heap_ptr(self.ptr);
+    }
+
+    /// Return the held pointer
+    public define unwrap(self) -> T {
+        return self.ptr;
+    }
+
+    public define free(self) {
+        free(self.ptr);
+    }
+}

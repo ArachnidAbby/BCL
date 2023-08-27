@@ -1,7 +1,6 @@
 import stdlib::*;
 import exitcodes::*;
 
-
 public struct Vector::<T> {
     array_ptr: UntypedPointer, // &UntypedPointer -> &T[...]
     allocated_size: UntypedPointer, // &size_t
