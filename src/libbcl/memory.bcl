@@ -1,8 +1,8 @@
 import box::*;
 import stdlib::*;
 
-// For better self-documentation of a function's intent
-// usually used for function bound from other languages.
+/// For better self-documentation of a function's intent
+/// usually used for function bound from other languages.
 public struct RawHeapPtr::<T> {
     ptr: UntypedPointer; // Really &T, but pointer pointers don't exist usually, so we use UntypedPointer in case.
 
@@ -19,3 +19,62 @@ public struct RawHeapPtr::<T> {
         free(self.ptr);
     }
 }
+
+/// create a strlit with /00 chars
+/// useful for buffers
+public define create_buffer_512() -> char[520] {
+    // 512 + i64::SIZEOF = 520
+    return [(0i8 as char); 520];
+}
+
+/// turn buffer (char[520]) into strlit, this has to be done in two steps
+/// we need the creator of the buffer to first own that buffer.
+/// hence why this step is seperate, strlit is an unowned type.
+public define prep_buffer_512(buffer: &char[520]) -> strlit {
+
+    data_as_i64 = (&data as UntypedPointer as &i64);
+    data_as_i64 = 512; // put an i64 in the first position
+
+    ptr = buffer as UntypedPointer;
+    return UntypedPointer[i64::SIZEOF] as &strlit as strlit;
+}
+
+
+//! modifies original strlit, this can be done without
+//! using a reference, strlit is always passed by reference because
+//! it is unowned.
+//! ---------
+/// Recounts the length of an strlit
+/// saves that into the original strlit
+///! Beware that the strlit must be a valid *BCL* strlit.
+///! Than means the pointer is actually 8 bytes ahead of the allocated memory.
+///! These bytes are what contain the size.
+///! So, ensure that there is 8 bytes allocated behind the ptr.
+public define recount_strlit(data: strlit, max: i64) {
+    // get access to the *i8 inside of the strlit
+    char_ptr = *(&data as UntypedPointer as &UntypedPointer);
+
+    size = 0i64;
+    current_char = *(char_ptr[size] as &i8);
+    while size < max and current_char!=0i8{
+        size+=1i64;
+        current_char = *(char_ptr[size] as &char);
+    }
+
+    // -8 = i64::SIZEOF * -1
+    size_ptr = char_ptr[-8] as &i64 as i64;
+    size_ptr = size;
+}
+
+/// Recounts the length of an strlit
+/// saves that into the original strlit
+///! Invalid strlits wihout an ending NULL-char will cause this function to read i64::MAX chars.
+public define recount_strlit(data: strlit) {
+    recount_strlit(data, i64::MAX);
+}
+
+
+// /// Unsafely recast ptr to some other type
+// public define recast::<T>(ptr: UntypedPointer) -> T {
+//     return ptr as &T as T; // should still work, even if T is a pointer.
+// }
