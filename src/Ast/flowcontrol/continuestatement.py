@@ -13,5 +13,11 @@ class ContinueStatement(ASTNode):
         Block.BLOCK_STACK[-1].ended = True
         func.inside_loop.branch_logic(func)
 
+    def copy(self):
+        return ContinueStatement(self._position)
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
+
     def repr_as_tree(self) -> str:
         return "Continue Statement"
