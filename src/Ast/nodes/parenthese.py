@@ -12,7 +12,8 @@ from errors import error
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ret_type', 'in_func_call', 'ptr',
-                 'contains_ellipsis', 'evaled_children')
+                 'contains_ellipsis', 'evaled_children',
+                 'do_register_dispose')
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
@@ -21,6 +22,7 @@ class ParenthBlock(ContainerNode):
         self.ret_type = Ast_Types.Void()
         self.evaled_children = []
         self.contains_ellipsis = False
+        self.do_register_dispose = False
 
     def copy(self):
         out = ParenthBlock(self._position)
@@ -37,6 +39,11 @@ class ParenthBlock(ContainerNode):
         self.evaled_children = []
         for child in self.children:
             child.reset()
+
+    def post_parse(self, func):
+        for child in self.children:
+            self.do_register_dispose = self.do_register_dispose or \
+                                       child.do_register_dispose
 
     def pre_eval(self, func):
         for child in self.children:
@@ -146,7 +153,9 @@ class ParenthBlock(ContainerNode):
                                 return_type=self.ret_type)
 
     def as_type_reference(self, func, allow_generics=False):
-        if len(self.children) == 1:
+        if len(self.children) == 0:
+            return Ast_Types.Void()
+        elif len(self.children) == 1:
             return self.children[0].as_type_reference(func, allow_generics=allow_generics)
         else:
             members = [child.as_type_reference(func, allow_generics=allow_generics) for child in self.children]
