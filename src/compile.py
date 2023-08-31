@@ -15,7 +15,8 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--emit-ast": False,
     "--supress-warnings": False,
     "--libs": [],
-    "--run": False
+    "--run": False,
+    "--debug": False
 }
 
 
@@ -62,7 +63,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
     with timingContext('parsing finished'):
         try:
             module = Ast.module.Module(SrcPosition.invalid(), output_loc.stem,
-                                       str(file), tokens)
+                                       str(file), tokens, args)
             module.parse()
         except LexingError as e:
             error_pos = e.source_pos

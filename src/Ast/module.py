@@ -37,7 +37,7 @@ class Module(ASTNode):
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed',
                  'scheduled_events', 'ran_schedule', 'target_machine',
-                 'scheduled_templates')
+                 'scheduled_templates', 'cmd_args')
 
     is_namespace = True
     ENUM_SCHEDULE_ID = 0
@@ -45,7 +45,8 @@ class Module(ASTNode):
     TEMPLATE_SCHEDULE_ID = 2
     ALIAS_SCHEDULE_ID = 3
 
-    def __init__(self, pos: SrcPosition, name, location, tokens):
+    def __init__(self, pos: SrcPosition, name, location, tokens,
+                 cmd_args: dict):
         super().__init__(pos)
         self.mod_name = name
         self.location = location
@@ -54,9 +55,29 @@ class Module(ASTNode):
         self.types: dict[str, "Type"] = {}   # type: ignore
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
+        self.cmd_args = cmd_args
+        if cmd_args["--debug"]:
+            di_file = self.module.add_debug_info(
+                "DIFile",
+                {
+                    "filename": self.mod_name+".bcl",
+                    "directory": self.location
+                }
+            )
+            # self.module.add_debug_info(
+            #     "DICompileUnit",
+            #     {
+            #         "language": ir.DIToken("DW_LANG_BCL"),
+            #         "file": di_file,
+            #         "producer": "PyBCL Compiler (v0.8.0-alpha)",
+            #         "runtimeVersion": 0,
+            #         "isOptimized": True,
+            #     },
+            #     is_distinct=True
+            # )
         self.target = binding.Target.from_triple(self.module.triple)
         self.target_machine = self.target.create_target_machine(force_elf=True,
-                                                   codemodel="default")
+                                                        codemodel="default")
         self.children = tokens
         self.parsed = False
         self.pre_evaled = False
@@ -149,7 +170,7 @@ class Module(ASTNode):
             src_str = f.read()
             tokens = Lexer().get_lexer().lex(src_str)
             new_module = Ast.module.Module(SrcPosition.invalid(), name,
-                                           file, tokens)
+                                           file, tokens, self.cmd_args)
             self.imports[name] = NamespaceInfo(new_module, using_namespace, is_public)
 
     def create_type(self, name: str, typeobj: Ast.Type):
