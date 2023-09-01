@@ -13,6 +13,16 @@ class Void(Type_Base.Type):
     pass_as_ptr = False
     no_load = False
 
+    def global_namespace_names(self, func, name, pos):
+        from Ast.Ast_Types.Type_I32 import Integer_32
+        from Ast.literals.numberliteral import Literal
+        if name == "SIZEOF":
+            ty = Integer_32(name="u64", size=64, signed=False)
+            val = Literal(pos, 0, ty)
+            return val
+
+        super().global_namespace_names(func, name, pos)
+
     @classmethod
     def convert_from(cls, func, typ: str, previous):
         if typ == Void():
