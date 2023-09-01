@@ -531,7 +531,7 @@ class Parser(ParserBase):
         # self.start_min = self._cursor
         self.replace(2, "statement", self.peek(0).value)
 
-    @rule(-1, "!DOT expr expr")
+    @rule(-1, "!DOT expr expr !expr")
     def parse_func_call(self):
         # * Function Calls
         func_name = self.peek(0).value
