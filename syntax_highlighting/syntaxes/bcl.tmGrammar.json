@@ -144,6 +144,18 @@
             "name": "keyword.control.bcl"
           },
           {
+            "match": "\\b((typedef))\\b",
+            "name": "storage.type.typedef.bcl"
+          },
+          {
+            "match": "\\b((struct))\\b",
+            "name": "storage.type.structure.bcl"
+          },
+          {
+            "match": "\\b((define))\\b",
+            "name": "storage.type.function.bcl"
+          },
+          {
             "match": "\\b((public))\\b",
             "name": "keyword.other.bcl"
           },
