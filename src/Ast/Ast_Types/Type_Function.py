@@ -35,22 +35,30 @@ class NodeLifetimePass(ExpressionNode):
     def get_lifetime(self, func):
         return self.lifetime
 
-    def get_mapped_arg_pos(self):
+    def get_recursion_depth(self, recursion_depth=0):
         if not isinstance(self.mapped_from[0], NodeLifetimePass):
+            return recursion_depth
+
+        return self.mapped_from[0].get_recursion_depth(recursion_depth) + 1
+
+    def get_mapped_arg_pos(self, recursion_amount=0, max_recursion=0):
+        if not isinstance(self.mapped_from[0], NodeLifetimePass) or recursion_amount >= max_recursion:
             return self.mapped_from[1]
 
-        return self.mapped_from[0].get_mapped_arg_pos()
+        return self.mapped_from[0].get_mapped_arg_pos(recursion_amount+1, max_recursion=max_recursion)
 
-    def get_arg_list(self):
-        if not isinstance(self.mapped_from[0], NodeLifetimePass):
+    def get_arg_list(self, recursion_amount=0, max_recursion=0):
+        if not isinstance(self.mapped_from[0], NodeLifetimePass) or recursion_amount >= max_recursion:
             return self.args_list
 
-        return self.mapped_from[0].get_arg_list()
+        return self.mapped_from[0].get_arg_list(recursion_amount+1, max_recursion=max_recursion)
 
     # def __str__(self) -> str:
     #     return f"[LIFETIME:{self.lifetime}, node: {str(self.node)}]"
 
     def get_position(self) -> SrcPosition:
+        if not isinstance(self.node, NodeLifetimePass):
+            return self.node.get_position()
         return super().get_position()
 
     def __str__(self) -> str:
@@ -104,7 +112,6 @@ class Function(Type):
             arg0_lifetime = args[group[0]].get_lifetime(func)
             arg1_lifetime = args[group[1]].get_lifetime(func)
             if arg0_lifetime.value > arg1_lifetime.value:
-                pos = args[group[0]].merge_pos([args[group[1]].position])
                 if not isinstance(args[group[0]], NodeLifetimePass):
                     self._lifetime_error_regular(group, args)
                 else:
@@ -118,46 +125,24 @@ class Function(Type):
               line=[args[group[0]].position, args[group[1]].position])
 
     def _lifetime_error_mapped(self, group, args):
-        new_args = args[group[0]].get_arg_list()
+        min_depth = min(
+            args[group[0]].get_recursion_depth(),
+            args[group[1]].get_recursion_depth()
+        )
+
+        new_args = args[group[0]].get_arg_list(max_recursion=min_depth)
         group = (
-            args[group[0]].get_mapped_arg_pos(),
-            args[group[1]].get_mapped_arg_pos()
+            args[group[0]].get_mapped_arg_pos(max_recursion=min_depth),
+            args[group[1]].get_mapped_arg_pos(max_recursion=min_depth)
         )
         args = new_args
         error(f"Arguments {group[0]} and {group[1]} have a coupled " +
               f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
               "must have a lifetime less than or\n" +
-              f"equal to argument: \"{args[group[1]]}\"",
+              f"equal to argument: \"{args[group[1]]}\"\n",
               line=[args[group[0]].position, args[group[1]].position])
 
-    # def couple_call_lifetimes(self, arg_ids: list[int|None],
-    #                           couple_func):
-    #     '''arg_ids is going to be [0, None, 2, None, 1] for example.'''
-    #     if self.coupling_stack is None:
-    #         self.coupling_stack = [self]
-    #     else:
-    #         if self in self.coupling_stack:
-    #             return
-    #         self.coupling_stack.append(self)
-
-    #     nodes = self.definition.lifetime_checked_nodes
-
-    #     for node in nodes:
-    #         node.resolve_lifetime_coupling(self.definition)
-
-    #     for couple in couple_func.lifetime_groups:
-    #         arg1 = arg_ids[couple[0]]
-    #         arg2 = arg_ids[couple[1]]
-    #         if arg1 is None or arg2 is None:
-    #             continue
-
-    #         coupling = (arg1, arg2)
-    #         if coupling not in self.lifetime_groups:
-    #             self.lifetime_groups.append(coupling)
-
-    #     self.coupling_stack.pop(-1)
-
-    def check_function_coupling(self, func, args, rearrange_life=True):
+    def check_function_coupling(self, func, args, recursion_amount=0):
         if self in self.call_stack:
             return
         self.call_stack.append(self)
@@ -172,31 +157,15 @@ class Function(Type):
             # new_args = [coupled[2].func_name.lhs] + new_args
 
             for o_idx, coupled_args_lhs in coupled[1]:
-                if rearrange_life:
-                    # print(self.definition.func_name, self.definition.module.mod_name , ":", coupled_args_lhs, o_idx)
-                    # print(args[coupled_args_lhs].get_lifetime(func))
-                    # print()
-                    arg = args[coupled_args_lhs]
-                    new_args[o_idx] = NodeLifetimePass(arg.position,
-                                                       arg.get_lifetime(func),
-                                                       new_args[o_idx],
-                                                       (arg, coupled_args_lhs),
-                                                       args)
-                # for idx_lhs, idx_rhs in coupled_func.lifetime_groups:
-                #     if o_idx != idx_lhs:
-                #         continue
-                #     for o_idx_rhs, coupled_args_rhs in coupled[1]:
-                #         if o_idx_rhs != idx_rhs:
-                #             continue
-                #         arg0_lifetime = args[coupled_args_lhs].get_lifetime(func)
-                #         arg1_lifetime = args[coupled_args_rhs].get_lifetime(func)
-                #         if arg0_lifetime.value > arg1_lifetime.value:
-                #             pos = args[coupled_args_lhs].merge_pos([args[coupled_args_rhs].position])
-                #             error(f"Arguments {coupled_args_lhs} and {coupled_args_rhs} have a coupled " +
-                #                 f"lifetime. \nThe argument: \"{args[coupled_args_lhs]}\"\n" +
-                #                 "must have a lifetime less than or\n" +
-                #                 f"equal to argument: \"{args[coupled_args_rhs]}\"",
-                #                 line=[args[coupled_args_lhs].position, args[coupled_args_rhs].position])
+                # print(self.definition.func_name, self.definition.module.mod_name , ":", coupled_args_lhs, o_idx)
+                # print(args[coupled_args_lhs].get_lifetime(func))
+                # print()
+                arg = args[coupled_args_lhs]
+                new_args[o_idx] = NodeLifetimePass(arg.position,
+                                                    arg.get_lifetime(func),
+                                                    new_args[o_idx],
+                                                    (arg, coupled_args_lhs),
+                                                    args)
             coupled_func.lifetime_checks(self.definition, new_args)
             coupled_func.check_function_coupling(self.definition, new_args)
 
