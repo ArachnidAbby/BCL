@@ -81,10 +81,8 @@ class FunctionCall(ExpressionNode):
         for idx, child in enumerate(childs):
             lifetimes = child.get_coupled_lifetimes(func)
             for life in lifetimes:
-                # if isinstance(life, list):
-                #     print("AHAHAHALHAJHDJAD:LKJ")
-                #     print(life)
-                #     continue
+                if isinstance(life, list):
+                    continue
                 arg_ids.append((idx, life))
 
         func.function_ty.coupled_functions.append((coupling_func, tuple(arg_ids), self))
