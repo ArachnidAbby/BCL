@@ -1,16 +1,16 @@
 from typing import Protocol
 
 from llvmlite import ir
-from Ast.Ast_Types.Type_Base import Type
-from Ast.Ast_Types.Type_Void import Void
-from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast import Ast_Types
+from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.yieldstatement import YieldStatement
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
-from Ast.nodes.commontypes import SrcPosition, Modifiers
+from Ast.nodes.commontypes import Modifiers, SrcPosition
+from Ast.nodes.passthrough import PassNode  # type: ignore
 from Ast.reference import Ref
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
@@ -46,7 +46,7 @@ class FunctionDef(ASTNode):
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start", "dispose_queue", "parent", "ret_raw",
-                 "function_ty")
+                 "function_ty", "lifetime_checked_nodes")
 
     can_have_modifiers = True
 
@@ -98,14 +98,17 @@ class FunctionDef(ASTNode):
         self.args_ir: tuple[ir.Type, ...] = ()
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
+        self.lifetime_checked_nodes = []
 
     def copy(self):
         if self.block is not None:
-            val = FunctionDef(self._position, self.func_name, self.raw_args.copy(),
+            val = FunctionDef(self._position,
+                              self.func_name, self.raw_args.copy(),
                               self.block.copy(), self.module)
             self.block.parent = val
         else:
-            val = FunctionDef(self._position, self.func_name, self.raw_args.copy(),
+            val = FunctionDef(self._position, self.func_name,
+                              self.raw_args.copy(),
                               None, self.module)
 
         if not isinstance(self.ret_raw, Void):
@@ -304,7 +307,8 @@ class FunctionDef(ASTNode):
                                        name=self._mangle_name(self.func_name,
                                                               parent))
         function_object = Ast_Types.Function(self.func_name, self.args_types,
-                                             self.function_ir, self.module)
+                                             self.function_ir, self.module,
+                                             self)
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \

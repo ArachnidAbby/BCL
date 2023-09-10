@@ -50,7 +50,7 @@ class GeneratorType(Type):
         self.ir_type = ir.global_context.get_identified_type(f"struct.{iter_function.func_name}")
         self.next_group = FunctionGroup("next", self.iter_function.module)
         mod = self.iter_function.module
-        self.next = Function("next", (Reference(self),), None, mod)
+        self.next = Function("next", (Reference(self),), None, mod, None)
         self.next.set_method(True, self)
         self.next.add_return(self.typ)
         self.next_group.add_function(self.next)

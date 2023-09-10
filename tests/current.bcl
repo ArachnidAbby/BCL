@@ -194,8 +194,17 @@ define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
     return x;
 }
 
-// define indirection(val: &LifetimeTest) {
-//     val.set(&22);
+define indirection(val: &LifetimeTest, _: i32, inner_val: &i32) {
+    val.set(inner_val);
+}
+
+define indirection_2(val: &LifetimeTest, _: i32, _2: i32, inner_val: &i32) {
+    indirection(val, _, inner_val);
+}
+
+// ! should cause a lifetime error
+// define indirection_3(val: &LifetimeTest) {
+//     indirection_2(val, 0, 0, &22); // ! this is where that should happen
 // }
 
 typedef INT = i32;
@@ -212,8 +221,9 @@ define test_typedef_gen(_: IBOX){
 
 define main() {
     w = LifetimeTest {x: &10};
+    // indirection_2(&w, 0, 0, &22); // * should work perfectly
 
-    println(test_typedef(22));
+    // println(test_typedef(22));
     // indirection(&w);
 
     println("started");

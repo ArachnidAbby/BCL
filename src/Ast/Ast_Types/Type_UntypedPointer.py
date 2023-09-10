@@ -1,11 +1,11 @@
 from llvmlite import ir
+
+import errors
+from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_Function import Function, FunctionGroup
 from Ast.Ast_Types.Type_Reference import Reference
 from Ast.Ast_Types.Type_Void import Void
 from Ast.nodes.commontypes import MemberInfo
-
-import errors
-from Ast.Ast_Types.Type_Base import Type
 
 
 class UntypedPointer(Type):
@@ -76,7 +76,7 @@ class StoreFunction(Function):
     __slots__ = ()
 
     def __init__(self):
-        super().__init__("store", (), None, None)
+        super().__init__("store", (), None, None, None)
         self.func_ret = Void()
         self.is_method = True
         self.args = (UntypedPointer(), )

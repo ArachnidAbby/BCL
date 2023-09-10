@@ -1,16 +1,17 @@
 from typing import Self
 
 from llvmlite import ir
+
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_Reference import Reference
-from Ast.Ast_Types.Type_Void import Void# type: ignore
-
+from Ast.Ast_Types.Type_Void import Void  # type: ignore
 # from Ast import Ast_Types
 # from Ast.Ast_Types import Type_Base
 from Ast.math import MemberAccess
+from Ast.nodes.commontypes import Modifiers, SrcPosition
+from Ast.nodes.expression import ExpressionNode
 from Ast.reference import Ref
 from errors import error
-from Ast.nodes.commontypes import Modifiers
 
 
 class MockFunction:
@@ -21,20 +22,60 @@ class MockFunction:
         self.module = module
 
 
+class NodeLifetimePass(ExpressionNode):
+    __slots__ = ('lifetime', 'node', 'mapped_from', 'args_list')
+
+    def __init__(self, pos, lifetime, node, mapped, args):
+        self._position = pos
+        self.lifetime = lifetime
+        self.node = node
+        self.mapped_from: tuple[ExpressionNode, int] = mapped
+        self.args_list = args
+
+    def get_lifetime(self, func):
+        return self.lifetime
+
+    def get_mapped_arg_pos(self):
+        if not isinstance(self.mapped_from[0], NodeLifetimePass):
+            return self.mapped_from[1]
+
+        return self.mapped_from[0].get_mapped_arg_pos()
+
+    def get_arg_list(self):
+        if not isinstance(self.mapped_from[0], NodeLifetimePass):
+            return self.args_list
+
+        return self.mapped_from[0].get_arg_list()
+
+    # def __str__(self) -> str:
+    #     return f"[LIFETIME:{self.lifetime}, node: {str(self.node)}]"
+
+    def get_position(self) -> SrcPosition:
+        return super().get_position()
+
+    def __str__(self) -> str:
+        return str(self.node)
+
+    def __getattr__(self, name):
+        return getattr(self.node, name)
+
+
 class Function(Type):
     '''abstract type class that outlines the necessary features
     of a type class.'''
 
     __slots__ = ('func_name', 'module', 'args', 'func_ret',
                  'contains_ellipsis', "func_obj", "is_method",
-                 "visibility", "lifetime_groups")
+                 "visibility", "lifetime_groups", "definition",
+                 "call_stack", "coupled_functions")
 
     name = "Function"
     pass_as_ptr = False
     no_load = False
     read_only = True
 
-    def __init__(self, name: str, args: tuple, func_obj, module):
+    def __init__(self, name: str, args: tuple, func_obj, module,
+                 definition):
         self.func_name = name
         self.module = module
         self.args = args
@@ -44,7 +85,14 @@ class Function(Type):
         self.contains_ellipsis = False
         self.is_method = False
         self.lifetime_groups = []
+        # functions that get called inside of this one.
+        # These have their own lifetime checks
+        self.coupled_functions: list[tuple[Function, tuple[tuple[int, int], ...]]] = []
+
+        # used when resolving coupling and lifetime dependence.
+        self.call_stack = []
         self.visibility = super().visibility
+        self.definition = definition
 
     def couple_lifetimes(self, arg1_id, arg2_id):
         coupling = (arg1_id, arg2_id)
@@ -52,16 +100,107 @@ class Function(Type):
             self.lifetime_groups.append(coupling)
 
     def lifetime_checks(self, func, args):
-        # print("POGGERS")
         for group in self.lifetime_groups:
             arg0_lifetime = args[group[0]].get_lifetime(func)
             arg1_lifetime = args[group[1]].get_lifetime(func)
             if arg0_lifetime.value > arg1_lifetime.value:
                 pos = args[group[0]].merge_pos([args[group[1]].position])
-                error(f"Arguments {group[0]} and {group[1]} have a coupled " +
-                      f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
-                      "must have a lifetime less than or\n" +
-                      f"equal to argument: \"{args[group[1]]}\"", line=[args[group[0]].position, args[group[1]].position])
+                if not isinstance(args[group[0]], NodeLifetimePass):
+                    self._lifetime_error_regular(group, args)
+                else:
+                    self._lifetime_error_mapped(group, args)
+
+    def _lifetime_error_regular(self, group, args):
+        error(f"Arguments {group[0]} and {group[1]} have a coupled " +
+              f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
+              "must have a lifetime less than or\n" +
+              f"equal to argument: \"{args[group[1]]}\"",
+              line=[args[group[0]].position, args[group[1]].position])
+
+    def _lifetime_error_mapped(self, group, args):
+        new_args = args[group[0]].get_arg_list()
+        group = (
+            args[group[0]].get_mapped_arg_pos(),
+            args[group[1]].get_mapped_arg_pos()
+        )
+        args = new_args
+        error(f"Arguments {group[0]} and {group[1]} have a coupled " +
+              f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
+              "must have a lifetime less than or\n" +
+              f"equal to argument: \"{args[group[1]]}\"",
+              line=[args[group[0]].position, args[group[1]].position])
+
+    # def couple_call_lifetimes(self, arg_ids: list[int|None],
+    #                           couple_func):
+    #     '''arg_ids is going to be [0, None, 2, None, 1] for example.'''
+    #     if self.coupling_stack is None:
+    #         self.coupling_stack = [self]
+    #     else:
+    #         if self in self.coupling_stack:
+    #             return
+    #         self.coupling_stack.append(self)
+
+    #     nodes = self.definition.lifetime_checked_nodes
+
+    #     for node in nodes:
+    #         node.resolve_lifetime_coupling(self.definition)
+
+    #     for couple in couple_func.lifetime_groups:
+    #         arg1 = arg_ids[couple[0]]
+    #         arg2 = arg_ids[couple[1]]
+    #         if arg1 is None or arg2 is None:
+    #             continue
+
+    #         coupling = (arg1, arg2)
+    #         if coupling not in self.lifetime_groups:
+    #             self.lifetime_groups.append(coupling)
+
+    #     self.coupling_stack.pop(-1)
+
+    def check_function_coupling(self, func, args, rearrange_life=True):
+        if self in self.call_stack:
+            return
+        self.call_stack.append(self)
+
+        for coupled in self.coupled_functions:
+            coupled_func = coupled[0]
+
+            orig_args = coupled[2].paren.children
+            coupled[2].paren.children = coupled_func._fix_args(coupled[2].func_name, coupled[2].paren, self.definition)
+            new_args = [_ for _ in coupled[2].paren.children]
+            coupled[2].paren.children = orig_args
+            # new_args = [coupled[2].func_name.lhs] + new_args
+
+            for o_idx, coupled_args_lhs in coupled[1]:
+                if rearrange_life:
+                    # print(self.definition.func_name, self.definition.module.mod_name , ":", coupled_args_lhs, o_idx)
+                    # print(args[coupled_args_lhs].get_lifetime(func))
+                    # print()
+                    arg = args[coupled_args_lhs]
+                    new_args[o_idx] = NodeLifetimePass(arg.position,
+                                                       arg.get_lifetime(func),
+                                                       new_args[o_idx],
+                                                       (arg, coupled_args_lhs),
+                                                       args)
+                # for idx_lhs, idx_rhs in coupled_func.lifetime_groups:
+                #     if o_idx != idx_lhs:
+                #         continue
+                #     for o_idx_rhs, coupled_args_rhs in coupled[1]:
+                #         if o_idx_rhs != idx_rhs:
+                #             continue
+                #         arg0_lifetime = args[coupled_args_lhs].get_lifetime(func)
+                #         arg1_lifetime = args[coupled_args_rhs].get_lifetime(func)
+                #         if arg0_lifetime.value > arg1_lifetime.value:
+                #             pos = args[coupled_args_lhs].merge_pos([args[coupled_args_rhs].position])
+                #             error(f"Arguments {coupled_args_lhs} and {coupled_args_rhs} have a coupled " +
+                #                 f"lifetime. \nThe argument: \"{args[coupled_args_lhs]}\"\n" +
+                #                 "must have a lifetime less than or\n" +
+                #                 f"equal to argument: \"{args[coupled_args_rhs]}\"",
+                #                 line=[args[coupled_args_lhs].position, args[coupled_args_rhs].position])
+            coupled_func.lifetime_checks(self.definition, new_args)
+            coupled_func.check_function_coupling(self.definition, new_args)
+
+        self.call_stack.pop(-1)
 
     def add_return(self, ret: Type):
         self.func_ret = ret
@@ -164,6 +303,7 @@ class Function(Type):
             args.children = self._fix_args(lhs, args, func)
         args.eval(func, expected_args=self.args)
         self.lifetime_checks(func, args.children)
+        self.check_function_coupling(func, args.children)
         args.children = orig_args
         return func.builder.call(self.func_obj, args.evaled_children)
 

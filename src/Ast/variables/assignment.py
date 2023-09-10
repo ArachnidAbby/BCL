@@ -66,6 +66,7 @@ class VariableAssign(ASTNode):
 
     def post_parse(self, func):
         self.value.post_parse(func)
+        func.lifetime_checked_nodes.append(self)
 
     def pre_eval(self, func):
         self.value.pre_eval(func)
@@ -82,15 +83,17 @@ class VariableAssign(ASTNode):
             error("Cannot assign value to non-assignable variable/member",
                   line=self.var_name.position)
 
+        self.resolve_lifetime_coupling(func)
+        # if self.typ.needs_dispose:
+        #     func.register_dispose(self)
+
+    def resolve_lifetime_coupling(self, func):
         var_life = self.var_name.get_coupled_lifetimes(func)
         val_lifetimes = self.value.get_coupled_lifetimes(func)
 
         if len(var_life) != 0:
             for lifetime in val_lifetimes:
                 func.function_ty.couple_lifetimes(var_life[0], lifetime)
-
-        # if self.typ.needs_dispose:
-        #     func.register_dispose(self)
 
     def set_not_constant(self, func):
         '''set a variable object's is_constant attribute to False'''
