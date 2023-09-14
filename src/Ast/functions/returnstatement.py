@@ -1,10 +1,10 @@
 from llvmlite import ir
-from Ast.nodes.passthrough import PassNode
 
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.block import Block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode
 
 
 class ReturnStatement(ASTNode):
@@ -73,6 +73,10 @@ class ReturnStatement(ASTNode):
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:
+            if not self.expr.ret_type.returnable:
+                lifetimes = self.expr.get_coupled_lifetimes(func)
+                for life in lifetimes:
+                    func.function_ty.return_coupling.append(life)
             func.builder.ret(ret_val)
         Block.BLOCK_STACK[-1].ended = True
 

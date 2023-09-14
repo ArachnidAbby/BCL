@@ -91,7 +91,18 @@ class FunctionCall(ExpressionNode):
         return self.function.call(func, self.func_name, self.paren)
 
     def get_lifetime(self, func):
-        return Lifetimes.FUNCTION
+        if isinstance(self.function, FunctionGroup):
+            coupling_func = self.function.get_function(func, self.func_name, self.paren)
+        else:
+            coupling_func = self.function
+        if len(coupling_func.return_coupling) == 0:
+            return Lifetimes.FUNCTION
+
+        childs = self.paren.children
+        if isinstance(self.func_name, MemberAccess) and coupling_func.is_method:
+            childs = [self.func_name.lhs] + childs
+
+        return childs[coupling_func.return_coupling[0]].get_lifetime(func)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Function Call",

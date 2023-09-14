@@ -181,6 +181,11 @@ struct ContainsBox {
     }
 }
 
+define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
+    *x.x = 8;
+    return x;
+}
+
 struct LifetimeTest {
     x: &i32;
 
@@ -189,23 +194,40 @@ struct LifetimeTest {
     }
 }
 
-define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
-    *x.x = 8;
+// define indirection(val: &LifetimeTest, _: i32, inner_val: &i32) {
+//     val.set(inner_val);
+// }
+
+// define indirection_2(val: &LifetimeTest, _: i32, _2: i32, inner_val: &i32) {
+//     indirection(val, _, inner_val);
+// }
+
+// define indirection_3(val: &LifetimeTest, inner_val: &i32) {
+//     indirection_2(val, 0, 0, inner_val);
+// }
+
+// define indirection_recur(val: &LifetimeTest) {
+//     indirection_4(val);
+// }
+
+// // ! should cause a lifetime error
+// define indirection_4(val: &LifetimeTest) {
+//     indirection_3(val, &22); // ! this is where that should happen
+//     indirection_recur(val);
+// }
+
+define gamerly(x: &i32, y: &i32) -> &i32 {
+    if true { return x; }
+    return y;
+}
+
+define return_lifetime_back(x: &i32) -> &i32 {
     return x;
 }
 
-define indirection(val: &LifetimeTest, _: i32, inner_val: &i32) {
-    val.set(inner_val);
+define gamerly_test(x: &i32) {
+    gamerly(x, return_lifetime_back(x));
 }
-
-define indirection_2(val: &LifetimeTest, _: i32, _2: i32, inner_val: &i32) {
-    indirection(val, _, inner_val);
-}
-
-// ! should cause a lifetime error
-// define indirection_3(val: &LifetimeTest) {
-//     indirection_2(val, 0, 0, &22); // ! this is where that should happen
-// }
 
 typedef INT = i32;
 
@@ -216,8 +238,8 @@ define test_typedef(_: INT) -> INT {
     return 10;
 }
 
-define test_typedef_gen(_: IBOX){
-}
+// define test_typedef_gen(_: IBOX){
+// }
 
 define main() {
     w = LifetimeTest {x: &10};
@@ -230,7 +252,6 @@ define main() {
     println([1, 3, 4, 6, 8, 2, 34, 8, 3, 10] == [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
     println([1, 3, 4, 6, 8, 2, 34, 8, 3, 10] != [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
     println([1, 3, 4, 6, 8, 2, 342, 8, 3, 10] != [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
-
 
     println("1-2".length);
     println("hi"=="hi");

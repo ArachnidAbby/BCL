@@ -75,7 +75,7 @@ class Function(Type):
     __slots__ = ('func_name', 'module', 'args', 'func_ret',
                  'contains_ellipsis', "func_obj", "is_method",
                  "visibility", "lifetime_groups", "definition",
-                 "call_stack", "coupled_functions")
+                 "call_stack", "coupled_functions", "return_coupling")
 
     name = "Function"
     pass_as_ptr = False
@@ -93,6 +93,7 @@ class Function(Type):
         self.contains_ellipsis = False
         self.is_method = False
         self.lifetime_groups = []
+        self.return_coupling = [] # all of these must have *equal* return. tight coupling
         # functions that get called inside of this one.
         # These have their own lifetime checks
         self.coupled_functions: list[tuple[Function, tuple[tuple[int, int], ...]]] = []
@@ -124,6 +125,14 @@ class Function(Type):
               f"equal to argument: \"{args[group[1]]}\"",
               line=[args[group[0]].position, args[group[1]].position])
 
+    def _lifetime_return_error_regular(self, group, args):
+        error(f"Arguments {group[0]} and {group[1]} have a STRONGLY coupled\n" +
+              "lifetime due to both being returned by the callee.\n" +
+              f"The argument: \"{args[group[0]]}\"\n" +
+              "must have a lifetime " +
+              f"equal to\nthe argument: \"{args[group[1]]}\"",
+              line=[args[group[0]].position, args[group[1]].position])
+
     def _lifetime_error_mapped(self, group, args):
         min_depth = min(
             args[group[0]].get_recursion_depth(),
@@ -139,8 +148,45 @@ class Function(Type):
         error(f"Arguments {group[0]} and {group[1]} have a coupled " +
               f"lifetime. \nThe argument: \"{args[group[0]]}\"\n" +
               "must have a lifetime less than or\n" +
-              f"equal to argument: \"{args[group[1]]}\"\n",
+              f"equal to argument: \"{args[group[1]]}\"",
               line=[args[group[0]].position, args[group[1]].position])
+
+    def _lifetime_return_error_mapped(self, group, args):
+        min_depth = min(
+            args[group[0]].get_recursion_depth(),
+            args[group[1]].get_recursion_depth()
+        )
+
+        new_args = args[group[0]].get_arg_list(max_recursion=min_depth)
+        group = (
+            args[group[0]].get_mapped_arg_pos(max_recursion=min_depth),
+            args[group[1]].get_mapped_arg_pos(max_recursion=min_depth)
+        )
+        args = new_args
+        error(f"Arguments {group[0]} and {group[1]} have a STRONGLY coupled\n" +
+              "lifetime due to both being returned by the callee.\n" +
+              f"The argument: \"{args[group[0]]}\"\n" +
+              "must have a lifetime " +
+              f"equal to\nthe argument: \"{args[group[1]]}\"",
+              line=[args[group[0]].position, args[group[1]].position])
+
+    def check_return_coupling(self, func, args):
+        needed_lifetime = None
+        needed_life_item = 0
+        for item in self.return_coupling:
+            item_val = args[item]
+            item_life = item_val.get_lifetime(func)
+
+            if needed_lifetime is None:
+                needed_lifetime = item_life
+                needed_life_item = item
+                continue
+
+            if needed_lifetime.value != item_life.value:
+                if not isinstance(item_val, NodeLifetimePass):
+                    self._lifetime_return_error_regular((needed_life_item, item), args)
+                else:
+                    self._lifetime_return_error_mapped((needed_life_item, item), args)
 
     def check_function_coupling(self, func, args, recursion_amount=0):
         if self in self.call_stack:
@@ -166,6 +212,7 @@ class Function(Type):
                                                     new_args[o_idx],
                                                     (arg, coupled_args_lhs),
                                                     args)
+            coupled_func.check_return_coupling(self.definition, new_args)
             coupled_func.lifetime_checks(self.definition, new_args)
             coupled_func.check_function_coupling(self.definition, new_args)
 
@@ -271,6 +318,7 @@ class Function(Type):
         if len(args.children) != len(self.args):
             args.children = self._fix_args(lhs, args, func)
         args.eval(func, expected_args=self.args)
+        self.check_return_coupling(func, args.children)
         self.lifetime_checks(func, args.children)
         self.check_function_coupling(func, args.children)
         args.children = orig_args
