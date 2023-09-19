@@ -3,18 +3,18 @@ from typing import Self
 
 from llvmlite import ir  # type: ignore
 
+import Ast.math
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
-from Ast.nodes import KeyValuePair, ParenthBlock, Block
+from Ast.nodes import Block, KeyValuePair, ParenthBlock
+from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
 from Ast.nodes.container import ContainerNode
 from Ast.nodes.passthrough import PassNode
-from Ast.variables.reference import VariableRef
-from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
 from Ast.reference import Ref
+from Ast.variables.reference import VariableRef
 from errors import error
-import Ast.math
 
 member_access_op = Ast.math.ops["access_member"]
 
@@ -118,7 +118,7 @@ class Struct(Ast_Types.Type):
                         False, def_copy)
         def_copy.struct_type = new_ty
 
-        self.versions[params] = (new_ty, generic_args, def_copy)
+        self.versions[params] = (new_ty, generic_args, def_copy, pos)
 
         self.definition.fullfill_templates(self.module)
 

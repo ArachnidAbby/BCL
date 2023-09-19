@@ -34,6 +34,10 @@ SrcPosition = collections.namedtuple('SrcPosition',
                                      ['line', 'col', 'length', 'source_name'])
 invalid_pos = SrcPosition(-1, -1, -1, '')
 
+# added to when fullfilling templates
+# allows more error info.
+templating_stack: list[SrcPosition] = []
+
 
 class BCLLexer(RegexLexer):
     name = 'bcl'
@@ -44,7 +48,7 @@ class BCLLexer(RegexLexer):
             (r'[\s\n]+', Whitespace),
             (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)',
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)|(typedef)|(as)',
              Keyword.Reserved),
             (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
@@ -84,6 +88,20 @@ def error(text: str, line=invalid_pos, full_line=False):
     line_no = -1
     col = -1
 
+    template_additions = ""
+
+    for template in templating_stack:
+        temp_col = template[1]
+        temp_line = template[0]
+        temp_file = template.source_name
+        code_line = show_error_spot(template, False)
+        template_additions += "| Error constructing templated type:\n" + \
+                              f"|    Line: {temp_line}\n" + \
+                              f"|    File: {temp_file}:{temp_line}:{temp_col}" + \
+                              f'\n#{"-"*(35)}\n' + \
+                              f"{code_line}{RED}\n#---\n| Cause:"
+    # print(templating_stack)
+
     if not isinstance(line, list) and line[0] != -1 and line[2]!='':
         code_line = show_error_spot(line, full_line)
         file_name = line.source_name
@@ -103,7 +121,8 @@ def error(text: str, line=invalid_pos, full_line=False):
         [len(code_line.split('\n')[0])]
     ), 45)
     print(f'{RED}#{"-"*(largest//4)}')
-
+    if len(template_additions) != 0:
+        print(template_additions)
     _print_text(text)
     if line[0] != -1:
         print(f'|    Line: {line_no}')

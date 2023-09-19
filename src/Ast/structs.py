@@ -1,13 +1,13 @@
 import Ast.Ast_Types as Ast_Types
-from Ast.Ast_Types.Type_Void import Void
-from Ast.generics import GenericSpecify
-from Ast.variables.reference import VariableRef
-from Ast.variables.varobject import VariableObj
 import errors
+from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
+from Ast.generics import GenericSpecify
 from Ast.nodes import ASTNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
+from Ast.variables.reference import VariableRef
+from Ast.variables.varobject import VariableObj
 
 
 class StructDef(ASTNode):
@@ -126,14 +126,18 @@ class StructDef(ASTNode):
                 stmt.fullfill_templates(self)
 
         for version in self.struct_type.versions.values():
+            errors.templating_stack.append(version[3])
             version[2].fullfill_templates(version[2])
+            del errors.templating_stack[-1]
 
     def post_parse(self, module):
         if not self.is_generic:
             self.struct_type.define(self)
 
         for version in self.struct_type.versions.values():
+            errors.templating_stack.append(version[3])
             version[2].post_parse(version[2])
+            del errors.templating_stack[-1]
 
         if self.is_generic:
             return
@@ -147,7 +151,9 @@ class StructDef(ASTNode):
         #     self.post_parse(module)
 
         for version in self.struct_type.versions.values():
+            errors.templating_stack.append(version[3])
             version[2].pre_eval(version[2])
+            del errors.templating_stack[-1]
 
         if self.is_generic:
             return
@@ -157,7 +163,9 @@ class StructDef(ASTNode):
     def eval_impl(self, module):
 
         for version in self.struct_type.versions.values():
+            errors.templating_stack.append(version[3])
             version[2].eval(version[2])
+            del errors.templating_stack[-1]
 
         if self.is_generic:
             return
