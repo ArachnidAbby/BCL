@@ -10,9 +10,9 @@ from errors import error
 
 from . import Type_Base
 
-
 ZERO_CONST = ir.Constant(ir.IntType(32), 0)
-u64_ty = Type_I32.Integer_32(size=64, signed=False, rang=Type_I32.I64_RANGE)
+u64_ty = Type_I32.Integer_32(size=64, signed=False, name='u64',
+                             rang=Type_I32.I64_RANGE)
 
 
 def create_compare_method(typ, module, name, res, res_end):
@@ -175,8 +175,8 @@ class StringLiteral(Type_Base.Type):
 
     def _out_of_bounds(self, func, lhs, rhs, val, lhs_ptr):
         '''creates the code for runtime bounds checking'''
-        from Ast.literals.numberliteral import Literal
         from Ast import exception  # type: ignore
+        from Ast.literals.numberliteral import Literal
         size = PassNode(SrcPosition.invalid(),
                         self.get_size(func, lhs_ptr),
                         u64_ty)
@@ -207,7 +207,7 @@ class StringLiteral(Type_Base.Type):
         out = func.builder.call(self.nequal_func, (lhs.eval(func), rhs.eval(func)))
         return out
 
-    def assign(self, func, ptr, value, typ: Self):
-        val = value.ret_type.convert_to(func, value, typ)  # type: ignore
-        val = func.builder.bitcast(val, self.ir_type)
-        func.builder.store(val, ptr.ptr)
+    # def assign(self, func, ptr, value, typ: Self, first_assignment=False):
+    #     val = value.ret_type.convert_to(func, value, typ)  # type: ignore
+    #     val = func.builder.bitcast(val, self.ir_type)
+    #     func.builder.store(val, ptr.ptr)

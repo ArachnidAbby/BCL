@@ -9,7 +9,6 @@ from errors import error
 
 from . import Type_Base
 
-
 # Ranges
 U8_RANGE = (0, 255)
 U16_RANGE = (0, 65535)
@@ -63,18 +62,18 @@ class Integer_32(Type_Base.Type):
 
         return other.ret_type.convert_to(func, other, self)
 
-    def convert_from(self, func, typ, previous):
-        if typ.name in ('f32', 'f64'):
-            return func.builder.fptosi(previous.eval(func), self.ir_type)
-        elif typ.name == 'bool':
-            return func.builder.zext(previous.eval(func), self.ir_type)
-        elif typ.name == 'i64':
-            return func.builder.trunc(previous.eval(func), self.ir_type)
-        elif typ.name == 'i32':
-            return previous.eval(func)
+    # def convert_from(self, func, typ, previous):
+    #     if typ.name in ('f32', 'f64'):
+    #         return func.builder.fptosi(previous.eval(func), self.ir_type)
+    #     elif typ.name == 'bool':
+    #         return func.builder.zext(previous.eval(func), self.ir_type)
+    #     elif typ.name == 'i64':
+    #         return func.builder.trunc(previous.eval(func), self.ir_type)
+    #     elif typ.name == 'i32':
+    #         return previous.eval(func)
 
-        error(f"type '{typ}' cannot be converted to type 'i32'",
-              line=previous.position)
+    #     error(f"type '{typ}' cannot be converted to type 'i32'",
+    #           line=previous.position)
 
     def convert_to(self, func, orig, typ):
         if typ == self:

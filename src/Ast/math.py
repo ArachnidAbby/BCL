@@ -2,11 +2,11 @@ from collections import deque
 from typing import Any, Callable, Final, NamedTuple
 
 from llvmlite import ir
-from Ast.Ast_Types.Type_Void import Void
 
 import errors
 from Ast import Ast_Types  # type: ignore
 from Ast.Ast_Types.Type_Reference import Reference
+from Ast.Ast_Types.Type_Void import Void
 # from Ast import exception
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
@@ -309,7 +309,7 @@ class MemberAccess(OperationNode):
     def get_ptr(self, func):
         lhs = self.lhs
         rhs = self.rhs
-        if not lhs.ret_type.has_members:
+        if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
             possible_func = rhs.get_var(func)
 
             if possible_func is not None:
