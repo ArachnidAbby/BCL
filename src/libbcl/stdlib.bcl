@@ -21,6 +21,12 @@ public define malloc(size: size_t) -> UntypedPointer;
 public define free(ptr: UntypedPointer);
 public define strnlen(str: strlit, max: size_t) -> size_t;
 
+/// This is unsafe. Don't use it directly
+/// Eventually it will be moved too.
+// output is actually ssize_t, but the language doesn't have that. I should add it.
+public define read(file_descriptor: i32, buffer: UntypedPointer, count: size_t) -> i64;
+
+
 public define random() -> i32;
 public define srandom(seed: i32);
 
@@ -113,6 +119,26 @@ public define sleep(seconds: i32);
 public define exit(exit_code: i32);
 public define exit();
 
+// opaque FILE type used in C.
+public struct File {
+    fp: size_t; // random data, we can't make empty types yet.
+
+    public define is_null(&self) -> bool {
+        return *(self as UntypedPointer as &size_t) == 0;
+    }
+}
+
+public define fopen(filename: strlit, mode: strlit) -> &File;
+public define fclose(file: &File) -> i32;
+
+// std C get char from file
+public define fgetc(fp: &File) -> char;
+
+// get till next line, or buffer size reached
+define fgets(buffer: strlit, max_len: i32, fp: &File) -> i64;
+public define fgets(fp: &File, buffer: strlit) -> i64 {
+    return fgets(buffer, buffer.length as i32, fp);
+}
 
 // DEBUGGING
 
