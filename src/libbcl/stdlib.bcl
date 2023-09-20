@@ -21,10 +21,10 @@ public define malloc(size: size_t) -> UntypedPointer;
 public define free(ptr: UntypedPointer);
 public define strnlen(str: strlit, max: size_t) -> size_t;
 
-/// This is unsafe. Don't use it directly
-/// Eventually it will be moved too.
-// output is actually ssize_t, but the language doesn't have that. I should add it.
-public define read(file_descriptor: i32, buffer: UntypedPointer, count: size_t) -> i64;
+// /// This is unsafe. Don't use it directly
+// /// Eventually it will be moved too.
+// // output is actually ssize_t, but the language doesn't have that. I should add it.
+// public define read(file_descriptor: i32, buffer: UntypedPointer, count: size_t) -> i64;
 
 
 public define random() -> i32;
