@@ -9,7 +9,8 @@
 // Direct Usage of printf will not do any kind of fancy
 // compile-time checks. Be careful when passing things in.
 
-import optional::*;
+public import optional::*;
+public import result::*;
 
 // EXTERNAL DEFINITIONS
 public define printf(x: strlit, ...);
@@ -110,7 +111,6 @@ public define print(x: strlit) {
     printf("%s", x);
 }
 
-
 // SLEEP FUNCTIONS
 public define usleep(microsec: i32);
 public define sleep(seconds: i32);
@@ -124,7 +124,9 @@ public struct File {
     fp: size_t; // random data, we can't make empty types yet.
 
     public define is_null(&self) -> bool {
-        return *(self as UntypedPointer as &size_t) == 0;
+        //  &self -bitcast-> ptr -ref-> &ptr -bitcast-> ptr
+        //      -bitcast-> &size_t -deref-> size_t
+        return *(&(self as UntypedPointer) as UntypedPointer as &size_t) == 0;
     }
 }
 
@@ -138,6 +140,19 @@ public define fgetc(fp: &File) -> char;
 define fgets(buffer: strlit, max_len: i32, fp: &File) -> i64;
 public define fgets(fp: &File, buffer: strlit) -> i64 {
     return fgets(buffer, buffer.length as i32, fp);
+}
+
+define fdopen(fildes: i32, mode: strlit) -> &File;
+
+/// get stderr
+define stderr() -> &File {
+    return fdopen(2, "w");
+}
+
+define fprintf(fp: &File, msg: strlit, ...);
+
+public define err_println(msg: strlit) {
+    fprintf(stderr(), "%s\n", msg); // this wastefully reopens stderr :(
 }
 
 // DEBUGGING
