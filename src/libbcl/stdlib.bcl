@@ -157,11 +157,11 @@ public define err_print(msg: strlit) {
 }
 
 public define err_print(msg: i64) {
-    fprintf(stderr(), '%lld', msg);
+    fprintf(stderr(), "%lld", msg);
 }
 
 public define err_print(msg: i32) {
-    fprintf(stderr(), '%i', msg);
+    fprintf(stderr(), "%i", msg);
 }
 
 
@@ -170,11 +170,11 @@ public define err_println(msg: strlit) {
 }
 
 public define err_println(msg: i64) {
-    fprintf(stderr(), '%lld\n', msg);
+    fprintf(stderr(), "%lld\n", msg);
 }
 
 public define err_println(msg: i32) {
-    fprintf(stderr(), '%i\n', msg);
+    fprintf(stderr(), "%i\n", msg);
 }
 
 // DEBUGGING

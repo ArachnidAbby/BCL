@@ -1,14 +1,15 @@
 import os
-from typing import NamedTuple
 import parser  # type: ignore
+from typing import NamedTuple
 
 from llvmlite import binding, ir  # type: ignore
+from rply import LexingError
 
 import Ast.functions.standardfunctions
 import errors
 import linker
 from Ast import Ast_Types
-from Ast.nodes import ASTNode, SrcPosition, Modifiers
+from Ast.nodes import ASTNode, Modifiers, SrcPosition
 from lexer import Lexer
 
 modules: dict[str, "Module"] = {}
@@ -96,7 +97,13 @@ class Module(ASTNode):
         self.parsed = True
         for imp in self.imports.values():
             if not imp.obj.parsed:
-                imp.obj.parse()
+                try:
+                    imp.obj.parse()
+                except LexingError as e:
+                    error_pos = e.source_pos
+                    pos = SrcPosition(error_pos.lineno, error_pos.colno, 0, str(imp.obj.location))
+                    errors.error("A Lexing Error has occured. Invalid Syntax",
+                                 line=pos, full_line=True)
 
     def add_enum_to_schedule(self, enum_def):
         self.scheduled_events[self.ENUM_SCHEDULE_ID].append(enum_def)
