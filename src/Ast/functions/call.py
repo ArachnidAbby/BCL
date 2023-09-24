@@ -96,6 +96,9 @@ class FunctionCall(ExpressionNode):
         else:
             coupling_func = self.function
         if len(coupling_func.return_coupling) == 0:
+            if not self.ret_type.returnable:
+                return Lifetimes.LONG
+
             return Lifetimes.FUNCTION
 
         childs = self.paren.children
