@@ -71,12 +71,12 @@ public struct Vector::<T> {
         }
 
         if index >= *actual_size_ptr {
-            stdlib::print("\u001b[31m");
-            stdlib::print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
-            stdlib::print(index);
-            stdlib::print("\nActual size: ");
-            stdlib::print(*actual_size_ptr);
-            stdlib::println("\u001b[0m");
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
             stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
         }
 
@@ -97,12 +97,12 @@ public struct Vector::<T> {
         }
 
         if index >= *actual_size_ptr {
-            stdlib::print("\u001b[31m");
-            stdlib::print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
-            stdlib::print(index);
-            stdlib::print("\nActual size: ");
-            stdlib::print(*actual_size_ptr);
-            stdlib::println("\u001b[0m");
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
             stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
         }
 
@@ -133,7 +133,7 @@ public struct Vector::<T> {
 
             stdlib::free(array_ptr);
             array_ptr = new_ptr;
-            stdlib::println("MAKING BIGGER!");
+            // stdlib::println("MAKING BIGGER!");
         }
 
 
@@ -154,12 +154,12 @@ public struct Vector::<T> {
         actual_size_ptr = self.actual_size as &i64;
 
         if index >= *actual_size_ptr or index < 0i64 {
-            stdlib::print("\u001b[31m");
-            stdlib::print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
-            stdlib::print(index);
-            stdlib::print("\nActual size: ");
-            stdlib::print(*actual_size_ptr);
-            stdlib::println("\u001b[0m");
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
             stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
         }
 
@@ -173,14 +173,10 @@ public struct Vector::<T> {
 
         move_size = (*actual_size_ptr * T::SIZEOF) - (T::SIZEOF * (index + 1));
 
-        stdlib::println("pogging");
         data_ptr.release(data_ptr as &T);
-        stdlib::println("champing");
 
         stdlib::memmove(data_ptr, ahead_ptr, move_size as size_t);
-        stdlib::println("idk something else");
         actual_size_ptr -= 1;
-        stdlib::println("last stuff");
     }
 
 
@@ -190,8 +186,8 @@ public struct Vector::<T> {
     public define __increase_ref_count__(&self) {
         ref_ptr_typed = self.ref_count as &i64;
         ref_ptr_typed = 1 + *ref_ptr_typed;
-        stdlib::print("Append ref count: ");
-        stdlib::println(*ref_ptr_typed);
+        // stdlib::print("Append ref count: ");
+        // stdlib::println(*ref_ptr_typed);
     }
 
     /// Do not execute manually, breaks safety
@@ -199,8 +195,8 @@ public struct Vector::<T> {
         ref_count_ptr = self.ref_count as &i64;
         ref_count_ptr -= 1;
         ref_count = ref_count_ptr as i64;
-        stdlib::print("dipose ref count:");
-        stdlib::println(ref_count);
+        // stdlib::print("dipose ref count:");
+        // stdlib::println(ref_count);
 
         if ref_count <= 0 {
             array_ptr = *(self.array_ptr as &UntypedPointer); // this could just not work.. I don't know yet
@@ -216,7 +212,7 @@ public struct Vector::<T> {
             stdlib::free(self.ref_count);
             stdlib::free(self.allocated_size);
             stdlib::free(self.actual_size);
-            stdlib::println("Removed Vector");
+            // stdlib::println("Removed Vector");
         }
     }
 }

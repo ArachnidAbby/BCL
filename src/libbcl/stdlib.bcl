@@ -151,8 +151,30 @@ define stderr() -> &File {
 
 define fprintf(fp: &File, msg: strlit, ...);
 
+
+public define err_print(msg: strlit) {
+    fprintf(stderr(), msg); // this wastefully reopens stderr :(
+}
+
+public define err_print(msg: i64) {
+    fprintf(stderr(), '%lld', msg);
+}
+
+public define err_print(msg: i32) {
+    fprintf(stderr(), '%i', msg);
+}
+
+
 public define err_println(msg: strlit) {
-    fprintf(stderr(), "%s\n", msg); // this wastefully reopens stderr :(
+    fprintf(stderr(), "%s\n", msg);
+}
+
+public define err_println(msg: i64) {
+    fprintf(stderr(), '%lld\n', msg);
+}
+
+public define err_println(msg: i32) {
+    fprintf(stderr(), '%i\n', msg);
 }
 
 // DEBUGGING
