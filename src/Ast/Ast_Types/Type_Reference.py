@@ -1,7 +1,8 @@
+from llvmlite import ir
+
 from Ast import Ast_Types
 from Ast.nodes.passthrough import PassNode
 from errors import error
-from llvmlite import ir
 
 from . import Type_Base
 
@@ -35,18 +36,17 @@ class Reference(Type_Base.Type):
     def __hash__(self):
         return hash(f"&{self.typ}")
 
-    def convert_from(self, func, typ, previous):
-        if typ.name == "ref" and isinstance(previous.ret_type, Reference):
-            error("Pointer conversions are not supported due to unsafe " +
-                  "behavior", line=previous.position)
-        return self.typ.convert_from(func, typ, previous)
+    # def convert_from(self, func, typ, previous):
+    #     if typ.name == "ref" and isinstance(previous.ret_type, Reference):
+    #         error("Pointer conversions are not supported due to unsafe " +
+    #               "behavior", line=previous.position)
+    #     return self.typ.convert_from(func, typ, previous)
 
     def convert_to(self, func, orig, typ):
-        if typ == self.typ:
-            # self.add_ref_count(func, orig)
-            return func.builder.load(orig.get_ptr(func))
         if typ.name == "UntypedPointer":
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
+        if typ == self.typ: # deref is secondary to casting to UntypedPointer.
+            return func.builder.load(orig.get_ptr(func))
         error("Pointer conversions are not supported due to unsafe behavior",
               line=orig.position)
 
