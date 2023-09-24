@@ -73,6 +73,8 @@ class StructDef(ASTNode):
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
             return self.generic_args[var_name][0]
+        elif var_name == "Self":
+            return self.struct_type
 
         return self.module.get_type_by_name(var_name, pos)
 
@@ -95,6 +97,8 @@ class StructDef(ASTNode):
         if var_name in self.generic_args.keys():
             var = self.generic_args[var_name][0]
             return var
+        elif var_name == "Self":
+            return self.struct_type
         elif module is not None:
             return module.get_global(var_name)
 
@@ -147,9 +151,6 @@ class StructDef(ASTNode):
             stmt.post_parse(self)
 
     def pre_eval(self, module):
-        # if self.is_generic:
-        #     self.post_parse(module)
-
         for version in self.struct_type.versions.values():
             errors.templating_stack.append(version[3])
             version[2].pre_eval(version[2])
@@ -161,7 +162,6 @@ class StructDef(ASTNode):
             stmt.pre_eval(self)
 
     def eval_impl(self, module):
-
         for version in self.struct_type.versions.values():
             errors.templating_stack.append(version[3])
             version[2].eval(version[2])
