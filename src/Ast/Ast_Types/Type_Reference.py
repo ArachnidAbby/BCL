@@ -60,37 +60,37 @@ class Reference(Type_Base.Type):
         return self.typ.get_member(func, lhs.as_varref(), member_name_in)
 
     def sum(self, func, lhs, rhs):
-        return lhs.typ.sum(func, lhs.as_varref(), rhs)
+        return self.typ.sum(func, lhs.as_varref(), rhs)
 
     def sub(self, func, lhs, rhs):
-        return lhs.typ.sub(func, lhs.as_varref(), rhs)
+        return self.typ.sub(func, lhs.as_varref(), rhs)
 
     def mul(self, func, lhs, rhs):
-        return lhs.typ.mul(func, lhs.as_varref(), rhs)
+        return self.typ.mul(func, lhs.as_varref(), rhs)
 
     def div(self, func, lhs, rhs):
-        return lhs.typ.div(func, lhs.as_varref(), rhs)
+        return self.typ.div(func, lhs.as_varref(), rhs)
 
     def mod(self, func, lhs, rhs):
-        return lhs.typ.mod(func, lhs.as_varref(), rhs)
+        return self.typ.mod(func, lhs.as_varref(), rhs)
 
     def eq(self, func, lhs, rhs):
-        return lhs.typ.eq(func, lhs.as_varref(), rhs)
+        return self.typ.eq(func, lhs.as_varref(), rhs)
 
     def neq(self, func, lhs, rhs):
-        return lhs.typ.neq(func, lhs.as_varref(), rhs)
+        return self.typ.neq(func, lhs.as_varref(), rhs)
 
     def geq(self, func, lhs, rhs):
-        return lhs.typ.geq(func, lhs.as_varref(), rhs)
+        return self.typ.geq(func, lhs.as_varref(), rhs)
 
     def leq(self, func, lhs, rhs):
-        return lhs.typ.leq(func, lhs.as_varref(), rhs)
+        return self.typ.leq(func, lhs.as_varref(), rhs)
 
     def le(self, func, lhs, rhs):
-        return lhs.typ.le(func, lhs.as_varref(), rhs)
+        return self.typ.le(func, lhs.as_varref(), rhs)
 
     def gr(self, func, lhs, rhs):
-        return lhs.typ.gr(func, lhs.as_varref(), rhs)
+        return self.typ.gr(func, lhs.as_varref(), rhs)
 
     def get_assign_type(self, func, value):
         if value.ret_type.roughly_equals(self):
@@ -150,3 +150,21 @@ class Reference(Type_Base.Type):
     def deref(self, func, node):
         ptr = node.eval(func)
         return func.builder.load(ptr)
+
+    def lshift(self, func, lhs, rhs):
+        return self.typ.lshift(func, lhs.as_varref(), rhs)
+
+    def rshift(self, func, lhs, rhs):
+        return self.typ.rshift(func, lhs.as_varref(), rhs)
+
+    def bit_or(self, func, lhs, rhs):
+        return self.typ.bit_or(func, lhs.as_varref(), rhs)
+
+    def bit_xor(self, func, lhs, rhs):
+        return self.typ.bit_xor(func, lhs.as_varref(), rhs)
+
+    def bit_and(self, func, lhs, rhs):
+        return self.typ.bit_and(func, lhs.as_varref(), rhs)
+
+    def bit_not(self, func, lhs, rhs):
+        return self.typ.bit_not(func, lhs.as_varref(), rhs)

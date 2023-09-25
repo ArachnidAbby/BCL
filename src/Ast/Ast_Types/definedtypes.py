@@ -3,13 +3,15 @@ import platform
 from llvmlite import ir
 
 import errors
+from Ast.Ast_Types.Type_Alias import Alias
 from Ast.Ast_Types.Type_Base import Type
 from Ast.nodes import ExpressionNode
 
 from .Type_Bool import Integer_1
 from .Type_Char import Char
 from .Type_F32 import Float_32
-from .Type_I32 import I16_RANGE, I64_RANGE, I8_RANGE, U16_RANGE, U32_RANGE, U64_RANGE, U8_RANGE, Integer_32
+from .Type_I32 import (I8_RANGE, I16_RANGE, I64_RANGE, U8_RANGE, U16_RANGE,
+                       U32_RANGE, U64_RANGE, Integer_32)
 from .Type_Range import RangeType
 from .Type_StrLit import StringLiteral
 from .Type_UntypedPointer import UntypedPointer
@@ -83,13 +85,27 @@ conversion_priority = {x: c for c, x in enumerate(conversion_priority_raw)}
 def get_std_ret_type(self: ExpressionNode, other: ExpressionNode):
     '''When a math operation happens between types,
     we need to know what the final return type will be.'''
-    if other.ret_type not in conversion_priority.keys():
+    l_ret_type = self.ret_type
+    r_ret_type = other.ret_type
+
+    if isinstance(l_ret_type, Alias):
+        l_ret_type = l_ret_type.dealias()
+    if isinstance(r_ret_type, Alias):
+        r_ret_type = r_ret_type.dealias()
+
+    if r_ret_type not in conversion_priority.keys():
         errors.error("Cannot perform operation with a right " +
-                     f"operand of type \"{str(other.ret_type)}\"",
+                     f"operand of type \"{str(r_ret_type)}\"",
                      line=other.position)
+
+    if l_ret_type not in conversion_priority.keys():
+        errors.error("Cannot perform operation with a right " +
+                     f"operand of type \"{str(l_ret_type)}\"",
+                     line=self.position)
+
     largest_priority = max(
-        conversion_priority[self.ret_type],
-        conversion_priority[other.ret_type]
+        conversion_priority[l_ret_type],
+        conversion_priority[r_ret_type]
     )
 
     return conversion_priority_raw[largest_priority]
