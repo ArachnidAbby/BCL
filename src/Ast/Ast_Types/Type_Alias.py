@@ -28,6 +28,8 @@ class Alias(Type):
             return getattr(self.aliased_typ, name)
 
     def dealias(self):
+        if isinstance(self.aliased_typ, Alias):
+            return self.aliased_typ.dealias()
         return self.aliased_typ
 
     # ! remove in later commit, I just want this in the git history.
