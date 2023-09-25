@@ -221,12 +221,12 @@ class FunctionDef(ASTNode):
         #     errors.error(f"Function {self.func_name} cannot return a " +
         #                  "reference to a local variable or value.",
         #                  line=ret_line)
-        if not self.ret_type.returnable and self.block is None:
-            errors.warning("THIS IS NOT AN ERROR\n" +
-                           "You are binding a function that returns a heap pointer.\n" +
-                           "You will not be able to free this memory!\n" +
-                           "Please keep this in mind",
-                           line=ret_line)
+        # if not self.ret_type.returnable and self.block is None:
+        #     errors.warning("THIS IS NOT AN ERROR\n" +
+        #                    "You are binding a function that returns a heap pointer.\n" +
+        #                    "You will not be able to free this memory!\n" +
+        #                    "Please keep this in mind",
+        #                    line=ret_line)
         if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE:
             errors.error("Function is public while the return type is private. \n" +
                          "This makes it impossible for external callers to handle the return.",
