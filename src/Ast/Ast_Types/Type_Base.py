@@ -2,11 +2,10 @@
 from typing import Self
 
 from llvmlite import ir
-from Ast.nodes.passthrough import PassNode# type: ignore
-
-from errors import error
 
 from Ast.nodes.commontypes import Modifiers
+from Ast.nodes.passthrough import PassNode  # type: ignore
+from errors import error
 
 
 class Type:
@@ -55,8 +54,8 @@ class Type:
         pass
 
     def global_namespace_names(self, func, name, pos):
-        from Ast.literals.numberliteral import Literal
         from Ast.Ast_Types.Type_I32 import Integer_32
+        from Ast.literals.numberliteral import Literal
         if name == "SIZEOF":
             target_data = func.module.target_machine.target_data
             size = self.ir_type.get_abi_size(target_data)
@@ -144,10 +143,6 @@ class Type:
 
     def bit_and(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operator '&' is not supported for type '{lhs.ret_type}'",
-              line=lhs.position)
-
-    def div(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator '/' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def mod(self, func, lhs, rhs) -> ir.Instruction:
