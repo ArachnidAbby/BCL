@@ -216,6 +216,14 @@ struct LifetimeTest {
 //     indirection_recur(val);
 // }
 
+struct ExampleErrors::<T> {
+    _: T;
+
+    define poglin(self) {
+        self._ as UntypedPointer;
+    }
+}
+
 define gamerly(x: &i32, y: &i32) -> &i32 {
     if true { return x; }
     return y;
@@ -230,6 +238,7 @@ define gamerly_test(x: &i32) {
 }
 
 typedef INT = i32;
+// typedef ErroringExample = ExampleErrors::<i32>;
 
 typedef IBOX = Box::<i32>;
 import winDef;
@@ -241,8 +250,20 @@ define test_typedef(_: INT) -> INT {
 // define test_typedef_gen(_: IBOX){
 // }
 
+
+define tests(_: TestStruct) -> i32 {
+    return 6980085;
+}
+
 define main() {
     w = LifetimeTest {x: &10};
+    dd: INT = 12;
+    dd + 15;
+
+    random_thing = TestStruct {x: 10, y: 10};
+
+    println(random_thing.(tests)());
+
     // indirection_2(&w, 0, 0, &22); // * should work perfectly
 
     // println(test_typedef(22));

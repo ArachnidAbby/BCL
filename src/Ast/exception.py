@@ -1,15 +1,15 @@
 from llvmlite import ir
 
 import errors
-from Ast import Ast_Types  # type: ignore
-from Ast.functions import standardfunctions
+from Ast.Ast_Types.Type_I32 import Integer_32  # type: ignore
+# from Ast.functions import standardfunctions
 from Ast.literals import stringliteral
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.parenthese import ParenthBlock
 from Ast.variables.reference import VariableRef
 
 PRINTF_ARGS = ()
-EXIT_ARGS = (Ast_Types.Integer_32(),)
+EXIT_ARGS = (Integer_32(),)
 
 
 def _get_function(func, name: str, args: tuple, pos):
@@ -41,8 +41,8 @@ def over_index_exception(func, name, index, pos):
 
     fmt_bitcast = stringliteral.StrLiteral(pos, over_index_fmt)
 
-    printf_args = (strlit_ty, Ast_Types.Integer_32())
-    exit_args = (Ast_Types.Integer_32(),)
+    printf_args = (strlit_ty, Integer_32())
+    exit_args = (Integer_32(),)
 
     printf = _get_function(func, "printf", printf_args, pos)
     exit_func = _get_function(func, "exit", exit_args, pos)
@@ -60,8 +60,8 @@ def no_next_item(func, name):
 
     fmt_bitcast = stringliteral.StrLiteral(SrcPosition.invalid(), over_index_fmt)
 
-    printf_args = (strlit_ty, Ast_Types.Integer_32())
-    exit_args = (Ast_Types.Integer_32(),)
+    printf_args = (strlit_ty, Integer_32())
+    exit_args = (Integer_32(),)
 
     printf = _get_function(func, "printf", printf_args, SrcPosition.invalid())
     exit_func = _get_function(func, "exit", exit_args, SrcPosition.invalid())

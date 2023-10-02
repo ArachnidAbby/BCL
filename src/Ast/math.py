@@ -261,9 +261,20 @@ class MemberAccess(OperationNode):
     # do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
+        from Ast.namespace import NamespaceIndex
+        from Ast.nodes.container import ContainerNode
+        from Ast.variables.reference import VariableRef
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
         self.is_pointer = False
+        if not isinstance(rhs, ContainerNode) and not isinstance(rhs, VariableRef) and not isinstance(rhs, NamespaceIndex):
+            errors.error("Member access operator can only get members that " +
+                         "are in parenthesis or are valid keywords",
+                         line=rhs.position)
+        if isinstance(rhs, ContainerNode) and len(rhs.children) > 1:
+            errors.error("Member Access operator using parenthesis must " +
+                         "only contain a singlular item.",
+                         line=rhs.position)
 
     def copy(self):
         out = MemberAccess(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
@@ -277,9 +288,20 @@ class MemberAccess(OperationNode):
         self.rhs.reset()
 
     def pre_eval_math(self, func):
+        from Ast.nodes.container import ContainerNode
+
         self.lhs.pre_eval(func)
         lhs = self.lhs
         rhs = self.rhs
+
+        if isinstance(rhs, ContainerNode):
+            possible_func = rhs.children[0].get_var(func)
+            if possible_func is not None:
+                self.ret_type = possible_func
+                self.assignable = False
+                return
+            errors.error("Entity not found.", line=rhs.position)
+
         if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
             # get function if struct doesn't contain members.
             # global functions can still use the member access syntax on structs
@@ -289,7 +311,7 @@ class MemberAccess(OperationNode):
                 self.ret_type = possible_func
                 self.assignable = False
             elif lhs.ret_type.has_members:
-                errors.error("member not found!", line=rhs.position)
+                errors.error("Member not found!", line=rhs.position)
             else:
                 errors.error("Has no members", line=self.position)
         else:
@@ -298,7 +320,6 @@ class MemberAccess(OperationNode):
             self.assignable = member_info.mutable
             self.is_pointer = member_info.is_pointer
             self.ret_type = member_info.typ
-            # print(self.ret_type, self.lhs, self.rhs)
 
     def _get_global_func(self, module, name: str):
         return module.get_global(name)
@@ -307,8 +328,16 @@ class MemberAccess(OperationNode):
         return self.lhs.get_coupled_lifetimes(func)
 
     def get_ptr(self, func):
+        from Ast.nodes.container import ContainerNode
+
         lhs = self.lhs
         rhs = self.rhs
+        if isinstance(rhs, ContainerNode):
+            possible_func = rhs.children[0].get_var(func)
+            if possible_func is not None:
+                return
+            errors.error("Entity not found.", line=rhs.position)
+
         if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
             possible_func = rhs.get_var(func)
 
@@ -326,8 +355,13 @@ class MemberAccess(OperationNode):
         return self.lhs.get_lifetime(func)
 
     def using_global(self, func) -> bool:
+        from Ast.nodes.container import ContainerNode
         rhs = self.rhs
         lhs = self.lhs
+
+        if isinstance(rhs, ContainerNode):
+            return True
+
         possible_func = rhs.get_var(func)
         return (possible_func is not None and (not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None))
 
@@ -369,25 +403,31 @@ def pow(self, func, lhs, rhs):
 def bnot(self, func, lhs, rhs):
     return (lhs.ret_type).bit_not(func, lhs, rhs)
 
+
 @operator(0, "Lshift")
 def lshift(self, func, lhs, rhs):
     return (lhs.ret_type).lshift(func, lhs, rhs)
+
 
 @operator(0, "Rshift")
 def rshift(self, func, lhs, rhs):
     return (lhs.ret_type).rshift(func, lhs, rhs)
 
+
 @operator(-1, "Band")
 def band(self, func, lhs, rhs):
     return (lhs.ret_type).bit_and(func, lhs, rhs)
+
 
 @operator(-2, "Bxor")
 def bxor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_xor(func, lhs, rhs)
 
+
 @operator(-3, "Bor")
 def bor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_or(func, lhs, rhs)
+
 
 @operator(1, "Sum")
 def sum(self, func, lhs, rhs):

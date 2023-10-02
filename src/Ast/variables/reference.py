@@ -2,8 +2,9 @@ from Ast import Ast_Types
 from Ast.Ast_Types import Type_Base
 from Ast.nodes import ExpressionNode, block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
-from .varobject import VariableObj
 from errors import error
+
+from .varobject import VariableObj
 
 
 class VariableRef(ExpressionNode):

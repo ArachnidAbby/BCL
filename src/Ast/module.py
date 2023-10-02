@@ -70,7 +70,7 @@ class Module(ASTNode):
             #     {
             #         "language": ir.DIToken("DW_LANG_BCL"),
             #         "file": di_file,
-            #         "producer": "PyBCL Compiler (v0.8.0-alpha)",
+            #         "producer": "PyBCL Compiler (v0.7.0-alpha)",
             #         "runtimeVersion": 0,
             #         "isOptimized": True,
             #     },
