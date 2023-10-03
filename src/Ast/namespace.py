@@ -1,8 +1,8 @@
+import errors
 from Ast import Ast_Types
 from Ast.generics import GenericSpecify
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.expression import ExpressionNode
-import errors
 
 
 class NamespaceIndex(ExpressionNode):
@@ -75,7 +75,6 @@ class NamespaceIndex(ExpressionNode):
         self.pre_eval(func)
         if isinstance(self.val, Ast_Types.Type):
             return self.val
-        print(self.val)
         errors.error("Not a type", line=self.position)
 
     def as_file_path(self):
