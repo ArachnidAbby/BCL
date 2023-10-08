@@ -24,7 +24,7 @@ class TypeDefinition(ASTNode):
             self.is_generic = False
             self.typ_name = name.var_name
             self.params = {}  # type params
-        if isinstance(name, GenericSpecify):  # generic
+        if isinstance(name, GenericSpecify):
             self.is_generic = True
             self.typ_name = name.left.var_name
             # type params

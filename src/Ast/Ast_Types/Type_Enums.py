@@ -1,9 +1,10 @@
-from Ast.Ast_Types.Type_Base import Type
 from llvmlite import ir
-from Ast.Ast_Types.Type_I32 import Integer_32
+
 import errors
-from Ast.literals.numberliteral import Literal
 from Ast import Ast_Types
+from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_I32 import Integer_32
+from Ast.literals.numberliteral import Literal
 
 # Found using https://mathiasbynens.be/demo/integer-range
 # because I'm lazy
@@ -52,6 +53,7 @@ class EnumType(Type):
             self.members[mem_name] = None
 
         self.visibility = super().visibility
+        self.bitsize = 0
 
     def set_visibility(self, value):
         self.visibility = value
@@ -71,7 +73,6 @@ class EnumType(Type):
         last_num = 0
         # Get size and create members. Same way as C enums
         for mem_name, val, val_pos in members:
-
             if val is None:
                 val = last_num
             else:
@@ -92,7 +93,6 @@ class EnumType(Type):
 
         self.bitsize = int_sequence_sizes[max_size]
         self.ir_type = int_types[int_sequence[max_size]]
-
 
     def convert_to(self, func, orig, typ):
         if typ == self:

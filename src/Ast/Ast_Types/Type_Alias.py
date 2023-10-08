@@ -1,3 +1,4 @@
+import errors
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_Void import Void
 
@@ -33,6 +34,10 @@ class Alias(Type):
             params_types.append(ty.as_type_reference(func))
 
         params = tuple(params_types)
+
+        if len(params) != len(self.definition.params):
+            errors.error("Invalid Generic arguments. Not enough args",
+                         line=pos)
 
         if Void() in params:
             return self

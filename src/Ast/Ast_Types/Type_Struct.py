@@ -91,6 +91,10 @@ class Struct(Ast_Types.Type):
 
         params = tuple(params_types)
 
+        if len(params) != len(self.definition.generic_args):
+            error("Invalid Generic arguments. Not enough args",
+                  line=pos)
+
         if Void() in params:
             return self
 
