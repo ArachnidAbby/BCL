@@ -94,11 +94,7 @@ class NamespaceIndex(ExpressionNode):
 
         return file
 
-
     def get_position(self) -> SrcPosition:
         if self.star_idx:
             return self.left.position
         return self.merge_pos((self.left.position, self.right.position))
-
-    def get_function(self, func):
-        errors.error("FUCK", line=self.position)

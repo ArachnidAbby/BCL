@@ -14,9 +14,6 @@ class GenericSpecify(ExpressionNode):
         self.params = params
         self.in_definition = False
         self.block = block
-        # module.add_template_to_schedule(self)
-
-    # def get_type_by_name(self, name, pos):
 
     def copy(self):
         last_block = None
@@ -58,5 +55,4 @@ class GenericSpecify(ExpressionNode):
         return f"{self.left}::<{self.params}>"
 
     def get_position(self):
-        # print(self._position)
         return self.merge_pos((self._position, self.params.position))
