@@ -1,27 +1,72 @@
 from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Void import Void
 
 # from Ast.nodes.commontypes import SrcPosition
 
 
 class Alias(Type):
     __slots__ = ('module', 'aliased_typ', 'name',
-                 'typ_name', 'is_public', "__dict__")
+                 'typ_name', 'is_public', "is_generic",
+                 "versions", "definition")
 
-    def __init__(self, module, name, aliased):
+    def __init__(self, module, name, aliased, definition):
         self.aliased_typ = aliased
         self.typ_name = name
         self.name = ""
         self.module = module
         self.is_public = False
+        self.definition = definition
+        self.is_generic = False
+        self.versions = {}
 
     def set_type(self, typ, public):
         self.aliased_typ = typ
         self.name = typ.name
         self.is_public = public
 
+    def pass_type_params(self, func, params, pos):
+        from Ast.variables.reference import VariableRef
+
+        params_types = []
+
+        for ty in params:
+            params_types.append(ty.as_type_reference(func))
+
+        params = tuple(params_types)
+
+        if Void() in params:
+            return self
+
+        if params in self.versions.keys():
+            return self.versions[params][0]
+
+        new_name = f"{self.typ_name}::<{', '.join([str(x) for x in params])}>"
+
+        name_var = VariableRef(pos, new_name, None)
+
+        generic_args = {**self.definition.params}
+
+        for c, key in enumerate(self.definition.params.keys()):
+            generic_args[key] = (params[c], func)
+
+        def_copy = self.definition.copy()
+        def_copy.is_generic = False
+        def_copy.original_name = name_var
+        def_copy.typ_name = new_name
+        def_copy.params = generic_args
+
+        # new_ty = Alias(self.module, name_var, def_copy.aliased, def_copy)
+        # def_copy.typ = new_ty
+
+        self.versions[params] = (def_copy.typ, generic_args, def_copy, pos)
+
+        self.definition.fullfill_templates(self.module)
+
+        return def_copy.typ
+
     def __getattribute__(self, name):
         self_members = (*Alias.__slots__, "set_type", "__init__", "__str__",
-                        "__hash__", "declare", "dealias")
+                        "__hash__", "declare", "dealias", "pass_type_params")
         if name in self_members:
             return object.__getattribute__(self, name)
         if hasattr(self.aliased_typ, name):
@@ -32,81 +77,15 @@ class Alias(Type):
             return self.aliased_typ.dealias()
         return self.aliased_typ
 
-    # ! remove in later commit, I just want this in the git history.
-    # @property
-    # def ir_type(self):
-    #     return self.aliased_typ.ir_type
+    def declare(self, mod):
+        '''Ensure declare works properly'''
+        if self.aliased_typ in mod.declared_types:
+            return
 
-    # @property
-    # def pass_as_ptr(self):
-    #     return self.aliased_typ.pass_as_ptr
-
-    # @property
-    # def no_load(self):
-    #     return self.aliased_typ.no_load
-
-    # @property
-    # def read_only(self):
-    #     return self.aliased_typ.read_only
-
-    # @property
-    # def has_members(self):
-    #     return self.aliased_typ.has_members
-
-    # @property
-    # def returnable(self):
-    #     return self.aliased_typ.returnable
-
-    # @property
-    # def checks_lifetime(self):
-    #     return self.aliased_typ.checks_lifetime
-
-    # @property
-    # def is_dynamic(self):
-    #     return self.aliased_typ.is_dynamic
-
-    # @property
-    # def functions(self):
-    #     return self.aliased_typ.functions
-
-    # @property
-    # def is_iterator(self):
-    #     return self.aliased_typ.is_iterator
-
-    # @property
-    # def is_method(self):
-    #     return self.aliased_typ.is_method
-
-    # @property
-    # def literal_index(self):
-    #     return self.aliased_typ.literal_index
-
-    # @property
-    # def is_namespace(self):
-    #     return self.aliased_typ.is_namespace
-
-    # @property
-    # def needs_dispose(self):
-    #     return self.aliased_typ.needs_dispose
-
-    # @property
-    # def is_generic(self):
-    #     return self.aliased_typ.is_generic
-
-    # @property
-    # def ref_counted(self):
-    #     return self.aliased_typ.ref_counted
-
-    # @property
-    # def generate_bounds_check(self):
-    #     return self.aliased_typ.generate_bounds_check
-
-    # @property
-    # def rang(self):
-    #     return self.aliased_typ.rang
+        self.aliased_typ.declare(mod)
 
     def __str__(self) -> str:
-        return self.typ_name
+        return str(self.typ_name)
 
     def __hash__(self):
         return hash(self.typ_name + f".{self.module.location}")

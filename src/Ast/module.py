@@ -38,7 +38,7 @@ class Module(ASTNode):
                  'module', 'mod_name', 'target', 'parsed', 'pre_evaled',
                  'evaled', 'ir_saved', 'types', 'post_parsed',
                  'scheduled_events', 'ran_schedule', 'target_machine',
-                 'scheduled_templates', 'cmd_args')
+                 'scheduled_templates', 'cmd_args', 'declared_types')
 
     is_namespace = True
     ENUM_SCHEDULE_ID = 0
@@ -87,6 +87,7 @@ class Module(ASTNode):
         self.ir_saved = False
         self.scheduled_events = [[], [], [], []]
         self.scheduled_templates = []
+        self.declared_types = [] # types that have had their .declare method ran.
         self.ran_schedule = False
 
         modules[name] = self
@@ -182,6 +183,7 @@ class Module(ASTNode):
 
     def create_type(self, name: str, typeobj: Ast.Type):
         self.types[name] = typeobj
+        self.declared_types.append(typeobj) # no need to run declare.
 
     def get_type_by_name(self, name, position, stack=None) -> Ast.Ast_Types.Type:  # type: ignore
         private_imports = False
@@ -426,6 +428,7 @@ class Module(ASTNode):
             func.declare(self)
         types = self.get_import_types()
         for typ in types:
+            self.declared_types.append(typ)
             typ.declare(self)
         if args["--emit-ast"]:
             print(self.repr_as_tree())

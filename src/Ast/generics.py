@@ -1,8 +1,8 @@
 
+import errors
 from Ast.nodes import block
 from Ast.nodes.commontypes import Lifetimes
 from Ast.nodes.expression import ExpressionNode
-import errors
 
 
 class GenericSpecify(ExpressionNode):

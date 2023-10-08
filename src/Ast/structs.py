@@ -22,6 +22,7 @@ class StructDef(ASTNode):
         self.raw_name = name
         if isinstance(name, GenericSpecify):
             self.is_generic = True
+            # (typ, func_of_origin)
             self.generic_args = {x.var_name: (Void(), None) for x in name.params}
             self.struct_name = name.left.var_name
             name.in_definition = True
@@ -88,6 +89,8 @@ class StructDef(ASTNode):
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.generic_args.keys():
             return self.get_variable(var_name, module)
+        elif var_name == "Self":
+            return self.struct_type
         elif module is not None:
             return module.get_global(var_name)
 

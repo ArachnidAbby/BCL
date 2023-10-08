@@ -150,13 +150,15 @@ class Parser(ParserBase):
 
     @rule(0, "$typedef expr SET_VALUE expr SEMI_COLON")
     def parse_typedef(self):
-        if not isinstance(self.peek(1).value, Ast.variables.reference.VariableRef):
-            errors.error("Typedef name must be a variable name.",
+        name = self.peek(1).value
+        if not isinstance(name, Ast.variables.reference.VariableRef) and \
+                not isinstance(name, Ast.GenericSpecify):
+            errors.error("Typedef name must be a variable name (or template name).",
                          line=self.peek(1).pos)
 
         pos = self.peek(0).pos
         node = Ast.variables.typedef.TypeDefinition(pos,
-                                                    self.peek(1).value.var_name,
+                                                    name,
                                                     self.peek(3).value,
                                                     self.module)
         self.replace(5, 'statement', node)

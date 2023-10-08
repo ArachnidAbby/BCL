@@ -68,7 +68,6 @@ class Struct(Ast_Types.Type):
         self.is_generic = is_generic
         self.definition = definition
         for c, member in enumerate(members):
-
             # populate member lists
             member_name = member.key.var_name
             self.member_indexs.append(member_name)

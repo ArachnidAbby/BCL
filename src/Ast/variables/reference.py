@@ -94,7 +94,11 @@ class VariableRef(ExpressionNode):
         '''Get this variable's name as a Type
         This is useful for static type declaration.
         '''
-        typ = func.get_type_by_name(self.var_name, self.position)()
+        typ = None
+        if self.block is not None:
+            typ = self.block.get_type_by_name(self.var_name, self.position)()
+        elif typ is None:
+            typ = func.get_type_by_name(self.var_name, self.position)()
         if typ.is_generic and not allow_generics:
             error(f"Type is generic. Add type params. {typ}",
                   line=self.position)

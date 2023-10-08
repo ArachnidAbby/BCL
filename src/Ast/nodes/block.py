@@ -101,8 +101,10 @@ class Block(ContainerNode):
             return self.parent.get_variable(var_name, module)
         elif module is not None:
             return module.get_global(var_name)
-        else:
-            return None
+
+    def get_type_by_name(self, var_name, pos):
+        if self.parent is not None:
+            return self.parent.get_type_by_name(var_name, pos)
 
     def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''
