@@ -84,10 +84,15 @@ class Alias(Type):
 
     def declare(self, mod):
         '''Ensure declare works properly'''
-        if self.aliased_typ in mod.declared_types:
+        if self.dealias() in mod.declared_types:
             return
 
-        self.aliased_typ.declare(mod)
+        if not self.is_generic:
+            self.aliased_typ.declare(mod)
+            return
+
+        for ver in self.versions.values():
+            ver[0].declare(mod)
 
     def __str__(self) -> str:
         return str(self.typ_name)

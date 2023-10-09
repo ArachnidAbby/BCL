@@ -1,10 +1,11 @@
 from copy import copy
 from typing import Self
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
 
 import Ast.math
 from Ast import Ast_Types
+from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
 from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
@@ -132,11 +133,7 @@ class Struct(Ast_Types.Type):
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
                   line=pos)
 
-        # print("getting size")
-        # print(self.ir_type.elements)
         if x := self.global_namespace_names(func, name, pos):
-            # print("getting size")
-            # print(self.ir_type.elements)
             return x
 
         for mem_name in self.members.keys():
@@ -212,14 +209,24 @@ class Struct(Ast_Types.Type):
         error(f"{self.struct_name} has no conversions",  line=orig.position)
 
     def __eq__(self, other):
+        if isinstance(other, Alias):
+            return self.name == other.dealias().name \
+               and other.dealias().struct_name == self.struct_name \
+               and self.module.location == other.dealias().module.location
+
         return super().__eq__(other) \
                and other.struct_name == self.struct_name \
                and self.module.location == other.module.location
 
     def __neq__(self, other):
+        if isinstance(other.ret_type, Alias):
+            return self.name != other.dealias().name \
+               or other.struct_name != self.struct_name \
+               or self.module.location != other.module.location
+
         return super().__neq__(other) \
-               and other.struct_name != self.struct_name \
-               and self.module.location != other.module.location
+               or other.struct_name != self.struct_name \
+               or self.module.location != other.module.location
 
     def get_func(self, name, lhs, rhs, ret_none=False):
         if rhs is not None:

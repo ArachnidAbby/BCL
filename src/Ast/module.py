@@ -301,13 +301,14 @@ class Module(ASTNode):
             output.append(func)
 
         if stack is None:
-            stack = [self]
+            stack = []
         elif self in stack:
             return output
 
+        stack.append(self)
+
         for mod in self.imports.values():
             if mod.using_namespace:
-                stack.append(self)
                 output += mod.obj.get_all_globals(stack)
         return output
 
@@ -330,10 +331,17 @@ class Module(ASTNode):
             output.append(typ)
         return output
 
-    def get_import_types(self):
+    def get_import_types(self, stack=None):
+        if stack is None:
+            stack = []
+        elif self in stack:
+            return []
+        stack.append(self)
+
         output = []
         for mod in self.imports.values():
             output += mod.obj.get_all_types()
+            output += mod.obj.get_import_types(stack=stack)
         return output
 
     def post_parse(self, parent):
@@ -451,10 +459,14 @@ class Module(ASTNode):
         other_args["--emit-binary"] = False
         other_args["--emit-object"] = True
         objects = [f"{loc}/target/o/{self.mod_name}.o"]
-        for mod in self.imports.values():
-            mod.obj.declare_builtins()
-            mod.obj.save_ir(f"{loc}", other_args)
-            objects.append(f"{loc}/target/o/{mod.obj.mod_name}.o")
+
+        # using global list of modules
+        for mod in modules.values():
+            if mod == self:
+                continue
+            mod.declare_builtins()
+            mod.save_ir(f"{loc}", other_args)
+            objects.append(f"{loc}/target/o/{mod.mod_name}.o")
 
         if args["--emit-binary"]:
             extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm']  # adds math.h
