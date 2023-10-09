@@ -245,10 +245,15 @@ class Function(Type):
 
     def declare(self, module):
         '''Declare a function inside of a new module'''
-        fnty = ir.FunctionType((self.func_ret).ir_type, self.get_ir_types(),
-                               self.contains_ellipsis)
-        ir.Function(module.module, fnty,
-                    name=module.get_unique_name(self.func_obj.name))
+        # ! any way to avoid try catch?
+        try:
+            fnty = ir.FunctionType((self.func_ret).ir_type, self.get_ir_types(),
+                                    self.contains_ellipsis)
+            ir.Function(module.module, fnty,
+                        name=self.func_obj.name)
+        except ir._utils.DuplicatedNameError:
+            error(f"Bound function with the name \"{self.func_obj.name}\" already exists",
+                  line=self.definition.position, full_line=True)
 
         if self.func_ret.name != "Generator":
             return

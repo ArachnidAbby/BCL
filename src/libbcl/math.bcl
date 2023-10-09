@@ -60,7 +60,6 @@ public define sign(x : i32) -> i32 {
 public define acos(x: f64) -> f64;
 public define asin(x: f64) -> f64;
 public define atan(x: f64) -> f64;
-public define acos(x: f64) -> f64;
 public define atan2(x: f64) -> f64;
 
 public define cos(x: f64) -> f64;

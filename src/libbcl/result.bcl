@@ -15,7 +15,7 @@ public struct Result::<T, E> {
     _is_error: bool;
 
     /// create a non-error Result
-    public define wrap(data:: T) -> Self {
+    public define wrap(data: T) -> Self {
         // maybe adding enumty::SMALLESTMEMBER is a good idea?
         // zero may not be valid.
         ecode = *(&0i64 as UntypedPointer as &E); // i64 is the largest enum size.
@@ -58,7 +58,7 @@ public struct Result::<T, E> {
 
     /// only exit on the case of a specific error
     public define handle(&self, ecode: E, msg: strlit) -> &Self {
-        if self._is_error and self._error_code == E {
+        if self._is_error and self._error_code == ecode {
             err_println(msg);
             exit(self._error_code as i32);
         }
@@ -66,7 +66,7 @@ public struct Result::<T, E> {
         return self;
     }
 
-    public define is_error(self) {
+    public define is_error(self) -> bool{
         return self._is_error;
     }
 

@@ -221,7 +221,10 @@ class Module(ASTNode):
                      f"'{self.mod_name}'", line=position)
 
     def get_unique_name(self, name: str):
-        return self.module.get_unique_name(name)
+        if name == "main":  #! main is special because of the crt.
+            return name
+        # ! Using names alone could get messy in the future. Change this when packages are added.
+        return self.module.get_unique_name(f"{self.mod_name}.{name}")
 
     def get_local_name(self, name: str, position: tuple[int, int, int]):
         '''get a local object by name, this could be a global, import,
@@ -237,7 +240,8 @@ class Module(ASTNode):
         errors.error(f"Cannot find '{name}' in module '{self.mod_name}'",
                      line=position)
 
-    def get_global(self, name: str, pos=SrcPosition.invalid(), stack=None) -> object | None:
+    def get_global(self, name: str, pos=SrcPosition.invalid(),
+                   stack=None) -> object | None:
         '''get a global/constant'''
         if name in self.globals:
             return self.globals[name]
@@ -296,20 +300,20 @@ class Module(ASTNode):
 
     def get_all_globals(self, stack=None) -> list[object]:
         '''get all functions for linking'''
+        if stack is None:
+            stack = []
+        elif self in stack:
+            return []
+
         output: list[object] = []
         for func in self.globals.values():
             output.append(func)
 
-        if stack is None:
-            stack = []
-        elif self in stack:
-            return output
-
         stack.append(self)
 
         for mod in self.imports.values():
-            if mod.using_namespace:
-                output += mod.obj.get_all_globals(stack)
+            # if mod.using_namespace:
+            output += mod.obj.get_all_globals(stack)
         return output
 
     def copy(self):
@@ -321,7 +325,7 @@ class Module(ASTNode):
     def get_import_globals(self):
         output = []
         for mod in self.imports.values():
-            output += mod.obj.get_all_globals()
+            output += mod.obj.get_all_globals(stack=[self])
         return output
 
     def get_all_types(self) -> list[object]:
@@ -431,15 +435,21 @@ class Module(ASTNode):
         module_pass.add_cfg_simplification_pass()
         # module_pass.add_merge_returns_pass()
         # pass_manager.populate(module_pass)
-        funcs = self.get_import_globals()
-        for func in funcs:
-            func.declare(self)
-        types = self.get_import_types()
-        for typ in types:
-            self.declared_types.append(typ)
-            typ.declare(self)
+
+        for mod in modules.values():
+            if mod == self:
+                continue
+            # declare all types originating from imports
+            for typ in mod.types.values():
+                self.declared_types.append(typ)
+                typ.declare(self)
+            # declare all functions originating from imports
+            for func in mod.globals.values():
+                func.declare(self)
+
         if args["--emit-ast"]:
             print(self.repr_as_tree())
+
         llir = str(self.module)
         # mod = llir
         mod = binding.parse_assembly(llir)
@@ -458,6 +468,7 @@ class Module(ASTNode):
         other_args = args.copy()
         other_args["--emit-binary"] = False
         other_args["--emit-object"] = True
+        other_args["--run"] = False
         objects = [f"{loc}/target/o/{self.mod_name}.o"]
 
         # using global list of modules

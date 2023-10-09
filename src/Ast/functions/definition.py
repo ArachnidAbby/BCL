@@ -235,6 +235,11 @@ class FunctionDef(ASTNode):
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and
         is NOT named "main"'''
+        if parent == self.module and self.block is None:
+            if name in self.module.globals.keys():
+                errors.error(f"Bound function with the name \"{name}\" already exists",
+                             line=self.position, full_line=True)
+            return name
         return parent.get_unique_name(name)
 
     def _append_args(self):

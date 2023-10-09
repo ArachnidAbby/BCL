@@ -6,11 +6,9 @@ struct test {
     y: i32;
 }
 
-define strnlen(str: strlit, max: i32) -> i32;
-
 public define poggers() {
     println("SHOG");
-    println("SOGGERS".strnlen(123123));
+    println("SOGGERS".strnlen(123123 as size_t));
     println(get_new('#',2));
     println("");
 }
