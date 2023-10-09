@@ -298,24 +298,6 @@ class Module(ASTNode):
         group.add_function(function_object)  # type: ignore
         return group
 
-    def get_all_globals(self, stack=None) -> list[object]:
-        '''get all functions for linking'''
-        if stack is None:
-            stack = []
-        elif self in stack:
-            return []
-
-        output: list[object] = []
-        for func in self.globals.values():
-            output.append(func)
-
-        stack.append(self)
-
-        for mod in self.imports.values():
-            # if mod.using_namespace:
-            output += mod.obj.get_all_globals(stack)
-        return output
-
     def copy(self):
         return self
 
@@ -326,26 +308,6 @@ class Module(ASTNode):
         output = []
         for mod in self.imports.values():
             output += mod.obj.get_all_globals(stack=[self])
-        return output
-
-    def get_all_types(self) -> list[object]:
-        '''get all functions for linking'''
-        output: list[object] = []
-        for typ in self.types.values():
-            output.append(typ)
-        return output
-
-    def get_import_types(self, stack=None):
-        if stack is None:
-            stack = []
-        elif self in stack:
-            return []
-        stack.append(self)
-
-        output = []
-        for mod in self.imports.values():
-            output += mod.obj.get_all_types()
-            output += mod.obj.get_import_types(stack=stack)
         return output
 
     def post_parse(self, parent):
