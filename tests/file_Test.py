@@ -11,7 +11,7 @@ last = None
 
 def compile_file(dir):
     # Have to do it this way due to llvm goofyness
-    return os.system(f"env/bin/python {p}/../src/main.py compile {dir} --emit-binary")
+    return os.system(f"env/bin/python {p}/../src/main.py compile {dir} --emit-binary --quiet")
 
 
 class AllTest(unittest.TestCase):

@@ -16,20 +16,25 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--supress-warnings": False,
     "--libs": [],
     "--run": False,
-    "--debug": False
+    "--debug": False,
+    "--quiet": False  # suppress all compiler output
 }
 
 
 @contextmanager
-def timingContext(text: str):
+def timingContext(text: str, args):
     start = perf_counter()
     yield
-    print(errors.GREEN, end="")
-    _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
+    if not args["--quiet"]:
+        print(errors.GREEN, end="")
+        _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
 
 def compile(src_str: str, output_loc: Path, args, file=""):
     start = perf_counter()
+
+    if args["--quiet"]:
+        errors.SILENT_MODE = True
 
     inline_warning("Python has notoriusly high memory usage, this applies " +
                    "for this compiler!\nThis compiler is written in python " +
@@ -40,7 +45,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
     if args["--supress-warnings"]:
         errors.SUPRESSED_WARNINGS = True
 
-    with timingContext('imports finished'):
+    with timingContext('imports finished', args):
         import psutil  # type: ignore
 
         process = psutil.Process(os.getpid())
@@ -57,10 +62,10 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         import lexer as lex
         from Ast import Ast_Types
 
-    with timingContext('lexing finished'):
+    with timingContext('lexing finished', args):
         tokens = lex.Lexer().get_lexer().lex(src_str)
 
-    with timingContext('parsing finished'):
+    with timingContext('parsing finished', args):
         try:
             module = Ast.module.Module(SrcPosition.invalid(), output_loc.stem,
                                        str(file), tokens, args)
@@ -71,7 +76,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
             errors.error("A Lexing Error has occured. Invalid Syntax",
                          line=pos, full_line=True)
 
-    with timingContext('module created'):
+    with timingContext('module created', args):
         Ast_Types.definedtypes.types_dict['strlit'] = Ast_Types.definedtypes.types_dict['strlit'](module)
         Ast_Types.definedtypes.needs_declare.append(Ast_Types.definedtypes.types_dict['strlit'])
         module.fullfill_templates()

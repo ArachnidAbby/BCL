@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import sys
 from pathlib import Path
@@ -6,7 +7,6 @@ from typing import List
 
 import compile
 import errors
-import platform
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,6 +26,7 @@ compile <src> [..args]
 (some libs might need to be prefixed with ':')
         --run execute after compilation
         --dev (additional information used during development of the language)
+        --quiet (disables all output)
 help
     you are already here?
 
