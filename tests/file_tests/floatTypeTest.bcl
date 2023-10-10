@@ -1,0 +1,53 @@
+import math::*;
+
+define main() {
+    x = 8f + 9f * 12f / 7f % 9f ** 9f;
+    x += 12f;
+    x -= 7f;
+    x /= 1f;
+    x *= 9f;
+    // mix float with every int type
+    7f + 88u8 + 7u16 + 22u32 + 5u64;
+    7f - 88u8 - 7u16 - 22u32 - 5u64;
+    7f * 88u8 * 7u16 * 22u32 * 5u64;
+    7f / 88u8 / 7u16 / 22u32 / 5u64;
+    7f ** 88u8 + 7u16 - 22u32 * 5u64 / 2u8;
+
+    x += 12;
+    x -= 7;
+    x /= 1;
+    x *= 9;
+
+    not x;
+    x and 7f;
+    x or 9f;
+    // -----------
+    x2 = 8f64 + 9f64 * 12f64 / 7f64 % 9f64 ** 9f64;
+    x2 += 12f;
+    x2 -= 7f;
+    x2 /= 1f;
+    x2 *= 9f;
+    // mix float with every int type
+    7f64 + 88u8 + 7u16 + 22u32 + 5u64;
+    7f64 - 88u8 - 7u16 - 22u32 - 5u64;
+    7f64 * 88u8 * 7u16 * 22u32 * 5u64;
+    7f64 / 88u8 / 7u16 / 22u32 / 5u64;
+    7f64 ** 88u8 + 7u16 - 22u32 * 5u64 / 2u8;
+
+    x2 += 12;
+    x2 -= 7;
+    x2 /= 1;
+    x2 *= 9;
+
+    not x2;
+    x2 and 7f64;
+    x2 or 9f64;
+}
+
+define factorial(x: f64) -> f64 {
+    if x == 1f {
+        return x;
+    }
+
+    return x * factorial(x-1f);
+}
