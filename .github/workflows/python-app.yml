@@ -28,7 +28,7 @@ jobs:
       with:
         version: latest
         platform: x64
-    - name: Setup Conda:
+    - name: Setup Conda
       uses: s-weigand/setup-conda@v1
       with:
         activate-conda: true
