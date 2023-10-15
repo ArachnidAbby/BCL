@@ -51,11 +51,11 @@ def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
             gcc_base = f"/usr/{location}/gcc/"
             if os.path.exists(gcc_base):
                 break
-
-    gcc_base = f"/usr/{lib_dir}/gcc/"
-    if not os.path.exists(gcc_base):
-        errors.error(f"Directory '{gcc_base}' does not exist." +
-                     " Aborting linking process")
+    else:
+        gcc_base = f"/usr/{lib_dir}/gcc/"
+        if not os.path.exists(gcc_base):
+            errors.error(f"Directory '{gcc_base}' does not exist." +
+                         " Aborting linking process")
 
     gcc_targets = os.listdir(gcc_base)
     if len(gcc_targets) > 1:
