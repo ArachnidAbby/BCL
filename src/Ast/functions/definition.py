@@ -458,15 +458,17 @@ class FunctionDef(ASTNode):
         ibranch.add_destination(self.yield_start)
         for branch in self.yield_after_blocks:
             ibranch.add_destination(branch)
-        self.builder.position_at_end(after_block)
 
-        continue_ptr = self.builder.gep(self.yield_struct_ptr,
-                                        [ir.Constant(ir.IntType(32), 0),
-                                            ir.Constant(ir.IntType(32), 0)])
-        self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
+        if not self.builder.block.is_terminated:
+            self.builder.position_at_end(after_block)
 
+            continue_ptr = self.builder.gep(self.yield_struct_ptr,
+                                            [ir.Constant(ir.IntType(32), 0),
+                                                ir.Constant(ir.IntType(32), 0)])
+            self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
+
+            self.dispose_stack()
         self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
-        self.dispose_stack()
 
     def populate_yield_struct(self):
         continue_ptr = self.builder.gep(self.yield_struct_ptr,
