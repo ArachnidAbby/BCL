@@ -49,6 +49,7 @@ class Type:
     ref_counted = False
     visibility = Modifiers.VISIBILITY_PUBLIC
     generate_bounds_check = True
+    index_returns_ptr = True
 
     def __init__(self):
         pass
@@ -193,7 +194,7 @@ class Type:
               line=lhs.position)
 
     def put(self, func, lhs, value):
-        error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'",
+        error(f"Operation 'put at index' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def call(self, func, lhs, args) -> ir.Instruction:
@@ -221,10 +222,11 @@ class Type:
 
         sum_value = self.sum(func, node, rhs)
         sum_node = PassNode(rhs.position, sum_value, self.get_op_return(func, 'sum', ptr, rhs))
-        final_value = sum_node.ret_type.convert_to(func, sum_node, ptr.ret_type)
+        # final_value = sum_node.ret_type.convert_to(func, sum_node, ptr.ret_type)
 
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, sum_node, self)
 
     def isub(self, func, ptr, rhs):
         val = func.builder.load(ptr.get_ptr(func))
@@ -232,10 +234,11 @@ class Type:
 
         sub_value = self.sub(func, node, rhs)
         sub_node = PassNode(rhs.position, sub_value, self.get_op_return(func, 'sub', ptr, rhs))
-        final_value = sub_node.ret_type.convert_to(func, sub_node, ptr.ret_type)
+        # final_value = sub_node.ret_type.convert_to(func, sub_node, ptr.ret_type)
 
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, sub_node, self)
 
     def imul(self, func, ptr, rhs):
         val = func.builder.load(ptr.get_ptr(func))
@@ -243,10 +246,11 @@ class Type:
 
         mul_value = self.mul(func, node, rhs)
         mul_node = PassNode(rhs.position, mul_value, self.get_op_return(func, 'mul', ptr, rhs))
-        final_value = mul_node.ret_type.convert_to(func, mul_node, ptr.ret_type)
+        # final_value = mul_node.ret_type.convert_to(func, mul_node, ptr.ret_type)
 
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, mul_node, self)
 
     def idiv(self, func, ptr, rhs):
         val = func.builder.load(ptr.get_ptr(func))
@@ -254,10 +258,11 @@ class Type:
 
         div_value = self.div(func, node, rhs)
         div_node = PassNode(rhs.position, div_value, self.get_op_return(func, 'div', ptr, rhs))
-        final_value = div_node.ret_type.convert_to(func, div_node, ptr.ret_type)
+        # final_value = div_node.ret_type.convert_to(func, div_node, ptr.ret_type)
 
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, div_node, self)
 
     def __hash__(self):
         return hash(self.name)

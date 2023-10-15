@@ -1,6 +1,6 @@
 from llvmlite import ir
-from Ast import exception# type: ignore
 
+from Ast import exception  # type: ignore
 from Ast.Ast_Types import Type_Bool, Type_I32
 from Ast.literals.numberliteral import Literal
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
@@ -8,7 +8,6 @@ from Ast.nodes.passthrough import PassNode
 from errors import error
 
 from . import Type_Base
-
 
 ZERO_CONST = ir.Constant(ir.IntType(64), 0)
 u64_ty = Type_I32.Integer_32(size=64, signed=False, rang=Type_I32.I64_RANGE)
@@ -255,7 +254,7 @@ class Array(Type_Base.Type):
         return ptr
 
     def put(self, func, lhs, value):
-        return func.builder.store(value.eval(func), lhs.get_ptr(func))
+        return self.typ.assign(func, lhs, value, self.typ)
 
     def __repr__(self) -> str:
         return f"{self.typ}[{self.size}]"

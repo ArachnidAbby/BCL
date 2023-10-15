@@ -7,7 +7,7 @@ class Ref(ExpressionNode):
     '''Variable Reference that acts like other `expr` nodes.
     It returns a ptr uppon `eval`'''
     __slots__ = ('var', )
-    assignable = True
+    assignable = False
     do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, var):

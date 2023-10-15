@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
@@ -65,6 +66,11 @@ class ExpressionNode(ASTNode):
         '''Used in a few circumstances to get arguments that need to
         have their lifetimes coupled together.'''
         return []
+
+    def store(self, func, ptr, value,
+              typ, first_assignment=False):
+        '''Store data at some address '''
+        self.ret_type.assign(func, ptr, value, typ, first_assignment=first_assignment)
 
     def reset(self):
         super().reset()

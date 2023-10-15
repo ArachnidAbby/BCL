@@ -90,8 +90,8 @@ class Integer_32(Type_Base.Type):
                 return func.builder.zext(orig.eval(func), typ.ir_type)
 
         match (typ.name, self.name):
-            case ('char', 'i8'):
-                return orig.eval(func)
+            # case ('char', 'i8'):
+            #     return orig.eval(func)
             case ('bool', _):
                 return func.builder.trunc(orig.eval(func), ir.IntType(1))
             case ('char', _):
@@ -115,7 +115,7 @@ class Integer_32(Type_Base.Type):
     def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         match op.lower():
-            case 'sum' | 'sub' | 'mul' | 'div' | 'mod'|'pow':
+            case 'sum' | 'sub' | 'mul' | 'div' | 'mod' | 'pow':
                 return definedtypes.get_std_ret_type(lhs, rhs)
             case 'eq' | 'neq' | 'geq' | 'leq' | 'le' | 'gr':
                 return Ast_Types.Type_Bool.Integer_1()

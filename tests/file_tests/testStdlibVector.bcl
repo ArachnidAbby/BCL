@@ -1,0 +1,25 @@
+import stdlib::*;
+import vector::*;
+
+define main() {
+    my_vec = Vector::<i32>::new(1i64);
+    println(my_vec.length());
+    my_vec.append(22);
+    println(my_vec.length());
+
+    println(my_vec.get(0i64));
+    my_vec.put(0i64, 22);
+    println(my_vec.get(0i64));
+
+    println("Expanding vector");
+
+    my_vec.append(11);
+    println(my_vec.length());
+    println(my_vec.get(0i64));
+    println(my_vec.get(1i64));
+
+    my_vec.put(0i64, 44);
+    my_vec.put(1i64, 22);
+    println(my_vec.get(0i64));
+    println(my_vec.get(1i64));
+}

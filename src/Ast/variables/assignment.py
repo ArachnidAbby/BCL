@@ -119,8 +119,8 @@ class VariableAssign(ASTNode):
         if ptr.get_lifetime(func).value > self.value.get_lifetime(func).value and not self.value.ret_type.returnable:
             error("Cannot store short-lived data in a long-lived variable",
                   line=self.value.position)
-        typ.assign(func, ptr, self.value, typ,
-                   first_assignment=self.is_declaration)
+        ptr.store(func, ptr, self.value, typ,
+                  first_assignment=self.is_declaration)
 
     def reset(self):
         super().reset()

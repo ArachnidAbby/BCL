@@ -72,10 +72,12 @@ class VariableIndexRef(ExpressionNode):
                   f"type used: '{rhs.ret_type}'", line=rhs.position)
 
     def get_ptr(self, func) -> ir.Instruction:
-        if self.ptr is None:
+        if self.ptr is None and self.varref.ret_type.index_returns_ptr:
             if isinstance(self.ind.ret_type, Ref):
                 self.ind = self.ind.get_value(func)
             self.ptr = self.varref.ret_type.index(func, self.varref, self.ind)
+        elif self.ptr is None:
+            super().get_ptr(func)
         return self.ptr
 
     def get_value(self, func):
@@ -84,14 +86,22 @@ class VariableIndexRef(ExpressionNode):
     def get_var(self, func):
         return self.varref.get_var(func)
 
+    def store(self, func, ptr, value,
+              typ, first_assignment=False):
+        array_typ = self.varref.ret_type
+        array_typ.put(func, ptr, value)
+
     def eval_impl(self, func):
         if isinstance(self.ind.ret_type, Ref):
             self.ind = self.ind.get_value(func)
-        self.ptr = self.varref.ret_type.index(func, self.varref, self.ind)
-        if self.ret_type.name == "UntypedPointer":
-            return self.ptr
+        if self.varref.ret_type.index_returns_ptr:
+            self.ptr = self.varref.ret_type.index(func, self.varref, self.ind)
+            if self.ret_type.name == "UntypedPointer":  # ? Why did I put this here?
+                return self.ptr
 
-        return func.builder.load(self.ptr)
+            return func.builder.load(self.ptr)
+        else:
+            return self.varref.ret_type.index(func, self.varref, self.ind)
 
     def get_lifetime(self, func):
         return self.varref.get_lifetime(func)
