@@ -8,6 +8,7 @@ from Ast.nodes.commontypes import SrcPosition
 from errors import error
 from parserbase import ParserBase, ParserToken, rule
 
+IN_FROZEN_EXE = path.dirname(__file__).endswith('library.zip')
 
 class Parser(ParserBase):
     ''' The actual BCL parser implementation.
@@ -243,6 +244,8 @@ class Parser(ParserBase):
         filedir = f"{directory_path}/{name}.bcl"
         if not path.exists(filedir):
             libbcl_dir = path.dirname(__file__) + "/libbcl"
+            if IN_FROZEN_EXE:
+                libbcl_dir = '/'.join(path.dirname(__file__).split("/")[0:-1]) + "/libbcl"
             filedir = f"{libbcl_dir}/{name}.bcl"
             if not path.exists(filedir):
                 errors.error(f"Could not find module '{name}'",

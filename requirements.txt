@@ -17,6 +17,7 @@ snakeviz
 ## compilation
 ordered-set
 nuitka
+cx_freeze
 
 ## source management
 mypy
