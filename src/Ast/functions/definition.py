@@ -458,7 +458,7 @@ class FunctionDef(ASTNode):
         ibranch.add_destination(self.yield_start)
         for branch in self.yield_after_blocks:
             ibranch.add_destination(branch)
-        self.builder.position_at_start(after_block)
+        self.builder.position_at_end(after_block)
 
         continue_ptr = self.builder.gep(self.yield_struct_ptr,
                                         [ir.Constant(ir.IntType(32), 0),
