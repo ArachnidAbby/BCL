@@ -209,7 +209,7 @@ class Type:
 
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
 
-        node = PassNode(value.position, value._instruction, value.ret_type)
+        node = PassNode(value.position, val, typ)
 
         value.ret_type.add_ref_count(func, node)
 
@@ -219,7 +219,10 @@ class Type:
         val = func.builder.load(ptr.get_ptr(func))
         node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
 
-        final_value = self.sum(func, node, rhs)
+        sum_value = self.sum(func, node, rhs)
+        sum_node = PassNode(rhs.position, sum_value, self.get_op_return(func, 'sum', ptr, rhs))
+        final_value = sum_node.ret_type.convert_to(func, sum_node, ptr.ret_type)
+
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
@@ -227,7 +230,10 @@ class Type:
         val = func.builder.load(ptr.get_ptr(func))
         node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
 
-        final_value = self.sub(func, node, rhs)
+        sub_value = self.sub(func, node, rhs)
+        sub_node = PassNode(rhs.position, sub_value, self.get_op_return(func, 'sub', ptr, rhs))
+        final_value = sub_node.ret_type.convert_to(func, sub_node, ptr.ret_type)
+
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
@@ -235,7 +241,10 @@ class Type:
         val = func.builder.load(ptr.get_ptr(func))
         node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
 
-        final_value = self.mul(func, node, rhs)
+        mul_value = self.mul(func, node, rhs)
+        mul_node = PassNode(rhs.position, mul_value, self.get_op_return(func, 'mul', ptr, rhs))
+        final_value = mul_node.ret_type.convert_to(func, mul_node, ptr.ret_type)
+
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
@@ -243,7 +252,10 @@ class Type:
         val = func.builder.load(ptr.get_ptr(func))
         node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
 
-        final_value = self.div(func, node, rhs)
+        div_value = self.div(func, node, rhs)
+        div_node = PassNode(rhs.position, div_value, self.get_op_return(func, 'div', ptr, rhs))
+        final_value = div_node.ret_type.convert_to(func, div_node, ptr.ret_type)
+
         ptr = ptr.get_ptr(func)
         func.builder.store(final_value, ptr)
 
