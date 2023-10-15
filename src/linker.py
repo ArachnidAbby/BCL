@@ -83,7 +83,7 @@ def get_linuxcrt() -> list[str]:
 
     # note: this *could* be a one-liner, it would just be ugly.
     for file in all_files:
-        if '.' not in file:
+        if file.count('.') != 1:
             continue
         name, ext = file.split('.')
         if ext != 'o':  # skip non .o files
