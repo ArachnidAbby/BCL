@@ -38,6 +38,10 @@ public define println(x: i32) {
     printf("%i\n", x);
 }
 
+public define println(x: i8) {
+    printf("%i\n", x as i32);
+}
+
 public define println(x: i64) {
     printf("%lld\n", x);
 }
@@ -46,7 +50,7 @@ public define println(x: u64) {
     printf("%llu\n", x);
 }
 
-public define println(x: UntypedPointer) {
+public define println_ptr(x: UntypedPointer) {
     printf("%llu\n", x);
 }
 
@@ -122,37 +126,38 @@ public define exit() {
     exit(0);
 }
 
-/// get stderr
-define stderr() -> FilePointer {
-    return fdopen(2, "w");
-}
 
 define fprintf(fp: FilePointer, msg: strlit, ...);
 
-
 public define err_print(msg: strlit) {
-    fprintf(stderr(), msg); // this wastefully reopens stderr :(
+    fprintf(stderr().fp, msg);
 }
 
 public define err_print(msg: i64) {
-    fprintf(stderr(), "%lld", msg);
+    fprintf(stderr().fp, "%lld", msg);
 }
 
 public define err_print(msg: i32) {
-    fprintf(stderr(), "%i", msg);
+    fprintf(stderr().fp, "%i", msg);
 }
 
 
 public define err_println(msg: strlit) {
-    fprintf(stderr(), "%s\n", msg);
+    fprintf(stderr().fp, "%s\n", msg);
 }
 
 public define err_println(msg: i64) {
-    fprintf(stderr(), "%lld\n", msg);
+    fprintf(stderr().fp, "%lld\n", msg);
 }
 
 public define err_println(msg: i32) {
-    fprintf(stderr(), "%i\n", msg);
+    fprintf(stderr().fp, "%i\n", msg);
+}
+
+
+public define input(buffer: &strlit) -> &strlit {
+    stdin().read_strlit(*buffer);
+    return buffer;
 }
 
 // DEBUGGING

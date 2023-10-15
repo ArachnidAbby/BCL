@@ -9,11 +9,11 @@ import stdlib::*;
 
 public define assert(cond: bool, on_error: strlit) {
     if not cond {
-        print("\u001b[31m");
-        println("Assertion failed:");
-        print("\t");
-        println(on_error);
-        print("\u001b[0m");
+        err_print("\u001b[31m");
+        err_println("Assertion failed:");
+        err_print("\t");
+        err_println(on_error);
+        err_print("\u001b[0m");
         exit(2);
     }
 }

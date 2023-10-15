@@ -20,7 +20,7 @@ public enum IOError {
 // }
 
 public struct File {
-    fp: i64;
+    public fp: i64;
 }
 
 typedef FilePointer = i64;
@@ -61,3 +61,11 @@ public define read_strlit(file: File, buffer: strlit) -> i64 {
 }
 
 public define fdopen(fildes: i32, mode: strlit) -> FilePointer;
+
+public define stderr() -> File {
+    return File { fp: fdopen(2, "w") };
+}
+
+public define stdin() -> File {
+    return File { fp: fdopen(0, "r") };
+}
