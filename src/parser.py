@@ -165,6 +165,9 @@ class Parser(ParserBase):
 
     @rule(-1, "!expr MUL expr !NAMEINDEX")
     def parse_deref(self):
+        if self.peek_safe(2).name in ('expr', 'OPEN_PAREN'):
+            return
+
         deref = Ast.Deref(self.peek(0).pos,
                           self.peek(1).value)
         self.replace(2, "expr", deref)
