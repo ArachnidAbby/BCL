@@ -42,8 +42,16 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
                           )
 
 
-def get_gcc_dir(lib_dir='lib') -> str:
+def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
     '''get the gcc directory'''
+
+    if isinstance(lib_dir, list):
+        gcc_base = ""
+        for location in lib_dir:
+            gcc_base = f"/usr/{location}/gcc/"
+            if os.path.exists(gcc_base):
+                break
+
     gcc_base = f"/usr/{lib_dir}/gcc/"
     if not os.path.exists(gcc_base):
         errors.error(f"Directory '{gcc_base}' does not exist." +
@@ -67,7 +75,7 @@ def get_gcc_dir(lib_dir='lib') -> str:
 
 def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
-    gcc_dir = get_gcc_dir("lib64")
+    gcc_dir = get_gcc_dir(["lib64", "lib"])  # `lib` as fallback
     all_files = os.listdir(gcc_dir)
     output = []
     exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
