@@ -6,6 +6,7 @@ from llvmlite import ir
 import Ast.math
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
+from Ast.Ast_Types.Type_Bool import Integer_1
 from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
@@ -25,16 +26,18 @@ struct_op_overloads = {
     "mul": "__mul__",
     "div": "__div__",
     "mod": "__mod__",
+    "pow": "__pow__",
     "eq": "__eq__",
-    "ne": "__ne__",
+    "neq": "__neq__",
     "le": "__lt__",
     "gr": "__gt__",
     "geq": "__geq__",
     "leq": "__leq__",
-    "imul": "__imul__",
-    "idiv": "__idiv__",
-    "isub": "__isub__",
-    "isum": "__iadd__"
+    "_imul": "__imul__",
+    "_idiv": "__idiv__",
+    "_isub": "__isub__",
+    "_isum": "__iadd__",
+    "ind": "__index__"
 }
 
 
@@ -52,6 +55,7 @@ class Struct(Ast_Types.Type):
     pass_as_ptr = True
     no_load = False
     has_members = True
+    index_returns_ptr = False
 
     # TODO: ADD __EQ__ CHECK FOR NAMESPACE
     def __init__(self, name: str, members: list[KeyValuePair], module,
@@ -278,6 +282,9 @@ class Struct(Ast_Types.Type):
     def div(self, func, lhs, rhs):
         return self.call_func(func, "__div__", lhs, rhs)
 
+    def pow(self, func, lhs, rhs):
+        return self.call_func(func, "__pow__", lhs, rhs)
+
     def eq(self, func, lhs, rhs):
         return self.call_func(func, "__eq__", lhs, rhs)
 
@@ -328,13 +335,26 @@ class Struct(Ast_Types.Type):
         idx = ir.Constant(ir.IntType(32), member_index)
         return func.builder.gep(lhs.get_ptr(func), [zero_const, idx])
 
-    # TODO:
-    def index(self, func, lhs) -> ir.Instruction:
-        return func.builder.load(lhs.get_ptr(func))
+    # # TODO:
+    # def index(self, func, var, ind) -> ir.Instruction:
+    #     return self.call_func(func, "__index__", var.position, var, ind)
 
-    def put(self, func, lhs, value):
-        error(f"Operation 'put-at' is not supported for type '{lhs.ret_type}'",
-              line=lhs.position)
+    # def put(self, func, lhs, value):
+    #     return self.call_func(func, "__put_at__", Ref(lhs.position, lhs), value)
+
+    def deref(self, func, node):
+        return self.call_func(func, "__deref__", node, None)
+
+    def truthy(self, func, lhs):
+        function = self.get_func("__truthy__", lhs, None)
+        if function.func_ret != Integer_1():
+            error("\"__truthy__\" must return a boolean",
+                  line=func.definition.position)
+        return self.call_func(func, "__truthy__", lhs, None)
+
+    def get_deref_return(self, func, node):
+        function = self.get_func("__deref__", node, None)
+        return function.func_ret
 
     def add_ref_count(self, func, ptr):
         if func.func_name in ("__increase_ref_count__", "__dispose__") and func.parent is self.definition:

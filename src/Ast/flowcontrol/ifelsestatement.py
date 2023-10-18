@@ -1,13 +1,14 @@
 from Ast.nodes import ASTNode, Block
 from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.expression import ExpressionNode
 
 
 class IfElseStatement(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('cond', 'if_block', 'else_block')
 
-    def __init__(self, pos: SrcPosition, cond: ASTNode, if_block: ASTNode,
-                 else_block: ASTNode):
+    def __init__(self, pos: SrcPosition, cond: ExpressionNode,
+                 if_block: ASTNode, else_block: ASTNode):
         super().__init__(pos)
         self.cond = cond
         self.if_block = if_block
