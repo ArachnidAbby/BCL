@@ -1,3 +1,4 @@
+import platform
 from typing import Self
 
 from llvmlite import ir
@@ -249,8 +250,10 @@ class Function(Type):
         try:
             fnty = ir.FunctionType((self.func_ret).ir_type, self.get_ir_types(),
                                     self.contains_ellipsis)
-            ir.Function(module.module, fnty,
-                        name=self.func_obj.name)
+            functy = ir.Function(module.module, fnty,
+                                 name=self.func_obj.name)
+            if self.definition.block is None and platform.system() == "windows":
+                functy.linkage += "dllimport"
         except ir._utils.DuplicatedNameError:
             error(f"Bound function with the name \"{self.func_obj.name}\" already exists",
                   line=self.definition.position, full_line=True)

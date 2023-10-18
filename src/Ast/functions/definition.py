@@ -1,3 +1,4 @@
+import platform
 from typing import Protocol
 
 from llvmlite import ir
@@ -314,6 +315,8 @@ class FunctionDef(ASTNode):
         function_object = Ast_Types.Function(self.func_name, self.args_types,
                                              self.function_ir, self.module,
                                              self)
+        if self.block is None and platform.system() == "windows":
+            self.function_ir.linkage += "dllimport"
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \
