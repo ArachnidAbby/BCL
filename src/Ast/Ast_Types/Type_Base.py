@@ -138,6 +138,10 @@ class Type:
         error(f"Operator '^' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
+    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '~' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
     def bit_or(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operator '|' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
