@@ -252,8 +252,9 @@ class Function(Type):
                                     self.contains_ellipsis)
             functy = ir.Function(module.module, fnty,
                                  name=self.func_obj.name)
-            if self.definition.block is None and platform.system() == "windows":
-                functy.linkage += "dllimport"
+            if self.definition is not None:
+                if self.definition.block is None and platform.system() == "windows":
+                    functy.linkage += "dllimport"
         except ir._utils.DuplicatedNameError:
             error(f"Bound function with the name \"{self.func_obj.name}\" already exists",
                   line=self.definition.position, full_line=True)

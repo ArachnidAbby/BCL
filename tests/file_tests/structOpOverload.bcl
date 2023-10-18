@@ -24,6 +24,32 @@ struct MyStruct {
         return Self {x: self.x ** other};
     }
 
+
+    define __bitnot__(self) -> Self {
+        return Self {x: ~self.x};
+    }
+
+    define __bitor__(self, other: i32) -> Self {
+        return Self {x: self.x | other};
+    }
+
+    define __bitand__(self, other: i32) -> Self {
+        return Self {x: self.x & other};
+    }
+
+    define __bitxor__(self, other: i32) -> Self {
+        return Self {x: self.x ^ other};
+    }
+
+    define __lshift__(self, other: i32) -> Self {
+        return Self {x: self.x << other};
+    }
+
+    define __rshift__(self, other: i32) -> Self {
+        return Self {x: self.x >> other};
+    }
+
+
     define __iadd__(&self, other: i32) {
         self.x += other;
     }
@@ -80,6 +106,13 @@ define main() {
     val = val - 10;
     val = val * 10;
     val = val / 10;
+
+    val = ~val;
+    val = val | 10;
+    val = val & 10;
+    val = val ^ 0;
+    val = val << 2;
+    val = val >> 2;
 
     val += 10;
     val -= 10;

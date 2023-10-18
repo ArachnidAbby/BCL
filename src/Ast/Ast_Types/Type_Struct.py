@@ -37,7 +37,14 @@ struct_op_overloads = {
     "_idiv": "__idiv__",
     "_isub": "__isub__",
     "_isum": "__iadd__",
-    "ind": "__index__"
+    "ind": "__index__",
+
+    "bor": "__bitor__",
+    "band": "__bitand__",
+    "bxor": "__bitxor__",
+    "bitnot": "__bitnot__",
+    "lshift": "__lshift__",
+    "rshift": "__rshift__"
 }
 
 
@@ -232,7 +239,7 @@ class Struct(Ast_Types.Type):
                or other.struct_name != self.struct_name \
                or self.module.location != other.module.location
 
-    def get_func(self, name, lhs, rhs, ret_none=False):
+    def get_func(self, func, name, lhs, rhs, ret_none=False):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
@@ -268,7 +275,9 @@ class Struct(Ast_Types.Type):
         self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
             return
-        return self.get_func(op_name, lhs, rhs).func_ret
+        if op_name == "__bitnot__":
+            return self.get_func(func, op_name, lhs, None).func_ret
+        return self.get_func(func, op_name, lhs, rhs).func_ret
 
     def sum(self, func, lhs, rhs):
         return self.call_func(func, "__add__", lhs, rhs)
@@ -315,6 +324,24 @@ class Struct(Ast_Types.Type):
     def idiv(self, func, lhs, rhs):
         return self.call_func(func, "__idiv__", Ref(lhs.position, lhs), rhs)
 
+    def lshift(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__lshift__", lhs, rhs)
+
+    def rshift(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__rshift__", lhs, rhs)
+
+    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__bitnot__", lhs, None)
+
+    def bit_xor(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__bitxor__", lhs, rhs)
+
+    def bit_or(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__bitor__", lhs, rhs)
+
+    def bit_and(self, func, lhs, rhs) -> ir.Instruction:
+        return self.call_func(func, "__bitand__", lhs, rhs)
+
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
             return None
@@ -346,14 +373,14 @@ class Struct(Ast_Types.Type):
         return self.call_func(func, "__deref__", node, None)
 
     def truthy(self, func, lhs):
-        function = self.get_func("__truthy__", lhs, None)
+        function = self.get_func(func, "__truthy__", lhs, None)
         if function.func_ret != Integer_1():
             error("\"__truthy__\" must return a boolean",
                   line=func.definition.position)
         return self.call_func(func, "__truthy__", lhs, None)
 
     def get_deref_return(self, func, node):
-        function = self.get_func("__deref__", node, None)
+        function = self.get_func(func, "__deref__", node, None)
         return function.func_ret
 
     def add_ref_count(self, func, ptr):
@@ -365,7 +392,7 @@ class Struct(Ast_Types.Type):
         zero_const = ir.Constant(int_type, 0)
         struct_ptr = ptr.get_ptr(func)
 
-        function = self.get_func("__increase_ref_count__", ptr, None, ret_none=True)
+        function = self.get_func(func, "__increase_ref_count__", ptr, None, ret_none=True)
         if function is not None:
             self.call_func(func, "__increase_ref_count__", ptr, None)
 
@@ -389,7 +416,7 @@ class Struct(Ast_Types.Type):
         zero_const = ir.Constant(int_type, 0)
         struct_ptr = ptr.get_ptr(func)
 
-        function = self.get_func("__dispose__", ptr, None, ret_none=True)
+        function = self.get_func(func, "__dispose__", ptr, None, ret_none=True)
         if function is not None:
             self.call_func(func, "__dispose__", ptr, None)
 
