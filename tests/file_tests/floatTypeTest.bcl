@@ -42,6 +42,8 @@ define main() {
     not x2;
     x2 and 7f64;
     x2 or 9f64;
+
+    if 1f {}
 }
 
 define factorial(x: f64) -> f64 {

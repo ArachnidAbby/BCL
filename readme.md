@@ -137,7 +137,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] `import` statement with the ability to import modules/packages (WIP, needs namespaces)
 - [x] compile a folder or file instead of hardcoded test string.
 - [x] heap allocation with garbage collection (`Box::<T>`)
-- [ ] `del` or `free` statement (only work when GC is off, otherwise they decrease the ref count by 1)
+- [x] `malloc` and `free` functions (If you manage your own memory instead of using `Box::<T>`)
 - [ ] in-line assembly functionality.
 - [ ] make sys-calls
 - [x] ~~some access to llvm function directly. (notice: more can, and will, be added)~~ disabled temporarily
@@ -147,7 +147,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [ ] strings (mutable)
 - [ ] vectors (WIP)
 - [x] stdio library (VERY WIP)
-- [ ] run-time errors (Error type for errors as values.)
+- [x] run-time errors (Error type for errors as values., `Result::<T, E>`)
 - [x] Option type (`Optional::<T>`)
 - [x] namespaces
 - [x] enums

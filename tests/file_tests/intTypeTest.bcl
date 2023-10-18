@@ -23,7 +23,7 @@ define main() {
     x or 9;
 
     // i32::MAX;
-
+    if 1 {}
 }
 
 define factorial(x: i64) -> i64 {
