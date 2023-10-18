@@ -91,16 +91,17 @@ def get_linuxcrt() -> list[str]:
             continue
         if name.startswith('crt') and name not in exclude:
             output.append(f'{gcc_dir}/{file}')
-    for crt_path in ['/lib/', '/lib64/', gcc_dir]:
+    for crt_path in ['/lib/', '/lib64/', gcc_dir, 'usr/lib/', 'usr/lib64/']:
         all_libs = os.listdir(crt_path)
         for file in all_libs:
             if file.startswith("crt") and (".o" in file) and file[3].isdigit():
-                output.append(f"/lib/{file}")
+                output.append(f"{crt_path}{file}")
                 break
         else:
             continue
         break
     else:  # no break
+        print(output)
         errors.error("Unable to find a valid crt file in '/lib/'")
 
     for file in output:
