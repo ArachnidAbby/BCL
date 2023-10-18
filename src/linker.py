@@ -25,6 +25,7 @@ import errors
 
 def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
+    gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])
     binding.lld.lld_linux(file,
                           [
                               *get_linuxcrt(),
@@ -35,7 +36,7 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
                               "-Bdynamic", "-no-pie", "--build-id",
                               "--dynamic-linker",
                               "/lib64/ld-linux-x86-64.so.2",
-                              f"-L{get_gcc_dir()}/",
+                              f"-L{gcc_dir}/",
                               "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/",
                               "-L/lib64/", "-lc"  # ? what happens on 32 bit
                           ] + additional_args
@@ -75,7 +76,7 @@ def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
 
 def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
-    gcc_dir = get_gcc_dir(["lib64", "lib"])  # `lib` as fallback
+    gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
     all_files = os.listdir(gcc_dir)
     output = []
     exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
@@ -90,7 +91,7 @@ def get_linuxcrt() -> list[str]:
             continue
         if name.startswith('crt') and name not in exclude:
             output.append(f'{gcc_dir}/{file}')
-    for crt_path in ['/lib/', '/lib64/']:
+    for crt_path in ['/lib/', '/lib64/', gcc_dir]:
         all_libs = os.listdir(crt_path)
         for file in all_libs:
             if file.startswith("crt") and (".o" in file) and file[3].isdigit():
