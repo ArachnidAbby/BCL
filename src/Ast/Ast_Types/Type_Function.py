@@ -248,8 +248,9 @@ class Function(Type):
         '''Declare a function inside of a new module'''
         # ! any way to avoid try catch?
         try:
-            fnty = ir.FunctionType((self.func_ret).ir_type, self.get_ir_types(),
-                                    self.contains_ellipsis)
+            fnty = ir.FunctionType((self.func_ret).ir_type,
+                                   self.get_ir_types(),
+                                   self.contains_ellipsis)
             functy = ir.Function(module.module, fnty,
                                  name=self.func_obj.name)
             if self.definition is not None:

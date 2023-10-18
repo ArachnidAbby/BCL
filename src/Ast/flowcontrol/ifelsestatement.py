@@ -28,11 +28,6 @@ class IfElseStatement(ASTNode):
         self.if_block.post_parse(func)
         self.else_block.post_parse(func)
         self.cond.post_parse(func)
-        # for child in self.iter_block_or_stmt(self.if_block):
-        #     child.post_parse(func)
-
-        # for child in self.iter_block_or_stmt(self.else_block):
-        #     child.post_parse(func)
 
     def pre_eval(self, func):
         self.cond.pre_eval(func)
