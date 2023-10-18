@@ -25,9 +25,7 @@ class Deref(ExpressionNode):
 
     def pre_eval(self, func):
         self.ref.pre_eval(func)
-
         self.ret_type = self.ref.ret_type.get_deref_return(func, self.ref)
-        # if isinstance(self.ret_type, Reference):
 
     def eval_impl(self, func):
         return self.ref.ret_type.deref(func, self.ref)

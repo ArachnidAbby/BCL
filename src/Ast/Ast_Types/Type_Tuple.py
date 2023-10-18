@@ -3,7 +3,6 @@ from llvmlite import ir
 from Ast.Ast_Types.Type_Base import Type
 from Ast.nodes.passthrough import PassNode
 
-
 ZERO_CONST = ir.Constant(ir.IntType(64), 0)
 
 
@@ -49,7 +48,7 @@ class TupleType(Type):
                                 [ZERO_CONST, rhs.eval(func)])
 
     def put(self, func, lhs, value):
-        return func.builder.store(value.eval(func), lhs.get_ptr(func))
+        return lhs.ret_type.assign(func, lhs, value, lhs.ret_type)
 
     def add_ref_count(self, func, ptr):
         int_type = ir.IntType(64)

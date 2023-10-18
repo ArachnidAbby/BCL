@@ -1,0 +1,21 @@
+import stdlib::*;
+
+define main() {
+    my_val = "Some Random Strlit";
+
+    not_a_copy_technically = my_val;
+    my_val[1] = 'h';
+
+    println(my_val[0]);
+    println(my_val);
+    println("Hello World");
+
+    if my_val == not_a_copy_technically {}
+    else if my_val != not_a_copy_technically {};
+
+    takes_strlit(my_val);
+}
+
+define takes_strlit(x: strlit) {
+    println(x[0]);
+}

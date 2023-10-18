@@ -1,0 +1,14 @@
+import stdlib::*;
+
+define main() {
+    my_val = (0, 2, 8f);
+
+    my_val[1] = 22f;
+    my_val[2] = 22;
+}
+
+typedef FunnyType = (i32, i32, f32);
+
+define random_function(x: FunnyType) -> FunnyType {
+    return x;
+}

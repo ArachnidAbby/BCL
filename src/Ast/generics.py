@@ -27,8 +27,6 @@ class GenericSpecify(ExpressionNode):
         self.as_type_reference(func)
 
     def post_parse(self, func):
-        # if self.in_definition:
-        #     return
         self.left.post_parse(func)
         self.params.post_parse(func)
 

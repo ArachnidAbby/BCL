@@ -173,6 +173,9 @@ class StringLiteral(Type_Base.Type):
         return func.builder.gep(lhs_ptr_char,
                                 [rhs.eval(func)])
 
+    def put(self, func, lhs, value):
+        return lhs.ret_type.assign(func, lhs, value, lhs.ret_type)
+
     def _out_of_bounds(self, func, lhs, rhs, val, lhs_ptr):
         '''creates the code for runtime bounds checking'''
         from Ast import exception  # type: ignore
