@@ -34,6 +34,7 @@ jobs:
         activate-conda: true
     - name: Install dependencies
       run: |
+        sudo apt install gcc-multilib
         # setup virtual environment
         python -m pip install --upgrade pip
         python3.11 -m venv env
