@@ -78,19 +78,22 @@ def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
     gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
     all_files = os.listdir(gcc_dir)
+    for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
+        all_files += os.listdir(crt_path)
     output = []
     exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
-               "crtbeginT", "crtbeginS", "crtendS", "crtendT")
+               "crtbeginT", "crtbeginS", "crtendS", "crtendT",
+               "crtoffloadtable")
 
     # note: this *could* be a one-liner, it would just be ugly.
-    for file in all_files:
-        if file.count('.') != 1:
-            continue
-        name, ext = file.split('.')
-        if ext != 'o':  # skip non .o files
-            continue
-        if name.startswith('crt') and name not in exclude:
-            output.append(f'{gcc_dir}/{file}')
+    # for file in all_files:
+    #     if file.count('.') != 1:
+    #         continue
+    #     name, ext = file.split('.')
+    #     if ext != 'o':  # skip non .o files
+    #         continue
+    #     if name.startswith('crt') and name not in exclude:
+    #         output.append(f'{gcc_dir}/{file}')
     for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
         all_libs = os.listdir(crt_path)
         for file in all_libs:
