@@ -38,7 +38,8 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
                               "/lib64/ld-linux-x86-64.so.2",
                               f"-L{gcc_dir}/",
                               "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/",
-                              "-L/lib64/", "-lc"  # ? what happens on 32 bit
+                              "-L/lib64/", "-L/usr/lib/x86_64-linux-gnu",
+                              "-lc"
                           ] + additional_args
                           )
 
@@ -77,9 +78,9 @@ def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
 def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
     gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
-    all_files = os.listdir(gcc_dir)
-    for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
-        all_files += os.listdir(crt_path)
+    # all_files = os.listdir(gcc_dir)
+    # for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
+    #     all_files += os.listdir(crt_path)
     output = []
     exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
                "crtbeginT", "crtbeginS", "crtendS", "crtendT",
