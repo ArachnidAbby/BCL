@@ -10,6 +10,7 @@ DEPENDECIES:
 - python >3.11
 '''
 
+import os
 import platform
 import subprocess
 import sys
@@ -67,6 +68,47 @@ section_break()
 print("Installing BCL")
 
 subprocess.run(["pip", "install", "."])
+
+section_break()
+
+print("Testing functionality of compiler")
+print()
+
+print("Testing if compilation works (simple ll emit)")
+res = os.system("bcl compile tests/console_cube_reloaded.bcl")
+if res != 0:
+    print("FAILED, LANGUAGE COULD NOT COMPILE BCL EXAMPLE CODE.")
+    print("CHECK THE LOGS AND REPORT THIS ON GITHUB")
+    quit()
+
+print("passed")
+print()
+
+print("Testing if compilation works (simple object emit)")
+res = os.system("bcl compile tests/console_cube_reloaded.bcl --emit-object")
+if res != 0:
+    print("FAILED, LANGUAGE COULD NOT COMPILE BCL EXAMPLE CODE.")
+    print("CHECK THE LOGS AND REPORT THIS ON GITHUB")
+    print()
+    print("IF YOU DON'T CARE ABOUT THE FAILURE, COMPILE THE .LL FILES YOURSELF.")
+    print("THEN USE A LINKER")
+    quit()
+
+print("passed")
+
+print()
+
+print("Testing if compilation works (executable emit)")
+res = os.system("bcl compile tests/console_cube_reloaded.bcl --emit-binary")
+if res != 0:
+    print("FAILED, LANGUAGE COULD NOT COMPILE BCL EXAMPLE CODE.")
+    print("CHECK THE LOGS AND REPORT THIS ON GITHUB")
+    print()
+    print("To bypass this, it is fairly easy. Use your own system provided linker")
+    print("ld for example. make sure to link with -lm and -lc")
+    quit()
+
+print("passed")
 
 section_break()
 
