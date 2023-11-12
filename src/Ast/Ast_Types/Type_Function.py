@@ -204,9 +204,6 @@ class Function(Type):
             # new_args = [coupled[2].func_name.lhs] + new_args
 
             for o_idx, coupled_args_lhs in coupled[1]:
-                # print(self.definition.func_name, self.definition.module.mod_name , ":", coupled_args_lhs, o_idx)
-                # print(args[coupled_args_lhs].get_lifetime(func))
-                # print()
                 arg = args[coupled_args_lhs]
                 new_args[o_idx] = NodeLifetimePass(arg.position,
                                                     arg.get_lifetime(func),

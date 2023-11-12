@@ -67,7 +67,7 @@ class GeneratorType(Type):
                                (self.ir_type.as_pointer(),))
 
         ir.Function(module.module, fnty,
-                    name=module.get_unique_name(self.iter_function.yield_function.name))
+                    name=self.iter_function.yield_function.name)
 
     def add_members(self, consts, members):
         # Doing the dangerous thing and setting the elements directly

@@ -100,15 +100,6 @@ class StoreFunction(Function):
         lhs = lhs.lhs
         data = args_used[0].eval(func)
         actual_ptr = func.builder.bitcast(lhs.eval(func), args_used[0].ret_type.ir_type)
-        # print(actual_ptr)
-        # print(args_used[0].ret_type.ir_type)
-        # print(args_used)
-        # print(data)
-        # print()
-        # old_name = func.func_name
-        # func.func_name = "store"
-        # args_used[0].ret_type.add_ref_count(func, args_used[0])
-        # func.func_name = old_name
         ptr_val = func.builder.load(data)
         func.builder.store(ptr_val, actual_ptr)
 
