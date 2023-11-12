@@ -33,6 +33,10 @@ class WhileStatement(ASTNode):
         self.cond.pre_eval(func)
         self.block.pre_eval(func)
 
+    @property
+    def loop_after(self):
+        return self.while_after
+
     def eval_impl(self, func):
         # cond = self.cond.eval(func)
         orig_block_name = func.builder.block._name
@@ -60,6 +64,7 @@ class WhileStatement(ASTNode):
         if func.block.last_instruction:
             func.builder.unreachable()
 
+    # ! Must be shared between both kinds of loop !
     def branch_logic(self, func):
         cond = self.cond.ret_type.truthy(func, self.cond)
         func.builder.cbranch(cond, self.while_body, self.while_after)

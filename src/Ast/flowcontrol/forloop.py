@@ -53,6 +53,10 @@ class ForLoop(ASTNode):
 
         self.block.pre_eval(func)
 
+    @property
+    def loop_after(self):
+        return self.for_after
+
     def eval_impl(self, func):
         orig_block_name = func.builder.block._name
         self.varptr = func.create_const_var(self.iter_type.get_iter_return(self.iterable.position))
@@ -97,6 +101,7 @@ class ForLoop(ASTNode):
         if func.block.last_instruction:
             func.builder.unreachable()
 
+    # ! Must be shared between both kinds of loop !
     def branch_logic(self, func):
         func.builder.store(self.iter_type.iter(func, self.iter_ptr, self.iterable.position),
                            self.varptr)

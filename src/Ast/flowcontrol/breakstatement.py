@@ -11,7 +11,7 @@ class BreakStatement(ASTNode):
                          line=self.position)
 
         Block.BLOCK_STACK[-1].ended = True
-        func.builder.branch(func.inside_loop.while_after)
+        func.builder.branch(func.inside_loop.loop_after)
 
     def copy(self):
         return BreakStatement(self._position)
