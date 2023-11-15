@@ -3,7 +3,7 @@ from typing import Self
 from llvmlite import ir
 
 from Ast.Ast_Types import Type_Bool, Type_Char, Type_I32
-from Ast.Ast_Types.Type_Function import MockFunction
+from Ast.Ast_Types.Type_Function import Function, MockFunction
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
 from errors import error
@@ -110,8 +110,16 @@ class StringLiteral(Type_Base.Type):
             self.size = size
 
         self.ir_type = ir.LiteralStructType((ir.IntType(8).as_pointer(),))
-        self.equal_func = create_compare_method(self, module, 'eq', 0, 1)
-        self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
+        if module is not None:
+            self.equal_func = create_compare_method(self, module, 'eq', 0, 1)
+            self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
+
+    def get_namespace_name(self, func, name, pos):
+        if x := self.global_namespace_names(func, name, pos):
+            return x
+
+        if name == "new":
+            return InitEmptyFuction()
 
     def declare(self, module):
         eq_typ = self.equal_func.ftype
@@ -127,7 +135,7 @@ class StringLiteral(Type_Base.Type):
 
     def convert_to(self, func, orig, typ):
         if typ != self:
-            error(f"Cannot convert 'Array<{orig.ir_type.element}>'" +
+            error(f"Cannot convert '{self}' " +
                   f"to type '{typ}'", line=orig.position)
         return orig.eval(func)
 
@@ -210,7 +218,54 @@ class StringLiteral(Type_Base.Type):
         out = func.builder.call(self.nequal_func, (lhs.eval(func), rhs.eval(func)))
         return out
 
-    # def assign(self, func, ptr, value, typ: Self, first_assignment=False):
-    #     val = value.ret_type.convert_to(func, value, typ)  # type: ignore
-    #     val = func.builder.bitcast(val, self.ir_type)
-    #     func.builder.store(val, ptr.ptr)
+
+class InitEmptyFuction(Function):
+    '''Overload default Function Type behavior'''
+
+    __slots__ = ()
+
+    def __init__(self):
+        super().__init__("new", (), None, None, None)
+        self.func_ret = StringLiteral(None, )
+        self.is_method = True
+        self.args = (Type_I32.Integer_32(),)
+
+    def call(self, func, lhs, rhs):
+        from Ast.literals.numberliteral import Literal
+
+        if not isinstance(rhs.children[0], Literal):
+            error("Must be a literal value.", line=rhs.children[0].position)
+
+        if rhs.children[0].value <= 0:
+            error("Literal value must be greater than 0", line=rhs.children[0].position)
+
+        ZERO = ir.Constant(ir.IntType(32), 0)
+
+        encoded_string = (b'\x00' * rhs.children[0].value)
+        length = len(encoded_string)
+
+        string_actual_typ = ir.LiteralStructType((ir.IntType(64),
+                                                  ir.ArrayType(ir.IntType(8),
+                                                               length),))
+
+        const = ir.Constant(ir.ArrayType(ir.IntType(8), length),
+                            bytearray(encoded_string))
+
+        ptr = func.builder.alloca(string_actual_typ)
+        size_ptr = func.builder.gep(ptr, (ZERO, ZERO))
+        str_ptr = func.builder.gep(ptr, (ZERO, ir.Constant(ir.IntType(32), 1)))
+
+        # Don't count the null character in the length
+        func.builder.store(ir.Constant(ir.IntType(64), length-1), size_ptr)
+
+        func.builder.store(const, str_ptr)
+        ptr = func.builder.bitcast(str_ptr, ir.IntType(8).as_pointer())
+
+        string_struct = ir.LiteralStructType((ir.IntType(8).as_pointer(), ))
+
+        val_ptr = func.builder.alloca(string_struct)
+        val_str_ptr = func.builder.gep(val_ptr, (ZERO, ZERO))
+        func.builder.store(ptr, val_str_ptr)
+        val = func.builder.load(val_ptr)
+
+        return val

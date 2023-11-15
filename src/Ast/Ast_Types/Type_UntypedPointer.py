@@ -71,7 +71,7 @@ class UntypedPointer(Type):
 
 
 class StoreFunction(Function):
-    '''Overload default Function Type behavior'''
+    '''store data without running __increment_ref_count__'''
 
     __slots__ = ()
 
