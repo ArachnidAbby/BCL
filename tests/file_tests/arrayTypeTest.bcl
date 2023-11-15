@@ -49,6 +49,9 @@ define main() {
     println(my_array[0]);
     println(multidim_array[0][0]);
 
+    for val in my_array {
+        continue;
+    }
 }
 
 define takes_array(_: i32[10]) -> i32[10] {

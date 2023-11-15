@@ -14,7 +14,6 @@ define main() {
         continue;
     }
 
-
     for x in 0..100 {
         if x % 20 and x!=20 {
             continue;

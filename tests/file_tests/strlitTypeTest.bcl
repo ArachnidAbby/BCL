@@ -3,6 +3,8 @@ import stdlib::*;
 define main() {
     my_val = "Some Random Strlit";
 
+    some_buffer = strlit::new(512);
+
     not_a_copy_technically = my_val;
     my_val[1] = 'h';
 

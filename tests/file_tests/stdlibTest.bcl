@@ -1,0 +1,57 @@
+import stdlib::*;
+
+define main() {
+    println(1i8);
+    println(1i16);
+    println(1i32);
+    println(1i64);
+
+    println(1u8);
+    println(1u16);
+    println(1u32);
+    println(1u64);
+
+    println(1f32);
+    println(1f64);
+
+    println_ptr(&7 as UntypedPointer);
+    println(true);
+    println('x');
+    println("Hello World");
+    println();
+
+    print(1i8);
+    print(1i16);
+    print(1i32);
+    print(1i64);
+
+    print(1u8);
+    print(1u16);
+    print(1u32);
+    print(1u64);
+
+    print(1f32);
+    print(1f64);
+
+    print_ptr(&7 as UntypedPointer);
+    print(true);
+    print('x');
+    print("Hello World");
+
+    usleep(15);
+    sleep(15);
+
+    err_println("OH FUCK AN ERROR");
+    err_println(1i64);
+    err_println(1i32);
+
+    err_print("OH FUCK AN ERROR");
+    err_print(1i64);
+    err_print(1i32);
+
+    buffer = strlit::new(512);
+    println(*(&buffer.input()));
+
+    exit(11);
+    exit();
+}

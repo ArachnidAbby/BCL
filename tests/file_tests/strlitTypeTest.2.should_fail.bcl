@@ -1,0 +1,3 @@
+define main() {
+    strlit::new(-1);
+}
