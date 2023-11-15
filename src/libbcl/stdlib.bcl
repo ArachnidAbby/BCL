@@ -34,16 +34,33 @@ public define srandom(seed: i32);
 
 
 //  PRINTLN()
-public define println(x: i32) {
-    printf("%i\n", x);
-}
-
 public define println(x: i8) {
     printf("%i\n", x as i32);
 }
 
+public define println(x: i16) {
+    printf("%i\n", x as i32);
+}
+
+public define println(x: i32) {
+    printf("%i\n", x);
+}
+
 public define println(x: i64) {
     printf("%lld\n", x);
+}
+
+
+public define println(x: u8) {
+    printf("%iu\n",x as u32);
+}
+
+public define println(x: u16) {
+    printf("%iu\n",x as u32);
+}
+
+public define println(x: u32) {
+    printf("%iu\n", x);
 }
 
 public define println(x: u64) {
@@ -84,12 +101,40 @@ public define println() {
 
 
 // PRINT()
+public define print(x: i8) {
+    printf("%i", x as i32);
+}
+
+public define print(x: i16) {
+    printf("%i", x as i32);
+}
+
 public define print(x: i32) {
     printf("%i", x);
 }
 
 public define print(x: i64) {
     printf("%lli", x);
+}
+
+public define print(x: u8) {
+    printf("%iu",x as u32);
+}
+
+public define print(x: u16) {
+    printf("%iun",x as u32);
+}
+
+public define print(x: u32) {
+    printf("%iu", x);
+}
+
+public define print(x: u64) {
+    printf("%llu", x);
+}
+
+public define print_ptr(x: UntypedPointer) {
+    printf("%llu", x);
 }
 
 public define print(x: bool) {
