@@ -17,8 +17,7 @@ build:
 sphinx:
   configuration: docs/conf.py
 
-formats:
-  - all
+formats: all
 
 python:
   install:
