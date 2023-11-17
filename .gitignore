@@ -5,7 +5,9 @@
 *.prof
 __pycache__/
 env/
+winenv/
 *.tar.gz
+/.egg/
 
 # SetupTools
 Bens_Compiled_Language/
@@ -14,6 +16,7 @@ build/
 
 ## sphinx-docs
 docs/build/
+docs/source/_static/gif_parts/
 
 ## test compiler outputs
 test
