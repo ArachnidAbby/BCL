@@ -26,6 +26,7 @@ Welcome to BCL's documentation!
    tutorial/loops.rst
    tutorial/array.rst
    tutorial/creating_types.rst
+   tutorial/modules.rst
 
 Indices and tables
 ==================

@@ -74,6 +74,8 @@ With enums you use the :doc:`namespace operator </tutorial/math_operations>` to 
 
 .. code-block:: bcl
 
+    import stdlib::*;
+
     enum States {
         // each item here is called a "variant"
         WORKING,     // language gives a value of 0
