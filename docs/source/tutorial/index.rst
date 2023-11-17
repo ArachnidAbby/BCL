@@ -5,13 +5,8 @@ learn all about the language and how to use it. This is a sort of guide to the l
 
 There are a few missing things that will be finished soon.
 
-- Modules
-- Namespaces
-- Imports
-- Visibility modifiers
 - Tuples
 - Generators
-- Custom data types
 
 .. .. toctree:: 
 

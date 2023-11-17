@@ -27,6 +27,8 @@ Welcome to BCL's documentation!
    tutorial/array.rst
    tutorial/creating_types.rst
    tutorial/modules.rst
+   tutorial/references.rst
+   tutorial/methods.rst
 
 Indices and tables
 ==================
