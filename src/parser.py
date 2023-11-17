@@ -257,6 +257,7 @@ class Parser(ParserBase):
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False
 
+    # ? is `^` supposed to be there!?!
     @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef|^|COMMA|CLOSE_PAREN")
     def parse_visibility_modifiers(self):
         '''parsing finished sets of curly braces into blocks'''
@@ -654,7 +655,7 @@ class Parser(ParserBase):
 
     @rule(-1, "!expr AMP expr")
     def parse_varref(self):
-        if self.peek_safe(2).name in ("OPEN_SQUARE", "OPEN_TYPEPARAM"):
+        if self.peek_safe(2).name in ("OPEN_SQUARE", "OPEN_TYPEPARAM", "OPEN_PAREN"):
             return
 
         var = self.peek(1).value

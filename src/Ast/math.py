@@ -11,6 +11,7 @@ from Ast.Ast_Types.Type_Void import Void
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode
 
 # from Ast.variable import VariableRef
 
@@ -65,10 +66,18 @@ class OperationNode(ExpressionNode):
         return self.op.right_asso
 
     def deref(self, func):
-        if isinstance(self.rhs.ret_type, Reference):
-            self.rhs = self.rhs.get_value(func)
         if isinstance(self.lhs.ret_type, Reference):
-            self.lhs = self.lhs.get_value(func)
+            if self.lhs.ret_type.typ.name == "STRUCT":
+                return
+
+        if isinstance(self.rhs.ret_type, Reference):
+
+            ptr = self.rhs.eval(func)
+
+            self.rhs = PassNode(self.rhs.position,
+                                func.builder.load(ptr),
+                                self.rhs.ret_type.typ,
+                                ptr)
 
     def pre_eval_math(self, func):
         self.lhs.pre_eval(func)
