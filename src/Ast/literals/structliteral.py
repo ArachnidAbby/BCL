@@ -1,8 +1,11 @@
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
+from Ast.Ast_Types import Type_Function
+from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast.nodes import Block, ExpressionNode, KeyValuePair
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.Ast_Types.Type_Struct import Struct
 
 
 class StructLiteral(ExpressionNode):
@@ -14,24 +17,58 @@ class StructLiteral(ExpressionNode):
         self.members = members
         self.struct_name = name
 
+    def copy(self):
+        return StructLiteral(self._position, self.struct_name.copy(), self.members.copy())
+
+    def fullfill_templates(self, func):
+        self.members.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.members.post_parse(func)
+
     def pre_eval(self, func):
         self.ret_type = self.struct_name.as_type_reference(func)
+        if not isinstance(self.ret_type, Struct):
+            errors.error("Type is not a structure",
+                         line=self.position)
+
+        if not self.ret_type.can_create_literal and func.module.location != self.ret_type.module.location:
+            errors.error("Type has private members, cannot " +
+                         "create a struct literal from this type",
+                         line=self.position)
+
+        used_names = []
+        missing_members = []
+
         # self.members.pre_eval(func)
         for child in self.members:
             if not isinstance(child, KeyValuePair):
                 errors.error("Invalid Syntax:", line=child.position)
             child.value.pre_eval(func)
             name = child.key.var_name
+            used_names.append(name)
             if name not in self.ret_type.members.keys():
                 errors.error(f"{self.ret_type} has no member " +
                              f"\"{child.key.var_name}\"",
-                             line=child.key.position);
-            if child.value.ret_type != self.ret_type.members[name]:
-                errors.error(f"Expected type {self.ret_type.members[name]} " +
+                             line=child.key.position)
+            if child.value.ret_type != self.ret_type.members[name][0]:
+                errors.error(f"Expected type {self.ret_type.members[name][0]} " +
                              f"got {child.value.ret_type}",
                              line=child.value.position)
 
-    def eval(self, func):
+        for x in self.ret_type.members.keys():
+            ty = self.ret_type.members[x][0]
+            if isinstance(ty, Type_Function.Function) or isinstance(ty, Type_Function.FunctionGroup):
+                continue
+            if x not in used_names:
+                missing_members.append(x)
+
+        if len(missing_members) > 0:
+            missing_str = ", ".join([f"\"{x}\"" for x in missing_members])
+            errors.error(f"Missing required members: {missing_str} ",
+                         line=self.position)
+
+    def eval_impl(self, func):
         ptr = func.create_const_var(self.ret_type)
         zero_const = ir.Constant(ir.IntType(64), 0)
         idx_lookup = {name: idx for idx, name in
@@ -39,9 +76,20 @@ class StructLiteral(ExpressionNode):
         for child in self.members:
             index = ir.Constant(ir.IntType(32), idx_lookup[child.key.var_name])
             item_ptr = func.builder.gep(ptr, [zero_const, index])
-            func.builder.store(child.value.eval(func), item_ptr)
+
+            value = child.value.eval_impl(func)
+            node = PassNode(child.value.position, value, child.value.ret_type, item_ptr)
+            child.value._instruction = value
+            func.builder.store(value, item_ptr)
+            child.value.ret_type.add_ref_count(func, node)
         self.ptr = ptr
-        return func.builder.load(ptr)
+        self._instruction = func.builder.load(ptr)
+        return self._instruction
+
+    def get_lifetime(self, func):
+        # if self.ret_type.returnable:
+        #     return Lifetimes.LONG
+        return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position,

@@ -8,6 +8,7 @@ from Ast.nodes.commontypes import SrcPosition
 from errors import error
 from parserbase import ParserBase, ParserToken, rule
 
+IN_FROZEN_EXE = path.dirname(__file__).endswith('library.zip')
 
 class Parser(ParserBase):
     ''' The actual BCL parser implementation.
@@ -38,6 +39,8 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("$PI", 0))
         ParserBase.CREATED_RULES.append(("CLOSE_SQUARE|expr", -1))
         ParserBase.CREATED_RULES.append(("$not expr", 0))
+        ParserBase.CREATED_RULES.append(("BNOT expr", 0))
+        ParserBase.CREATED_RULES.append(("expr AMP expr", 0))
         ParserBase.CREATED_RULES.append(("expr ISUM expr SEMI_COLON", 0))
         ParserBase.CREATED_RULES.append(("expr ISUB expr SEMI_COLON", 0))
         ParserBase.CREATED_RULES.append(("expr IMUL expr SEMI_COLON", 0))
@@ -51,34 +54,43 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("SUB", 0))
         ParserBase.CREATED_RULES.append(("SUM", 0))
         ParserBase.CREATED_RULES.append(("statement_list|expr_list", 1))
+        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef", 2))
+
 
         super().__init__(*args, **kwargs)
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct', 'import', 'yield'
+            'as', 'for', 'in', 'struct', 'import', 'yield',
+            'enum', 'public', 'typedef'
         )  # ? would it make sense to put these in a language file?
 
         self.standard_expr_checks = ("OPEN_PAREN", "DOT", "KEYWORD",
-                                     "expr", "OPEN_SQUARE", "paren")
+                                     "expr", "OPEN_SQUARE", "paren",
+                                     "NAMEINDEX", "OPEN_TYPEPARAM")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
-                              "COLON", "DOUBLE_DOT")
+                              "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
+                              "BXOR", "BOR", "BNOT", "AMP")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
             "OPEN_CURLY_USED": (self.parse_finished_blocks,
                                 self.parse_struct_literal),
-            "expr": (self.parse_var_decl, self.parse_array_index,
+            "expr": (self.parse_var_decl,
+                     self.parse_array_index,
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
-                     self.parse_expr_list,
-                     self.parse_rangelit,
-                     self.parse_member_access),
+                     self.parse_expr_list, self.parse_rangelit,
+                     self.parse_member_access, self.namespace_index,
+                     self.parse_generic),
             "statement": (self.parse_statement, self.parse_combine_statements),
             "statement_list": (self.parse_statement_list, ),
             "SUB": (self.parse_numbers, ),
             "SUM": (self.parse_numbers, ),
-            "KEYWORD": (self.parse_return_statement,
+            "MUL": (self.parse_deref, ),
+            "KEYWORD": (self.parse_typedef,
+                        self.parse_visibility_modifiers,
+                        self.parse_return_statement,
                         self.parse_return_statement_empty,
                         self.parse_math,
                         self.parse_import_statment,
@@ -93,7 +105,8 @@ class Parser(ParserBase):
                         self.parse_var_usage, self.parse_functions,
                         self.parse_func_with_return,
                         self.parse_func_double_return,
-                        self.parse_structs, self.parse_KV_pairs),
+                        self.parse_structs, self.parse_KV_pairs,
+                        self.parse_enums),
             "func_def_portion": (self.parse_funcdef_empty,
                                  self.parse_funcdef_with_body),
             "kv_pair": (self.parse_expr_list, self.parse_vardecl_explicit,
@@ -104,7 +117,8 @@ class Parser(ParserBase):
             "paren": (self.parse_member_access,),
             "OPEN_SQUARE": (self.parse_array_literal_multi_element,
                             self.parse_array_literal,),
-            "AMP": (self.parse_varref, )
+            "AMP": (self.parse_varref, ),
+            "BNOT": (self.parse_math, )
         }
 
         self.blocks = deque(((None, 0),))
@@ -135,27 +149,124 @@ class Parser(ParserBase):
                 errors.developer_info(f"{self._tokens}")
                 errors.error("Unclosed '('", line=self.parens[-1][0].position)
 
+    @rule(0, "$typedef expr SET_VALUE expr SEMI_COLON")
+    def parse_typedef(self):
+        name = self.peek(1).value
+        if not isinstance(name, Ast.variables.reference.VariableRef) and \
+                not isinstance(name, Ast.GenericSpecify):
+            errors.error("Typedef name must be a variable name (or template name).",
+                         line=self.peek(1).pos)
+
+        pos = self.peek(0).pos
+        node = Ast.variables.typedef.TypeDefinition(pos,
+                                                    name,
+                                                    self.peek(3).value,
+                                                    self.module)
+        self.replace(5, 'statement', node)
+
+    @rule(-1, "!expr MUL expr !NAMEINDEX")
+    def parse_deref(self):
+        if self.peek_safe(2).name in ('expr', 'OPEN_PAREN'):
+            return
+
+        deref = Ast.Deref(self.peek(0).pos,
+                          self.peek(1).value)
+        self.replace(2, "expr", deref)
+
+    @rule(0, "expr OPEN_TYPEPARAM expr_list|expr GR|RSHIFT")
+    def parse_generic(self):
+        left = self.peek(0).value
+        right = self.peek(2).value
+
+        if self.peek(2).name=="expr":
+            right = Ast.nodes.ParenthBlock(self.peek(2).pos)
+            right.append_child(self.peek(2).value)
+
+        pos = self.peek(0).pos
+        if not (isinstance(left, Ast.variables.reference.VariableRef)
+                or isinstance(left, Ast.namespace.NamespaceIndex)):
+            errors.error("Namespace index must be indexing a name or another namespace index",
+                         line=self.peek(0).pos)
+
+        node = Ast.generics.GenericSpecify(pos, left, right, self.module, self.blocks[-1][0])
+
+        is_rshift = self.peek(3).name == "RSHIFT"
+        if is_rshift:
+            rshift_pos = self.peek(3).pos
+            self._tokens[self._cursor + 3] = ParserToken("GR", ">", (rshift_pos[0], rshift_pos[1]+1, 1, rshift_pos[3]), False)
+            self.replace(3, "expr", node)
+        else:
+            self.replace(4, "expr", node)
+
+    @rule(0, "expr NAMEINDEX expr|MUL")
+    def namespace_index(self):
+        left = self.peek(0).value
+        right = self.peek(2).value
+        if not (isinstance(left, Ast.variables.reference.VariableRef)
+                or isinstance(left, Ast.namespace.NamespaceIndex)
+                or isinstance(left, Ast.generics.GenericSpecify)):
+            errors.error("Namespace index must be indexing a name or another namespace index",
+                         line=self.peek(0).pos)
+
+        if not (isinstance(right, Ast.variables.reference.VariableRef)
+                or (isinstance(right, str) and right=='*')):
+            errors.error("Index in a namespace index must be a name (or '*')",
+                         line=self.peek(2).pos)
+
+        pos = self.peek(0).pos
+
+        node = Ast.namespace.NamespaceIndex(pos, left, right)
+        if right == '*':
+            node.star_idx = True
+        self.replace(3, "expr", node)
+
     @rule(0, "$import expr SEMI_COLON")
     def parse_import_statment(self):
-        if not isinstance(self.peek(1).value,
-                          Ast.variables.reference.VariableRef):
+        mod = self.peek(1).value
+        if not (isinstance(mod, Ast.variables.reference.VariableRef)
+                or isinstance(mod, Ast.namespace.NamespaceIndex)):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
-        name = self.peek(1).value.var_name
+        is_public = False
+        if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
+            is_public = True
+
         directories = self.module.location.split("/")[:-1]
         directory_path = '/'.join(directories)
+        using_namespace = False
+        if isinstance(mod, Ast.namespace.NamespaceIndex):
+            using_namespace = mod.star_idx
+            name = mod.as_file_path()
+        else:
+            name = self.peek(1).value.var_name
+
         filedir = f"{directory_path}/{name}.bcl"
         if not path.exists(filedir):
             libbcl_dir = path.dirname(__file__) + "/libbcl"
+            if IN_FROZEN_EXE:
+                libbcl_dir = '/'.join(path.dirname(__file__).split("/")[0:-1]) + "/libbcl"
             filedir = f"{libbcl_dir}/{name}.bcl"
             if not path.exists(filedir):
                 errors.error(f"Could not find module '{name}'",
                              line=self.peek(1).pos)
 
-        self.module.add_import(filedir, name)
-        errors.inline_warning("Notice: import statements may be buggy")
+        self.module.add_import(filedir, name, using_namespace, is_public)
+        # errors.inline_warning("Notice: import statements may be buggy")
         self.consume(0, 3)
+        # self._cursor = max(self.start, self.start_min)
+        # self.do_move = False
+
+    # ? is `^` supposed to be there!?!
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef|^|COMMA|CLOSE_PAREN")
+    def parse_visibility_modifiers(self):
+        '''parsing finished sets of curly braces into blocks'''
+        val = self.peek(1).value
+        val.set_modifier(Ast.nodes.astnode.Modifiers.VISIBILITY_PUBLIC,
+                         "visibility")
+        name = self.peek(1).name
+
+        self.replace(2, name, val)
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):
@@ -215,12 +326,13 @@ class Parser(ParserBase):
 
         values = self.peek(1).value
         if self.peek(1).name == "kv_pair":
-            values = Ast.nodes.ContainerNode(self.peek(1).pos)
-            values.append_child(self.peek(1).value)
+            block[0].append_child(self.peek(1).value)
+        else:
+            block[0].children = values.children
         self.start = self.blocks[-1][1]
         struct_literal = Ast.StructLiteral(self.peek(-1).pos,
                                            self.peek(-1).value,
-                                           values)
+                                           block[0])
         self.replace(4, "expr", struct_literal, i=-1)
 
     @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
@@ -250,11 +362,30 @@ class Parser(ParserBase):
 
     @rule(0, "$struct expr statement")
     def parse_structs(self):
-        struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1),
+        struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1).value,
                                        self.peek(2).value, self.module)
         self.replace(3, "structdef", struct)
 
-    @rule(0, "expr DOT expr")
+    @rule(0, "$enum expr statement")
+    def parse_enums(self):
+        if not isinstance(self.peek(2).value, Ast.nodes.container.ContainerNode):
+            error("Enum definition body must be a block.`\n" +
+                  "enum MyEnum {\nvariant1,\nvariant2\nvariant3\n}\n`",
+                  line=self.peek(2).pos)
+
+        members = self.peek(2).value.children
+
+        if not isinstance(members[0], Ast.nodes.container.ContainerNode):
+            tmp = Ast.nodes.container.ContainerNode(members[0].position)
+            tmp.append_children(members[0])
+            members[0] = tmp
+
+        struct = Ast.enumdef.Definition(self.peek(0).pos, self.peek(1).value,
+                                        members, self.module)
+
+        self.replace(3, "enumdef", struct)
+
+    @rule(0, "expr DOT expr !NAMEINDEX")
     def parse_member_access(self):
         op = Ast.math.ops['access_member'](self.peek(0).pos,
                                            self.peek(0).value,
@@ -285,16 +416,9 @@ class Parser(ParserBase):
         if self.simple_check(-1, "KEYWORD") and \
                 self.peek(-1).value not in self.keywords:
             return
-        amount = self.peek(3).value
-        if not isinstance(amount, Ast.literals.numberliteral.Literal) or \
-                self.peek(3).value.ret_type.name != "i32":
-            errors.error("Array literal size must be an i32",
-                         line=self.peek(3).pos)
-        if amount.value <= 0:
-            errors.error("Array literal size must be greater than '0'",
-                         line=self.peek(3).pos)
-        exprs = [self.peek(1).value] * amount.value
-        literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+
+        exprs = [self.peek(1).value]
+        literal = Ast.ArrayLiteral(self.peek(0).pos, exprs, repeat=self.peek(3).value)
         self.replace(5, "expr", literal)
 
     @rule(0, "expr OPEN_SQUARE expr CLOSE_SQUARE")
@@ -390,7 +514,7 @@ class Parser(ParserBase):
                                                         func_name,
                                                         self.peek(2).value,
                                                         None, self.module)
-            func.ret_type = self.peek(4).value
+            func.ret_raw = self.peek(4).value
             func.is_ret_set = True
             # self.start_min = self._cursor
             self.replace(5, "func_def_portion", func)
@@ -416,7 +540,7 @@ class Parser(ParserBase):
         # self.start_min = self._cursor
         self.replace(2, "statement", self.peek(0).value)
 
-    @rule(-1, "!DOT expr expr")
+    @rule(-1, "!DOT expr expr !expr")
     def parse_func_call(self):
         # * Function Calls
         func_name = self.peek(0).value
@@ -529,8 +653,11 @@ class Parser(ParserBase):
                                         self.blocks[-1][0])
         self.replace(1, "expr", var)
 
-    @rule(0, "AMP expr !OPEN_SQUARE")
+    @rule(-1, "!expr AMP expr")
     def parse_varref(self):
+        if self.peek_safe(2).name in ("OPEN_SQUARE", "OPEN_TYPEPARAM", "OPEN_PAREN"):
+            return
+
         var = self.peek(1).value
         typ = Ast.reference.Ref(self.peek(0).pos, var)
         self.replace(2, "expr", typ)
@@ -589,9 +716,16 @@ class Parser(ParserBase):
                                         SrcPosition.invalid()))
             self.replace(2, "expr", op)
 
+        if self.check_group_lookahead(0, 'BNOT expr') and \
+                self.peek_safe(2).name != "DOUBLE_DOT":
+            op = Ast.math.ops['bitnot'](self.peek(0).pos, self.peek(1).value,
+                                        Ast.nodes.ExpressionNode(
+                                           SrcPosition.invalid()))
+            self.replace(2, "expr", op)
+
         if self.peek_safe(3).name in self.standard_expr_checks:
             return
-        # todo: add more operations
+
         # * Parse expressions
         if self.check_group(0, "expr ISUM expr SEMI_COLON"):
             op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,
@@ -614,6 +748,11 @@ class Parser(ParserBase):
                 self.peek(1).name in Ast.math.ops.keys():
             op_str = self.peek(1).name
             op = Ast.math.ops[op_str](self.peek(0).pos, self.peek(0).value,
+                                      self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr AMP expr'):
+            op = Ast.math.ops['band'](self.peek(0).pos, self.peek(0).value,
                                       self.peek(2).value)
             self.replace(3, "expr", op)
 

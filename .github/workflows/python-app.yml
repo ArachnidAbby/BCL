@@ -23,17 +23,30 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.11"
-    - uses: s-weigand/setup-conda@v1
+    - name: Set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+        platform: x64
+    - name: Setup Conda
+      uses: s-weigand/setup-conda@v1
       with:
         activate-conda: true
     - name: Install dependencies
       run: |
+        sudo ldconfig
+        sudo apt-get install libc6-dev
+        sudo apt install gcc-multilib
+        # setup virtual environment
         python -m pip install --upgrade pip
-        pip install flake8 pytest rply
+        python3.11 -m venv env
+        # install simple dependencies
+        env/bin/pip install flake8 pytest rply
+        # install llvmlite and it's dependencies
         conda install -c conda-forge libstdcxx-ng=12
         conda install -y -q -c numba/label/dev llvmdev="14.*" libxml2
         conda install cmake
-        pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
+        env/bin/pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
     - name: Run Tests
       run: |
-        python setup.py test
+        env/bin/python setup.py test

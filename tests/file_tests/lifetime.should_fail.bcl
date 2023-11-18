@@ -1,0 +1,7 @@
+define main() {
+
+}
+
+define should_fail() -> &i64 {
+    return &22i64;
+}

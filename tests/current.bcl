@@ -1,5 +1,5 @@
 #!./bcl compile --run --emit-binary
-import stdlib;
+import stdlib::*;
 
 // import SDL;
 
@@ -41,7 +41,8 @@ import stdlib;
 //     return 0;
 // }
 
-import math;
+import math::*;
+import optional::*;
 
 define tests() -> f32 {
     return 934f;
@@ -57,6 +58,10 @@ struct TestStruct {
 
     define test() -> char {
         return 'F';
+    }
+
+    define goof_function(x: i32) -> i32 {
+        return x;
     }
 
     define testing(self) {
@@ -88,6 +93,10 @@ struct TestStruct {
     }
 }
 
+struct Wrapper {
+    x: TestStruct;
+}
+
 define test_gen(w: i32) -> (i32, i32) {
     yield (420, 420);
     yield (421, 420);
@@ -116,12 +125,294 @@ define gaming_test_function() -> i32 {
     }
 }
 
-define random() -> (i16, i16);
+// define malloc(size_bytes: size_t) -> UntypedPointer;
+// define free(ptr: UntypedPointer);
 
-define malloc(size_bytes: size_t) -> UntypedPointer;
-define free(ptr: UntypedPointer);
+enum TestEnum {
+    ONE,
+    TWO,
+    THREE: 4,
+    FIVE,
+    SIX,
+    SEVEN: 11;
+}
+
+enum Flags {
+    A: 1,
+    B: 2,
+    C: 3;
+}
+
+import test;
+
+
+struct Gumby::<T, U> {
+    one: T,
+    two: U;
+    define new() -> Gumby::<T, U>{
+        return Gumby::<T, U> {
+            one: 12,
+            two: 69
+        };
+    }
+}
+
+define get_value() -> Optional::<i32> {
+    x = random();
+    if x > i32::MAX / 2 {
+        return Optional::<i32>::wrap(x);
+    }
+
+    return Optional::<i32>::none();
+}
+
+import box::*;
+import vector::*;
+
+define random_box_test(my_arg: &Box::<i64>) -> Box::<i64> {
+    return *my_arg;
+}
+
+struct ContainsBox {
+    x: &Box::<i64>;
+
+    define __dispose__(self) {
+        println("DISPOSING AND POSING");
+    }
+}
+
+define testing_lifetimes(x: &LifetimeTest, ptr: &i32) -> &LifetimeTest {
+    *x.x = 8;
+    return x;
+}
+
+struct LifetimeTest {
+    x: &i32;
+
+    define set(&self, val: &i32) {
+        self.x = val;
+    }
+}
+
+// define indirection(val: &LifetimeTest, _: i32, inner_val: &i32) {
+//     val.set(inner_val);
+// }
+
+// define indirection_2(val: &LifetimeTest, _: i32, _2: i32, inner_val: &i32) {
+//     indirection(val, _, inner_val);
+// }
+
+// define indirection_3(val: &LifetimeTest, inner_val: &i32) {
+//     indirection_2(val, 0, 0, inner_val);
+// }
+
+// define indirection_recur(val: &LifetimeTest) {
+//     indirection_4(val);
+// }
+
+// // ! should cause a lifetime error
+// define indirection_4(val: &LifetimeTest) {
+//     indirection_3(val, &22); // ! this is where that should happen
+//     indirection_recur(val);
+// }
+
+struct ExampleErrors::<T> {
+    _: T;
+
+    define poglin(self) {
+        self._ as UntypedPointer;
+    }
+}
+
+define gamerly(x: &i32, y: &i32) -> &i32 {
+    if true { return x; }
+    return y;
+}
+
+define return_lifetime_back(x: &i32) -> &i32 {
+    return x;
+}
+
+define gamerly_test(x: &i32) {
+    gamerly(x, return_lifetime_back(x));
+}
+
+typedef INT = i32;
+// typedef ErroringExample = ExampleErrors::<i32>;
+
+typedef IBOX = Box::<i32>;
+import winDef;
+
+define test_typedef(_: INT) -> INT {
+    return 10;
+}
+
+// define test_typedef_gen(_: IBOX){
+// }
+
+
+define tests(_: TestStruct) -> i32 {
+    return 6980085;
+}
 
 define main() {
+    w = LifetimeTest {x: &10};
+    dd: INT = 12;
+    dd + 15;
+
+    random_thing = TestStruct {x: 10, y: 10};
+
+    println(random_thing.(tests)());
+
+    // indirection_2(&w, 0, 0, &22); // * should work perfectly
+
+    // println(test_typedef(22));
+    // indirection(&w);
+
+    println("started");
+    println([1, 3, 4, 6, 8, 2, 34, 8, 3, 10] == [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
+    println([1, 3, 4, 6, 8, 2, 34, 8, 3, 10] != [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
+    println([1, 3, 4, 6, 8, 2, 342, 8, 3, 10] != [1, 3, 4, 6, 8, 2, 34, 8, 3, 10]);
+
+    println("1-2".length);
+    println("hi"=="hi");
+    println("Hoi"=="Boi");
+    println("joi" == "15");
+    println(""=="");
+
+    println("1--2".length);
+    println("hi"!="hi");
+    println("Hoi"!="Boi");
+    println("joi" != "15");
+    println(""!="");
+    // println("Pogging"[10]);
+
+    example_vec: Vector::<i64> = Vector::<i64>::new(10i64);
+
+    example_vec.append(12i64);
+    example_vec.append(2i64);
+    example_vec.put(0i64, 10i64);
+    test_val = example_vec.get(0i64);
+    test_val_2 = example_vec.get(1i64);
+
+
+    print("Vec value: ");
+    println(test_val);
+
+    print("Vec value 2: ");
+    println(test_val_2);
+
+    // example_vec.pop(0i64);
+
+    test_val = example_vec.get(0i64);
+
+    print("Vec value: ");
+    println(test_val);
+
+    // // should error at runtime
+    test_val = example_vec.get(1i64);
+
+    print("Vec value: ");
+    println(test_val);
+
+    // while example_vec.length() {
+
+    // }
+    p = example_vec.iter();
+    // example_vec::SIZEOF;
+
+    for item in example_vec.iter() {
+        println(item);
+    }
+
+
+    j = Box::<i64>::new(10i64);
+    Box::<i64>::new(10i64);
+    OhNo = ContainsBox {
+        x: &j
+    };
+
+    // box_array = [Box::<i32>::new(10); 10];
+
+    // box_in_a_box = Box::<Box::<i32>>::new(j);
+
+    // for x in box_array {
+    //     println(x.unwrap());
+    // }
+
+    // println("running func");
+    // j = random_box_test(&j);
+
+    // println(j.unwrap());
+
+    // j.wrap(69);
+
+    // println(j.unwrap());
+
+    println();
+    println();
+
+    // j = Box::<i32>::new(15);
+
+    println();
+    println();
+
+    // box2 = my_box;
+
+    // println(TestEnum::ONE as i32);
+    // println(TestEnum::TWO as i32);
+    // println(TestEnum::THREE as i32);
+    // println(TestEnum::FIVE as i32);
+    // println(TestEnum::SIX as i32);
+    // println(TestEnum::SEVEN as i32);
+    // println(i32::MAX);
+    // println(i32::MIN);
+    // Gumby::<i32, i32>::new();
+    println(Gumby::<i32, i32>::SIZEOF as i32);
+
+    // srandom(59548548892080984);
+
+    // for _ in 0..20 {
+    //     my_optional_value = get_value();
+    //     val = my_optional_value.unwrap_or(0);
+    //     print("RANDOM VALUE ");
+    //     println(val);
+    // }
+
+    println("--------------------------------");
+    println("Testing bitwise ops on integers");
+    println();
+    test::assert((12<<1)==24, "Right shift is broken");
+    test::assert((12>>1)==6, "Left shift is broken");
+    test::assert((12<<1>>1)==12, "Right + Left shift doesn't yield original value?");
+    test::assert((1u8|1u8)==1u8, "Bitwise or is broken");
+    test::assert((3u8^1u8)==2u8, "Bitwise xor is broken");
+    test::assert((3u8&1u8)==1u8, "Bitwise and is broken");
+    test::assert((~1u8)==254, "Bitwise not is broken");
+
+
+    println();
+    println("SUCCESS");
+    println("--------------------------------");
+    println("Testing bitwise ops on enums");
+    println();
+
+    test::assert((Flags::A<<1)==2, "Left shift is broken");
+    test::assert((Flags::B>>1)==1, "Right shift is broken");
+    test::assert((Flags::A|Flags::B)==3u8, "Bitwise or is broken");
+    test::assert((Flags::A|5)==5u8, "Bitwise or is broken (2)");
+    test::assert((Flags::A^Flags::C)==2u8, "Bitwise xor is broken");
+    test::assert((Flags::A^3)==2u8, "Bitwise xor is broken (2)");
+    test::assert((Flags::A&Flags::C)==1u8, "Bitwise and is broken");
+    test::assert((Flags::A&3)==1u8, "Bitwise and is broken (2)");
+    test::assert((~Flags::A)==254u8, "Bitwise not is broken");
+
+
+    println();
+    println("SUCCESS");
+    println("--------------------------------");
+    println();
+
 
     define create_data(c: i32) -> i32 {
         for x in 0..c {
@@ -137,21 +428,39 @@ define main() {
     println(18f32);
 
     println(16**0.5);
-    println(20**3f);
+    println(20**3f); // 26
+
+    lmnop = Wrapper {x: TestStruct {x: 12, y: 10}};
+    joty = lmnop.x;
+    joty + 10;
+    lmnop.x + 10; //32
+    println(TestStruct::test()); //33
+    // TestStruct;
+    println();
+    20.println();
 
 
     t = create_data(23);
+    println(120583.TestStruct::goof_function());
 
-    x = [t.next(); 3];
+    x = [t.next(); 3]; //38
 
-    pointer = malloc(4 as size_t);
+    pointer = malloc(i32::SIZEOF * 2); // UntypedPointer
+
+    ahead = pointer[i32::SIZEOF] as &i32;
+
+    ahead = 34500000;
+
     i32_p = pointer as &i32;
     i32_p = 12;
-    println(i32_p as i32);
+    println(i32_p as i32); //30-31 +9 // 41
     i32_p = 69420;
     println(i32_p as i32);
+
+    println(ahead as i32);
+
     // println(x);
-    free(pointer);
+    free(pointer); //45
 
     // println 10;
     // m = TestStruct {x: 123, y: 1232};
@@ -231,6 +540,7 @@ define main() {
     // if (10f>9) * 2f {
     //     println("hi");
     // }
+    println("END");
 }
 
 // struct parent {

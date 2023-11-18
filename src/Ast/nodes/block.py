@@ -20,11 +20,41 @@ class Block(ContainerNode):
         self.ended = False
         self.parent = parent
 
+    def simple_copy(self):
+        out = Block(self._position)
+        out.children = [child.copy() for child in self.children if child is not None]
+        return out
+
+    def copy(self):
+        out = Block(self._position)
+        if len(self.BLOCK_STACK) != 0:
+            out.parent = self.BLOCK_STACK[-1]
+        self.BLOCK_STACK.append(out)
+        out.children = [child.copy() for child in self.children if child is not None]
+        self.BLOCK_STACK.pop()
+        return out
+
+    def reset(self):
+        super().reset()
+        self.variables: dict[str, object] = {}
+        self.BLOCK_STACK.append(self)
+        for x in self.children:
+            x.reset()
+        self.BLOCK_STACK.pop()
+        # {name: VarObj, ...} -- recursive import uppon proper type annotation
+        self.builder = None
+        self.last_instruction = False
+        self.ended = False
+
     def append_nested_vars(self):
         '''append vars for nested blocks'''
         if len(self.BLOCK_STACK) != 0:
             self.variables = {**self.variables,
                               **self.BLOCK_STACK[-1].variables}
+
+    def fullfill_templates(self, func):
+        for child in self:
+            child.fullfill_templates(func)
 
     def post_parse(self, func):
         for child in self:
@@ -37,7 +67,7 @@ class Block(ContainerNode):
             x.pre_eval(func)
         self.BLOCK_STACK.pop()
 
-    def eval(self, func):
+    def eval_impl(self, func):
         if len(self.children) == 0:
             self.last_instruction = not func.ret_type.is_void()
             return
@@ -71,8 +101,10 @@ class Block(ContainerNode):
             return self.parent.get_variable(var_name, module)
         elif module is not None:
             return module.get_global(var_name)
-        else:
-            return None
+
+    def get_type_by_name(self, var_name, pos):
+        if self.parent is not None:
+            return self.parent.get_type_by_name(var_name, pos)
 
     def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''

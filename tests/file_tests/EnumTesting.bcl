@@ -1,0 +1,60 @@
+import stdlib::*;
+
+enum WithoutValues {
+    ONE,
+    TWO,
+    THREE,
+    FOUR,
+    FIVE,
+    SIX;
+}
+
+enum WithValues {
+    ONE: 69,
+    TWO,
+    THREE,
+    FOUR: 420,
+    FIVE,
+    SIX: 230;
+}
+
+
+// casting
+define casting_test() {
+    WithoutValues::ONE as u8;
+    WithoutValues::TWO as u16;
+    WithoutValues::THREE as u32;
+    WithoutValues::FOUR as u64;
+    WithoutValues::FIVE as i8;
+    WithoutValues::SIX as i16;
+    WithoutValues::ONE as i32;
+    WithoutValues::TWO as i64;
+}
+
+// passing
+define passing_test() {
+    define as_arg(x: WithoutValues) {
+        println(x as i32);
+    }
+
+    define as_ret() -> WithoutValues{
+        return WithoutValues::ONE;
+    }
+
+    as_arg(WithoutValues::ONE);
+    as_ret() as i32;
+}
+
+//storage & pointers
+define storage_test() {
+    x = WithValues::SIX;
+    println(x as i32);
+    x = WithValues::FOUR;
+}
+
+
+define main() {
+    casting_test();
+    passing_test();
+    storage_test();
+}

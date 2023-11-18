@@ -1,0 +1,10 @@
+import stdlib::*;
+
+define main() {
+    x = 0..11;
+    for i in x {}
+
+    for y in 0..x.end {}
+
+    for z in 0..x.start {}
+}

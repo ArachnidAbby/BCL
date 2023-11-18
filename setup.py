@@ -1,4 +1,9 @@
+import os
+import sys
+
 from setuptools import find_packages, setup
+
+sys.path.append(os.path.dirname(__file__) + "/tests")
 
 with open("readme.md", "r", encoding="utf-8") as f:
     long_description = f.read()
@@ -33,5 +38,6 @@ setup(
     entry_points='''
         [console_scripts]
         bcl=bcl:main
-    '''
+    ''',
+    test_suite="file_Test.AllTest.test_all"
 )

@@ -44,7 +44,7 @@ class ParserBase:
     '''
 
     CREATED_RULES: list[tuple[str, int]] = []
-    compiled_rules: dict[str, tuple] = {}
+    compiled_rules: dict[str, tuple] = {} # []
 
     def __init__(self, lex_stream, module):
         self._tokens = []
@@ -79,6 +79,8 @@ class ParserBase:
         elif '|' in wanting:  # `or` operation
             code = [self.single_compile(y, pos) for y in wanting.split('|')]
             return "("+(' or '.join(code))+")"
+        elif '^' in wanting:  # `or` operation
+            return f'input[{pos}].name=="EOF"'
         else:
             return f'input[{pos}].name=="{wanting}"'
 
@@ -135,7 +137,7 @@ class ParserBase:
 
     def isEOF(self, index) -> bool:
         '''Checks if the End-Of-File has been reached'''
-        return self.EOS and index >= (len(self._tokens))
+        return self.EOS and (index >= (len(self._tokens)) or self.peek(0).name == "EOF")
 
     def move_cursor(self, index: int = 1):
         '''Moves the cursor unless `!self.doMove` '''
@@ -159,11 +161,11 @@ class ParserBase:
             pos = SrcPosition(tok.source_pos.lineno, tok.source_pos.colno,
                               len(tok.value), self.module.location)
             if tok.name == "NUMBER":
-                val = Literal(pos, int(tok.value), Ast.Ast_Types.Integer_32())
+                val = Literal(pos, int(tok.value), definedtypes.types_dict['i32'])
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "NUMBER_F":
                 val = Literal(pos, float(tok.value.strip('f')),
-                              Ast.Ast_Types.Float_32())
+                              definedtypes.types_dict['f32'])
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "NUMBER_W_TYPE":
                 if 'i' in tok.value:
@@ -193,7 +195,12 @@ class ParserBase:
             self._tokens.append(fintok)
             if c == amount-1:
                 return True
+
         self.EOS = True
+        if len(self._tokens)-self._cursor < MAX_SIZE:
+            fintok = ParserToken("EOF", "EOF", SrcPosition.invalid(), False)
+            self._tokens.append(fintok)
+            return True
         return False
 
     def peek_safe(self, index: int) -> ParserToken:
@@ -201,6 +208,8 @@ class ParserBase:
         overindexing the token list, it will return an empty token'''
         if self.isEOF(self._cursor+index):
             return ParserToken("EOF", "EOF", SrcPosition.invalid(), False)
+
+        # print(self._cursor+index, len(self._tokens))
 
         return self.peek(index)
 
@@ -211,9 +220,12 @@ class ParserBase:
 
     def consume(self, index: int, amount: int):
         '''Consume a specific `amount` of tokens starting at `index`'''
-        self._consume(index=index, amount=amount)
+        self._consume(index, amount)
 
         self._cursor = max(self.start, self.start_min)
+        tokens_left = (len(self._tokens)-self._cursor)
+        if tokens_left < MAX_SIZE:
+            self.gen_ahead(tokens_left % MAX_SIZE)
         self.do_move = False
 
     def insert(self, index: int, name: str, value: Ast.nodes.ASTNode,

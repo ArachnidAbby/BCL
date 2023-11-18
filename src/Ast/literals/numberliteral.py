@@ -3,7 +3,7 @@ from typing import Any
 from llvmlite import ir  # type: ignore
 
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class Literal(ExpressionNode):
@@ -15,8 +15,17 @@ class Literal(ExpressionNode):
         self.value = value
         self.ret_type = typ
 
-    def eval(self, func) -> ir.Constant:
+    def copy(self):
+        return Literal(self._position, self.value, self.ret_type)
+
+    def fullfill_templates(self, func):
+        return super().fullfill_templates(func)
+
+    def eval_impl(self, func) -> ir.Constant:
         return ir.Constant(self.ir_type, self.value)
+
+    def get_lifetime(self, func):
+        return Lifetimes.FUNCTION
 
     def __str__(self) -> str:
         return str(self.value)

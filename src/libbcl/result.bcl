@@ -1,0 +1,85 @@
+import stdlib::*;
+
+
+// TODO: Change to T|E, this is much more memory efficient
+// Alternatively, if I add tagged union syntax, use that instead of a struct.
+
+/// T is the type of the data
+/// E is the type of the error.
+/// ---
+/// E MUST be an enum type.
+/// T must have a size > 0
+public struct Result::<T, E> {
+    data: T,
+    _error_code: E,
+    _is_error: bool;
+
+    /// create a non-error Result
+    public define wrap(data: T) -> Self {
+        // maybe adding enumty::SMALLESTMEMBER is a good idea?
+        // zero may not be valid.
+        ecode = *(&0i64 as UntypedPointer as &E); // i64 is the largest enum size.
+
+        return Self {
+            data: data,
+            _error_code: ecode,
+            _is_error: false
+        };
+    }
+
+    /// create an error Result
+    public define error(ecode: E) -> Self {
+        fake_data = *(&[0u8; T::SIZEOF] as UntypedPointer as &T);
+        return Self {
+            data: fake_data,
+            _error_code: ecode,
+            _is_error: true
+        };
+    }
+
+    public define except(self) -> T {
+        if self._is_error {
+            err_println("Unexpected Exit");
+            exit(self._error_code as i32);
+        }
+
+        return self.data;
+    }
+
+    /// exit if result is error, print error
+    public define except(self, msg: strlit) -> T {
+        if self._is_error {
+            err_println(msg);
+            exit(self._error_code as i32);
+        }
+
+        return self.data;
+    }
+
+    /// only exit on the case of a specific error
+    public define handle(&self, ecode: E, msg: strlit) -> &Self {
+        if self._is_error and self._error_code == ecode {
+            err_println(msg);
+            exit(self._error_code as i32);
+        }
+
+        return self;
+    }
+
+    public define is_error(self) -> bool{
+        return self._is_error;
+    }
+
+    public define __eq__(self, ecode: E) -> bool {
+        return self._is_error and self._error_code == ecode;
+    }
+
+    public define __neq__(self, ecode: E) -> bool {
+        return self._is_error and self._error_code == ecode;
+    }
+
+    //! Cannot do this *currently* because _error_code can be an invalid variant of E
+    // public define error_code(self) -> E {
+    //     return self._error_code;
+    // }
+}

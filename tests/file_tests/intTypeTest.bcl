@@ -1,0 +1,35 @@
+import math::*;
+
+define main() {
+    x = 8 + 9 * 12 / 7 % 9 ** 9;
+    x += 12;
+    x -= 7;
+    x /= 1;
+    x *= 9;
+    88u8 + 7u16 + 22u32 + 5u64;
+    88u8 - 7u16 - 22u32 - 5u64;
+    88u8 * 7u16 * 22u32 * 5u64;
+    88u8 / 7u16 / 22u32 / 5u64;
+    88u8 + 7u16 - 22u32 * 5u64 / 2u8;
+
+    22|255u8;
+    22&7u64;
+    2^3u8;
+    5<<9;
+    8>>7;
+    ~22;
+    not x;
+    x and 7;
+    x or 9;
+
+    // i32::MAX;
+    if 1 {}
+}
+
+define factorial(x: i64) -> i64 {
+    if x == 1 {
+        return x;
+    }
+
+    return x * factorial(x-1);
+}

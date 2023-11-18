@@ -21,6 +21,17 @@ class ContainerNode(ASTNode):
     def __len__(self) -> int:
         return len(self.children)
 
+    def copy(self):
+        out = ContainerNode(self._position)
+
+        out.children = [child.copy() for child in self.children]
+
+        return out
+
+    def fullfill_templates(self, func):
+        for child in self.children:
+            child.fullfill_templates(func)
+
     def post_parse(self, parent):
         for child in self.children:
             child.post_parse(parent)
@@ -29,7 +40,7 @@ class ContainerNode(ASTNode):
         for child in self.children:
             child.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         for child in self.children:
             child.eval(func)
 
@@ -46,6 +57,11 @@ class ContainerNode(ASTNode):
 
     def set_end_pos(self, pos: SrcPosition):
         self.end_pos = pos
+
+    def reset(self):
+        super().reset()
+        for x in self.children:
+            x.reset()
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self._position, self.end_pos))

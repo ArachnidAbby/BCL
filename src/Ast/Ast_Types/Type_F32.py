@@ -48,7 +48,7 @@ class Float_32(Type_Base.Type):
             case _: error(f"Cannot convert 'f32' to type '{typ}'",
                           line=orig.position)
 
-    def get_op_return(self, op: str, lhs, rhs):
+    def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         match op.lower():
             case 'sum' | 'sub' | 'mul' | 'div' | 'mod'|'pow':
@@ -143,6 +143,10 @@ class Float_32(Type_Base.Type):
         desired_typ = definedtypes.get_std_ret_type(lhs, rhs)
 
         pow_func = func.module.get_global("pow")
+        if pow_func is None:
+            error("Cannot find 'pow' function in the global namespace.\n" +
+                  "Try `import math::*;`",
+                  line=lhs.position)
         f64 = Float_32(name="f64", typ=ir.DoubleType())
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, f64), f64)
         arg2 = PassNode(rhs.position, (rhs.ret_type).convert_to(func, rhs, f64), f64)

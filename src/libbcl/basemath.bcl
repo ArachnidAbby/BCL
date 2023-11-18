@@ -1,0 +1,21 @@
+// ======================================
+// created: 07/06/2023
+// description:
+//   Contains only the basic functions
+//     needed for simple math only
+// ======================================
+
+
+// from math.h
+public define pow(x: f64, y: f64) -> f64;
+public define fmod(x: f64) -> f64;
+
+
+// must be defined after fpow due to binding issues :)
+public define pow(x: i64, pow: i32) -> i64 {
+    output = 1 as i64;
+    for _ in 0..pow {
+        output *= x;
+    }
+    return output;
+}

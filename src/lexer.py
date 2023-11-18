@@ -17,11 +17,13 @@ class Lexer():
         self.lexer.add('OPEN_SQUARE', r'\[')
         self.lexer.add('CLOSE_SQUARE', r'\]')
         # Number
-        self.lexer.add('NUMBER_W_TYPE', r'\d+[fiu]\d+')
+        self.lexer.add('NUMBER_W_TYPE', r'(\d+(\.\d+)?)[fiu]\d+')
         self.lexer.add('NUMBER_F', r'\d+((\.\d+f)|(\.\d+)|f)')
         self.lexer.add('NUMBER', r'\d+')
         # Semi Colon, comma, etc
         self.lexer.add('SEMI_COLON', r'\;')
+        self.lexer.add('OPEN_TYPEPARAM', r'\:\:\<')  # namespace::<T>
+        self.lexer.add('NAMEINDEX', r'\:\:')
         self.lexer.add('COLON', r'\:')
         self.lexer.add('RIGHT_ARROW', r'\-\>')
         self.lexer.add('COMMA', r'\,')
@@ -43,8 +45,17 @@ class Lexer():
         self.lexer.add('NEQ', r'\!\=')
         self.lexer.add('GEQ', r'\>\=')
         self.lexer.add('LEQ', r'\<\=')
+        # bitwise ops
+        self.lexer.add('LSHIFT', r'\<\<')
+        self.lexer.add('RSHIFT', r'\>\>')
+        self.lexer.add('BXOR', r'\^')
+        self.lexer.add('BOR', r'\|')
+        self.lexer.add('BNOT', r'\~')
+
+        # Comp continue
         self.lexer.add('GR', r'\>')
         self.lexer.add('LE', r'\<')
+
         self.lexer.add('AMP', r'\&')
         self.lexer.add('SET_VALUE', r'\=')
         # Keywords and strings

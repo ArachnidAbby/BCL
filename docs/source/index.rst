@@ -12,13 +12,23 @@ Welcome to BCL's documentation!
 
    features/index.rst
    features/future/index.rst
+   standard_library/index.rst
 
 .. toctree::
    :caption: Tutorials
 
-   getting_started
-
-
+   tutorial/index.rst
+   tutorial/your_first_code.rst
+   tutorial/variables.rst
+   tutorial/math_operations.rst
+   tutorial/functions.rst
+   tutorial/if-else.rst
+   tutorial/loops.rst
+   tutorial/array.rst
+   tutorial/creating_types.rst
+   tutorial/modules.rst
+   tutorial/references.rst
+   tutorial/methods.rst
 
 Indices and tables
 ==================

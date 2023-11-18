@@ -3,7 +3,8 @@ from llvmlite import ir
 import errors
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.block import Block
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode
 
 
 class ReturnStatement(ASTNode):
@@ -12,6 +13,24 @@ class ReturnStatement(ASTNode):
     def __init__(self, pos: SrcPosition, expr: ExpressionNode):
         self._position = pos
         self.expr = expr
+
+    def copy(self):
+        if self.expr is None:
+            expr_copy = None
+        else:
+            expr_copy = self.expr.copy()
+        out = ReturnStatement(self._position, expr_copy)
+        return out
+
+    def fullfill_templates(self, func):
+        if self.expr is None:
+            return
+        self.expr.fullfill_templates(func)
+
+    def post_parse(self, func):
+        if self.expr is None:
+            return
+        self.expr.post_parse(func)
 
     def pre_eval(self, func):
         if self.expr is None:
@@ -30,7 +49,7 @@ class ReturnStatement(ASTNode):
                          f" of '{func.ret_type}'. Return statement returned" +
                          f" '{self.expr.ret_type}'", line=self.position)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         func.has_return = True
         self._check_valid_type(func)
 
@@ -40,10 +59,25 @@ class ReturnStatement(ASTNode):
                                              ir.Constant(ir.IntType(32), 0)])
             func.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
+        ret_val = None
+        if not func.ret_type.is_void():
+            node = PassNode(self.expr.position, self.expr.eval(func), self.expr.ret_type)
+            self.expr.ret_type.add_ref_count(func, node)
+            ret_val = self.expr._instruction
+            if self.expr.get_lifetime(func) != Lifetimes.LONG and not self.expr.ret_type.returnable:
+                errors.error(f"{str(self.expr.ret_type)} is not returnable",
+                             line=self.expr.position)
+
+        func.dispose_stack()
+
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:
-            func.builder.ret(self.expr.eval(func))
+            if not self.expr.ret_type.returnable:
+                lifetimes = self.expr.get_coupled_lifetimes(func)
+                for life in lifetimes:
+                    func.function_ty.return_coupling.append(life)
+            func.builder.ret(ret_val)
         Block.BLOCK_STACK[-1].ended = True
 
     def repr_as_tree(self) -> str:

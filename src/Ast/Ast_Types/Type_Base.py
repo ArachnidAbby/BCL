@@ -1,8 +1,10 @@
 
 from typing import Self
 
-from llvmlite import ir  # type: ignore
+from llvmlite import ir
 
+from Ast.nodes.commontypes import Modifiers
+from Ast.nodes.passthrough import PassNode  # type: ignore
 from errors import error
 
 
@@ -24,6 +26,7 @@ class Type:
     has_members = False
     # is this type allowed to be the return type of a function
     returnable = True
+    checks_lifetime = False
     # Dynamic types change function definitions and the
     # matching of function args when calling
     is_dynamic = False
@@ -39,8 +42,36 @@ class Type:
     # Only allow indexes via literals
     literal_index = False
 
+    # Namespacing stuff that applies to nodes also applies to types
+    is_namespace = True
+    needs_dispose = False
+    is_generic = False
+    ref_counted = False
+    visibility = Modifiers.VISIBILITY_PUBLIC
+    generate_bounds_check = True
+    index_returns_ptr = True
+
     def __init__(self):
         pass
+
+    def global_namespace_names(self, func, name, pos):
+        from Ast.Ast_Types.Type_I32 import Integer_32
+        from Ast.literals.numberliteral import Literal
+        if name == "SIZEOF":
+            target_data = func.module.target_machine.target_data
+            size = self.ir_type.get_abi_size(target_data)
+            ty = Integer_32(name="u64", size=64, signed=False)
+            val = Literal(pos, size, ty)
+            return val
+
+    def get_namespace_name(self, func, name, pos):
+        '''Getting a name from the namespace'''
+        if x := self.global_namespace_names(func, name, pos):
+            return x
+        error(f"Cannot get {name} from namespace {self}", line=pos)
+
+    def pass_type_params(self, func, params, pos):
+        error(f"Type is not Generic: {self}", line=pos)
 
     @classmethod
     def convert_from(cls, func, typ, previous) -> ir.Instruction:
@@ -71,8 +102,11 @@ class Type:
         if op == "call" and rhs.position.line > lhs.position.line:
             error(f"{self} is not callable, perhaps you forgot a semicolon?",
                   line=lhs.position)
+        elif op == "call":
+            error(f"{self} is not callable",
+                  line=lhs.position)
 
-    def get_op_return(self, op, lhs, rhs):
+    def get_op_return(self, func, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         pass
 
@@ -90,6 +124,30 @@ class Type:
 
     def div(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operator '/' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def lshift(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '<<' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def rshift(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '>>' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_xor(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '^' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '~' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_or(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '|' is not supported for type '{lhs.ret_type}'",
+              line=lhs.position)
+
+    def bit_and(self, func, lhs, rhs) -> ir.Instruction:
+        error(f"Operator '&' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def mod(self, func, lhs, rhs) -> ir.Instruction:
@@ -135,12 +193,12 @@ class Type:
     def _not(self, func, rhs):
         return func.builder.not_(rhs.ret_type.truthy(func, rhs))
 
-    def index(self, func, lhs) -> ir.Instruction:
+    def index(self, func, lhs, rhs) -> ir.Instruction:
         error(f"Operation 'index' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def put(self, func, lhs, value):
-        error(f"Operation 'putat' is not supported for type '{lhs.ret_type}'",
+        error(f"Operation 'put at index' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def call(self, func, lhs, args) -> ir.Instruction:
@@ -153,32 +211,62 @@ class Type:
         if self.read_only and not first_assignment:
             error(f"Type: \'{ptr.ret_type}\' is read_only",
                   line=ptr.position)
+
         val = value.ret_type.convert_to(func, value, typ)  # type: ignore
+
+        node = PassNode(value.position, val, typ)
+
+        value.ret_type.add_ref_count(func, node)
+
         func.builder.store(val, ptr.get_ptr(func))
 
     def isum(self, func, ptr, rhs):
-        final_value = self.sum(func, ptr, rhs)
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        sum_value = self.sum(func, node, rhs)
+        sum_node = PassNode(rhs.position, sum_value, self.get_op_return(func, 'sum', ptr, rhs))
+        # final_value = sum_node.ret_type.convert_to(func, sum_node, ptr.ret_type)
+
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, sum_node, self)
 
     def isub(self, func, ptr, rhs):
-        final_value = self.sub(func, ptr, rhs)
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        sub_value = self.sub(func, node, rhs)
+        sub_node = PassNode(rhs.position, sub_value, self.get_op_return(func, 'sub', ptr, rhs))
+        # final_value = sub_node.ret_type.convert_to(func, sub_node, ptr.ret_type)
+
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, sub_node, self)
 
     def imul(self, func, ptr, rhs):
-        final_value = self.mul(func, ptr, rhs)
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
+
+        mul_value = self.mul(func, node, rhs)
+        mul_node = PassNode(rhs.position, mul_value, self.get_op_return(func, 'mul', ptr, rhs))
+        # final_value = mul_node.ret_type.convert_to(func, mul_node, ptr.ret_type)
+
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, mul_node, self)
 
     def idiv(self, func, ptr, rhs):
-        final_value = self.div(func, ptr, rhs)
-        ptr = ptr.get_ptr(func)
-        func.builder.store(final_value, ptr)
+        val = func.builder.load(ptr.get_ptr(func))
+        node = PassNode(ptr.position, val, self, ptr.get_ptr(func))
 
-    def cleanup(self, func, ptr): # TODO: IMPLEMENT
-        '''code to run on the closing of a function'''
-        print("cleanup")
+        div_value = self.div(func, node, rhs)
+        div_node = PassNode(rhs.position, div_value, self.get_op_return(func, 'div', ptr, rhs))
+        # final_value = div_node.ret_type.convert_to(func, div_node, ptr.ret_type)
+
+        # ptr = ptr.get_ptr(func)
+        # func.builder.store(final_value, ptr)
+        ptr.store(func, ptr, div_node, self)
 
     def __hash__(self):
         return hash(self.name)
@@ -192,14 +280,14 @@ class Type:
     def __call__(self) -> Self:
         return self
 
-    def eval(self, foo):  # ? Why is this here
+    def eval_impl(self, foo):  # ? Why is this here
         '''Does nothing'''
         pass
 
     def declare(self, mod):
         '''re-declare an ir-type in a module'''
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         return self
 
     def get_member_info(self, lhs, rhs):
@@ -226,6 +314,10 @@ class Type:
     def truthy(self, func, val):
         '''When using boolean ops or if statements'''
         return ir.Constant(ir.IntType(1), 0)  # defaults false
+
+    @property
+    def type(self):
+        return self
 
     @property
     def ret_type(self):
@@ -266,3 +358,21 @@ class Type:
         ptr = func.builder.alloca(item[0].type.ir_type)
         func.builder.store(val, ptr)
         item[0].ptr = ptr
+
+    def add_ref_count(self, func, ptr):
+        # print(f"add_ref_count {func.func_name} {self}")
+        pass
+
+    def pop_ref_count(self, func, ptr):
+        pass
+
+    def dispose(self, func, ptr):
+        '''code to run on the closing of a function'''
+        self.pop_ref_count(func, ptr)
+        # print(f"dispose {func.func_name} {self}")
+
+    def get_deref_return(self, func, node):
+        error(f"Cannot dereference type, {self}", line=node.position)
+
+    def deref(self, func, node):
+        error(f"Cannot dereference type, {self}", line=node.position)

@@ -1,0 +1,138 @@
+import basemath::*;
+import stdlib::*;
+
+struct MyStruct {
+    x: i32;
+
+    define __add__(self, other: &i32) -> Self {
+        return Self {x: self.x + other};
+    }
+
+    define __sub__(self, other: &i32) -> Self {
+        return Self {x: self.x - other};
+    }
+
+    define __mul__(self, other: &i32) -> Self {
+        return Self {x: self.x * other};
+    }
+
+    define __div__(self, other: &i32) -> Self {
+        return Self {x: self.x / other};
+    }
+
+    define __pow__(self, other: &i32) -> Self {
+        return Self {x: self.x ** other};
+    }
+
+
+    define __bitnot__(self) -> Self {
+        return Self {x: ~self.x};
+    }
+
+    define __bitor__(self, other: &i32) -> Self {
+        return Self {x: self.x | other};
+    }
+
+    define __bitand__(self, other: &i32) -> Self {
+        return Self {x: self.x & other};
+    }
+
+    define __bitxor__(self, other: &i32) -> Self {
+        return Self {x: self.x ^ other};
+    }
+
+    define __lshift__(self, other: &i32) -> Self {
+        return Self {x: self.x << other};
+    }
+
+    define __rshift__(self, other: &i32) -> Self {
+        return Self {x: self.x >> other};
+    }
+
+
+    define __iadd__(&self, other: &i32) {
+        self.x += other;
+    }
+
+    define __isub__(&self, other: &i32) {
+        self.x -= other;
+    }
+
+    define __imul__(&self, other: &i32) {
+        self.x *= other;
+    }
+
+    define __idiv__(&self, other: &i32) {
+        self.x /= other;
+    }
+
+    define __eq__(self, other: &i32) -> bool {
+        return self.x == other;
+    }
+
+    define __neq__(self, other: &i32) -> bool {
+        return self.x != other;
+    }
+
+    define __gt__(self, other: &i32) -> bool {
+        return self.x > other;
+    }
+
+    define __lt__(self, other: &i32) -> bool {
+        return self.x < other;
+    }
+
+    define __geq__(self, other: &i32) -> bool {
+        return self.x >= other;
+    }
+
+    define __leq__(self, other: &i32) -> bool {
+        return self.x <= other;
+    }
+
+    define __deref__(self) -> i32 {
+        return self.x;
+    }
+
+    define __truthy__(self) -> bool {
+        return self.x != 0;
+    }
+}
+
+define main() {
+    val =  &(MyStruct {x: 10});
+    num =  &10;
+
+    val = val + num;
+    val = val - num;
+    val = val * num;
+    val = val / num;
+
+    println(*(*val));
+
+    val = ~val;
+    val = val | num;
+    val = val & num;
+    val = val ^ num;
+    val = val << num;
+    val = val >> num;
+
+    println(*(*val));
+
+    val += num;
+    val -= num;
+    val *= num;
+    val /= num;
+
+    println(*(*val));
+
+    if val == num {}
+    else if val != num {}
+    else if val > num {}
+    else if val < num {}
+    else if val >= num {}
+    else if val <= num {}
+    else if val {}
+
+    println(*(*val));
+}

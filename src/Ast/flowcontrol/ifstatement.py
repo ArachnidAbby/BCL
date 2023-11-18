@@ -13,15 +13,25 @@ class IfStatement(ASTNode):
         self.cond = cond
         self.block = block
 
+    def copy(self):
+        out = IfStatement(self._position, self.cond.copy(), self.block.copy())
+        return out
+
+    def fullfill_templates(self, func):
+        self.block.fullfill_templates(func)
+        self.cond.fullfill_templates(func)
+
     def post_parse(self, func):
-        for child in self.block:
-            child.post_parse(func)
+        self.block.post_parse(func)
+        self.cond.post_parse(func)
+        # for child in self.block:
+        #     child.post_parse(func)
 
     def pre_eval(self, func):
         self.cond.pre_eval(func)
         self.block.pre_eval(func)
 
-    def eval(self, func):
+    def eval_impl(self, func):
         cond = self.cond.ret_type.truthy(func, self.cond)
         bfor = func.has_return
 

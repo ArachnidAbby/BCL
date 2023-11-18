@@ -1,0 +1,14 @@
+import wire_world::*;
+import stdlib::*;
+
+struct test {
+    x: i32,
+    y: i32;
+}
+
+public define poggers() {
+    println("SHOG");
+    println("SOGGERS".strnlen(123123 as size_t));
+    println(get_new('#',2));
+    println("");
+}

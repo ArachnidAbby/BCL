@@ -4,7 +4,7 @@ from llvmlite import ir
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes import ContainerNode
-from Ast.nodes.commontypes import GenericNode, SrcPosition
+from Ast.nodes.commontypes import GenericNode, Lifetimes, SrcPosition
 from Ast.nodes.keyvaluepair import KeyValuePair
 from errors import error
 
@@ -12,7 +12,8 @@ from errors import error
 class ParenthBlock(ContainerNode):
     '''Provides a node for parenthesis as an expression or tuple'''
     __slots__ = ('ret_type', 'in_func_call', 'ptr',
-                 'contains_ellipsis', 'evaled_children')
+                 'contains_ellipsis', 'evaled_children',
+                 'do_register_dispose')
 
     def __init__(self, pos: SrcPosition, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
@@ -21,6 +22,28 @@ class ParenthBlock(ContainerNode):
         self.ret_type = Ast_Types.Void()
         self.evaled_children = []
         self.contains_ellipsis = False
+        self.do_register_dispose = False
+
+    def copy(self):
+        out = ParenthBlock(self._position)
+        out.children = [child.copy() for child in self.children]
+        out.in_func_call = self.in_func_call
+        out.contains_ellipsis = self.contains_ellipsis
+        return out
+
+    def reset(self):
+        super().reset()
+        self.in_func_call = False
+        self.ptr = None
+        self.ret_type = Ast_Types.Void()
+        self.evaled_children = []
+        for child in self.children:
+            child.reset()
+
+    def post_parse(self, func):
+        for child in self.children:
+            self.do_register_dispose = self.do_register_dispose or \
+                                       child.do_register_dispose
 
     def pre_eval(self, func):
         for child in self.children:
@@ -62,7 +85,7 @@ class ParenthBlock(ContainerNode):
                 continue
             self.evaled_children.append(child.eval(func))
 
-    def eval(self, func, expected_args=[]):
+    def eval_impl(self, func, expected_args=[]):
         self.evaled_children = []
         self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:
@@ -95,12 +118,26 @@ class ParenthBlock(ContainerNode):
         #           "one value", line=self.position)
 
         if self.ptr is None:
-            val = self.eval(func)
-
             if len(self.children) == 1:
-                self.ptr = func.create_const_var(self.ret_type)
-                func.builder.store(val, self.ptr)
+                self.ptr = self.children[0].get_ptr(func)
         return self.ptr
+
+    def get_var(self):
+        if len(self.children) == 1:
+            return self.children[0]
+
+        return self
+
+    def get_lifetime(self, func) -> Lifetimes:
+        if len(self.children) > 1:
+            return Lifetimes.FUNCTION
+        return self.children[0].get_lifetime(func)
+
+    def get_coupled_lifetimes(self, func):
+        return [child.get_coupled_lifetimes(func) for child in self.children]
+
+    def get_value(self, func):
+        return self.children[0].get_value(func)
 
     @property
     def is_empty(self) -> bool:
@@ -115,9 +152,11 @@ class ParenthBlock(ContainerNode):
                                 children=self.children,
                                 return_type=self.ret_type)
 
-    def as_type_reference(self, func):
-        if len(self.children) == 1:
-            return self.children[0].as_type_reference(func)
+    def as_type_reference(self, func, allow_generics=False):
+        if len(self.children) == 0:
+            return Ast_Types.Void()
+        elif len(self.children) == 1:
+            return self.children[0].as_type_reference(func, allow_generics=allow_generics)
         else:
-            members = [child.as_type_reference(func) for child in self.children]
+            members = [child.as_type_reference(func, allow_generics=allow_generics) for child in self.children]
             return Ast_Types.TupleType(members)

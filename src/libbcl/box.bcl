@@ -1,0 +1,96 @@
+import stdlib::*;
+import memory::*;
+
+
+public struct Box::<T> {
+    inner: UntypedPointer, // &T
+    ref_count: UntypedPointer; // &i64 (signed in case the count goes negative)
+
+    public define new(data: T) -> Self {
+        inner_ptr = malloc(T::SIZEOF);
+        rc_ptr = malloc(i64::SIZEOF);
+
+        inner_tptr = inner_ptr as &T;
+        rc_tptr = rc_ptr as &i64;
+
+        inner_tptr = data;
+        rc_tptr = 1i64;
+
+        inner_ptr.store(&inner_tptr);
+
+        x = Box::<T> {
+            inner: inner_ptr,
+            ref_count: rc_ptr
+        };
+
+        return x;
+    }
+
+    public define from_heap_ptr(data_ptr: UntypedPointer) -> Self {
+        inner_ptr = data_ptr;
+        rc_ptr = malloc(i64::SIZEOF);
+
+        inner_tptr = inner_ptr as &T;
+        rc_tptr = rc_ptr as &T;
+
+        rc_tptr= 1i64;
+
+        inner_ptr.store(&inner_tptr);
+
+        x = Box::<T> {
+            inner: inner_ptr,
+            ref_count: rc_ptr
+        };
+
+        return x;
+    }
+
+    public define unwrap(self) -> T {
+        inner_data = self.inner as &T;
+
+        // if *(self.ref_count as &i64)<=0i64 {
+        //     println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
+        // }
+
+        return *inner_data;
+    }
+
+    public define wrap(&self, data: T) {
+        inner_data = self.inner as &T;
+
+        // if *(self.ref_count as &i64)<=0i64 {
+        //     println("\u001b[31mInvalid ref-count, this is impossible!?!\u001b[0m");
+        // }
+
+        *inner_data = data;
+    }
+
+    // public because of some dumb reasons that are necessary for op overloading
+    // will fix soon
+    /// Do not execute manually, breaks safety
+    public define __increase_ref_count__(&self) {
+        inner_ptr = self.inner as &T;
+        rc_ptr = self.ref_count as &i64;
+        rc_ptr += 1i64;
+        self.inner.retake(&inner_ptr);
+        // print("increasing, ref count: ");
+        // println(*inner_data.ref_count);
+    }
+
+    /// Do not execute manually, breaks safety
+    public define __dispose__(&self) {
+        inner_data = self.inner as &T;
+        rc_ptr = self.ref_count as &i64;
+        rc_ptr -= 1i64;
+        // print("diposing, ref count:");
+        // println(*inner_data.ref_count);
+        self.inner.release(&inner_data);
+
+        if *rc_ptr <= 0i64 {
+            // self.data.release(self.data as &T);
+            free(self.inner);
+            free(self.ref_count);
+            // println("Removed");
+        }
+    }
+}

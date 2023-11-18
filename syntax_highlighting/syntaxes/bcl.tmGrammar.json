@@ -9,6 +9,7 @@
             { "include": "#comment" },
             { "include": "#constants" },
             { "include": "#function_declaration" },
+            { "include": "#enums" },
             { "include": "#structs"},
             { "include": "#types"},
             { "include": "#keywords" },
@@ -59,7 +60,7 @@
       },
 
       "types": {
-        "match": "\\b((i8)|(i16)|(i32)|(i64)|(f32)|(f64)|(bool)|(char)|(string)|(strlit)|(str))\\b",
+        "match": "\\b((i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f32)|(f64)|(bool)|(char)|(string)|(strlit)|(str))\\b",
         "name": "storage.type.bcl"
       },
       "structs": {
@@ -79,13 +80,48 @@
             "begin": "([a-zA-Z0-9_]+)\\s*(:)",
             "beginCaptures": {
               "1": {"name": "support.variable.property.bcl"},
-              "2": {"name": "keyword.operator.type.annotation.bclv"}
+              "2": {"name": "keyword.operator.type.annotation.bcl"}
             },
             "end": "(?=[,\\}\\;])",
             "patterns": [
               {"include": "#comment"},
               {"include": "#punctuation"},
               {"include": "#types"}
+            ]
+          },
+          {"include": "#punctuation"},
+          {"include": "#function_declaration"},
+          {"include": "#types"},
+          {"include": "#constants"},
+          {"include": "#keywords"},
+          {"include": "#string"}
+        ]
+      },
+
+      "enums": {
+        "begin": "(enum)\\s+([a-zA-Z0-9_]+)\\s*(\\{)",
+        "beginCaptures": {
+          "1": {"name": "storage.type.enum.bcl"},
+          "2": {"name": "entity.name.enum.bcl"},
+          "3": {"name": "punctuation.definition.block.start.bcl"}
+        },
+        "end": "\\}",
+        "endCaptures": {
+          "0": {"name": "punctuation.definition.block.end.bcl"}
+        },
+        "patterns": [
+          {"include": "#comment" },
+          {
+            "begin": "([a-zA-Z0-9_]+)\\s*(:?)",
+            "beginCaptures": {
+              "1": {"name": "support.variable.property.bcl"},
+              "2": {"name": "keyword.operator.assignment.bcl"}
+            },
+            "end": "(?=[,\\}\\;])",
+            "patterns": [
+              {"include": "#comment"},
+              {"include": "#punctuation"},
+              {"include": "#constants"}
             ]
           },
           {"include": "#punctuation"},
@@ -108,7 +144,23 @@
             "name": "keyword.control.bcl"
           },
           {
-            "match": "\\b((or)|(and)|(not)|(in))\\b",
+            "match": "\\b((typedef))\\b",
+            "name": "storage.type.typedef.bcl"
+          },
+          {
+            "match": "\\b((struct))\\b",
+            "name": "storage.type.structure.bcl"
+          },
+          {
+            "match": "\\b((define))\\b",
+            "name": "storage.type.function.bcl"
+          },
+          {
+            "match": "\\b((public))\\b",
+            "name": "keyword.other.bcl"
+          },
+          {
+            "match": "\\b((or)|(and)|(not)|(in)|(as))\\b",
             "name": "keyword.operator.bcl"
           },
           {

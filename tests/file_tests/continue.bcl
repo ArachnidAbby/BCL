@@ -1,0 +1,23 @@
+import stdlib::*;
+
+define main() {
+    for x in 0..10 {
+        continue;
+    }
+
+    while true {
+        continue;
+    }
+
+    while true {
+        continue;
+        continue;
+    }
+
+    for x in 0..100 {
+        if x % 20 and x!=20 {
+            continue;
+        }
+        println(10*x);
+    }
+}

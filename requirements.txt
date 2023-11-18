@@ -4,8 +4,9 @@ sphinx-rtd-theme
 
 # project
 rply
-#llvmlite
-git+https://github.com/spidertyler2005/llvmlite.git
+# llvmlite
+# git+https://github.com/spidertyler2005/llvmlite.git
+git+https://github.com/Hassium-Software/llvmlite-lld.git
 psutil
 
 ## profiling
@@ -16,6 +17,7 @@ snakeviz
 ## compilation
 ordered-set
 nuitka
+cx_freeze
 
 ## source management
 mypy

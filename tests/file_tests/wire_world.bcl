@@ -1,4 +1,5 @@
-import random_import;
+import stdlib::*;
+import random_import::*;
 
 // Tile Types
 // '.' = Nothing
@@ -62,7 +63,7 @@ define get_neighbors(board: char[8][8], x: i32, y: i32) -> i32{
     return count;
 }
 
-define get_new(original: char, neighbors: i32) -> char {
+public define get_new(original: char, neighbors: i32) -> char {
     if original == '^' {
         return '*';
     } else if original == '*' {
@@ -78,13 +79,13 @@ define get_new(original: char, neighbors: i32) -> char {
 }
 
 define update(board: &char[8][8]) {
-    temp: char[8][8] = board; // TODO: fix so I don't have to do this.
+    // temp: char[8][8] = board; // TODO: fix so I don't have to do this.
     new_board = [['.'; 8]; 8];
 
     for x in 0..8 {
         for y in 0..8 {
             // println(check_left(&temp, x, y)); // TODO: Fix double pointer issue
-            new_board[x][y] = get_new(board[x][y], get_neighbors(temp, x, y));
+            new_board[x][y] = get_new(board[x][y], get_neighbors(*board, x, y));
         }
     }
     board = new_board;

@@ -1,0 +1,218 @@
+import stdlib::*;
+import exitcodes::*;
+
+public struct Vector::<T> {
+    array_ptr: UntypedPointer, // &UntypedPointer -> &T[...]
+    allocated_size: UntypedPointer, // &size_t
+    actual_size: UntypedPointer, // &size_t
+    ref_count: UntypedPointer; // &i64
+
+
+    /// Instantiate a new Vector with size elements allocated
+    public define new(size: i64) -> Vector::<T> {
+        array_ptr = stdlib::malloc((T::SIZEOF * size) as size_t);
+        array_ptr_ptr = stdlib::malloc(UntypedPointer::SIZEOF);
+
+        allocated_size_ptr = stdlib::malloc(i64::SIZEOF);
+        actual_size_ptr = stdlib::malloc(i64::SIZEOF);
+        ref_count_ptr = stdlib::malloc(i64::SIZEOF);
+        ref_count_ptr_typed = ref_count_ptr as &i64;
+        allocated_size_ptr_typed = allocated_size_ptr as &i64;
+        actual_size_ptr_typed = actual_size_ptr as &i64;
+
+        ref_count_ptr_typed = 1i64;
+        actual_size_ptr_typed = 0i64;
+        allocated_size_ptr_typed = size;
+
+        array_ptr_ptr_typed = (array_ptr_ptr as &UntypedPointer);
+
+        *array_ptr_ptr_typed = array_ptr;
+
+        return Vector::<T> {
+            array_ptr: array_ptr_ptr,
+            allocated_size: allocated_size_ptr,
+            actual_size: actual_size_ptr,
+            ref_count: ref_count_ptr
+        };
+    }
+
+    /// Initialize an array with a default size of 16 elements allocated
+    public define new() -> Vector::<T> {
+        return Vector::<T>::new(16i64);
+    }
+
+    public define length(self) -> i64 {
+        return *(self.actual_size as &i64);
+    }
+
+    public define get_allocated(self) -> i64 {
+        return *(self.allocated_size as &i64) * T::SIZEOF as i64;
+    }
+
+    public define iter(&self) -> T {
+        actual_size = *(self.actual_size as &i64);
+        i: i64 = 0;
+        while i < actual_size {
+            yield self.get(i);
+            i+=1i64;
+        }
+        return;
+    }
+
+
+    /// Get a value at an index, Negative indexes are valid
+    public define get(&self, index: i64) -> T {
+        ref_count_ptr = self.ref_count as &i64;
+        actual_size_ptr = self.actual_size as &i64;
+
+
+        if index < 0 {
+            index = actual_size_ptr as i64 - index;
+        }
+
+        if index >= *actual_size_ptr {
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
+            stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
+        }
+
+        array_ptr = *(self.array_ptr as &UntypedPointer);
+        data_ptr = array_ptr[T::SIZEOF * index];
+
+        return *(data_ptr as &T);
+    }
+
+    /// put a value at an index, Negative indexes are valid
+    public define put(&self, index: i64, value: T){
+        ref_count_ptr = self.ref_count as &i64;
+        actual_size_ptr = self.actual_size as &i64;
+
+
+        if index < 0 {
+            index = *actual_size_ptr - index;
+        }
+
+        if index >= *actual_size_ptr {
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
+            stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
+        }
+
+        array_ptr = *(self.array_ptr as &UntypedPointer);
+        data_ptr = array_ptr[T::SIZEOF * index];
+
+        data_ptr_typed = data_ptr as &T;
+        data_ptr_typed = value;
+    }
+
+
+    /// Append a value to the end of the array
+    public define append(&self, value: T) {
+        ref_count_ptr = self.ref_count as &i64;
+        allocated_size_ptr = self.actual_size as &i64;
+        actual_size_ptr = self.actual_size as &i64;
+
+        index = *actual_size_ptr as size_t;
+
+        actual_size_ptr += 1;
+
+        if *actual_size_ptr > *allocated_size_ptr {
+            array_ptr = *(self.array_ptr as &UntypedPointer); // this could just not work.
+            allocated_size_ptr *= 2;
+            new_ptr = stdlib::malloc((T::SIZEOF * *allocated_size_ptr) as size_t);
+
+            stdlib::memcpy(new_ptr, array_ptr, index as size_t);
+
+            stdlib::free(array_ptr);
+            array_ptr = new_ptr;
+            // stdlib::println("MAKING BIGGER!");
+        }
+
+
+        array_ptr = *(self.array_ptr as &UntypedPointer);
+        data_ptr = array_ptr[T::SIZEOF * index];
+
+        // data_ptr_typed = data_ptr as &T;
+        // data_ptr_typed = value;
+        data_ptr.store(&value);
+        data_ptr.retake(&value);
+    }
+
+
+    ///  Pop a value from the vector at some index
+    public define pop(&self, index: i64) {
+        ref_count_ptr = self.ref_count as &i64;
+        allocated_size_ptr = self.actual_size as &i64;
+        actual_size_ptr = self.actual_size as &i64;
+
+        if index >= *actual_size_ptr or index < 0i64 {
+            stdlib::err_print("\u001b[31m");
+            stdlib::err_print("\n\nINDEX OUT OF BOUNDS EXCEPTION: ");
+            stdlib::err_print(index);
+            stdlib::err_print("\nActual size: ");
+            stdlib::err_print(*actual_size_ptr);
+            stdlib::err_println("\u001b[0m");
+            stdlib::exit(ExitCodes::VectorIndexOutOfBounds as i32);
+        }
+
+        array_ptr = *(self.array_ptr as &UntypedPointer);
+        data_ptr = array_ptr[T::SIZEOF * index];
+         if index-1 >= *actual_size_ptr {
+            data_ptr.release(data_ptr as &T);
+            return;
+        }
+        ahead_ptr = array_ptr[T::SIZEOF * (index + 1)];
+
+        move_size = (*actual_size_ptr * T::SIZEOF) - (T::SIZEOF * (index + 1));
+
+        data_ptr.release(data_ptr as &T);
+
+        stdlib::memmove(data_ptr, ahead_ptr, move_size as size_t);
+        actual_size_ptr -= 1;
+    }
+
+
+    // public because of some dumb reasons that are necessary for op overloading
+    // will fix soon
+    /// Do not execute manually, breaks safety
+    public define __increase_ref_count__(&self) {
+        ref_ptr_typed = self.ref_count as &i64;
+        ref_ptr_typed = 1 + *ref_ptr_typed;
+        // stdlib::print("Append ref count: ");
+        // stdlib::println(*ref_ptr_typed);
+    }
+
+    /// Do not execute manually, breaks safety
+    public define __dispose__(&self) {
+        ref_count_ptr = self.ref_count as &i64;
+        ref_count_ptr -= 1;
+        ref_count = ref_count_ptr as i64;
+        // stdlib::print("dipose ref count:");
+        // stdlib::println(ref_count);
+
+        if ref_count <= 0 {
+            array_ptr = *(self.array_ptr as &UntypedPointer); // this could just not work.. I don't know yet
+            actual_size = *(self.actual_size as &i64);
+            i: i64 = 0;
+            while i < actual_size {
+                data_ptr = array_ptr[T::SIZEOF * i];
+                data_ptr.release(data_ptr as &T);
+                i+=1i64;
+            }
+            stdlib::free(array_ptr);
+            stdlib::free(self.array_ptr);
+            stdlib::free(self.ref_count);
+            stdlib::free(self.allocated_size);
+            stdlib::free(self.actual_size);
+            // stdlib::println("Removed Vector");
+        }
+    }
+}

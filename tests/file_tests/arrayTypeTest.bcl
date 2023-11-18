@@ -1,0 +1,59 @@
+import stdlib::*;
+
+define main() {
+    my_array = [122; 10];
+
+    my_array[0] + 10;
+    my_array[0] - 10;
+    my_array[0] * 10;
+    my_array[0] / 10;
+
+    println(my_array[0]);
+
+    my_array[0] = 10;
+    my_array[1] += 22;
+    my_array[2] -= 22;
+    my_array[3] *= 22;
+    my_array[4] /= 22;
+
+    my_array[0] = 10i8;
+    my_array[1] += 22i8;
+    my_array[2] -= 22i8;
+    my_array[3] *= 22i8;
+    my_array[4] /= 22i8;
+
+    multidim_array = [[10;5];5];
+    multidim_array[1][0] + 10;
+    multidim_array[1][0] - 10;
+    multidim_array[1][0] * 10;
+    multidim_array[1][0] / 10;
+
+    println(multidim_array[0][4]);
+
+    multidim_array[0][0] = 10;
+    multidim_array[0][1] += 22;
+    multidim_array[0][2] -= 22;
+    multidim_array[0][3] *= 22;
+    multidim_array[0][4] /= 22;
+
+    multidim_array[3][0] = 10i8;
+    multidim_array[3][1] += 22i8;
+    multidim_array[3][2] -= 22i8;
+    multidim_array[3][3] *= 22i8;
+    multidim_array[3][4] /= 22i8;
+
+    *&my_array[0] = 55;
+    *&multidim_array[0][0] = 55;
+
+    println();
+    println(my_array[0]);
+    println(multidim_array[0][0]);
+
+    for val in my_array {
+        continue;
+    }
+}
+
+define takes_array(_: i32[10]) -> i32[10] {
+    return _;
+}

@@ -1,0 +1,21 @@
+define main() {
+    for x in 0..10 {
+        break;
+    }
+
+    while true {
+        break;
+    }
+
+    while true {
+        break;
+        break;
+    }
+
+
+    for x in 0..100 {
+        if x % 20 and x!=20 {
+            break;
+        }
+    }
+}

@@ -4,7 +4,8 @@ from llvmlite import ir
 
 import Ast.Ast_Types.Type_Range
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
+import errors
 
 
 class RangeLiteral(ExpressionNode):
@@ -18,13 +19,34 @@ class RangeLiteral(ExpressionNode):
         self.end = end
         self.ptr = None
 
+    def copy(self):
+        out = RangeLiteral(self._position, self.start.copy(), self.end.copy())
+
+    def fullfill_templates(self, func):
+        self.start.fullfill_templates(func)
+        self.end.fullfill_templates(func)
+
+    def post_parse(self, func):
+        self.start.post_parse(func)
+        self.end.post_parse(func)
+
     def pre_eval(self, func):
         self.start.pre_eval(func)
         self.end.pre_eval(func)
 
-    def eval(self, func):
-        start = self.start.eval(func)
-        end = self.end.eval(func)
+        if self.start.ret_type.name != "i32":
+            errors.error("Start of range literal must be an i32",
+                         self.start.position)
+
+        if self.end.ret_type.name != "i32":
+            errors.error("End of range literal must be an i32",
+                         self.end.position)
+
+    def eval_impl(self, func):
+        start = self.start.eval_impl(func)
+        self.start._instruction = start
+        end = self.end.eval_impl(func)
+        self.end._instruction = end
         ptr = self.get_ptr(func)
         self._put_at(func, ptr, 0, start)
         self._put_at(func, ptr, 1, end)
@@ -36,6 +58,9 @@ class RangeLiteral(ExpressionNode):
         if self.ptr is None:
             self.ptr = func.create_const_var(self.ret_type)
         return self.ptr
+
+    def get_lifetime(self, func):
+        return Lifetimes.FUNCTION
 
     def _put_at(self, func, ptr, idx, val):
         val_ptr = func.builder.gep(ptr, (ir.Constant(ir.IntType(64), 0),

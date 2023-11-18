@@ -1,0 +1,25 @@
+import stdlib::*;
+
+define my_gen() -> i32 {
+    yield 10;
+    yield 20;
+    yield 30;
+}
+
+define double_or_nothin() -> i32 {
+    x = 10;
+    while true {
+        x *= 2;
+        yield x;
+    }
+}
+
+define main() {
+    for x in double_or_nothin() {
+        if x > 10000000 break;
+        println(x);
+    }
+
+    x = my_gen();
+    println(x.next());
+}

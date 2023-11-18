@@ -6,10 +6,12 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types  # type: ignore
 from Ast.Ast_Types.Type_Reference import Reference
+from Ast.Ast_Types.Type_Void import Void
 # from Ast import exception
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode
 
 # from Ast.variable import VariableRef
 
@@ -42,6 +44,15 @@ class OperationNode(ExpressionNode):
         self.shunted = shunted
         self.op = op
 
+    def copy(self):
+        return OperationNode(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+
+    def reset(self):
+        super().reset()
+        self.lhs.reset()
+        self.rhs.reset()
+        self.ret_type = Void()
+
     @property
     def op_type(self):
         return self.op.name
@@ -55,10 +66,18 @@ class OperationNode(ExpressionNode):
         return self.op.right_asso
 
     def deref(self, func):
-        if isinstance(self.rhs.ret_type, Reference):
-            self.rhs = self.rhs.get_value(func)
         if isinstance(self.lhs.ret_type, Reference):
-            self.lhs = self.lhs.get_value(func)
+            if self.lhs.ret_type.typ.name == "STRUCT":
+                return
+
+        if isinstance(self.rhs.ret_type, Reference):
+
+            ptr = self.rhs.eval(func)
+
+            self.rhs = PassNode(self.rhs.position,
+                                func.builder.load(ptr),
+                                self.rhs.ret_type.typ,
+                                ptr)
 
     def pre_eval_math(self, func):
         self.lhs.pre_eval(func)
@@ -74,7 +93,8 @@ class OperationNode(ExpressionNode):
         elif self.op.name in ('not', 'and', 'or'):
             self.ret_type = Ast_Types.Integer_1()
         else:
-            self.ret_type = (self.lhs.ret_type).get_op_return(self.op_type,
+            self.ret_type = (self.lhs.ret_type).get_op_return(func,
+                                                              self.op_type,
                                                               self.lhs,
                                                               self.rhs)
 
@@ -84,6 +104,25 @@ class OperationNode(ExpressionNode):
     def right_handed_position(self):
         '''get the position of the right handed element. This is recursive'''
         return self.rhs.position
+
+    def fullfill_templates(self, func):
+        self.lhs.fullfill_templates(func)
+        self.rhs.fullfill_templates(func)
+
+    def post_parse_math(self, func):
+        self.lhs.post_parse(func)
+        self.rhs.post_parse(func)
+
+    def post_parse(self, func):
+        if not self.shunted:
+            new = RPN_to_node(shunt(self))
+            self.shunted = True
+            self.lhs = new.lhs
+            self.rhs = new.rhs
+            self.op = new.op
+            self.post_parse(func)
+        else:
+            self.post_parse_math(func)
 
     def pre_eval(self, func):
         if not self.shunted:
@@ -96,7 +135,13 @@ class OperationNode(ExpressionNode):
         else:
             self.pre_eval_math(func)
 
-    def eval(self, func):
+    def get_ptr(self, func):
+        if self.op.name == 'as' and isinstance(self.ret_type, Ast_Types.Reference):
+            return self.eval(func)
+        else:
+            return super().get_ptr(func)
+
+    def eval_impl(self, func):
         if not self.shunted:
             return RPN_to_node(shunt(self)).eval(func)
         else:
@@ -106,14 +151,26 @@ class OperationNode(ExpressionNode):
     def __str__(self) -> str:
         return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
 
-    def as_type_reference(self, func):
+    def as_type_reference(self, func, allow_generics=False):
         if not self.shunted:
-            return RPN_to_node(shunt(self)).as_type_reference_defer(func)
+            return RPN_to_node(shunt(self)).as_type_reference_defer(func, allow_generics)
         else:
-            return self.as_type_reference_defer(func)
+            return self.as_type_reference_defer(func, allow_generics)
 
-    def as_type_reference_defer(self, func):
-        return super().as_type_reference(func)
+    def as_type_reference_defer(self, func, allow_generics):
+        return super().as_type_reference(func, allow_generics)
+
+    def get_lifetime(self, func):
+        if self.op.name == "as":
+            return self.lhs.get_lifetime(func)
+
+        return Lifetimes.FUNCTION
+
+    def get_coupled_lifetimes(self, func) -> list:
+        if self.op.name == "as":
+            return self.lhs.get_coupled_lifetimes(func)
+
+        return []
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Math Expression",
@@ -210,23 +267,60 @@ def operator(precedence: int, name: str, right=False,
 
 class MemberAccess(OperationNode):
     __slots__ = ("assignable", "is_pointer")
+    # do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
+        from Ast.namespace import NamespaceIndex
+        from Ast.nodes.container import ContainerNode
+        from Ast.variables.reference import VariableRef
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
         self.is_pointer = False
+        if not isinstance(rhs, ContainerNode) and not isinstance(rhs, VariableRef) and not isinstance(rhs, NamespaceIndex):
+            errors.error("Member access operator can only get members that " +
+                         "are in parenthesis or are valid keywords",
+                         line=rhs.position)
+        if isinstance(rhs, ContainerNode) and len(rhs.children) > 1:
+            errors.error("Member Access operator using parenthesis must " +
+                         "only contain a singlular item.",
+                         line=rhs.position)
+
+    def copy(self):
+        out = MemberAccess(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+        out.assignable = self.assignable
+        out.is_pointer = self.is_pointer
+        return out
+
+    def reset(self):
+        super().reset()
+        self.lhs.reset()
+        self.rhs.reset()
 
     def pre_eval_math(self, func):
+        from Ast.nodes.container import ContainerNode
+
         self.lhs.pre_eval(func)
         lhs = self.lhs
         rhs = self.rhs
-        if not lhs.ret_type.has_members:
-            # get function if struct doesn't contain members.
-            # global functions can still use the member access syntax on structs
-            possible_func = self._get_global_func(func.module, rhs.var_name)
+
+        if isinstance(rhs, ContainerNode):
+            possible_func = rhs.children[0].get_var(func)
             if possible_func is not None:
                 self.ret_type = possible_func
                 self.assignable = False
+                return
+            errors.error("Entity not found.", line=rhs.position)
+
+        if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
+            # get function if struct doesn't contain members.
+            # global functions can still use the member access syntax on structs
+            # possible_func = self._get_global_func(func.module, rhs.var_name)
+            possible_func = rhs.get_var(func)
+            if possible_func is not None:
+                self.ret_type = possible_func
+                self.assignable = False
+            elif lhs.ret_type.has_members:
+                errors.error("Member not found!", line=rhs.position)
             else:
                 errors.error("Has no members", line=self.position)
         else:
@@ -239,22 +333,46 @@ class MemberAccess(OperationNode):
     def _get_global_func(self, module, name: str):
         return module.get_global(name)
 
+    def get_coupled_lifetimes(self, func) -> list:
+        return self.lhs.get_coupled_lifetimes(func)
+
     def get_ptr(self, func):
+        from Ast.nodes.container import ContainerNode
+
         lhs = self.lhs
         rhs = self.rhs
-        if not lhs.ret_type.has_members:
-            possible_func = self._get_global_func(func.module, rhs.var_name)
+        if isinstance(rhs, ContainerNode):
+            possible_func = rhs.children[0].get_var(func)
+            if possible_func is not None:
+                return
+            errors.error("Entity not found.", line=rhs.position)
+
+        if not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None:
+            possible_func = rhs.get_var(func)
+
             if possible_func is not None:
                 return possible_func
             errors.error("Has no members", line=self.position)
 
         return (lhs.ret_type).get_member(func, lhs, rhs)
 
+    def get_var(self, func):
+        self.ptr = self.get_ptr(func)
+        return self
+
+    def get_lifetime(self, func):
+        return self.lhs.get_lifetime(func)
+
     def using_global(self, func) -> bool:
+        from Ast.nodes.container import ContainerNode
         rhs = self.rhs
         lhs = self.lhs
-        possible_func = self._get_global_func(func.module, rhs.var_name)
-        return possible_func is not None and not lhs.ret_type.has_members
+
+        if isinstance(rhs, ContainerNode):
+            return True
+
+        possible_func = rhs.get_var(func)
+        return (possible_func is not None and (not lhs.ret_type.has_members or lhs.ret_type.get_member_info(lhs, rhs) is None))
 
     def get_position(self) -> SrcPosition:
         return self.merge_pos((self.lhs.position,
@@ -280,7 +398,8 @@ def member_access(self, func, lhs, rhs):
 
 @operator(10, "as", pre_eval_right=False)
 def _as(self, func, lhs, rhs):
-    return (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
+    out = (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
+    return out
 
 
 # TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
@@ -288,6 +407,35 @@ def _as(self, func, lhs, rhs):
 def pow(self, func, lhs, rhs):
     return (lhs.ret_type).pow(func, lhs, rhs)
 
+
+@operator(8, "bitnot")
+def bnot(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_not(func, lhs, rhs)
+
+
+@operator(0, "Lshift")
+def lshift(self, func, lhs, rhs):
+    return (lhs.ret_type).lshift(func, lhs, rhs)
+
+
+@operator(0, "Rshift")
+def rshift(self, func, lhs, rhs):
+    return (lhs.ret_type).rshift(func, lhs, rhs)
+
+
+@operator(-1, "Band")
+def band(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_and(func, lhs, rhs)
+
+
+@operator(-2, "Bxor")
+def bxor(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_xor(func, lhs, rhs)
+
+
+@operator(-3, "Bor")
+def bor(self, func, lhs, rhs):
+    return (lhs.ret_type).bit_or(func, lhs, rhs)
 
 
 @operator(1, "Sum")
@@ -317,49 +465,49 @@ def mod(self, func, lhs, rhs):
 # * comparators
 
 
-@operator(0, "eq")
+@operator(-4, "eq")
 def eq(self, func, lhs, rhs):
     return (lhs.ret_type).eq(func, lhs, rhs)
 
 
-@operator(0, "neq")
+@operator(-4, "neq")
 def neq(self, func, lhs, rhs):
     return (lhs.ret_type).neq(func, lhs, rhs)
 
 
-@operator(0, "le")
+@operator(-4, "le")
 def le(self, func, lhs, rhs):
     return (lhs.ret_type).le(func, lhs, rhs)
 
 
-@operator(0, "leq")
+@operator(-4, "leq")
 def leq(self, func, lhs, rhs):
     return (lhs.ret_type).leq(func, lhs, rhs)
 
 
-@operator(0, "gr")
+@operator(-4, "gr")
 def gr(self, func, lhs, rhs):
     return (lhs.ret_type).gr(func, lhs, rhs)
 
 
-@operator(0, "geq")
+@operator(-4, "geq")
 def geq(self, func, lhs, rhs):
     return (lhs.ret_type).geq(func, lhs, rhs)
 
 # * boolean ops
 
 
-@operator(-3, "or")
+@operator(-7, "or")
 def _or(self, func, lhs, rhs):
     return (lhs.ret_type)._or(func, lhs, rhs)
 
 
-@operator(-2, "and")
+@operator(-6, "and")
 def _and(self, func, lhs, rhs):
     return (lhs.ret_type)._and(func, lhs, rhs)
 
 
-@operator(-1, "not")
+@operator(-5, "not")
 def _not(self, func, lhs, rhs):
     return (lhs.ret_type)._not(func, lhs)
 

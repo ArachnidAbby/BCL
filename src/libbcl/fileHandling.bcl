@@ -1,0 +1,71 @@
+import result::*;
+
+public typedef IOResult::<T> = Result::<T, IOError>;
+
+public enum IOError {
+    Ok: 0,
+    FileNotFound;
+}
+
+
+// // opaque FILE type used in C.
+// public struct File {
+//     fp: size_t; // random data, we can't make empty types yet.
+
+//     // public define is_null(&self) -> bool {
+//     //     //  &self -bitcast-> ptr -ref-> &ptr -bitcast-> ptr
+//     //     //      -bitcast-> &size_t -deref-> size_t
+//     //     return *(&(self as UntypedPointer) as UntypedPointer as &size_t) == 0;
+//     // }
+// }
+
+public struct File {
+    public fp: i64;
+}
+
+typedef FilePointer = i64;
+
+define fopen(filename: strlit, mode: strlit) -> FilePointer;
+define fclose(file: FilePointer) -> i32;
+
+public define open(filename: strlit, mode: strlit) -> IOResult::<File> {
+    fp = fopen(filename, mode);
+    file = File {fp: fp};
+
+    if fp == 0 { // fp is null
+        return IOResult::<File>::error(IOError::FileNotFound);
+    }
+
+    return IOResult::<File>::wrap(file);
+}
+
+public define close(file: File) {
+    file.fp.fclose();
+}
+
+// std C get char from file
+public define fgetc(fp: FilePointer) -> char;
+public define read_char(file: File) -> char {
+    return file.fp.fgetc();
+}
+
+// get till next line, or buffer size reached
+define fgets(buffer: strlit, max_len: i32, fp: FilePointer) -> i64;
+// public define fgets(fp: FilePointer, buffer: strlit) -> i64 {
+//     return fgets(buffer, buffer.length as i32, fp);
+// }
+
+/// read into a strlit buffer
+public define read_strlit(file: File, buffer: strlit) -> i64 {
+    return fgets(buffer, buffer.length as i32, file.fp);
+}
+
+public define fdopen(fildes: i32, mode: strlit) -> FilePointer;
+
+public define stderr() -> File {
+    return File { fp: fdopen(2, "w") };
+}
+
+public define stdin() -> File {
+    return File { fp: fdopen(0, "r") };
+}

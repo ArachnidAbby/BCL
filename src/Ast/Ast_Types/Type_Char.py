@@ -43,10 +43,10 @@ class Char(Type_Base.Type):
                 return func.builder.sitofp(orig.eval(func), ir.FloatType())
             case 'f64':
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
-        error(f"Cannot convert 'bool' to '{typ}'",
+        error(f"Cannot convert 'char' to '{typ}'",
               line=orig.position)
 
-    def get_op_return(self, op: str, lhs, rhs):
+    def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         match op.lower():
             case 'sum' | 'sub' | 'mul' | 'div' | 'mod':

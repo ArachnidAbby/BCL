@@ -2,18 +2,10 @@ from llvmlite import ir
 
 import Ast.exception
 from Ast.Ast_Types.Type_Base import Type
-from Ast.Ast_Types.Type_Function import Function, FunctionGroup
+from Ast.Ast_Types.Type_Function import Function, FunctionGroup, MockFunction
 from Ast.Ast_Types.Type_Reference import Reference
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from errors import error
-
-
-class MockFunction:
-    __slots__ = ("builder", "module")
-
-    def __init__(self, builder, module):
-        self.builder = builder
-        self.module = module
 
 
 def create_next_method(module, gen_typ, name):
@@ -58,7 +50,7 @@ class GeneratorType(Type):
         self.ir_type = ir.global_context.get_identified_type(f"struct.{iter_function.func_name}")
         self.next_group = FunctionGroup("next", self.iter_function.module)
         mod = self.iter_function.module
-        self.next = Function("next", (Reference(self),), None, mod)
+        self.next = Function("next", (Reference(self),), None, mod, None)
         self.next.set_method(True, self)
         self.next.add_return(self.typ)
         self.next_group.add_function(self.next)
@@ -67,6 +59,15 @@ class GeneratorType(Type):
         mod = self.iter_function.module
         func_obj = create_next_method(mod, self, self.iter_function.func_name)
         self.next.func_obj = func_obj
+
+    def declare(self, module):
+        self.next.declare(module)
+
+        fnty = ir.FunctionType(ir.VoidType(),
+                               (self.ir_type.as_pointer(),))
+
+        ir.Function(module.module, fnty,
+                    name=self.iter_function.yield_function.name)
 
     def add_members(self, consts, members):
         # Doing the dangerous thing and setting the elements directly
@@ -97,6 +98,7 @@ class GeneratorType(Type):
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name != "next":
+            return None
             error("member not found!", line=rhs.position)
         typ = self.next
         return MemberInfo(not typ.read_only, False, typ)
