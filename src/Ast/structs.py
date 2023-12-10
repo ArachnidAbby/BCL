@@ -1,6 +1,7 @@
 import Ast.Ast_Types as Ast_Types
 import errors
 from Ast.Ast_Types.Type_Void import Void
+from Ast.directives.directivenode import DirectiveList
 from Ast.functions.definition import FunctionDef
 from Ast.generics import GenericSpecify
 from Ast.nodes import ASTNode, KeyValuePair
@@ -108,12 +109,17 @@ class StructDef(ASTNode):
     def _yield_functions(self):
         # skip first element
         for statement in self.block.children[1:]:
+            statement = self._unwrap_directive(statement)
+
+            if statement is None:
+                continue
+
             if isinstance(statement, FunctionDef):
                 yield statement
             else:
                 errors.error("Struct bodies can only contain function " +
                              "declarations or member declarations",
-                             line=statement.pos)
+                             line=statement.position)
 
     def create_function(self, name: str, func_obj):
         self.struct_type.create_function(name, func_obj)
@@ -125,9 +131,25 @@ class StructDef(ASTNode):
     def reset(self):
         self.block.reset()
 
+    def _unwrap_directive(self, directive):
+        '''if something is a directive, keep going thru it until reaching original node'''
+        if not isinstance(directive, DirectiveList):
+            return directive
+
+        if isinstance(directive.statement, DirectiveList) and directive.should_compile:
+            return self._unwrap_directive(directive.statement)
+
+        if directive.should_compile:
+            return directive.statement
+
     def fullfill_templates(self, func):
         if not self.is_generic:
             for stmt in self.block:
+                stmt = self._unwrap_directive(stmt)
+
+                if stmt is None:
+                    continue
+
                 if isinstance(stmt, FunctionDef):
                     stmt.parent = self
                 stmt.fullfill_templates(self)

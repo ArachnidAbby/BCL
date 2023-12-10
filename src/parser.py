@@ -54,8 +54,7 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("SUB", 0))
         ParserBase.CREATED_RULES.append(("SUM", 0))
         ParserBase.CREATED_RULES.append(("statement_list|expr_list", 1))
-        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef", 2))
-
+        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement", 2))
 
         super().__init__(*args, **kwargs)
         self.keywords = (
@@ -118,7 +117,8 @@ class Parser(ParserBase):
             "OPEN_SQUARE": (self.parse_array_literal_multi_element,
                             self.parse_array_literal,),
             "AMP": (self.parse_varref, ),
-            "BNOT": (self.parse_math, )
+            "BNOT": (self.parse_math, ),
+            "DIRECTIVE_START": (self.parse_directive_list,)
         }
 
         self.blocks = deque(((None, 0),))
@@ -257,8 +257,8 @@ class Parser(ParserBase):
         # self._cursor = max(self.start, self.start_min)
         # self.do_move = False
 
-    # ? is `^` supposed to be there!?!
-    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef|^|COMMA|CLOSE_PAREN")
+    # ^ is EOF
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|^|COMMA|CLOSE_PAREN")
     def parse_visibility_modifiers(self):
         '''parsing finished sets of curly braces into blocks'''
         val = self.peek(1).value
@@ -267,6 +267,19 @@ class Parser(ParserBase):
         name = self.peek(1).name
 
         self.replace(2, name, val)
+
+    @rule(0, "DIRECTIVE_START OPEN_SQUARE expr|expr_list CLOSE_SQUARE statement")
+    def parse_directive_list(self):
+        '''parsing finished sets of curly braces into blocks'''
+        directives_raw = self.peek(2)
+        if directives_raw.name == "expr":
+            directives = [directives_raw.value]
+        else:
+            directives = directives_raw.value.children
+
+        node = Ast.DirectiveList(self.peek(0).pos, self.module, self.peek(4).value, directives)
+
+        self.replace(5, "statement", node)
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):
@@ -335,9 +348,11 @@ class Parser(ParserBase):
                                            block[0])
         self.replace(4, "expr", struct_literal, i=-1)
 
-    @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
+    @rule(-1, "__|OPEN_CURLY_USED|CLOSE_SQUARE expr|kv_pair|expr_list|statement SEMI_COLON")
     def parse_statement(self):
         '''Parsing statements and statement lists'''
+        if self.peek_safe(-1).name == "CLOSE_SQUARE" and self.peek_safe(-4).name != "DIRECTIVE_START":
+            return
         self.replace(2, "statement", self.peek(0).value)
 
     @rule(0, "statement statement !SEMI_COLON")
@@ -364,7 +379,7 @@ class Parser(ParserBase):
     def parse_structs(self):
         struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1).value,
                                        self.peek(2).value, self.module)
-        self.replace(3, "structdef", struct)
+        self.replace(3, "statement", struct)
 
     @rule(0, "$enum expr statement")
     def parse_enums(self):
@@ -383,7 +398,7 @@ class Parser(ParserBase):
         struct = Ast.enumdef.Definition(self.peek(0).pos, self.peek(1).value,
                                         members, self.module)
 
-        self.replace(3, "enumdef", struct)
+        self.replace(3, "statement", struct)
 
     @rule(0, "expr DOT expr !NAMEINDEX")
     def parse_member_access(self):
@@ -393,7 +408,7 @@ class Parser(ParserBase):
         self.replace(3, "expr", op)
 
     # * arrays
-    @rule(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE")
+    @rule(-1, "!DIRECTIVE_START OPEN_SQUARE expr_list|expr CLOSE_SQUARE")
     def parse_array_literal_multi_element(self):
         '''check for all nodes dealing with arrays'''
         if self.check(-1, "CLOSE_SQUARE|expr"):
@@ -409,7 +424,7 @@ class Parser(ParserBase):
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
         self.replace(3, "expr", literal)
 
-    @rule(0, "OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE")
+    @rule(-1, "!DIRECTIVE_START OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE")
     def parse_array_literal(self):
         if self.check(-1, "CLOSE_SQUARE|expr"):
             return

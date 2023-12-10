@@ -118,6 +118,13 @@ class Module(ASTNode):
     def add_template_to_schedule(self, generic):
         self.scheduled_templates.append(generic)
 
+    def remove_scheduled(self, node):
+        for bucket in self.scheduled_events:
+            for c, event in enumerate(bucket):
+                if event is node:
+                    bucket.pop(c)
+                    break
+
     def do_scheduled(self):
         if self.ran_schedule:
             return

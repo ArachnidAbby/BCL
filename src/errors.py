@@ -24,6 +24,9 @@ CODE202 = "\u001b[38;5;202m"
 CODE214 = "\u001b[38;5;214m"
 CODE177 = "\u001b[38;5;177m"
 
+CODE69 = "\u001b[38;5;69m"
+CODE81 = "\u001b[38;5;81m"
+
 SILENT_MODE = False
 SUPRESSED_WARNINGS = False
 PROFILING = False
@@ -79,7 +82,7 @@ def _print_raw(text):
     print(text)
 
 
-def error(text: str, line=invalid_pos, full_line=False):
+def error(text: str, line=invalid_pos, full_line=False, note=None):
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
@@ -127,6 +130,9 @@ def error(text: str, line=invalid_pos, full_line=False):
     if line[0] != -1:
         print(f'|    Line: {line_no}')
         print(f'|    File: {file_name}:{line_no}:{col}')
+        if note is not None:
+            print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
+            print(f"| {CODE81}{note}{RED}")
         print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')

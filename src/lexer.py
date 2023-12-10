@@ -16,6 +16,7 @@ class Lexer():
         # curly braces
         self.lexer.add('OPEN_SQUARE', r'\[')
         self.lexer.add('CLOSE_SQUARE', r'\]')
+        self.lexer.add('DIRECTIVE_START', r'\#')
         # Number
         self.lexer.add('NUMBER_W_TYPE', r'(\d+(\.\d+)?)[fiu]\d+')
         self.lexer.add('NUMBER_F', r'\d+((\.\d+f)|(\.\d+)|f)')

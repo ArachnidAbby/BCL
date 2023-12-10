@@ -1,4 +1,5 @@
 
+from abc import abstractmethod
 from typing import Self
 
 from llvmlite import ir
@@ -53,6 +54,9 @@ class Type:
 
     def __init__(self):
         pass
+
+    def __call__(self) -> Self:
+        return self
 
     def global_namespace_names(self, func, name, pos):
         from Ast.Ast_Types.Type_I32 import Integer_32
@@ -276,9 +280,6 @@ class Type:
 
     def __str__(self) -> str:
         return self.name
-
-    def __call__(self) -> Self:
-        return self
 
     def eval_impl(self, foo):  # ? Why is this here
         '''Does nothing'''

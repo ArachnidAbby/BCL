@@ -3,6 +3,7 @@ from typing import Self
 
 from llvmlite import ir
 
+import errors
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_Reference import Reference
 from Ast.Ast_Types.Type_Void import Void  # type: ignore
@@ -206,10 +207,10 @@ class Function(Type):
             for o_idx, coupled_args_lhs in coupled[1]:
                 arg = args[coupled_args_lhs]
                 new_args[o_idx] = NodeLifetimePass(arg.position,
-                                                    arg.get_lifetime(func),
-                                                    new_args[o_idx],
-                                                    (arg, coupled_args_lhs),
-                                                    args)
+                                                   arg.get_lifetime(func),
+                                                   new_args[o_idx],
+                                                   (arg, coupled_args_lhs),
+                                                   args)
             coupled_func.check_return_coupling(self.definition, new_args)
             coupled_func.lifetime_checks(self.definition, new_args)
             coupled_func.check_function_coupling(self.definition, new_args)
@@ -391,8 +392,15 @@ class FunctionGroup(Type):
             error("A valid version of this function does exist for these " +
                   "arguments, but it is private", line=lhs.position)
 
+        if len(self.versions) == 0:
+            note_message = "note: the function could also not exist."
+        else:
+            note_message = "This function takes any of these arguments:\n" + \
+                           ",\n".join([f"{errors.RED}|   {errors.RESET}({', '.join([str(arg) for arg in ver.args])}) -> {str(ver.definition.ret_type)}" for ver in self.versions])
+
         error("Invalid Argument types for function group with \n" +
               f" name: {self.func_name}\n args: ({', '.join([str(x.ret_type) for x in rhs])})",
+              note=note_message,
               line=rhs.position)
 
     def call(self, func, lhs, args: tuple):
