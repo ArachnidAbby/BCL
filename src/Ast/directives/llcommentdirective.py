@@ -1,11 +1,9 @@
 
-from llvmlite import ir
-
 import errors
 from Ast.directives.basedirective import CompilerDirective
 from Ast.literals import stringliteral
 
-usage_note = "Example: LLComment(\"This is a fun comment\")"
+usage_note = f"Example: {errors.RESET}LLComment(\"This is a fun comment\")"
 
 
 class LLCommentDirective(CompilerDirective):
@@ -24,7 +22,7 @@ class LLCommentDirective(CompilerDirective):
         if not isinstance(comment_arg, stringliteral.StrLiteral):
             errors.error("Expected argument to be a string literal",
                          note=usage_note,
-                         line=pos)
+                         line=comment_arg.position)
 
         self.comment = comment_arg.value[:-1]  # remove 0x00 char
 

@@ -10,25 +10,26 @@ VALID_PLATFORMS = [
      "linux"
 ]
 
+usage_note = f"Example: {errors.RESET}Platform(\"Windows\")"
+
 
 class PlatformDirective(CompilerDirective):
     __slots__ = ("platform",)
 
     def __init__(self, pos, args, original_stmt, module):
-        from Ast import enumdef
-        from Ast.structs import StructDef
-
         super().__init__(pos, args, original_stmt, module)
 
         if len(args) != 1:
             errors.error("Invalid number of arguments, expects 1",
+                         note=usage_note,
                          line=args.position)
 
         platform_arg = args.children[0]
 
         if not isinstance(platform_arg, stringliteral.StrLiteral):
             errors.error("Expected argument to be a string literal",
-                         line=pos)
+                         note=usage_note,
+                         line=platform_arg.position)
 
         self.platform = platform_arg.value.lower()[:-1]  # remove 0x00 char
 

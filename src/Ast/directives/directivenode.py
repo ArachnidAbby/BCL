@@ -1,8 +1,9 @@
 
 import errors
-from Ast.directives.basedirective import CompilerDirective
+from Ast.directives.anddirective import AndDirective
 from Ast.directives.llcommentdirective import LLCommentDirective
 from Ast.directives.notdirective import NotDirective
+from Ast.directives.ordirective import OrDirective
 from Ast.directives.platformdirective import PlatformDirective
 from Ast.functions.call import FunctionCall
 from Ast.nodes.astnode import ASTNode
@@ -14,6 +15,8 @@ directives = {
     "Platform": PlatformDirective,
     "LLComment": LLCommentDirective,
     "Not": NotDirective,
+    "Or": OrDirective,
+    "And": AndDirective
 }
 
 
