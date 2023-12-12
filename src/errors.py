@@ -55,6 +55,8 @@ class BCLLexer(RegexLexer):
              Keyword.Reserved),
             (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
+            (r'(Self)', Name.Builtin.Pseudo),
+            (r'\#\[.*\]', Comment.Preproc),
             (r'\s+((or)|(and)|(not)|(in)|(as))\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&\^\~\|(\<\<)(\>\>)]', Operator),
             (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
@@ -220,6 +222,10 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     print(RESET, end='')
 
 
+def highlight_code(code: str) -> str:
+    return highlight(code, BCLLexer(), TerminalFormatter())
+
+
 def show_error_spot(position: SrcPosition,
                     use_full_line: bool, color=RED) -> str:
     if not isinstance(position, list) and position[0] == -1:
@@ -257,7 +263,7 @@ def show_error_spot(position: SrcPosition,
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
 
-    highlighted = highlight(full_line, BCLLexer(), TerminalFormatter())
+    highlighted = highlight_code(full_line)
 
     return f"{color}|    {RESET}{highlighted}{color}|    {CODE177}{underline}\
             {RESET}"
