@@ -47,7 +47,7 @@ class FunctionDef(ASTNode):
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start", "dispose_queue", "parent", "ret_raw",
-                 "function_ty", "lifetime_checked_nodes")
+                 "function_ty", "lifetime_checked_nodes", "use_literal_name")
 
     can_have_modifiers = True
 
@@ -100,6 +100,8 @@ class FunctionDef(ASTNode):
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
         self.lifetime_checked_nodes = []
+
+        self.use_literal_name = False
 
     def copy(self):
         if self.block is not None:
@@ -236,7 +238,7 @@ class FunctionDef(ASTNode):
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and
         is NOT named "main"'''
-        if parent == self.module and self.block is None:
+        if parent == self.module and (self.use_literal_name or self.block is None):
             if name in self.module.globals.keys():
                 errors.error(f"Bound function with the name \"{name}\" already exists",
                              line=self.position, full_line=True)
@@ -315,8 +317,6 @@ class FunctionDef(ASTNode):
         function_object = Ast_Types.Function(self.func_name, self.args_types,
                                              self.function_ir, self.module,
                                              self)
-        if self.block is None and platform.system() == "windows":
-            self.function_ir.linkage += "dllimport"
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \

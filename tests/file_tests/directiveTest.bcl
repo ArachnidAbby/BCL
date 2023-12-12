@@ -1,3 +1,4 @@
+
 #[Platform("Linux")]
 import stdlib::*;
 
@@ -22,12 +23,11 @@ struct SillyMoment {
     x: i32;
 }
 
-
 #[Platform("Linux")]
 struct SillyMoment {
     x: i32;
 
-    #[Not(Platform("windows"))]
+    #[Or(Not(Platform("windows")), Platform("Linux"))]
     define test_method(self) {
         println("Ballin' n' callin");
     }

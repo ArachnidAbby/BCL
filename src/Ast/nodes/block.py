@@ -7,11 +7,12 @@ from Ast.nodes.container import ContainerNode
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
-    __slots__ = ('variables', 'builder', 'last_instruction', 'ended', 'parent')
+    __slots__ = ('variables', 'builder', 'last_instruction', 'ended', 'parent',
+                 'module')
 
     BLOCK_STACK: deque[Self] = deque()
 
-    def __init__(self, pos: SrcPosition, parent=None, *args, **kwargs):
+    def __init__(self, pos: SrcPosition, parent=None, module=None, *args, **kwargs):
         super().__init__(pos, *args, **kwargs)
         self.variables: dict[str, object] = {}
         # {name: VarObj, ...} -- recursive import uppon proper type annotation
@@ -19,14 +20,15 @@ class Block(ContainerNode):
         self.last_instruction = False
         self.ended = False
         self.parent = parent
+        self.module = module
 
     def simple_copy(self):
-        out = Block(self._position)
+        out = Block(self._position, module=self.module)
         out.children = [child.copy() for child in self.children if child is not None]
         return out
 
     def copy(self):
-        out = Block(self._position)
+        out = Block(self._position, module=self.module)
         if len(self.BLOCK_STACK) != 0:
             out.parent = self.BLOCK_STACK[-1]
         self.BLOCK_STACK.append(out)
@@ -68,16 +70,20 @@ class Block(ContainerNode):
         self.BLOCK_STACK.pop()
 
     def eval_impl(self, func):
+        from Ast.module import Module
         if len(self.children) == 0:
             self.last_instruction = not func.ret_type.is_void()
             return
         self.BLOCK_STACK.append(self)
         for x in self.children[0:-1]:
             x.eval(func)
+            if isinstance(func, Module):
+                continue
             if func.has_return or self.ended:
                 self.BLOCK_STACK.pop()
                 return
-        self.last_instruction = not func.ret_type.is_void()
+        if not isinstance(func, Module):
+            self.last_instruction = not func.ret_type.is_void()
         self.children[-1].eval(func)
         self.BLOCK_STACK.pop()
 
@@ -105,6 +111,8 @@ class Block(ContainerNode):
     def get_type_by_name(self, var_name, pos):
         if self.parent is not None:
             return self.parent.get_type_by_name(var_name, pos)
+        if self.module is not None:
+            return self.module.get_type_by_name(var_name, pos)
 
     def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''

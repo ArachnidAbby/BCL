@@ -2,6 +2,7 @@
 import errors
 from Ast.directives.anddirective import AndDirective
 from Ast.directives.llcommentdirective import LLCommentDirective
+from Ast.directives.nomangledirective import NoMangleDirective
 from Ast.directives.notdirective import NotDirective
 from Ast.directives.ordirective import OrDirective
 from Ast.directives.platformdirective import PlatformDirective
@@ -16,7 +17,8 @@ directives = {
     "LLComment": LLCommentDirective,
     "Not": NotDirective,
     "Or": OrDirective,
-    "And": AndDirective
+    "And": AndDirective,
+    "NoMangle": NoMangleDirective
 }
 
 

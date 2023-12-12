@@ -1,0 +1,44 @@
+// import stdlib::*; // cannot do this
+
+define main() -> i32;
+
+
+#[Platform("Linux")]
+{
+    define printf(fmt: strlit, ...);
+    define exit(x: i32);
+
+    public define println(x: u32) {
+        printf("%iu\n", x);
+    }
+
+    public define println(x: u64) {
+        printf("%llu\n", x);
+    }
+
+    #[NoMangle]
+    define _start(eh_frame: size_t) {
+        // println(eh_frame);
+        main();
+        exit(0);
+    }
+}
+
+#[Platform("Windows")]
+{
+    public typedef PVOID = UntypedPointer;
+    public typedef HANDLE = PVOID;
+    public typedef HINSTANCE = HANDLE;
+    public typedef WCHAR = u16; //16-bit unicode char
+
+    // DO NOT USE .length IN THIS CASE
+    public typedef PSTR = strlit;
+
+    public typedef PWSTR = &WCHAR;
+
+    #[NoMangle]
+    define wWinMain(h_instance: HINSTANCE, h_prev_instance: HINSTANCE, p_cmdline: PWSTR, n_cmdshow: i32) -> i32 {
+        main();
+        return 0;
+    }
+}

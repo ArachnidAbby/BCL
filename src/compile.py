@@ -29,6 +29,52 @@ def timingContext(text: str, args):
         print(errors.GREEN, end="")
         _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
+def compile_runtime(src_file: str, output_loc: str):
+    src_str = ""
+
+    args = {
+        "--emit-object": True,
+        "--emit-binary": False,
+        "--dev": False,
+        "--emit-ast": False,
+        "--supress-warnings": False,
+        "--libs": [],
+        "--run": False,
+        "--debug": False,
+        "--quiet": False  # suppress all compiler output
+    }
+
+    with open(src_file) as f:
+        src_str = f.read()
+
+    from rply.errors import LexingError  # type: ignore
+
+    import Ast.functions.standardfunctions
+    import lexer as lex
+    from Ast import Ast_Types
+
+    tokens = lex.Lexer().get_lexer().lex(src_str)
+
+    try:
+        module = Ast.module.Module(SrcPosition.invalid(), output_loc,
+                                   str(src_file), tokens, args)
+        module.parse()
+    except LexingError as e:
+        error_pos = e.source_pos
+        pos = SrcPosition(error_pos.lineno, error_pos.colno, 0, str(src_file))
+        errors.error("A Lexing Error has occured. Invalid Syntax",
+                     line=pos, full_line=True)
+
+    Ast_Types.definedtypes.needs_declare.append(Ast_Types.definedtypes.types_dict['strlit'])
+    module.fullfill_templates()
+    module.do_scheduled()
+    module.post_parse(None)
+    module.pre_eval(None)
+    module.eval(None)
+
+    # loc = output_loc.parents[0]
+    module.save_ir(os.getcwd(), args=args)
+
 
 def compile(src_str: str, output_loc: Path, args, file=""):
     start = perf_counter()

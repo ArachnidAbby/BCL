@@ -74,44 +74,65 @@ def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
     gcc_version = gcc_versions[0]
     return f"{gcc_base}/{gcc_target}/{gcc_version}"
 
+def compile_runtime():
+    import Ast.module
+    old_mod_list = Ast.module.modules
+    Ast.module.modules = {}
+
+    gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])
+
+    libbcl_dir = os.path.dirname(__file__) + "/libbcl"
+
+    output_dir = os.getcwd() + "/target"
+
+    import compile
+
+    compile.compile_runtime(f"{libbcl_dir}/runtime.bcl", "runtime")
+
+    Ast.module.modules = old_mod_list
+
+    return f"{output_dir}/o/runtime.o"
+
 
 def get_linuxcrt() -> list[str]:
     '''get CRT files on linux platform'''
-    gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
-    # all_files = os.listdir(gcc_dir)
-    # for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
-    #     all_files += os.listdir(crt_path)
-    output = []
-    exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
-               "crtbeginT", "crtbeginS", "crtendS", "crtendT",
-               "crtoffloadtable")
+    # gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
+    # # all_files = os.listdir(gcc_dir)
+    # # for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
+    # #     all_files += os.listdir(crt_path)
+    # output = []
+    # exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
+    #            "crtbeginT", "crtbeginS", "crtendS", "crtendT",
+    #            "crtoffloadtable")
 
-    # note: this *could* be a one-liner, it would just be ugly.
-    # for file in all_files:
-    #     if file.count('.') != 1:
+    # # note: this *could* be a one-liner, it would just be ugly.
+    # # for file in all_files:
+    # #     if file.count('.') != 1:
+    # #         continue
+    # #     name, ext = file.split('.')
+    # #     if ext != 'o':  # skip non .o files
+    # #         continue
+    # #     if name.startswith('crt') and name not in exclude:
+    # #         output.append(f'{gcc_dir}/{file}')
+    # for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/', '/usr/lib/x86_64-linux-gnu/']:
+    #     all_libs = os.listdir(crt_path)
+    #     for file in all_libs:
+    #         if file.startswith("crt") and (".o" in file) and file[3].isdigit():
+    #             output.append(f"{crt_path}{file}")
+    #             break
+    #     else:
     #         continue
-    #     name, ext = file.split('.')
-    #     if ext != 'o':  # skip non .o files
-    #         continue
-    #     if name.startswith('crt') and name not in exclude:
-    #         output.append(f'{gcc_dir}/{file}')
-    for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/', '/usr/lib/x86_64-linux-gnu/']:
-        all_libs = os.listdir(crt_path)
-        for file in all_libs:
-            if file.startswith("crt") and (".o" in file) and file[3].isdigit():
-                output.append(f"{crt_path}{file}")
-                break
-        else:
-            continue
-        break
-    else:  # no break
-        print(output)
-        errors.error("Unable to find a valid crt file in '/lib/'")
+    #     break
+    # else:  # no break
+    #     print(output)
+    #     errors.error("Unable to find a valid crt file in '/lib/'")
 
-    for file in output:
-        errors.developer_info(f"found crt file: {file}")
+    # for file in output:
+    #     errors.developer_info(f"found crt file: {file}")
 
-    return output
+    # return output
+
+    return [compile_runtime()]
 
 
 def link_all(file: str, objects: list[str],

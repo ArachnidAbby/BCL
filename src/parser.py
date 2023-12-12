@@ -303,7 +303,7 @@ class Parser(ParserBase):
 
     @rule(0, "OPEN_CURLY CLOSE_CURLY")
     def parse_block_empty(self):
-        output = Ast.Block(self.peek(0).pos)
+        output = Ast.Block(self.peek(0).pos, module=self.module)
         if self.parens[-1][0] is not None:
             tok = self._tokens[self.parens[-1][1]]
             errors.developer_info(f'{self._tokens}')
@@ -320,7 +320,7 @@ class Parser(ParserBase):
 
     @rule(0, "OPEN_CURLY")
     def parse_block_open(self):
-        output = Ast.Block(self.peek(0).pos)
+        output = Ast.Block(self.peek(0).pos, module=self.module)
 
         # * main implementation
         self.blocks.append((output, self._cursor))
