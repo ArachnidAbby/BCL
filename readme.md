@@ -151,6 +151,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] Option type (`Optional::<T>`)
 - [x] namespaces
 - [x] enums
+- [x] compiler directives (WIP: adding more directives) 
 
 
 # VSCode highlighting
