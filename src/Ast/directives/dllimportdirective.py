@@ -1,10 +1,13 @@
 import errors
 from Ast.directives.basedirective import CompilerDirective
 
-usage_note = f"Example: {errors.RESET}DLLImport\ndefine my_dllimport();"
+usage_code_example = errors.highlight_code("""#[DLLImport]
+define my_dllimport();""")
+
+usage_note = f"Example: \n{errors.RESET}{usage_code_example}"
 
 
-class NoMangleDirective(CompilerDirective):
+class DLLImportDirective(CompilerDirective):
     __slots__ = ("directive_arg")
 
     def __init__(self, pos, args, original_stmt, module):

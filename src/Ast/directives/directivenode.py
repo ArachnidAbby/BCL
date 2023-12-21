@@ -1,6 +1,7 @@
 
 import errors
 from Ast.directives.anddirective import AndDirective
+from Ast.directives.dllimportdirective import DLLImportDirective
 from Ast.directives.llcommentdirective import LLCommentDirective
 from Ast.directives.nomangledirective import NoMangleDirective
 from Ast.directives.notdirective import NotDirective
@@ -18,7 +19,8 @@ directives = {
     "Not": NotDirective,
     "Or": OrDirective,
     "And": AndDirective,
-    "NoMangle": NoMangleDirective
+    "NoMangle": NoMangleDirective,
+    "DLLImport": DLLImportDirective,
 }
 
 

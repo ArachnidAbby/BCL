@@ -224,8 +224,10 @@ class Module(ASTNode):
         if private_imports:
             return
 
-        errors.error(f"Cannot find type '{name}' in module " +
-                     f"'{self.mod_name}'", line=position)
+        highlighted_name = errors.highlight_code(name)
+
+        errors.error(f"Cannot find type '{highlighted_name}' in module " +
+                     f"'{errors.RESET}{self.mod_name}{errors.RED}'", line=position)
 
     def get_unique_name(self, name: str):
         if name == "main":  #! main is special because of the crt.
@@ -449,8 +451,8 @@ class Module(ASTNode):
             objects.append(f"{loc}/target/o/{mod.mod_name}.o")
 
         if args["--emit-binary"]:
-            extra_args = [f"-l{x}" for x in args["--libs"]] + ['-lm']  # adds math.h
-            linker.link_all(f"{loc}/target/output", objects, extra_args)
+            extra_args = [f"-l{x}" for x in args["--libs"]]
+            return linker.link_all(f"{loc}/target/output", objects, extra_args)
 
     def declare_builtins(self):
         if self.ir_saved:

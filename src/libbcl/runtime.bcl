@@ -17,8 +17,7 @@ define main() -> i32;
     }
 
     #[NoMangle]
-    define _start(eh_frame: size_t) {
-        // println(eh_frame);
+    define _start() {
         main();
         exit(0);
     }
@@ -35,6 +34,9 @@ define main() -> i32;
     public typedef PSTR = strlit;
 
     public typedef PWSTR = &WCHAR;
+
+    #[DLLImport, NoMangle]
+    define __chkstk();
 
     #[NoMangle]
     define wWinMain(h_instance: HINSTANCE, h_prev_instance: HINSTANCE, p_cmdline: PWSTR, n_cmdshow: i32) -> i32 {

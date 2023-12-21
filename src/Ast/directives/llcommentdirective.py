@@ -3,7 +3,8 @@ import errors
 from Ast.directives.basedirective import CompilerDirective
 from Ast.literals import stringliteral
 
-usage_note = f"Example: {errors.RESET}LLComment(\"This is a fun comment\")"
+highlighted_example = errors.highlight_code('LLComment(\"Who goes there?!\")')
+usage_note = f"Example: {highlighted_example}"
 
 
 class LLCommentDirective(CompilerDirective):

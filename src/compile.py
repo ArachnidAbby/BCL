@@ -132,7 +132,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         module.eval(None)
 
     # loc = output_loc.parents[0]
-    module.save_ir(os.getcwd(), args=args)
+    output_loc = module.save_ir(os.getcwd(), args=args)
     codegen.shutdown_llvm()
 
     _print_raw(f'{errors.GREEN}| IR saved, compilation done | ' +
@@ -146,7 +146,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
     _print_raw('\n\n\n')
     if args["--run"] and args["--emit-binary"]:
-        os.system(f"{os.getcwd()}/target/output")
+        os.system(output_loc)
 
 
 def create_args_dict(args: list[str]) -> dict[str, bool | str | list]:

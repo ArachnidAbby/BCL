@@ -67,13 +67,13 @@ class BCLLexer(RegexLexer):
     }
 
 
-def _print_text(text):
+def _print_text(text, color=GREEN):
     '''print text with preceeding '|' regardless of line count'''
     if SILENT_MODE:
         return
 
     for line in text.split('\n'):
-        print(f'| {line}')
+        print(f'{color}| {line}')
 
 
 def _print_raw(text):
@@ -128,13 +128,13 @@ def error(text: str, line=invalid_pos, full_line=False, note=None):
     print(f'{RED}#{"-"*(largest//4)}')
     if len(template_additions) != 0:
         print(template_additions)
-    _print_text(text)
+    _print_text(text, color=RED)
     if line[0] != -1:
         print(f'|    Line: {line_no}')
         print(f'|    File: {file_name}:{line_no}:{col}')
         if note is not None:
             print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
-            print(f"| {CODE81}{note}{RED}")
+            _print_text(f"{CODE81}{note}{RED}", color=RED)
         print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
@@ -148,7 +148,7 @@ def inline_warning(text: str, line=invalid_pos):
         return
 
     print(ORANGE, end='')
-    _print_text(text)
+    _print_text(text, color=ORANGE)
     if line[0] != -1 and line[2]!='':
         print(f'|    Line: {line.line}')
         print(f'|    File: {line.source_name}')
@@ -172,7 +172,7 @@ def warning(text: str, line=invalid_pos, full_line=False):
     ), 45)
     print(f'{CODE214}#{"-"*(largest//4)}')
 
-    _print_text(text)
+    _print_text(text, color=CODE214)
     if line[0] != -1:
         print(f'|    Line: {line[0]}')
         print(f'|    File: {line.source_name}')
@@ -191,7 +191,7 @@ def developer_warning(text: str):
 
     if (frame := currentframe()) is not None:
         frameinfo = getframeinfo(frame)
-        _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
+        _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}", color=CODE125)
 
     print(RESET, end='')
 
@@ -217,13 +217,13 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     print(f'#{"-"*(line_size)}')
     bugs = '\n'.join(('\t- '+bug for bug in possible_bugs))
     _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  \
-                POSSIBLE BUGS INCLUDE:\n{bugs}")
+                POSSIBLE BUGS INCLUDE:\n{bugs}", color=CODE202)
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
 
 
 def highlight_code(code: str) -> str:
-    return highlight(code, BCLLexer(), TerminalFormatter())
+    return highlight(code, BCLLexer(), TerminalFormatter())[:-3]
 
 
 def show_error_spot(position: SrcPosition,
@@ -265,5 +265,5 @@ def show_error_spot(position: SrcPosition,
 
     highlighted = highlight_code(full_line)
 
-    return f"{color}|    {RESET}{highlighted}{color}|    {CODE177}{underline}\
+    return f"{color}|    {RESET}{highlighted}{color}\n|    {CODE177}{underline}\
             {RESET}"
