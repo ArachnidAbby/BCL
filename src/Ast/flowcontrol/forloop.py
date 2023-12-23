@@ -44,11 +44,11 @@ class ForLoop(ASTNode):
         if self.iterable.ret_type.is_iterator:
             self.iter_type = self.iterable.ret_type
         else:
-            self.iter_type = self.iterable.ret_type.get_iter_return(self.iterable.position)
+            self.iter_type = self.iterable.ret_type.get_iter_return(func, self.iterable)
 
         self.block.variables[self.var.var_name] = \
             VariableObj(None,
-                        self.iter_type.get_iter_return(self.iterable.position),
+                        self.iter_type.get_iter_return(func, self.iterable),
                         False)
 
         self.block.pre_eval(func)
@@ -59,7 +59,7 @@ class ForLoop(ASTNode):
 
     def eval_impl(self, func):
         orig_block_name = func.builder.block._name
-        self.varptr = func.create_const_var(self.iter_type.get_iter_return(self.iterable.position))
+        self.varptr = func.create_const_var(self.iter_type.get_iter_return(func, self.iterable))
         self.block.variables[self.var.var_name].ptr = self.varptr
         self.for_body = func.builder.append_basic_block(
                 f'{orig_block_name}.for'

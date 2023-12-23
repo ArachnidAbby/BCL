@@ -126,7 +126,7 @@ class GeneratorType(Type):
         return hash(f"Generator<{self.iter_function.func_name}, " +
                     f"{self.iter_function.args}>")
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return self.typ
 
     def iter_condition(self, func, self_ptr, loc):

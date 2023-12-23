@@ -324,10 +324,10 @@ class Type:
     def ret_type(self):
         return self
 
-    def get_iter_return(self, loc):
-        error(f"{self.name} is not Iterable", line=loc)
+    def get_iter_return(self, func, node):
+        error(f"{self.name} is not Iterable", line=node.position)
 
-    def create_iterator(self, func, loc):
+    def create_iterator(self, func, val, loc):
         '''should return a ptr'''
         if not self.is_iterator:
             error(f"{self.name} is not Iterable", line=loc)  # default

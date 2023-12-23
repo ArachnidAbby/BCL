@@ -262,7 +262,7 @@ class Array(Type_Base.Type):
     def __str__(self) -> str:
         return f"{self.typ}[{self.size}]"
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return ItemIterator(self)
 
     def create_iterator(self, func, val, loc):
@@ -324,7 +324,7 @@ class ItemIterator(Type_Base.Type):
                                              ir.IntType(32),
                                              ir.IntType(32)))
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return self.iter_ret
 
     def iter_condition(self, func, self_ptr, loc):

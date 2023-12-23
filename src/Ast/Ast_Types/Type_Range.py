@@ -54,7 +54,7 @@ class RangeType(Type):
             case _:
                 error("member not found!", line=rhs.position)
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return Integer_32()
 
     def iter_condition(self, func, self_ptr, loc):

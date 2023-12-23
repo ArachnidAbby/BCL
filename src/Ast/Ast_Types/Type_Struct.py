@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Self
+from typing import Any, Self
 
 from llvmlite import ir
 
@@ -11,7 +11,7 @@ from Ast.Ast_Types.Type_Void import Void
 from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
 from Ast.nodes import Block, KeyValuePair, ParenthBlock
-from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
+from Ast.nodes.commontypes import Lifetimes, MemberInfo, Modifiers, SrcPosition
 from Ast.nodes.container import ContainerNode
 from Ast.nodes.passthrough import PassNode
 from Ast.reference import Ref
@@ -46,6 +46,30 @@ struct_op_overloads = {
     "lshift": "__lshift__",
     "rshift": "__rshift__"
 }
+
+
+# TODO: FINISH THIS DAMN THING!
+class QualifiedStruct(Ast_Types.Type):
+    __slots__ = ("struct_type", "member_lifetimes")
+
+    def __init__(self, struct_type):
+        self.struct_type = struct_type
+        self.member_lifetimes: dict[str, Lifetimes] = {}
+
+    def get_member_info(self, lhs, rhs):
+        # if len(self.member_lifetimes) == 0:
+        #     for name in self.struct_type.members.keys():
+        #         self.member_lifetimes[name] = Lifetimes.UNKNOWN
+
+        member_info = self.struct_type.get_member_info(lhs, rhs)
+
+        # member_info.lifetime = self.member_lifetimes[rhs.var_name]
+        return member_info
+
+    def __getattribute__(self, attr_name: str) -> Any:
+        if attr_name in ("member_lifetimes", "get_member_info", "struct_type"):
+            return object.__getattribute__(self, attr_name)
+        return object.__getattribute__(self.struct_type, attr_name)
 
 
 class Struct(Ast_Types.Type):
@@ -93,6 +117,9 @@ class Struct(Ast_Types.Type):
         self.module = module
         self.rang = None
         self.visibility = super().visibility
+
+    def __call__(self):
+        return QualifiedStruct(self)
 
     def pass_type_params(self, func, params, pos):
 
@@ -226,8 +253,8 @@ class Struct(Ast_Types.Type):
                and self.module.location == other.dealias().module.location
 
         return super().__eq__(other) \
-               and other.struct_name == self.struct_name \
-               and self.module.location == other.module.location
+            and other.struct_name == self.struct_name \
+            and self.module.location == other.module.location
 
     def __neq__(self, other):
         if isinstance(other.ret_type, Alias):
@@ -368,6 +395,17 @@ class Struct(Ast_Types.Type):
 
     # def put(self, func, lhs, value):
     #     return self.call_func(func, "__put_at__", Ref(lhs.position, lhs), value)
+
+    def get_iter_return(self, func, node):
+        function = self.get_func(func, "__iter__", node, None)
+        return function.func_ret
+
+    def create_iterator(self, func, val, loc):
+        actual_value = self.call_func(func, "__iter__", val, None)
+        var = func.create_const_var(self.get_iter_return(func, val))
+        func.builder.store(actual_value, var)
+
+        return var
 
     def deref(self, func, node):
         return self.call_func(func, "__deref__", node, None)
