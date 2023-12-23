@@ -38,6 +38,7 @@ struct_op_overloads = {
     "_isub": "__isub__",
     "_isum": "__iadd__",
     "ind": "__index__",
+    "call": "__call__",
 
     "bor": "__bitor__",
     "band": "__bitand__",
@@ -299,11 +300,23 @@ class Struct(Ast_Types.Type):
 
     def get_op_return(self, func, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
-        self._simple_call_op_error_check(op, lhs, rhs)
+        # self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
             return
         if op_name == "__bitnot__":
             return self.get_func(func, op_name, lhs, None).func_ret
+        if op_name == "__call__":
+            args = ParenthBlock(rhs.position)
+            name_var = VariableRef(lhs.position, "__call__", None)
+            mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+            if isinstance(rhs, ParenthBlock):
+                args.children = rhs.children
+            else:
+                args.children = [rhs]
+            args.in_func_call = True
+            if "__call__" not in self.members.keys():
+                error("No function \"__call__\" Found", line=lhs.position)
+            return self.members["__call__"][0].get_function(func, mem_access, args).func_ret
         return self.get_func(func, op_name, lhs, rhs).func_ret
 
     def sum(self, func, lhs, rhs):
@@ -420,6 +433,19 @@ class Struct(Ast_Types.Type):
     def get_deref_return(self, func, node):
         function = self.get_func(func, "__deref__", node, None)
         return function.func_ret
+
+    def call(self, func, lhs, args) -> ir.Instruction:
+        real_args = ParenthBlock(args.position)
+        name_var = VariableRef(lhs.position, "__call__", None)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        if isinstance(args, ParenthBlock):
+            real_args.children = args.children
+        else:
+            real_args.children = [args]
+        real_args.in_func_call = True
+        if "__call__" not in self.members.keys():
+            error("No function \"__call__\" Found", line=lhs.position)
+        return self.members["__call__"][0].call(func, mem_access, real_args)
 
     def add_ref_count(self, func, ptr):
         if func.func_name in ("__increase_ref_count__", "__dispose__") and func.parent is self.definition:

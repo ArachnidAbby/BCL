@@ -103,6 +103,10 @@ struct MyStruct {
         yield false;
         yield true;
     }
+
+    define __call__(self, x: i32) -> bool {
+        return true;
+    }
 }
 
 define main() {
@@ -138,4 +142,6 @@ define main() {
     for x in val {
         println(x);
     }
+
+    println(val(22));
 }
