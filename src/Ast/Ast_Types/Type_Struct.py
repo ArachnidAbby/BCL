@@ -168,6 +168,7 @@ class Struct(Ast_Types.Type):
         return new_ty
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if self.is_generic:
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
                   line=pos)
@@ -184,7 +185,7 @@ class Struct(Ast_Types.Type):
                 error("Member is private", line=pos)
 
             if isinstance(val, Ast_Types.FunctionGroup) and not val.is_method:
-                return val
+                return NamespaceInfo(val, {})
 
         error(f"Name \"{name}\" cannot be " +
               f"found in Type \"{self.struct_name}\"",

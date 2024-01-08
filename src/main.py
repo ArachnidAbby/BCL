@@ -2,7 +2,6 @@ import os
 import platform
 import shutil
 import sys
-from pathlib import Path
 from typing import List
 
 import compile
@@ -50,7 +49,7 @@ def make_project(args: List[str]):
     os.mkdir(f"{args[2]}/lib")
 
     shutil.copyfile(f"{PATH}/templates/{template}/project.toml", f"{args[2]}/project.toml")
-    with open(f"{args[2]}/project.toml",'r+', encoding='UTF-8') as f:
+    with open(f"{args[2]}/project.toml", 'r+', encoding='UTF-8') as f:
         contents = f.read()
         f.seek(0, 0)
         f.write(contents.format(AUTHOR=os.getlogin(), PROJECT_NAME=args[2]))

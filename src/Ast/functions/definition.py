@@ -250,7 +250,6 @@ class FunctionDef(ASTNode):
         args = self.function_ir.args
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
-            # print(orig[1])
             var = VariableObj(orig[0], orig[1], True, orig[3])
             self.block.variables[x] = var
             self.block.variables[x].ptr = args[c]
@@ -275,7 +274,10 @@ class FunctionDef(ASTNode):
         elif self.parent is not None:
             return self.parent.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def fullfill_templates(self, func):
         if self.block is not None:

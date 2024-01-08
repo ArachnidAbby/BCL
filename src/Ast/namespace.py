@@ -7,7 +7,7 @@ from Ast.nodes.expression import ExpressionNode
 
 class NamespaceIndex(ExpressionNode):
     '''Index a namespace like this: `namespace::function``'''
-    __slots__ = ("left", "right", "val", "star_idx")
+    __slots__ = ("left", "right", "val", "star_idx", "back_dirs")
     isconstant = True
     do_register_dispose = False
 
@@ -17,6 +17,7 @@ class NamespaceIndex(ExpressionNode):
         self.right = right
         self.val = None
         self.star_idx = False
+        self.back_dirs = 0  # the amount of `..`s in the namespace index
         if isinstance(left, NamespaceIndex) and left.star_idx:
             errors.error("Cannot get names from a `*` namespace index",
                          line=pos)
@@ -42,6 +43,9 @@ class NamespaceIndex(ExpressionNode):
         if self.star_idx:
             errors.error("'*' index can only used in an import statement",
                          line=self.left.position)
+        if self.back_dirs != 0:
+            errors.error("'..' index can only used in an import statement",
+                         line=self.left.position)
         var = self.left.get_var(func)
         if isinstance(var, GenericSpecify):
             var = var.as_type_reference(func, True)
@@ -51,7 +55,7 @@ class NamespaceIndex(ExpressionNode):
                          line=self.left.position)
         self.val = var.get_namespace_name(func,
                                           self.right.var_name,
-                                          self.right.position)
+                                          self.right.position).obj
         if isinstance(self.val, ExpressionNode):
             self.ret_type = self.val.ret_type
         else:
@@ -77,24 +81,39 @@ class NamespaceIndex(ExpressionNode):
             return self.val
         errors.error("Not a type", line=self.position)
 
-    def as_file_path(self):
-        '''for imports'''
+    def resolve_import(self, base_pkg):
+        for _ in range(self.back_dirs):
+            pkg = base_pkg.parent_pkg
+            if pkg is None:
+                errors.error(f"Package: '{base_pkg.pkg_name}' has no parent",
+                             line=self.position)
+            base_pkg = pkg
+
+        if self.back_dirs > 1:
+            return base_pkg
+
         if isinstance(self.left, NamespaceIndex):
-            left = self.left.as_file_path()
+            lhs = self.left.resolve_import(base_pkg)
+        elif self.back_dirs == 0:
+            lhs = base_pkg.get_namespace_name(None, self.left.var_name,
+                                              SrcPosition.invalid())
         else:
-            left = self.left.var_name
+            lhs = base_pkg.get_namespace_name(None, self.right.var_name,
+                                              SrcPosition.invalid())
 
-        if self.star_idx:
-            right = ""
-        else:
-            right = f"/{self.right.var_name}.bcl"
+        if self.right == "*" or self.back_dirs != 0:
+            return lhs
+        value = lhs.get_namespace_name(None, self.right.var_name,
+                                       SrcPosition.invalid())
+        if value is None:
+            errors.error("Could not resolve name during import",
+                         line=self.left.position)
+        return value
 
-        file = f"{left}{right}"
-        # folder = f"{left}/{right}/init.bcl"
-
-        return file
+    def __str__(self):
+        return f"{self.left}::{self.right}"
 
     def get_position(self) -> SrcPosition:
-        if self.star_idx:
-            return self.left.position
+        if self.star_idx or self.back_dirs > 0:
+            return self._position
         return self.merge_pos((self.left.position, self.right.position))

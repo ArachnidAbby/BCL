@@ -5,6 +5,7 @@ from Ast import Ast_Types
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_I32 import Integer_32
 from Ast.literals.numberliteral import Literal
+from Ast.module import NamespaceInfo
 
 # Found using https://mathiasbynens.be/demo/integer-range
 # because I'm lazy
@@ -187,7 +188,8 @@ class EnumType(Type):
             if self.members[name] is None:
                 errors.error("Variant has yet to be initialized",
                              line=pos)
-            return Literal(pos, self.members[name], self)
+            val = Literal(pos, self.members[name], self)
+            return NamespaceInfo(val, {})
 
         errors.error(f"Name \"{name}\" cannot be " +
                      f"found in Type \"{str(self)}\"",

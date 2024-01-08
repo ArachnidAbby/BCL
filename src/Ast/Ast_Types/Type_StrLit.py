@@ -115,11 +115,12 @@ class StringLiteral(Type_Base.Type):
             self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x
 
         if name == "new":
-            return InitEmptyFuction()
+            return NamespaceInfo(InitEmptyFuction(), {})
 
     def declare(self, module):
         eq_typ = self.equal_func.ftype

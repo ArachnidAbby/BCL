@@ -106,7 +106,10 @@ class Block(ContainerNode):
         elif self.parent is not None:
             return self.parent.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def get_type_by_name(self, var_name, pos):
         if self.parent is not None:

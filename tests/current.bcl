@@ -242,6 +242,8 @@ typedef INT = i32;
 
 typedef IBOX = Box::<i32>;
 import winDef;
+import examplePackage::exampleThing;
+// import examplePackage::*;
 
 define test_typedef(_: INT) -> INT {
     return 10;
@@ -256,6 +258,8 @@ define tests(_: TestStruct) -> i32 {
 }
 
 define main() {
+    examplePackage::exampleThing::gorgo_gorgo(4200000);
+    examplePackage::exampleThing::println("Yo Yo Yo");
     w = LifetimeTest {x: &10};
     dd: INT = 12;
     dd + 15;

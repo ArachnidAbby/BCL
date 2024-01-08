@@ -29,6 +29,7 @@ def timingContext(text: str, args):
         print(errors.GREEN, end="")
         _print_text(f'{text} in {perf_counter() - start} seconds{errors.RESET}')
 
+
 def compile_runtime(src_file: str, output_loc: str):
     src_str = ""
 
@@ -58,6 +59,7 @@ def compile_runtime(src_file: str, output_loc: str):
     try:
         module = Ast.module.Module(SrcPosition.invalid(), output_loc,
                                    str(src_file), tokens, args)
+        module.package = Ast.module.base_package
         module.parse()
     except LexingError as e:
         error_pos = e.source_pos
@@ -105,6 +107,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         from rply.errors import LexingError  # type: ignore
 
         import Ast.functions.standardfunctions
+        Ast.module.make_base_package(Path(output_loc.parent), args)
         import lexer as lex
         from Ast import Ast_Types
 
@@ -113,8 +116,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
     with timingContext('parsing finished', args):
         try:
-            module = Ast.module.Module(SrcPosition.invalid(), output_loc.stem,
-                                       str(file), tokens, args)
+            module = Ast.module.base_package.modules[output_loc.stem]
             module.parse()
         except LexingError as e:
             error_pos = e.source_pos

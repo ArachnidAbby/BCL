@@ -61,13 +61,13 @@ class Type:
     def global_namespace_names(self, func, name, pos):
         from Ast.Ast_Types.Type_I32 import Integer_32
         from Ast.literals.numberliteral import Literal
+        from Ast.module import NamespaceInfo
         if name == "SIZEOF":
             target_data = func.module.target_machine.target_data
             size = self.ir_type.get_abi_size(target_data)
             ty = Integer_32(name="u64", size=64, signed=False)
             val = Literal(pos, size, ty)
-            return val
-
+            return NamespaceInfo(val, {})
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
         if x := self.global_namespace_names(func, name, pos):
@@ -361,7 +361,6 @@ class Type:
         item[0].ptr = ptr
 
     def add_ref_count(self, func, ptr):
-        # print(f"add_ref_count {func.func_name} {self}")
         pass
 
     def pop_ref_count(self, func, ptr):
@@ -370,7 +369,6 @@ class Type:
     def dispose(self, func, ptr):
         '''code to run on the closing of a function'''
         self.pop_ref_count(func, ptr)
-        # print(f"dispose {func.func_name} {self}")
 
     def get_deref_return(self, func, node):
         error(f"Cannot dereference type, {self}", line=node.position)

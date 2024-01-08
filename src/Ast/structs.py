@@ -4,6 +4,7 @@ from Ast.Ast_Types.Type_Void import Void
 from Ast.directives.directivenode import DirectiveList
 from Ast.functions.definition import FunctionDef
 from Ast.generics import GenericSpecify
+from Ast.module import NamespaceInfo
 from Ast.nodes import ASTNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
@@ -74,9 +75,9 @@ class StructDef(ASTNode):
 
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
-            return self.generic_args[var_name][0]
+            return NamespaceInfo(self.generic_args[var_name][0], {})
         elif var_name == "Self":
-            return self.struct_type
+            return NamespaceInfo(self.struct_type(), {})
 
         return self.module.get_type_by_name(var_name, pos)
 
@@ -93,7 +94,10 @@ class StructDef(ASTNode):
         elif var_name == "Self":
             return self.struct_type
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def get_variable(self, var_name, module=None):
         '''Methods use this to get the names of types
@@ -104,7 +108,10 @@ class StructDef(ASTNode):
         elif var_name == "Self":
             return self.struct_type
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def _yield_functions(self):
         # skip first element

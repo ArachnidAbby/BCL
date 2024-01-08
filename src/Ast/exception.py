@@ -17,6 +17,7 @@ def _get_function(func, name: str, args: tuple, pos):
     if function is None:
         errors.error(f"Could not get function {name}, hint: import stdlib",
                      line=pos)
+    function = function.obj
     args_fixed = ParenthBlock(pos)
     for arg in args:
         args_fixed.children.append(arg)

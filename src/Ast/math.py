@@ -331,7 +331,10 @@ class MemberAccess(OperationNode):
             self.ret_type = member_info.typ
 
     def _get_global_func(self, module, name: str):
-        return module.get_global(name)
+        value = module.get_global(name)
+        if value is None:
+            return None
+        return value.obj
 
     def get_coupled_lifetimes(self, func) -> list:
         return self.lhs.get_coupled_lifetimes(func)

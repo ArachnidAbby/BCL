@@ -93,6 +93,7 @@ class Parser(ParserBase):
                         self.parse_return_statement_empty,
                         self.parse_math,
                         self.parse_import_statment,
+                        self.parse_import_statment_fixed,
                         self.parse_yield_stmt,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
@@ -118,7 +119,8 @@ class Parser(ParserBase):
                             self.parse_array_literal,),
             "AMP": (self.parse_varref, ),
             "BNOT": (self.parse_math, ),
-            "DIRECTIVE_START": (self.parse_directive_list,)
+            "DIRECTIVE_START": (self.parse_directive_list,),
+            "DOUBLE_DOT": (self.namespace_index, )
         }
 
         self.blocks = deque(((None, 0),))
@@ -198,24 +200,39 @@ class Parser(ParserBase):
         else:
             self.replace(4, "expr", node)
 
-    @rule(0, "expr NAMEINDEX expr|MUL")
+    @rule(0, "expr|DOUBLE_DOT NAMEINDEX expr|MUL|DOUBLE_DOT")
     def namespace_index(self):
         left = self.peek(0).value
         right = self.peek(2).value
         if not (isinstance(left, Ast.variables.reference.VariableRef)
                 or isinstance(left, Ast.namespace.NamespaceIndex)
-                or isinstance(left, Ast.generics.GenericSpecify)):
+                or isinstance(left, Ast.generics.GenericSpecify)
+                or (isinstance(left, str) and left in ('*', ".."))):
             errors.error("Namespace index must be indexing a name or another namespace index",
                          line=self.peek(0).pos)
 
         if not (isinstance(right, Ast.variables.reference.VariableRef)
-                or (isinstance(right, str) and right=='*')):
+                or (isinstance(right, str) and right in ('*', ".."))):
             errors.error("Index in a namespace index must be a name (or '*')",
                          line=self.peek(2).pos)
 
         pos = self.peek(0).pos
 
         node = Ast.namespace.NamespaceIndex(pos, left, right)
+        if left == "..":
+            node.back_dirs += 1
+
+        if right == "..":
+            p_backdirs = 0
+            if isinstance(left, Ast.namespace.NamespaceIndex):
+                p_backdirs = left.back_dirs
+            if (node.back_dirs + p_backdirs) == 0:
+                errors.error("For the right side of a namespace index to" +
+                             " go back a directory,\nthe left side must " +
+                             "also go back a directory",
+                             line=self.peek(2).pos,
+                             note="Hint: Change left side to '..'")
+            node.back_dirs += 1
         if right == '*':
             node.star_idx = True
         self.replace(3, "expr", node)
@@ -228,34 +245,58 @@ class Parser(ParserBase):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
+        offset = 0
+
         is_public = False
         if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
             is_public = True
+            offset += 1
 
-        directories = self.module.location.split("/")[:-1]
-        directory_path = '/'.join(directories)
         using_namespace = False
         if isinstance(mod, Ast.namespace.NamespaceIndex):
             using_namespace = mod.star_idx
-            name = mod.as_file_path()
-        else:
-            name = self.peek(1).value.var_name
+        self.module.add_import(mod, using_namespace, is_public)
+        self.consume(-offset, 3+offset)
 
-        filedir = f"{directory_path}/{name}.bcl"
-        if not path.exists(filedir):
-            libbcl_dir = path.dirname(__file__) + "/libbcl"
-            if IN_FROZEN_EXE:
-                libbcl_dir = '/'.join(path.dirname(__file__).split("/")[0:-1]) + "/libbcl"
-            filedir = f"{libbcl_dir}/{name}.bcl"
-            if not path.exists(filedir):
-                errors.error(f"Could not find module '{name}'",
-                             line=self.peek(1).pos)
+    @rule(0, "$import NAMEINDEX expr SEMI_COLON")
+    def parse_import_statment_fixed(self):
+        mod = self.peek(2).value
+        if not (isinstance(mod, Ast.variables.reference.VariableRef)
+                or isinstance(mod, Ast.namespace.NamespaceIndex)):
+            errors.error("Import must use a module name",
+                         line=self.peek(2).pos)
 
-        self.module.add_import(filedir, name, using_namespace, is_public)
-        # errors.inline_warning("Notice: import statements may be buggy")
-        self.consume(0, 3)
-        # self._cursor = max(self.start, self.start_min)
-        # self.do_move = False
+        is_public = False
+
+        offset = 0
+
+        if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
+            is_public = True
+            offset += 1
+
+        using_namespace = False
+        if isinstance(mod, Ast.namespace.NamespaceIndex):
+            using_namespace = mod.star_idx
+        self.module.add_import(mod, using_namespace, is_public, relative_import=False)
+        self.consume(-offset, 4+offset)
+
+    # @rule(0, "$import expr SEMI_COLON")
+    # def parse_import_statment(self):
+    #     mod = self.peek(1).value
+    #     if not (isinstance(mod, Ast.variables.reference.VariableRef)
+    #             or isinstance(mod, Ast.namespace.NamespaceIndex)):
+    #         errors.error("Import must use a module name",
+    #                      line=self.peek(1).pos)
+
+    #     is_public = False
+    #     if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
+    #         is_public = True
+
+    #     using_namespace = False
+    #     if isinstance(mod, Ast.namespace.NamespaceIndex):
+    #         using_namespace = mod.star_idx
+    #     self.module.add_import(mod, using_namespace, is_public)
+    #     self.consume(0, 3)
 
     # ^ is EOF
     @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|^|COMMA|CLOSE_PAREN")

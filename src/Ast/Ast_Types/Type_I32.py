@@ -41,15 +41,18 @@ class Integer_32(Type_Base.Type):
         return self
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x
 
         from Ast.literals.numberliteral import Literal
         if name == "MAX":
-            return Literal(pos, self.rang[1], self)
+            val = Literal(pos, self.rang[1], self)
+            return NamespaceInfo(val, {})
 
         if name == "MIN":
-            return Literal(pos, self.rang[0], self)
+            val = Literal(pos, self.rang[0], self)
+            return NamespaceInfo(val, {})
 
         error(f"Name \"{name}\" cannot be " +
               f"found in Type \"{str(self)}\"",
@@ -245,6 +248,7 @@ class Integer_32(Type_Base.Type):
             error("Cannot find 'pow' function in the global namespace.\n" +
                   "Try `import math::*;`",
                   line=lhs.position)
+        pow_func = pow_func.obj
         i64 = Integer_32(name="i64", size=64)
         i32 = Integer_32(name="i32", size=32)
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, i64), i64)

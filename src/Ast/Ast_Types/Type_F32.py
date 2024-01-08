@@ -147,6 +147,7 @@ class Float_32(Type_Base.Type):
             error("Cannot find 'pow' function in the global namespace.\n" +
                   "Try `import math::*;`",
                   line=lhs.position)
+        pow_func = pow_func.obj
         f64 = Float_32(name="f64", typ=ir.DoubleType())
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, f64), f64)
         arg2 = PassNode(rhs.position, (rhs.ret_type).convert_to(func, rhs, f64), f64)
