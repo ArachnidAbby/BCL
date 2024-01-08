@@ -685,12 +685,14 @@ class Module(ASTNode):
         module_pass.run(mod)
         create_target_dirs(loc)
 
-        with open(f"{loc}/target/ll/{self.mod_name}.ll", 'w') as output_file:
+        mangled_name = self.package.get_unique_name(self.mod_name)
+
+        with open(f"{loc}/target/ll/{mangled_name}.ll", 'w') as output_file:
             output_file.write(str(mod))
 
         if not (args["--emit-object"] or args["--emit-binary"]):
             return
-        with open(f"{loc}/target/o/{self.mod_name}.o", 'wb') as output_file:
+        with open(f"{loc}/target/o/{mangled_name}.o", 'wb') as output_file:
             output_file.write(target.emit_object(mod))
         self.ir_saved = True
 
@@ -698,7 +700,7 @@ class Module(ASTNode):
         other_args["--emit-binary"] = False
         other_args["--emit-object"] = True
         other_args["--run"] = False
-        objects = [f"{loc}/target/o/{self.mod_name}.o"]
+        objects = [f"{loc}/target/o/{mangled_name}.o"]
 
         # using global list of modules
         for mod in self.imported_modules:
