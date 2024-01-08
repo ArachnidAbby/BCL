@@ -105,7 +105,7 @@ def compile_runtime():
 
     Ast.module.modules = old_mod_list
 
-    return f"{output_dir}/o/runtime.o"
+    return f"{output_dir}/o/.runtime.o"
 
 
 def get_linuxcrt() -> list[str]:
