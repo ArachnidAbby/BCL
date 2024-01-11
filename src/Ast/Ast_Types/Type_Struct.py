@@ -1,5 +1,4 @@
-from copy import copy
-from typing import Any, Self
+from typing import Any
 
 from llvmlite import ir
 
@@ -8,9 +7,9 @@ from Ast import Ast_Types
 from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
 from Ast.Ast_Types.Type_Bool import Integer_1
 from Ast.Ast_Types.Type_Void import Void
-from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
 from Ast.nodes import Block, KeyValuePair, ParenthBlock
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import Lifetimes, MemberInfo, Modifiers, SrcPosition
 from Ast.nodes.container import ContainerNode
 from Ast.nodes.passthrough import PassNode
@@ -94,7 +93,8 @@ class Struct(Ast_Types.Type):
                  is_generic, definition):
         self.struct_name = name
         self.raw_members = members
-        self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}  # bool "is_public"
+        # bool "is_public"
+        self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}
         self.member_indexs = []
         self.member_index_search = {}
         self.returnable = True
@@ -110,10 +110,11 @@ class Struct(Ast_Types.Type):
             self.member_indexs.append(member_name)
             self.member_index_search[member_name] = c
 
+        self.ir_type: ir.Type | None = None
         if not self.is_generic:
-            self.ir_type = ir.global_context.get_identified_type(f"{module.mod_name}.struct.{name}")
-        else:
-            self.ir_type = None
+            name = f"{module.mod_name}.struct.{name}"
+            self.ir_type = ir.global_context.get_identified_type(name)
+
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
@@ -141,7 +142,8 @@ class Struct(Ast_Types.Type):
         if params in self.versions.keys():
             return self.versions[params][0]
 
-        new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
+        str_params = ', '.join([str(x) for x in params])
+        new_name = f"{self.struct_name}::<{str_params}>"
 
         generic_args = {**self.definition.generic_args}
 
@@ -416,7 +418,7 @@ class Struct(Ast_Types.Type):
 
     def create_iterator(self, func, val, loc):
         actual_value = self.call_func(func, "__iter__", val, None)
-        var = func.create_const_var(self.get_iter_return(func, val))
+        var = create_const_var(func, self.get_iter_return(func, val))
         func.builder.store(actual_value, var)
 
         return var

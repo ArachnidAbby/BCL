@@ -4,6 +4,7 @@ from llvmlite import ir
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes import ContainerNode
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import GenericNode, Lifetimes, SrcPosition
 from Ast.nodes.keyvaluepair import KeyValuePair
 from errors import error
@@ -93,7 +94,7 @@ class ParenthBlock(ContainerNode):
         # Makes a tuple value
         elif not self.in_func_call:
             if self.ptr is None:
-                self.ptr = func.create_const_var(self.ret_type)
+                self.ptr = create_const_var(func, self.ret_type)
                 for c, child in enumerate(self.evaled_children):
                     child_ptr = \
                         func.builder.gep(self.ptr,

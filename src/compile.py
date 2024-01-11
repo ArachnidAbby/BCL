@@ -50,7 +50,7 @@ def compile_runtime(src_file: str, output_loc: str):
 
     from rply.errors import LexingError  # type: ignore
 
-    import Ast.functions.standardfunctions
+    import Ast
     import lexer as lex
     from Ast import Ast_Types
 
@@ -66,6 +66,7 @@ def compile_runtime(src_file: str, output_loc: str):
         pos = SrcPosition(error_pos.lineno, error_pos.colno, 0, str(src_file))
         errors.error("A Lexing Error has occured. Invalid Syntax",
                      line=pos, full_line=True)
+        return
 
     Ast_Types.definedtypes.needs_declare.append(Ast_Types.definedtypes.types_dict['strlit'])
     module.fullfill_templates()
@@ -74,7 +75,6 @@ def compile_runtime(src_file: str, output_loc: str):
     module.pre_eval(None)
     module.eval(None)
 
-    # loc = output_loc.parents[0]
     module.save_ir(os.getcwd(), args=args)
 
 
@@ -106,13 +106,11 @@ def compile(src_str: str, output_loc: Path, args, file=""):
 
         from rply.errors import LexingError  # type: ignore
 
-        import Ast.functions.standardfunctions
         Ast.module.make_base_package(Path(output_loc.parent), args)
-        import lexer as lex
+        # import lexer as lex
+        import Ast
         from Ast import Ast_Types
 
-    with timingContext('lexing finished', args):
-        tokens = lex.Lexer().get_lexer().lex(src_str)
 
     with timingContext('parsing finished', args):
         try:
@@ -123,6 +121,7 @@ def compile(src_str: str, output_loc: Path, args, file=""):
             pos = SrcPosition(error_pos.lineno, error_pos.colno, 0, str(file))
             errors.error("A Lexing Error has occured. Invalid Syntax",
                          line=pos, full_line=True)
+            return
 
     with timingContext('module created', args):
         Ast_Types.definedtypes.types_dict['strlit'] = Ast_Types.definedtypes.types_dict['strlit'](module)
@@ -133,7 +132,6 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         module.pre_eval(None)
         module.eval(None)
 
-    # loc = output_loc.parents[0]
     output_loc = module.save_ir(os.getcwd(), args=args)
     codegen.shutdown_llvm()
 
@@ -182,10 +180,10 @@ def compile_file(args):
 
     if file is None:
         errors.error("No file was specified")
+        return
 
     if not os.path.exists(file):
         errors.error(f"No Such file \"{file}\"")
-
 
     with file.open() as f:
         args = create_args_dict(args)

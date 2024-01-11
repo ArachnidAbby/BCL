@@ -3,6 +3,7 @@ from llvmlite import ir
 from Ast import exception  # type: ignore
 from Ast.Ast_Types import Type_Bool, Type_I32
 from Ast.literals.numberliteral import Literal
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
 from errors import error
@@ -81,7 +82,7 @@ class Array(Type_Base.Type):
         func.builder.position_at_end(comp_start)
 
         bool_ty = ir.IntType(1)
-        ind_ptr = func.create_const_var(u64_ty)
+        ind_ptr = create_const_var(func, u64_ty)
         func.builder.store(ir.Constant(u64_ty.ir_type, 0), ind_ptr)
 
         loop_block = func.builder.append_basic_block(name="item_loop")
@@ -91,7 +92,8 @@ class Array(Type_Base.Type):
 
         size = ir.Constant(u64_ty.ir_type, self.size)
 
-        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0), size)
+        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0),
+                                          size)
         func.builder.cbranch(cond, loop_block, after_block)
 
         func.builder.position_at_end(loop_block)
@@ -136,7 +138,7 @@ class Array(Type_Base.Type):
         func.builder.position_at_end(comp_start)
 
         bool_ty = ir.IntType(1)
-        ind_ptr = func.create_const_var(u64_ty)
+        ind_ptr = create_const_var(func, u64_ty)
         func.builder.store(ir.Constant(u64_ty.ir_type, 0), ind_ptr)
 
         loop_block = func.builder.append_basic_block(name="item_loop")
@@ -146,7 +148,8 @@ class Array(Type_Base.Type):
 
         size = ir.Constant(u64_ty.ir_type, self.size)
 
-        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0), size)
+        cond = func.builder.icmp_unsigned('<', ir.Constant(u64_ty.ir_type, 0),
+                                          size)
         func.builder.cbranch(cond, loop_block, after_block)
 
         func.builder.position_at_end(loop_block)
@@ -267,7 +270,7 @@ class Array(Type_Base.Type):
 
     def create_iterator(self, func, val, loc):
         iter_type = ItemIterator(self)
-        ptr = func.create_const_var(iter_type)
+        ptr = create_const_var(func, iter_type)
 
         data_ptr_ptr = func.builder.gep(ptr,
                                         [ir.Constant(ir.IntType(32), 0),
@@ -320,7 +323,8 @@ class ItemIterator(Type_Base.Type):
     def __init__(self, collection_type):
         self.iter_ret = collection_type.typ
         # {data_ptr: *T, current: i32, size: i32}
-        self.ir_type = ir.LiteralStructType((collection_type.ir_type.as_pointer(),
+        collection_ptr_typ = collection_type.ir_type.as_pointer()
+        self.ir_type = ir.LiteralStructType((collection_ptr_typ,
                                              ir.IntType(32),
                                              ir.IntType(32)))
 
@@ -343,7 +347,8 @@ class ItemIterator(Type_Base.Type):
                                        [ir.Constant(ir.IntType(32), 0),
                                         ir.Constant(ir.IntType(32), 1)])
         current_val = func.builder.load(current_ptr)
-        addition = func.builder.add(current_val, ir.Constant(ir.IntType(32), 1))
+        addition = func.builder.add(current_val,
+                                    ir.Constant(ir.IntType(32), 1))
         func.builder.store(addition, current_ptr)
         value_ptr_ptr = func.builder.gep(self_ptr,
                                          [ir.Constant(ir.IntType(32), 0),

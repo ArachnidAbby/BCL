@@ -3,7 +3,7 @@ It does all the proper formatting.'''
 
 import sys
 from inspect import currentframe, getframeinfo
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, NoReturn, Sequence
 
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
@@ -93,7 +93,7 @@ def _print_raw(text):
 
 
 def error(text: str, line: MultiPosition = invalid_pos,
-          full_line=False, note=None):
+          full_line=False, note=None) -> NoReturn:
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
@@ -148,7 +148,7 @@ def error(text: str, line: MultiPosition = invalid_pos,
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
     print("\n\n\n\n")
-    sys.exit(1)
+    exit(1)
 
 
 def inline_warning(text: str, line=invalid_pos):

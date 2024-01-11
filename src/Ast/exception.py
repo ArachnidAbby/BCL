@@ -2,7 +2,6 @@ from llvmlite import ir
 
 import errors
 from Ast.Ast_Types.Type_I32 import Integer_32  # type: ignore
-# from Ast.functions import standardfunctions
 from Ast.literals import stringliteral
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.parenthese import ParenthBlock
@@ -21,7 +20,8 @@ def _get_function(func, name: str, args: tuple, pos):
     args_fixed = ParenthBlock(pos)
     for arg in args:
         args_fixed.children.append(arg)
-    return function.get_function(func, VariableRef(pos, name, None), args_fixed)
+    return function.get_function(func, VariableRef(pos, name, None),
+                                 args_fixed)
 
 
 # TODO: MAKE BETTER
@@ -59,7 +59,8 @@ def no_next_item(func, name):
                       f" '{str(name)}'\n\tLine: N/A{errors.RESET} \n")
     strlit_ty = definedtypes.types_dict["strlit"]
 
-    fmt_bitcast = stringliteral.StrLiteral(SrcPosition.invalid(), over_index_fmt)
+    fmt_bitcast = stringliteral.StrLiteral(SrcPosition.invalid(),
+                                           over_index_fmt)
 
     printf_args = (strlit_ty, Integer_32())
     exit_args = (Integer_32(),)

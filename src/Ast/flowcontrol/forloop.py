@@ -1,9 +1,12 @@
-from llvmlite import ir  # type: ignore
+from typing import TYPE_CHECKING
 
-from Ast import Ast_Types
 from Ast.nodes import ASTNode, Block
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import SrcPosition
 from Ast.variables.varobject import VariableObj
+
+if TYPE_CHECKING:
+    from Ast.variables.reference import VariableRef
 
 
 class ForLoop(ASTNode):
@@ -11,7 +14,8 @@ class ForLoop(ASTNode):
     __slots__ = ('var', 'iterable', 'block', 'loop_before', 'for_after',
                  'for_body', 'varptr', 'iter_ptr', 'iter_type')
 
-    def __init__(self, pos: SrcPosition, var: ASTNode, iterable, block: Block):
+    def __init__(self, pos: SrcPosition, var: "VariableRef", iterable,
+                 block: Block):
         super().__init__(pos)
         self.var = var
         self.varptr = None
@@ -35,16 +39,15 @@ class ForLoop(ASTNode):
     def post_parse(self, func):
         self.block.post_parse(func)
         self.iterable.post_parse(func)
-        # for child in self.block:
-        #     child.post_parse(func)
 
     def pre_eval(self, func):
         self.iterable.pre_eval(func)
 
-        if self.iterable.ret_type.is_iterator:
-            self.iter_type = self.iterable.ret_type
-        else:
-            self.iter_type = self.iterable.ret_type.get_iter_return(func, self.iterable)
+        self.iter_type = self.iterable.ret_type
+
+        if not self.iterable.ret_type.is_iterator:
+            self.iter_type = self.iter_type.get_iter_return(func,
+                                                            self.iterable)
 
         self.block.variables[self.var.var_name] = \
             VariableObj(None,
@@ -59,7 +62,8 @@ class ForLoop(ASTNode):
 
     def eval_impl(self, func):
         orig_block_name = func.builder.block._name
-        self.varptr = func.create_const_var(self.iter_type.get_iter_return(func, self.iterable))
+        iter_ret_typ = self.iter_type.get_iter_return(func, self.iterable)
+        self.varptr = create_const_var(func, iter_ret_typ)
         self.block.variables[self.var.var_name].ptr = self.varptr
         self.for_body = func.builder.append_basic_block(
                 f'{orig_block_name}.for'
@@ -76,16 +80,19 @@ class ForLoop(ASTNode):
         # create cond
         if not self.iterable.ret_type.is_iterator:
             iter_ret = self.iterable.ret_type
-            self.iter_ptr = iter_ret.create_iterator(func, self.iterable, self.iterable.position)
+            self.iter_ptr = iter_ret.create_iterator(func, self.iterable,
+                                                     self.iterable.position)
         else:
             self.iterable.eval(func)
             self.iter_ptr = self.iterable.get_ptr(func)
 
-        func.builder.store(self.iter_type.iter_get_val(func, self.iter_ptr, self.iterable.position),
+        func.builder.store(self.iter_type.iter_get_val(func, self.iter_ptr,
+                                                       self.iterable.position),
                            self.varptr)
 
         # branching and loop body
-        cond = self.iter_type.iter_condition(func, self.iter_ptr, self.iterable.position)
+        cond = self.iter_type.iter_condition(func, self.iter_ptr,
+                                             self.iterable.position)
         func.builder.cbranch(cond, self.for_body, self.for_after)
         func.builder.position_at_start(self.for_body)
 
@@ -103,9 +110,11 @@ class ForLoop(ASTNode):
 
     # ! Must be shared between both kinds of loop !
     def branch_logic(self, func):
-        func.builder.store(self.iter_type.iter(func, self.iter_ptr, self.iterable.position),
+        func.builder.store(self.iter_type.iter(func, self.iter_ptr,
+                                               self.iterable.position),
                            self.varptr)
-        cond = self.iter_type.iter_condition(func, self.iter_ptr, self.iterable.position)
+        cond = self.iter_type.iter_condition(func, self.iter_ptr,
+                                             self.iterable.position)
         func.builder.cbranch(cond, self.for_body, self.for_after)
 
     def repr_as_tree(self) -> str:

@@ -1,6 +1,8 @@
 from collections import deque
 from typing import Any, Iterator, Self
 
+from llvmlite import ir
+
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
 
@@ -8,12 +10,12 @@ from Ast.nodes.container import ContainerNode
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
     __slots__ = ('variables', 'builder', 'last_instruction', 'ended', 'parent',
-                 'module')
+                 'module', 'constants')
 
     BLOCK_STACK: deque[Self] = deque()
 
-    def __init__(self, pos: SrcPosition, parent=None, module=None, *args, **kwargs):
-        super().__init__(pos, *args, **kwargs)
+    def __init__(self, pos: SrcPosition, parent=None, module=None):
+        super().__init__(pos)
         self.variables: dict[str, object] = {}
         # {name: VarObj, ...} -- recursive import uppon proper type annotation
         self.builder = None
@@ -21,6 +23,8 @@ class Block(ContainerNode):
         self.ended = False
         self.parent = parent
         self.module = module
+        # Constants allocated here.
+        self.constants = []
 
     def simple_copy(self):
         out = Block(self._position, module=self.module)
@@ -63,11 +67,8 @@ class Block(ContainerNode):
             child.post_parse(func)
 
     def pre_eval(self, func):
-        # self.append_nested_vars()
-        self.BLOCK_STACK.append(self)
-        for x in self.children:
+        for x in self:
             x.pre_eval(func)
-        self.BLOCK_STACK.pop()
 
     def eval_impl(self, func):
         from Ast.module import Module
@@ -117,6 +118,11 @@ class Block(ContainerNode):
         if self.module is not None:
             return self.module.get_type_by_name(var_name, pos)
 
+    def create_const_var(self, func, typ):
+        ptr = func.create_const_var(typ)
+        self.constants.append((ptr, typ))
+        return ptr
+
     def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''
         var_ptr = self.get_variable(var_name, module).ptr  # type: ignore
@@ -133,3 +139,13 @@ class Block(ContainerNode):
         return self.create_tree("Block",
                                 contents=self.children,
                                 variables=self.variables)
+
+
+# Utility functions :)
+def get_current_block() -> Block:
+    return Block.BLOCK_STACK[-1]
+
+
+def create_const_var(func, typ) -> ir.AllocaInstr:
+    block = get_current_block()
+    return block.create_const_var(func, typ)

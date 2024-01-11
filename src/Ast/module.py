@@ -8,7 +8,7 @@ from llvmlite import binding, ir  # type: ignore
 from rply import LexingError
 from typing_extensions import Protocol
 
-import Ast.functions.standardfunctions
+import Ast
 import errors
 import linker
 from Ast import Ast_Types, package

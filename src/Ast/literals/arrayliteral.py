@@ -2,13 +2,14 @@
 from typing import Any
 
 from llvmlite import ir
-from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
 from Ast import Ast_Types
 from Ast.literals.numberliteral import Literal
 from Ast.nodes import ExpressionNode
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode  # type: ignore
 
 
 class ArrayLiteral(ExpressionNode):
@@ -69,7 +70,7 @@ class ArrayLiteral(ExpressionNode):
         # populate items if it isn't an array
         # of literal values.
         if not self.literal:
-            ptr = func.create_const_var(self.ret_type)
+            ptr = create_const_var(func, self.ret_type)
             zero_const = ir.Constant(ir.IntType(64), 0)
             for c, item in enumerate(self.value):
                 index = ir.Constant(ir.IntType(32), c)

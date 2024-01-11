@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from errors import error
 
@@ -26,7 +27,7 @@ class ExpressionNode(ASTNode):
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
         if self.ptr is None:
-            self.ptr = func.create_const_var(self.ret_type)
+            self.ptr = create_const_var(func, self.ret_type)
             val = self.eval(func)
             # self._instruction = val
             func.builder.store(val, self.ptr)
@@ -36,7 +37,9 @@ class ExpressionNode(ASTNode):
         return super().fullfill_templates(func)
 
     def eval(self, func, *args, **kwargs):
-        if self.do_register_dispose and self.ret_type is not None and self.ret_type.needs_dispose and not self.__evaled and not self.overwrite_eval:
+        if self.do_register_dispose and self.ret_type is not None and \
+                self.ret_type.needs_dispose and \
+                not self.__evaled and not self.overwrite_eval:
             self.__evaled = True
             self.get_ptr(func)
             self.__evaled = False

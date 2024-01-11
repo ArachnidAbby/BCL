@@ -340,11 +340,17 @@ class FunctionDef(ASTNode):
         self.block.pre_eval(self)
 
     def create_const_var(self, typ):
+        if self.builder is None or self.builder.block is None:
+            errors.developer_warning("A call exists to `create_const_var` " +
+                                     "when the function has no block.")
+            return
+
         current_block = self.builder.block
         self.builder.position_at_start(self.ir_entry)
         if self.yields:
             self.yield_consts.append(typ)
-            self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
+            self.yield_gen_type.add_members(self.yield_consts,
+                                            [x[0].type for x in self.variables])
             ptr = self.builder.gep(self.yield_struct_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 3),
