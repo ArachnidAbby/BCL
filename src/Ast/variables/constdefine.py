@@ -1,6 +1,7 @@
 from Ast.nodes.astnode import ASTNode
 
 
+# TODO: implement this.
 class ConstDef(ASTNode):
     __slots__ = ()
 
