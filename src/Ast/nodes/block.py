@@ -1,23 +1,26 @@
 from collections import deque
-from typing import Any, Iterator, Self
+from typing import TYPE_CHECKING, Any, Iterator, Self
 
 from llvmlite import ir
 
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
 
+if TYPE_CHECKING:
+    from Ast.variables.varobject import VariableObj
+
 
 class Block(ContainerNode):
     '''Provides a Block node that contains other `AST_NODE` objects'''
     __slots__ = ('variables', 'builder', 'last_instruction', 'ended', 'parent',
-                 'module', 'constants')
+                 'module', 'constants', 'dispose_queue')
 
     BLOCK_STACK: deque[Self] = deque()
 
     def __init__(self, pos: SrcPosition, parent=None, module=None):
         super().__init__(pos)
-        self.variables: dict[str, object] = {}
-        # {name: VarObj, ...} -- recursive import uppon proper type annotation
+        self.variables: dict[str, "VariableObj"] = {}
+        # {name: varobj, ...} -- recursive import uppon proper type annotation
         self.builder = None
         self.last_instruction = False
         self.ended = False
@@ -25,6 +28,7 @@ class Block(ContainerNode):
         self.module = module
         # Constants allocated here.
         self.constants = []
+        self.dispose_queue = []
 
     def simple_copy(self):
         out = Block(self._position, module=self.module)
@@ -42,7 +46,7 @@ class Block(ContainerNode):
 
     def reset(self):
         super().reset()
-        self.variables: dict[str, object] = {}
+        self.variables: dict[str, "VariableObj"] = {}
         self.BLOCK_STACK.append(self)
         for x in self.children:
             x.reset()
@@ -123,13 +127,17 @@ class Block(ContainerNode):
         self.constants.append((ptr, typ))
         return ptr
 
+    def register_dispose(self, func, node):
+        self.dispose_queue.append(node)
+        func.register_dispose(node)
+
     def validate_variable(self, var_name: str, module=None) -> bool:
         '''Return true if a variable already has a ptr'''
         var_ptr = self.get_variable(var_name, module).ptr  # type: ignore
         return var_ptr is not None
 
     def validate_variable_exists(self, var_name: str, module=None) -> bool:
-        if self.parent is None:
+        if self.parent is None and module is not None:
             return (var_name in self.variables.keys()) or \
                 (module.get_global(var_name) is not None)
         return (var_name in self.variables.keys()) or \

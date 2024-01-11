@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from Ast.nodes import ASTNode, Block
 from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.passthrough import PassNode
 from Ast.variables.varobject import VariableObj
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 class ForLoop(ASTNode):
     '''Code for an If-Statement'''
     __slots__ = ('var', 'iterable', 'block', 'loop_before', 'for_after',
-                 'for_body', 'varptr', 'iter_ptr', 'iter_type')
+                 'for_body', 'varptr', 'iter_ptr', 'iter_type', 'for_pre_body')
 
     def __init__(self, pos: SrcPosition, var: "VariableRef", iterable,
                  block: Block):
@@ -26,6 +27,7 @@ class ForLoop(ASTNode):
         self.loop_before = None
         self.for_after = None
         self.for_body = None
+        self.for_pre_body = None
 
     def copy(self):
         out = ForLoop(self._position, self.var.copy(), self.iterable.copy(),
@@ -64,7 +66,16 @@ class ForLoop(ASTNode):
         orig_block_name = func.builder.block._name
         iter_ret_typ = self.iter_type.get_iter_return(func, self.iterable)
         self.varptr = create_const_var(func, iter_ret_typ)
+        if iter_ret_typ.needs_dispose:
+            node = PassNode(self.var.position, None, iter_ret_typ,
+                            ptr=self.varptr)
+            self.block.register_dispose(func, node)
         self.block.variables[self.var.var_name].ptr = self.varptr
+
+        # Handles calling of destructors on subsequent iterations
+        self.for_pre_body = func.builder.append_basic_block(
+                f'{orig_block_name}.for_pre'
+            )
         self.for_body = func.builder.append_basic_block(
                 f'{orig_block_name}.for'
             )
@@ -101,6 +112,13 @@ class ForLoop(ASTNode):
         if not func.has_return and not self.block.ended:
             self.branch_logic(func)
 
+        # create pre_body
+        func.builder.position_at_start(self.for_pre_body)
+        for node in self.block.dispose_queue:
+            node.ret_type.dispose(func, node)
+        func.builder.branch(self.for_body)
+
+        # exit loop
         func.inside_loop = loop_bfor
         func.has_return = ret_before
         func.builder.position_at_start(self.for_after)
@@ -115,7 +133,7 @@ class ForLoop(ASTNode):
                            self.varptr)
         cond = self.iter_type.iter_condition(func, self.iter_ptr,
                                              self.iterable.position)
-        func.builder.cbranch(cond, self.for_body, self.for_after)
+        func.builder.cbranch(cond, self.for_pre_body, self.for_after)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("For Loop",

@@ -7,7 +7,7 @@ import errors
 from Ast import Ast_Types
 from Ast.literals.numberliteral import Literal
 from Ast.nodes import ExpressionNode
-from Ast.nodes.block import create_const_var
+from Ast.nodes.block import create_const_var, get_current_block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from Ast.nodes.passthrough import PassNode  # type: ignore
 
@@ -78,8 +78,9 @@ class ArrayLiteral(ExpressionNode):
                 # item.overwrite_eval = True
                 evaled = item.eval(func)
                 if item.do_register_dispose and item.ret_type.needs_dispose:
-                    dispose_node = PassNode(item.position, evaled, item.ret_type, item.ptr)
-                    func.register_dispose(dispose_node)
+                    dispose_node = PassNode(item.position, evaled,
+                                            item.ret_type, item.ptr)
+                    get_current_block().register_dispose(func, dispose_node)
 
                 item.ptr = None
                 item._instruction = evaled

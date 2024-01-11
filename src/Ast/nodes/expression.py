@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
-from Ast.nodes.block import create_const_var
+from Ast.nodes.block import create_const_var, get_current_block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from errors import error
 
@@ -44,7 +44,8 @@ class ExpressionNode(ASTNode):
             self.get_ptr(func)
             self.__evaled = False
 
-            func.register_dispose(self)
+            block = get_current_block()
+            block.register_dispose(func, self)
             if self._instruction is None:
                 self._instruction = self.eval_impl(func, *args, **kwargs)
         else:
