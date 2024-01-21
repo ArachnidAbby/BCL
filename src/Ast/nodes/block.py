@@ -75,21 +75,25 @@ class Block(ContainerNode):
             x.pre_eval(func)
 
     def eval_impl(self, func):
+        from Ast.functions.definition import FunctionDef
         from Ast.module import Module
+
         if len(self.children) == 0:
             self.last_instruction = not func.ret_type.is_void()
             return
         self.BLOCK_STACK.append(self)
         for x in self.children[0:-1]:
+            if not isinstance(func, Module):
+                if (func.has_return or self.ended) and not isinstance(x, FunctionDef):
+                    continue
             x.eval(func)
-            if isinstance(func, Module):
-                continue
-            if func.has_return or self.ended:
-                self.BLOCK_STACK.pop()
-                return
         if not isinstance(func, Module):
             self.last_instruction = not func.ret_type.is_void()
-        self.children[-1].eval(func)
+            if not (func.has_return or self.ended) or isinstance(x, FunctionDef):
+                self.children[-1].eval(func)
+        else:
+            self.children[-1].eval(func)
+
         self.BLOCK_STACK.pop()
 
     def __iter__(self) -> Iterator[Any]:
