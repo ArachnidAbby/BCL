@@ -5,21 +5,22 @@ define main() -> i32;
 
 #[Platform("Linux")]
 {
-    define printf(fmt: strlit, ...);
+    // define printf(fmt: strlit, ...);
     define exit(x: i32);
 
-    public define println(x: u32) {
-        printf("%iu\n", x);
-    }
+    // public define println(x: u32) {
+    //     printf("%iu\n", x);
+    // }
 
-    public define println(x: u64) {
-        printf("%llu\n", x);
-    }
+    // public define println(x: u64) {
+    //     printf("%llu\n", x);
+    // }
 
     #[NoMangle]
-    define _start() {
+    define __libc_start_main() {
+        _fallback_output = 0;
         main();
-        exit(0);
+        exit(_fallback_output);
     }
 }
 

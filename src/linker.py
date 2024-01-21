@@ -22,7 +22,8 @@ import errors
 #         "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
 #     ]
 # )
-def link_windows(file: str, objects: list[str], additional_args: list[str]=[]):
+def link_windows(file: str, objects: list[str],
+                 additional_args: list[str] = []):
     '''Linking for windows from a windows host machine'''
     binding.lld.lld_windows(file,
                             [
@@ -38,7 +39,8 @@ def link_windows(file: str, objects: list[str], additional_args: list[str]=[]):
                             )
 
 
-def link_linux(file: str, objects: list[str], additional_args: list[str]=[]):
+def link_linux(file: str, objects: list[str],
+               additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
     gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])
     binding.lld.lld_linux(file,
@@ -109,7 +111,42 @@ def compile_runtime():
 
 
 def get_linuxcrt() -> list[str]:
-    return [compile_runtime()]
+    '''get CRT files on linux platform'''
+    gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])  # `lib` as fallback
+    # all_files = os.listdir(gcc_dir)
+    # for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/']:
+    #     all_files += os.listdir(crt_path)
+    output = []
+    exclude = ("crtfastmath", "crtprec32", "crtprec64", "crtprec80",
+               "crtbeginT", "crtbeginS", "crtendS", "crtendT",
+               "crtoffloadtable")
+
+    # note: this *could* be a one-liner, it would just be ugly.
+    # for file in all_files:
+    #     if file.count('.') != 1:
+    #         continue
+    #     name, ext = file.split('.')
+    #     if ext != 'o':  # skip non .o files
+    #         continue
+    #     if name.startswith('crt') and name not in exclude:
+    #         output.append(f'{gcc_dir}/{file}')
+    for crt_path in ['/lib/', '/lib64/', gcc_dir, '/usr/lib/', '/usr/lib64/', '/usr/lib/x86_64-linux-gnu/']:
+        all_libs = os.listdir(crt_path)
+        for file in all_libs:
+            if file.startswith("crt") and (".o" in file) and file[3].isdigit():
+                output.append(f"{crt_path}{file}")
+                break
+        else:
+            continue
+        break
+    else:  # no break
+        print(output)
+        errors.error("Unable to find a valid crt file in '/lib/'")
+
+    for file in output:
+        errors.developer_info(f"found crt file: {file}")
+
+    return output + [compile_runtime()]
 
 
 def link_all(file: str, objects: list[str],

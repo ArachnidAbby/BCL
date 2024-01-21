@@ -14,7 +14,7 @@ public import result::*;
 public import fileHandling::*;
 
 // EXTERNAL DEFINITIONS
-public define printf(x: strlit, ...);
+public define printf(x: strlit, ...) -> i32;
 public define puts(data: strlit);
 
 public define memcpy(dest: UntypedPointer, source: UntypedPointer, size: size_t) -> UntypedPointer;
