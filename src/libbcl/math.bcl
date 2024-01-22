@@ -33,12 +33,12 @@ public define min(x: f32, y:f32) -> f32 {
     return y;
 }
 
-
 public define factorial(num: i32) -> i32{
-    if num > 1 {
-        return num * factorial(num-1);
+    acc = 1;
+    for i in 2..num+1 {
+        acc *= i;
     }
-    return num;
+    return acc;
 }
 
 public define abs(x : i32) -> i32 {

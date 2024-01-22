@@ -4,9 +4,50 @@ from typing import Self
 
 from llvmlite import ir
 
-from Ast.nodes.commontypes import Modifiers
+from Ast.nodes.commontypes import MemberInfo, Modifiers
 from Ast.nodes.passthrough import PassNode  # type: ignore
 from errors import error
+
+struct_op_overloads = {
+    "sum": "__add__",
+    "sub": "__sub__",
+    "mul": "__mul__",
+    "div": "__div__",
+    "mod": "__mod__",
+    "pow": "__pow__",
+    "eq": "__eq__",
+    "neq": "__neq__",
+    "le": "__lt__",
+    "gr": "__gt__",
+    "geq": "__geq__",
+    "leq": "__leq__",
+    "_imul": "__imul__",
+    "_idiv": "__idiv__",
+    "_isub": "__isub__",
+    "_isum": "__iadd__",
+    "ind": "__index__",
+    "call": "__call__",
+
+    "bor": "__bitor__",
+    "band": "__bitand__",
+    "bxor": "__bitxor__",
+    "bitnot": "__bitnot__",
+    "lshift": "__lshift__",
+    "rshift": "__rshift__"
+}
+
+op_overloads_reversed = {value: key for key, value in struct_op_overloads.items()}
+
+
+def create_op_method(op_name, func_name, typ, callback):
+    from Ast.Ast_Types.Type_Function import FakeOpFunction
+
+    arg_count = 2
+    if op_name in ("bitnot", "__truthy__", "__deref__"):
+        arg_count = 1
+
+    return FakeOpFunction(func_name, op_name,
+                          typ, callback, arg_count)
 
 
 class Type:
@@ -24,7 +65,7 @@ class Type:
     no_load = False
     # useful for things like function types.
     read_only = False
-    has_members = False
+    has_members = True
     # is this type allowed to be the return type of a function
     returnable = True
     checks_lifetime = False
@@ -68,6 +109,7 @@ class Type:
             ty = Integer_32(name="u64", size=64, signed=False)
             val = Literal(pos, size, ty)
             return NamespaceInfo(val, {})
+
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
         if x := self.global_namespace_names(func, name, pos):
@@ -90,10 +132,6 @@ class Type:
 
     def is_void(self) -> bool:
         return False
-
-    def get_member(self, func, lhs,
-                   name) -> tuple[ir.Instruction, Self] | None:
-        return None
 
     def __eq__(self, other):
         return (other is not None) and self.name == other.name
@@ -291,10 +329,66 @@ class Type:
     def as_type_reference(self, func, allow_generics=False):
         return self
 
+    # provide a standard type interface this way.
+    def _create_op_func(self, lhs, rhs):
+        special_ops = ("__deref__", "__truthy__")
+        from Ast.variables.reference import VariableRef
+
+        if not isinstance(rhs, VariableRef):
+            return
+
+        if rhs.var_name not in special_ops and \
+                rhs.var_name not in op_overloads_reversed.keys():
+            return
+
+        if rhs.var_name in special_ops:
+            op_name = rhs.var_name
+        else:
+            op_name = op_overloads_reversed[rhs.var_name]
+
+        callback = None
+
+        match rhs.var_name:
+            case "__add__": callback = self.sum
+            case "__sub__": callback = self.sub
+            case "__mul__": callback = self.mul
+            case "__div__": callback = self.div
+            case "__pow__": callback = self.pow
+            case "__eq__": callback = self.eq
+            case "__neq__": callback = self.neq
+            case "__lt__": callback = self.le
+            case "__gr__": callback = self.gr
+            case "__leq__": callback = self.leq
+            case "__geq__": callback = self.geq
+            case "__imul__": callback = self.imul
+            case "__idiv__": callback = self.idiv
+            case "__iadd__": callback = self.isum
+            case "__isub__": callback = self.isub
+            case "__call__": callback = self.call
+            case "__index__": callback = self.index
+            case "__deref__": callback = self.deref
+            case "__truthy__": callback = self.truthy
+
+        func = create_op_method(op_name,
+                                rhs.var_name,
+                                lhs.ret_type,
+                                callback)
+        return func
+
     def get_member_info(self, lhs, rhs):
         '''Used to get information about members
         ex: ret_type, mutability, etc
         '''
+        func = self._create_op_func(lhs, rhs)
+        if func is None:
+            return None
+
+        return MemberInfo(False, False, func)
+
+    def get_member(self, func, lhs,
+                   name) -> Self | ir.Instruction | None:
+        func = self._create_op_func(lhs, name)
+        return func
 
     def get_members(self):
         '''Gets all the member names.

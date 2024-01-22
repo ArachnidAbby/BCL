@@ -5,6 +5,7 @@ from llvmlite import ir
 import Ast.math
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
+from Ast.Ast_Types.Type_Base import struct_op_overloads
 from Ast.Ast_Types.Type_Bool import Integer_1
 from Ast.Ast_Types.Type_Void import Void
 from Ast.math import MemberAccess
@@ -18,34 +19,6 @@ from Ast.variables.reference import VariableRef
 from errors import error
 
 member_access_op = Ast.math.ops["access_member"]
-
-struct_op_overloads = {
-    "sum": "__add__",
-    "sub": "__sub__",
-    "mul": "__mul__",
-    "div": "__div__",
-    "mod": "__mod__",
-    "pow": "__pow__",
-    "eq": "__eq__",
-    "neq": "__neq__",
-    "le": "__lt__",
-    "gr": "__gt__",
-    "geq": "__geq__",
-    "leq": "__leq__",
-    "_imul": "__imul__",
-    "_idiv": "__idiv__",
-    "_isub": "__isub__",
-    "_isum": "__iadd__",
-    "ind": "__index__",
-    "call": "__call__",
-
-    "bor": "__bitor__",
-    "band": "__bitand__",
-    "bxor": "__bitxor__",
-    "bitnot": "__bitnot__",
-    "lshift": "__lshift__",
-    "rshift": "__rshift__"
-}
 
 
 # TODO: FINISH THIS DAMN THING!
@@ -388,7 +361,6 @@ class Struct(Ast_Types.Type):
     def get_member_info(self, lhs, rhs):
         if rhs.var_name not in self.members.keys():
             return None
-            error("member not found!", line=rhs.position)
         typ = self.members[rhs.var_name][0]
         is_ptr = not isinstance(typ, Ast_Types.FunctionGroup)
         return MemberInfo(not typ.read_only, is_ptr, typ)

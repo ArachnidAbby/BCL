@@ -289,11 +289,13 @@ class Function(Type):
 
     def __eq__(self, other):
         return super().__eq__(other) and \
-            other.func_name == self.func_name
+            other.func_name == self.func_name and \
+            self.module == other.module
 
     def __neq__(self, other):
-        return super().__neq__(other) and \
-            other.func_name != self.func_name
+        return super().__neq__(other) or \
+            other.func_name != self.func_name or \
+            self.module != other.module
 
     def get_op_return(self, func, op, lhs, rhs):
         if op != "call":
@@ -442,3 +444,49 @@ class FunctionGroup(Type):
                    pos=SrcPosition.invalid(), stack=None,
                    override_star=False) -> Optional["NamespaceInfo"]:
         pass
+
+
+class FakeOpFunction(Function):
+    __slots__ = ('callback', 'arg_count', 'op_name', 'typ')
+
+    def __init__(self, name, op_name, typ, callback,
+                 arg_count):
+        super().__init__(name, (), None, None, None)
+        self.callback = callback
+        self.is_method = True
+        self.arg_count = arg_count
+        self.op_name = op_name
+        self.typ = typ
+
+    def __eq__(self, other):
+        return super().__eq__(other) and \
+            other.callback == self.callback
+
+    def __neq__(self, other):
+        return super().__neq__(other) or \
+            other.callback != self.callback
+
+    def get_op_return(self, func, op, lhs, rhs):
+        from Ast.Ast_Types.Type_Bool import Integer_1
+        if op != "call":
+            return
+
+        args = rhs.children
+        if isinstance(lhs, MemberAccess):
+            args = [lhs.lhs] + args
+        if len(args) != self.arg_count:
+            error("Invalid number of arguments on operation function" +
+                  f" for type {self.typ}", line=rhs.position)
+
+        if self.op_name == "__deref__":
+            return self.typ.get_deref_return(func, *args)
+        elif self.op_name == "__truthy__":
+            return Integer_1()
+
+        return self.typ.get_op_return(func, self.op_name, *args)
+
+    def call(self, func, lhs, args):
+        args = args.children
+        if isinstance(lhs, MemberAccess):
+            args = [lhs.lhs] + args
+        return self.callback(func, *args)

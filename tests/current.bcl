@@ -257,7 +257,13 @@ define tests(_: TestStruct) -> i32 {
     return 6980085;
 }
 
-define main() {
+define main() -> i32 {
+
+    println(10f);
+    println(10.__add__(22f));
+    return 1;
+    // return 1;
+
     examplePackage::exampleThing::gorgo_gorgo(4200000);
     examplePackage::exampleThing::println("Yo Yo Yo");
     w = LifetimeTest {x: &10};
@@ -429,6 +435,7 @@ define main() {
     }
 
     testing_stuff(29i64);
+    println("Will segfault here");
     println(18f32);
 
     println(16**0.5);
