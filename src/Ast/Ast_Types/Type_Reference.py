@@ -190,5 +190,5 @@ class Reference(Type_Base.Type):
     def bit_and(self, func, lhs, rhs):
         return self.typ.bit_and(func, try_deref(lhs, func), rhs)
 
-    def bit_not(self, func, lhs, rhs):
-        return self.typ.bit_not(func, try_deref(lhs, func), rhs)
+    def bit_not(self, func, lhs):
+        return self.typ.bit_not(func, try_deref(lhs, func))

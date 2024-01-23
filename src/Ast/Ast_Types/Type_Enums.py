@@ -162,7 +162,7 @@ class EnumType(Type):
         lhs_eval = lhs.eval(func)
         return func.builder.and_(lhs_eval, rhs_eval)
 
-    def bit_not(self, func, lhs, rhs):
+    def bit_not(self, func, lhs):
         lhs_eval = lhs.eval(func)
         return func.builder.not_(lhs_eval)
 

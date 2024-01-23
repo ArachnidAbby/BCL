@@ -35,8 +35,7 @@ class RangeType(Type):
             case "end":
                 return MemberInfo(False, False, Integer_32())
             case _:
-                return None
-                error("member not found!", line=rhs.position)
+                return super().get_member_info(lhs, rhs)
 
     def get_member(self, func, lhs,
                    rhs: "Ast.variable.VariableRef"):
@@ -52,7 +51,7 @@ class RangeType(Type):
                                     ir.Constant(ir.IntType(32), 1)])
                 return func.builder.load(end_ptr)
             case _:
-                error("member not found!", line=rhs.position)
+                return super().get_member(func, lhs, rhs)
 
     def get_iter_return(self, func, node):
         return Integer_32()

@@ -359,7 +359,7 @@ class Function(Type):
         return f'<Type: {self.name}--{self.func_name}>'
 
     def __str__(self) -> str:
-        return f"{self.func_name}{str(self.args)}->{self.func_ret}"
+        return f"{self.func_name}{str(self.args)} -> {self.func_ret}"
 
     def get_signature(self) -> str:
         str_ret = str(self.definition.ret_type)
@@ -373,7 +373,6 @@ class Function(Type):
 class FunctionGroup(Type):
     '''Function Group
     Functions of the same name are said to belong to the same group.
-    *test*
     '''
     __slots__ = ('func_name', 'module', 'versions')
     name = "FunctionGroup"
@@ -471,12 +470,6 @@ class FakeOpFunction(Function):
         if self.typ.name == "STRUCT":
             return lhs, rhs
 
-        # if isinstance(lhs.ret_type, Reference) and not self.func_name.startswith("__i"):
-        #     ptr = lhs.eval(func)
-        #     lhs = PassNode(lhs.position,
-        #                    func.builder.load(ptr),
-        #                    lhs.ret_type.typ,
-        #                    ptr)
         if rhs is None:
             return lhs, rhs
 
@@ -509,33 +502,45 @@ class FakeOpFunction(Function):
         # ! This is kinda dumb
         if self.func_name.startswith("__i"):
             check_valid_inplace(args[0])
-
-        rhs_ = None if len(args) == 1 else args[1]
-        args = list(self.deref(func, args[0], rhs_))
-        if args[1] is None:
-            args.pop(1)
+        if self.func_name != "__call__":
+            rhs_ = None if len(args) == 1 else args[1]
+            args = list(self.deref(func, args[0], rhs_))
+        # if args[1] is None:
+        #     args.pop(1)
 
         if self.op_name == "__deref__":
             return self.typ.get_deref_return(func, *args)
         elif self.op_name == "__truthy__":
             return Integer_1()
+        elif self.op_name == "call":
+            ret_type = self.typ.get_op_return(func, self.op_name,
+                                              args[0], rhs)
+        else:
+            ret_type = self.typ.get_op_return(func, self.op_name, *args)
 
-        return self.typ.get_op_return(func, self.op_name, *args)
+        if ret_type is None:
+            error(f"Type \"{self.typ}\" does not have method \"{self.func_name}\"",
+                  line=lhs.position)
+        return ret_type
 
     def call(self, func, lhs, args):
         from Ast.math import check_valid_inplace
 
-        args = args.children
+        args_ = args.children
         if isinstance(lhs, MemberAccess):
-            args = [lhs.lhs] + args
+            args_ = [lhs.lhs] + args_
 
-        rhs_ = None if len(args) == 1 else args[1]
-        args = list(self.deref(func, args[0], rhs_))
-        if args[1] is None:
-            args.pop(1)
+        if self.func_name != "__call__":
+            rhs_ = None if len(args_) == 1 else args_[1]
+            args_ = list(self.deref(func, args_[0], rhs_))
+            if args_[1] is None:
+                args_.pop(1)
 
         # check for inplace ops
         # ! This is kinda dumb
         if self.func_name.startswith("__i"):
-            check_valid_inplace(args[0])
-        return self.callback(func, *args)
+            check_valid_inplace(args_[0])
+
+        elif self.op_name == "call":
+            return self.callback(func, args_[0], args)
+        return self.callback(func, *args_)

@@ -190,14 +190,14 @@ class Array(Type_Base.Type):
             case "length":
                 return MemberInfo(False, False, Type_I32.Integer_32())
             case _:
-                error("member not found!", line=rhs.position)
+                return super().get_member_info(lhs, rhs)
 
     def get_member(self, func, lhs, rhs):
         match rhs.var_name:
             case "length":
                 return ir.Constant(ir.IntType(32), self.size)
             case _:
-                error("member not found!", line=rhs.position)
+                return super().get_member(func, lhs, rhs)
 
     def __eq__(self, other):
         if (other is None) or other.name != self.name:

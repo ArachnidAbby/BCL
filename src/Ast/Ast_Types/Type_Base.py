@@ -180,7 +180,7 @@ class Type:
         error(f"Operator '^' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
-    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_not(self, func, lhs) -> ir.Instruction:
         error(f"Operator '~' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
@@ -368,6 +368,12 @@ class Type:
             case "__index__": callback = self.index
             case "__deref__": callback = self.deref
             case "__truthy__": callback = self.truthy
+            case "__bitor__": callback = self.bit_or
+            case "__bitand__": callback = self.bit_and
+            case "__bitxor__": callback = self.bit_xor
+            case "__bitnot__": callback = self.bit_not
+            case "__lshift__": callback = self.lshift
+            case "__rshift__": callback = self.rshift
 
         func = create_op_method(op_name,
                                 rhs.var_name,

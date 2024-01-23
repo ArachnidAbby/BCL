@@ -346,7 +346,7 @@ class Struct(Ast_Types.Type):
     def rshift(self, func, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__rshift__", lhs, rhs)
 
-    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_not(self, func, lhs) -> ir.Instruction:
         return self.call_func(func, "__bitnot__", lhs, None)
 
     def bit_xor(self, func, lhs, rhs) -> ir.Instruction:

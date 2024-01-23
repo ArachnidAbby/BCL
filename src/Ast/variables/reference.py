@@ -77,7 +77,7 @@ class VariableRef(ExpressionNode):
 
     def get_coupled_lifetimes(self, func) -> list:
         var = self.block.get_variable(self.var_name, func.module)
-        if var.is_arg:
+        if isinstance(var, VariableObj) and var.is_arg:
             return [var.arg_idx]
 
         return []

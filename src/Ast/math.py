@@ -411,7 +411,7 @@ def pow(self, func, lhs, rhs):
 
 @operator(8, "bitnot")
 def bnot(self, func, lhs, rhs):
-    return (lhs.ret_type).bit_not(func, lhs, rhs)
+    return (lhs.ret_type).bit_not(func, lhs)
 
 
 @operator(0, "Lshift")
