@@ -71,9 +71,7 @@ class OperationNode(ExpressionNode):
                 return
 
         if isinstance(self.rhs.ret_type, Reference):
-
             ptr = self.rhs.eval(func)
-
             self.rhs = PassNode(self.rhs.position,
                                 func.builder.load(ptr),
                                 self.rhs.ret_type.typ,

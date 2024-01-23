@@ -10,6 +10,7 @@ from Ast.Ast_Types.Type_Void import Void  # type: ignore
 from Ast.math import MemberAccess
 from Ast.nodes.commontypes import Modifiers, SrcPosition
 from Ast.nodes.expression import ExpressionNode
+from Ast.nodes.passthrough import PassNode
 from Ast.reference import Ref
 from errors import error
 
@@ -466,17 +467,53 @@ class FakeOpFunction(Function):
         return super().__neq__(other) or \
             other.callback != self.callback
 
+    def deref(self, func, lhs, rhs) -> tuple:
+        if self.typ.name == "STRUCT":
+            return lhs, rhs
+
+        # if isinstance(lhs.ret_type, Reference) and not self.func_name.startswith("__i"):
+        #     ptr = lhs.eval(func)
+        #     lhs = PassNode(lhs.position,
+        #                    func.builder.load(ptr),
+        #                    lhs.ret_type.typ,
+        #                    ptr)
+        if rhs is None:
+            return lhs, rhs
+
+        if isinstance(rhs.ret_type, Reference):
+
+            ptr = rhs.eval(func)
+
+            rhs = PassNode(rhs.position,
+                           func.builder.load(ptr),
+                           rhs.ret_type.typ,
+                           ptr)
+        return lhs, rhs
+
     def get_op_return(self, func, op, lhs, rhs):
         from Ast.Ast_Types.Type_Bool import Integer_1
+        from Ast.math import check_valid_inplace
+
         if op != "call":
             return
 
         args = rhs.children
         if isinstance(lhs, MemberAccess):
+            lhs.lhs.pre_eval(func)
             args = [lhs.lhs] + args
         if len(args) != self.arg_count:
             error("Invalid number of arguments on operation function" +
                   f" for type {self.typ}", line=rhs.position)
+
+        # check for inplace ops
+        # ! This is kinda dumb
+        if self.func_name.startswith("__i"):
+            check_valid_inplace(args[0])
+
+        rhs_ = None if len(args) == 1 else args[1]
+        args = list(self.deref(func, args[0], rhs_))
+        if args[1] is None:
+            args.pop(1)
 
         if self.op_name == "__deref__":
             return self.typ.get_deref_return(func, *args)
@@ -486,7 +523,19 @@ class FakeOpFunction(Function):
         return self.typ.get_op_return(func, self.op_name, *args)
 
     def call(self, func, lhs, args):
+        from Ast.math import check_valid_inplace
+
         args = args.children
         if isinstance(lhs, MemberAccess):
             args = [lhs.lhs] + args
+
+        rhs_ = None if len(args) == 1 else args[1]
+        args = list(self.deref(func, args[0], rhs_))
+        if args[1] is None:
+            args.pop(1)
+
+        # check for inplace ops
+        # ! This is kinda dumb
+        if self.func_name.startswith("__i"):
+            check_valid_inplace(args[0])
         return self.callback(func, *args)

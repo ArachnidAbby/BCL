@@ -25,6 +25,10 @@ class ParenthBlock(ContainerNode):
         self.contains_ellipsis = False
         self.do_register_dispose = False
 
+    @property
+    def assignable(self):
+        return len(self.children) == 1 and self.children[0].assignable
+
     def copy(self):
         out = ParenthBlock(self._position)
         out.children = [child.copy() for child in self.children]
@@ -139,6 +143,16 @@ class ParenthBlock(ContainerNode):
 
     def get_value(self, func):
         return self.children[0].get_value(func)
+
+    def store(self, func, ptr, value,
+              typ, first_assignment=False):
+        '''Store data at some address '''
+        if len(self.children)>1:
+            error("Tuple Literals are not assignable",
+                  line=self.position)
+
+        return self.children[0].store(func, ptr, value, typ,
+                                      first_assignment=first_assignment)
 
     @property
     def is_empty(self) -> bool:
