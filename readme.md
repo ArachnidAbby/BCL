@@ -160,3 +160,6 @@ There is a folder called `syntax_highlighting`, inside there is a vsix file whic
 # Documentation
 
 Sphinx documentation can be found in the `docs` folder. Note that these docs are not up-to-date yet.
+
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ArachnidAbby/BCL.svg?variant=adaptive)](https://starchart.cc/ArachnidAbby/BCL)
