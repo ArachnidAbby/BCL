@@ -108,7 +108,7 @@ class Integer_32(Type_Base.Type):
                     return func.builder.uitofp(orig.eval(func), ir.DoubleType())
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
 
-        error(f"Cannot convert 'i32' to type '{typ}'", line=orig.position)
+        error(f"Cannot convert 'i32' to type '{typ.__str__()}'", line=orig.position)
 
     def roughly_equals(self, other):
         return (isinstance(other, Integer_32) or

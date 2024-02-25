@@ -85,6 +85,7 @@ class ParenthBlock(ContainerNode):
                 if c < len(expected_args):
                     expected = expected_args[c]
                     self.evaled_children.append(expected.pass_to(func, child))
+                # vvv Only runs in the case of variable args via the "..." notation
                 else:
                     self.evaled_children.append(child.ret_type.pass_to(func, child))
                 continue
@@ -118,10 +119,6 @@ class ParenthBlock(ContainerNode):
 
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
-        # if len(self.children) > 1:
-        #     error("Cannot get a ptr to a set of parentheses with more than " +
-        #           "one value", line=self.position)
-
         if self.ptr is None:
             if len(self.children) == 1:
                 self.ptr = self.children[0].get_ptr(func)
@@ -147,7 +144,7 @@ class ParenthBlock(ContainerNode):
     def store(self, func, ptr, value,
               typ, first_assignment=False):
         '''Store data at some address '''
-        if len(self.children)>1:
+        if len(self.children) > 1:
             error("Tuple Literals are not assignable",
                   line=self.position)
 

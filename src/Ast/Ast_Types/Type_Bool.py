@@ -38,7 +38,7 @@ class Integer_1(Type_Base.Type):
             case Type_F32.Float_32(name="f64"):
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
             case _:
-                error(f"Cannot convert 'bool' to type '{typ}'",
+                error(f"Cannot convert 'bool' to type '{typ.__str__()}'",
                       line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):

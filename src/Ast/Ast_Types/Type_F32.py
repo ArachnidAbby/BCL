@@ -45,7 +45,7 @@ class Float_32(Type_Base.Type):
                 return func.builder.fpext(orig.eval(func), ir.DoubleType())
             case ('f64', 'f64'):
                 return orig.eval(func)
-            case _: error(f"Cannot convert 'f32' to type '{typ}'",
+            case _: error(f"Cannot convert 'f32' to type '{typ.__str__()}'",
                           line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):

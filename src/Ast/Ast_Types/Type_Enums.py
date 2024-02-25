@@ -109,7 +109,7 @@ class EnumType(Type):
             if typ.size < self.bitsize:
                 return func.builder.trunc(orig.eval(func), typ.ir_type)
 
-        errors.error(f"Cannot convert {str(self)} to {str(typ)}",
+        errors.error(f"Cannot convert {str(self)} to {typ.__str__()}",
                      line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):

@@ -34,7 +34,7 @@ class Void(Type_Base.Type):
     def convert_to(self, func, orig, typ):
         match typ:
             case Void(): return orig.eval(func)
-            case _: error(f"Cannot convert 'void' to type '{typ}'",
+            case _: error(f"Cannot convert 'void' to type '{typ.__str__()}'",
                           line=orig.position)
 
     def is_void(self) -> bool:

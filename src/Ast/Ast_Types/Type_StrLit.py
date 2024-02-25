@@ -137,7 +137,7 @@ class StringLiteral(Type_Base.Type):
     def convert_to(self, func, orig, typ):
         if typ != self:
             error(f"Cannot convert '{self}' " +
-                  f"to type '{typ}'", line=orig.position)
+                  f"to type '{typ.__str__()}'", line=orig.position)
         return orig.eval(func)
 
     def get_op_return(self, func, op, lhs, rhs):
