@@ -1,5 +1,3 @@
-
-from abc import abstractmethod
 from typing import Self
 
 from llvmlite import ir
@@ -71,6 +69,7 @@ class Type:
     checks_lifetime = False
     # Dynamic types change function definitions and the
     # matching of function args when calling
+    # ? this does nothing I think?
     is_dynamic = False
     # ? should this be here still?
     functions: dict = {"NONSTATIC": []}
