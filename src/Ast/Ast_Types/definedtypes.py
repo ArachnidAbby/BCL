@@ -99,7 +99,7 @@ def get_std_ret_type(self: ExpressionNode, other: ExpressionNode):
                      line=other.position)
 
     if l_ret_type not in conversion_priority.keys():
-        errors.error("Cannot perform operation with a right " +
+        errors.error("Cannot perform operation with a left " +
                      f"operand of type \"{str(l_ret_type)}\"",
                      line=self.position)
 
