@@ -40,6 +40,7 @@ class MemberInfo:
     is_pointer: bool
     typ: Any  # can't fully qualify this because circular imports
     lifetime: Lifetimes = Lifetimes.UNKNOWN
+    causes_unwrap = False
 
 
 GenericNode = Union["ASTNode", "ExpressionNode"]  # NOQA: F821 # type: ignore

@@ -6,8 +6,8 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Struct import Struct
 from Ast.Ast_Types.Type_Void import Void
-from Ast.functions.yieldstatement import YieldStatement
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
 from Ast.nodes.commontypes import Modifiers, SrcPosition
@@ -230,7 +230,8 @@ class FunctionDef(ASTNode):
         #                    "You will not be able to free this memory!\n" +
         #                    "Please keep this in mind",
         #                    line=ret_line)
-        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE:
+        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE and \
+            (not isinstance(self.ret_type, Struct) or self.ret_type.module == self.module):
             errors.error("Function is public while the return type is private. \n" +
                          "This makes it impossible for external callers to handle the return.",
                          line=ret_line)

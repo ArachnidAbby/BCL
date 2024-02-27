@@ -23,5 +23,4 @@ class NoMangleDirective(CompilerDirective):
                          note=usage_note % (original_stmt.func_name),
                          line=args.position)
 
-
         original_stmt.use_literal_name = True

@@ -7,6 +7,7 @@ from Ast.directives.nomangledirective import NoMangleDirective
 from Ast.directives.notdirective import NotDirective
 from Ast.directives.ordirective import OrDirective
 from Ast.directives.platformdirective import PlatformDirective
+from Ast.directives.wrapperdirective import WrapperDirective
 from Ast.functions.call import FunctionCall
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.parenthese import ParenthBlock
@@ -21,6 +22,7 @@ directives = {
     "And": AndDirective,
     "NoMangle": NoMangleDirective,
     "DLLImport": DLLImportDirective,
+    "WrapperType": WrapperDirective,
 }
 
 

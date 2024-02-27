@@ -59,7 +59,7 @@ class Array(Type_Base.Type):
     def convert_to(self, func, orig, typ):
         if typ != self:
             error(f"Cannot convert {self}' " +
-                  f"to type '{typ}'", line=orig.position)
+                  f"to type '{typ.__str__()}'", line=orig.position)
         return orig.eval(func)
 
     def get_op_return(self, func, op, lhs, rhs):
@@ -258,6 +258,9 @@ class Array(Type_Base.Type):
 
     def put(self, func, lhs, value):
         return self.typ.assign(func, lhs, value, self.typ)
+
+    def make_slice(self, func, start, end, step):
+        pass  # ! TODO
 
     def __repr__(self) -> str:
         return f"{self.typ}[{self.size}]"

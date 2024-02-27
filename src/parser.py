@@ -49,6 +49,7 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("expr $and expr", 0))
         ParserBase.CREATED_RULES.append(("expr $or expr", 0))
         ParserBase.CREATED_RULES.append(("expr $as expr", 0))
+        ParserBase.CREATED_RULES.append(("expr $is expr", 0))
         ParserBase.CREATED_RULES.append(("$define", 0))
         ParserBase.CREATED_RULES.append(("!CLOSE_CURLY", 2))
         ParserBase.CREATED_RULES.append(("SUB", 0))
@@ -60,7 +61,7 @@ class Parser(ParserBase):
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct', 'import', 'yield',
+            'as', 'is', 'for', 'in', 'struct', 'import', 'yield',
             'enum', 'public', 'typedef'
         )  # ? would it make sense to put these in a language file?
 
@@ -824,6 +825,11 @@ class Parser(ParserBase):
 
         elif self.check_group(0, 'expr $as expr'):
             op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr $is expr'):
+            op = Ast.math.ops['is'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)
 

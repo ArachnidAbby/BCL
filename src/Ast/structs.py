@@ -14,7 +14,7 @@ from Ast.variables.varobject import VariableObj
 
 class StructDef(ASTNode):
     __slots__ = ("struct_name", "block", "struct_type", "block", "module",
-                 "is_generic", "generic_args", "raw_name")
+                 "is_generic", "generic_args", "raw_name", "is_wrapper")
 
     can_have_modifiers = True
 
@@ -56,6 +56,7 @@ class StructDef(ASTNode):
             module.types[self.struct_name] = self.struct_type
         module.add_struct_to_schedule(self)
         self.module = module
+        self.is_wrapper = False
         # if self.is_generic:
         #     module.add_template_to_schedule(self)
 
@@ -64,6 +65,7 @@ class StructDef(ASTNode):
                         self.block.copy(), self.module, register=False)
         out.modifiers = self.modifiers
         out.block.parent = out
+        out.is_wrapper = self.is_wrapper
         return out
 
     @property
@@ -82,11 +84,7 @@ class StructDef(ASTNode):
         return self.module.get_type_by_name(var_name, pos)
 
     def get_unique_name(self, name: str) -> str:
-        types = []
-        for typ in self.generic_args.values():
-            types.append(str(typ))
-
-        return self.module.get_unique_name(f"__meth.{self.struct_name}.{name}.<{', '.join(types)}>")
+        return self.module.get_unique_name(f"__meth.{self.struct_name}.{name}")
 
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.generic_args.keys():
@@ -133,6 +131,7 @@ class StructDef(ASTNode):
 
     def scheduled(self, mod):
         self.struct_type.set_visibility(self.visibility)
+        self.struct_type.is_wrapper = self.is_wrapper
         self.fullfill_templates(mod)
 
     def reset(self):

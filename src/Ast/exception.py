@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from llvmlite import ir
 
 import errors
@@ -27,18 +29,13 @@ def _get_function(func, name: str, args: tuple, pos):
 # TODO: MAKE BETTER
 def over_index_exception(func, name, index, pos):
     from Ast.Ast_Types import definedtypes
+    from Ast.module import base_package
     strlit_ty = definedtypes.types_dict["strlit"]
 
+    location = Path(pos[3]).relative_to(base_package.location)
+
     over_index_fmt = (f"{errors.RED}Invalid index '%i' for array" +
-                      f" '{str(name)}'\n\tLine: {pos[0]}{errors.RESET} \n")
-    # formatted_str = over_index_fmt.encode("utf8")
-    # c_over_index_fmt = ir.Constant(ir.ArrayType(ir.IntType(8),
-    #                                             len(over_index_fmt)),
-    #                                bytearray(formatted_str))
-    # err_str = func.builder.alloca(ir.ArrayType(ir.IntType(8),
-    #                                            len(over_index_fmt)))
-    # fmt_bitcast = func.builder.bitcast(err_str, ir.IntType(8).as_pointer())
-    # func.builder.store(c_over_index_fmt, err_str)
+                      f"\n    File: {location}:{pos[0]}:{pos[1]}{errors.RESET}\n")
 
     fmt_bitcast = stringliteral.StrLiteral(pos, over_index_fmt)
 
@@ -71,3 +68,27 @@ def no_next_item(func, name):
     func.builder.call(printf.func_obj, [fmt_bitcast.eval(func)])
     func.builder.call(exit_func.func_obj,
                       [ir.Constant(ir.IntType(32), 2)])
+
+
+def slice_size_exception(func, name, slice_size, array_size, pos):
+    from Ast.Ast_Types import definedtypes
+    from Ast.module import base_package
+    strlit_ty = definedtypes.types_dict["strlit"]
+
+    location = Path(pos[3]).relative_to(base_package.location)
+
+    over_index_fmt = (f"{errors.RED}Slice too small: '%i' size must be " +
+                      f">= {array_size} '{str(name)}'\n" +
+                      f"    File: {location}:{pos[0]}:{pos[1]}{errors.RESET}\n")
+
+    fmt_bitcast = stringliteral.StrLiteral(pos, over_index_fmt)
+
+    printf_args = (strlit_ty, Integer_32())
+    exit_args = (Integer_32(),)
+
+    printf = _get_function(func, "printf", printf_args, pos)
+    exit_func = _get_function(func, "exit", exit_args, pos)
+
+    func.builder.call(printf.func_obj, [fmt_bitcast.eval(func), slice_size])
+    func.builder.call(exit_func.func_obj,
+                      [ir.Constant(ir.IntType(32), 1)])

@@ -110,7 +110,7 @@ class Integer_32(Type_Base.Type):
 
         error(f"Cannot convert 'i32' to type '{typ.__str__()}'", line=orig.position)
 
-    def roughly_equals(self, other):
+    def roughly_equals(self, func, other):
         return (isinstance(other, Integer_32) or
                 (isinstance(other, Alias) and isinstance(other.aliased_typ, Integer_32))) and \
                self.size == other.size and self.signed == other.signed

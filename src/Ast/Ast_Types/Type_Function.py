@@ -302,28 +302,28 @@ class Function(Type):
         if op != "call":
             return
         # rhs is the argument tuple
-        if self.match_args(lhs, rhs):
+        if self.match_args(func, lhs, rhs):
             return self.func_ret
         else:
             self.print_call_error(rhs)
 
     def print_call_error(self, rhs):
         error("Invalid Argument types for function" +
-              f"{str(self)}",
+              f"{self.__str__()}",
               line=rhs.position)
 
     def _fix_args(self, lhs, args, func=None):
         if isinstance(lhs, MemberAccess) and self.is_method:
             if func is not None:
                 if isinstance(self.args[0], Reference):
-                    ref = Ref(lhs.lhs.position, lhs.lhs)
+                    ref = lhs.get_left_mut(func)
                     ref.pre_eval(func)
                     return [ref, *args.children]
-            return [lhs.lhs, *args.children]
+            return [lhs.get_left(func), *args.children]
         else:
             return args.children
 
-    def match_args(self, lhs, args):
+    def match_args(self, func, lhs, args):
         args_used = self._fix_args(lhs, args)
 
         if not self.contains_ellipsis and len(args_used) != len(self.args):
@@ -334,7 +334,7 @@ class Function(Type):
         for c, (func_arg, passed_arg) in enumerate(zip(self.args, args_used)):
             if isinstance(lhs, MemberAccess) and self.is_method and c == 0:
                 continue
-            if not func_arg.roughly_equals(passed_arg.ret_type):
+            if not func_arg.roughly_equals(func, passed_arg.ret_type):
                 return False
 
         return True
@@ -362,8 +362,8 @@ class Function(Type):
         return f"{self.func_name}{str(self.args)} -> {self.func_ret}"
 
     def get_signature(self) -> str:
-        str_ret = str(self.definition.ret_type)
-        str_args = ', '.join([str(arg) for arg in self.args])
+        str_ret = self.definition.ret_type.__str__()
+        str_args = ', '.join([arg.__str__() for arg in self.args])
         return f"({str_args}) -> {str_ret}"
 
     def __call__(self) -> Self:
@@ -403,7 +403,7 @@ class FunctionGroup(Type):
     def get_function(self, func, lhs, args) -> Function | NoReturn:
         private_matches = 0
         for version in self.versions:
-            if version.match_args(lhs, args):
+            if version.match_args(func, lhs, args):
                 if version.visibility != Modifiers.VISIBILITY_PUBLIC and \
                         version.module.location != func.module.location:
                     private_matches += 1
@@ -426,7 +426,7 @@ class FunctionGroup(Type):
             note_message = "This function takes any of these arguments:\n" + \
                            ",\n".join(signatures)
 
-        str_args = ', '.join([str(x.ret_type) for x in rhs])
+        str_args = ', '.join([x.ret_type.__str__() for x in rhs])
         error("Invalid Argument types for function group with \n" +
               f" name: {self.func_name}\n args: ({str_args})",
               note=note_message,

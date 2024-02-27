@@ -401,7 +401,7 @@ class Type:
         '''
         return self.members.keys()  # members should always be a dict!
 
-    def roughly_equals(self, other):
+    def roughly_equals(self, func, other):
         '''check if two types are equivalent.
         This is helpful when you have compound types such as "Any"
         or a Protocol type.
@@ -409,6 +409,15 @@ class Type:
         defaults to `__eq__` behavior
         '''
         return self == other
+
+    def runtime_roughly_equals(self, func, obj):
+        '''check if two types are equivalent (at runtime).
+        This is helpful when you have compound types such as "Any"
+        or a Protocol type.
+
+        defaults to `self.roughly_equals` behavior
+        '''
+        return ir.Constant(ir.IntType(1), self.roughly_equals(func, obj.ret_type))
 
     # ? should this error instead?
     def truthy(self, func, val):

@@ -117,14 +117,14 @@ class Reference(Type_Base.Type):
         return self.typ.idiv(func, try_deref(lhs, func), rhs)
 
     def get_assign_type(self, func, value):
-        if value.ret_type.roughly_equals(self):
+        if value.ret_type.roughly_equals(func, self):
             return self
         else:
             return self.typ
 
     def assign(self, func, ptr, value, typ: "Ast_Types.Type",
                first_assignment=False):
-        if value.ret_type.roughly_equals(self):
+        if value.ret_type.roughly_equals(func, self):
             func.builder.store(value.eval(func), ptr.get_var(func).ptr)
             return
 

@@ -12,6 +12,7 @@ from Ast.Ast_Types.Type_Void import Void
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from Ast.nodes.passthrough import PassNode
+from Ast.reference import Ref
 
 # from Ast.variable import VariableRef
 
@@ -45,7 +46,8 @@ class OperationNode(ExpressionNode):
         self.op = op
 
     def copy(self):
-        return OperationNode(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+        return OperationNode(self._position, self.op, self.lhs.copy(),
+                             self.rhs.copy(), self.shunted)
 
     def reset(self):
         super().reset()
@@ -88,7 +90,7 @@ class OperationNode(ExpressionNode):
         # TODO: Allow an override_get_return Callable
         if self.op.name == "as":
             self.ret_type = self.rhs.as_type_reference(func)
-        elif self.op.name in ('not', 'and', 'or'):
+        elif self.op.name in ('not', 'and', 'or', 'is'):
             self.ret_type = Ast_Types.Integer_1()
         else:
             self.ret_type = (self.lhs.ret_type).get_op_return(func,
@@ -151,7 +153,8 @@ class OperationNode(ExpressionNode):
 
     def as_type_reference(self, func, allow_generics=False):
         if not self.shunted:
-            return RPN_to_node(shunt(self)).as_type_reference_defer(func, allow_generics)
+            return RPN_to_node(shunt(self))\
+                    .as_type_reference_defer(func, allow_generics)
         else:
             return self.as_type_reference_defer(func, allow_generics)
 
@@ -264,7 +267,7 @@ def operator(precedence: int, name: str, right=False,
 
 
 class MemberAccess(OperationNode):
-    __slots__ = ("assignable", "is_pointer")
+    __slots__ = ("assignable", "is_pointer", "needs_unwrap")
     # do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
@@ -274,6 +277,7 @@ class MemberAccess(OperationNode):
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
         self.is_pointer = False
+        self.needs_unwrap = False
         if not isinstance(rhs, ContainerNode) and not isinstance(rhs, VariableRef) and not isinstance(rhs, NamespaceIndex):
             errors.error("Member access operator can only get members that " +
                          "are in parenthesis or are valid keywords",
@@ -327,6 +331,7 @@ class MemberAccess(OperationNode):
             self.assignable = member_info.mutable
             self.is_pointer = member_info.is_pointer
             self.ret_type = member_info.typ
+            self.needs_unwrap = member_info.causes_unwrap
 
     def _get_global_func(self, module, name: str):
         value = module.get_global(name)
@@ -364,6 +369,18 @@ class MemberAccess(OperationNode):
     def get_lifetime(self, func):
         return self.lhs.get_lifetime(func)
 
+    def get_left(self, func):
+        '''requires self.lhs to be a struct type'''
+        if self.needs_unwrap and func is not None:
+            return self.lhs.ret_type.unwrap(func, self.lhs)[0]
+        return self.lhs
+
+    def get_left_mut(self, func):
+        '''requires self.lhs to be a struct type'''
+        if self.needs_unwrap and func is not None:
+            return self.lhs.ret_type.unwrap_mut(func, self.lhs)[0]
+        return Ref(self.lhs.position, self.lhs)
+
     def using_global(self, func) -> bool:
         from Ast.nodes.container import ContainerNode
         rhs = self.rhs
@@ -400,6 +417,11 @@ def member_access(self, func, lhs, rhs):
 @operator(10, "as", pre_eval_right=False)
 def _as(self, func, lhs, rhs):
     out = (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
+    return out
+
+@operator(10, "is", pre_eval_right=False)
+def _is(self, func, lhs, rhs):
+    out = rhs.as_type_reference(func).runtime_roughly_equals(func, lhs)
     return out
 
 
