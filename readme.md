@@ -4,7 +4,7 @@
 
 # What is BCL?
 
-BCL (Ben's Compiled Language) is a compiled programming language that is inspired by python and other languages.
+BCL (BCL Compiled Language) is a compiled programming language that is inspired by python, rust, and other languages.
 
 # Installing via source
 
