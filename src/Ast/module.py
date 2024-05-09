@@ -681,7 +681,12 @@ class Module(ASTNode):
 
         llir = str(self.module)
         # mod = llir
-        mod = binding.parse_assembly(llir)
+        try:
+            mod = binding.parse_assembly(llir)
+        except Exception as e:
+            print(e)
+            print('\n'.join (llir.split('\n')[630:640]))
+            exit()
         module_pass.run(mod)
         create_target_dirs(loc)
 

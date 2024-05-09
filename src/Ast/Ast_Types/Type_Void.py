@@ -13,18 +13,12 @@ class Void(Type_Base.Type):
     pass_as_ptr = False
     no_load = False
 
-    def global_namespace_names(self, func, name, pos):
-        from Ast.Ast_Types.Type_I32 import Integer_32
-        from Ast.literals.numberliteral import Literal
-        if name == "SIZEOF":
-            ty = Integer_32(name="u64", size=64, signed=False)
-            val = Literal(pos, 0, ty)
-            return val
-
-        super().global_namespace_names(func, name, pos)
+    def get_abi_size(self, mod) -> int:
+        return 0
 
     @classmethod
     def convert_from(cls, func, typ: str, previous):
+        print("GOT HERE SOMEHOW")
         if typ == Void():
             return previous
         else:
@@ -32,6 +26,10 @@ class Void(Type_Base.Type):
                   line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match typ:
             case Void(): return orig.eval(func)
             case _: error(f"Cannot convert 'void' to type '{typ.__str__()}'",
@@ -43,3 +41,11 @@ class Void(Type_Base.Type):
     def get_op_return(self, func, op: str, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
         return Void()
+
+    def assign(self, func, ptr, value, typ,
+               first_assignment=False):
+        if typ != self:
+            error(f"type '{typ.__str__()}' cannot be converted to type 'void'",
+                  line=value.position)
+        return  # * we don't actually want to do anything!
+

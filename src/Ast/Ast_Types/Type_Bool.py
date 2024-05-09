@@ -26,6 +26,10 @@ class Integer_1(Type_Base.Type):
                   line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match typ:
             case Integer_1():
                 return orig.eval(func)

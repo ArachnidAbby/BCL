@@ -25,6 +25,10 @@ class RangeType(Type):
             return previous.eval(func)
 
     def convert_to(self, func, orig, typ) -> ir.Instruction:
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if typ.name == "Range":
             return orig.eval(func)
 

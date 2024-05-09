@@ -82,6 +82,10 @@ class Integer_32(Type_Base.Type):
         if typ == self:
             return orig.eval(func)
 
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if isinstance(typ, Integer_32):
             if typ.size == self.size:
                 return orig.eval(func)

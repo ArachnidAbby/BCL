@@ -103,11 +103,14 @@ class Type:
         from Ast.literals.numberliteral import Literal
         from Ast.module import NamespaceInfo
         if name == "SIZEOF":
-            target_data = func.module.target_machine.target_data
-            size = self.ir_type.get_abi_size(target_data)
+            size = self.get_abi_size(func.module)
             ty = Integer_32(name="u64", size=64, signed=False)
             val = Literal(pos, size, ty)
             return NamespaceInfo(val, {})
+
+    def get_abi_size(self, mod) -> int:
+        target_data = mod.target_machine.target_data
+        return self.ir_type.get_abi_size(target_data)
 
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''

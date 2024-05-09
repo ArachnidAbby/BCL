@@ -6,6 +6,7 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types  # type: ignore
 from Ast.Ast_Types.Type_Reference import Reference
+from Ast.Ast_Types.Type_Union import Union
 from Ast.Ast_Types.Type_Void import Void
 # from Ast import exception
 # from Ast.literals import Literal
@@ -266,6 +267,20 @@ def operator(precedence: int, name: str, right=False,
     return wrapper
 
 
+class BitwiseOr(OperationNode):
+    def _get_types(self, func, allow_generics=False):
+        rhs_typ = self.rhs.as_type_reference(func, allow_generics)
+        if isinstance(self.lhs, BitwiseOr):
+            return [*self.lhs._get_types(func), rhs_typ]
+
+        lhs_typ = self.lhs.as_type_reference(func, allow_generics)
+        return [lhs_typ, rhs_typ]
+
+    def as_type_reference(self, func, allow_generics=False):
+        types = self._get_types(func, allow_generics)
+        return Union(func.module, types)
+
+
 class MemberAccess(OperationNode):
     __slots__ = ("assignable", "is_pointer", "needs_unwrap")
     # do_register_dispose = False
@@ -419,9 +434,14 @@ def _as(self, func, lhs, rhs):
     out = (lhs.ret_type).convert_to(func, lhs, rhs.as_type_reference(func))
     return out
 
+
 @operator(10, "is", pre_eval_right=False)
 def _is(self, func, lhs, rhs):
-    out = rhs.as_type_reference(func).runtime_roughly_equals(func, lhs)
+    typ = rhs.as_type_reference(func)
+    if isinstance(lhs.ret_type, Union) and not isinstance(typ, Union):
+        return lhs.ret_type.runtime_roughly_equals_rev(func, lhs, typ)
+
+    out = typ.runtime_roughly_equals(func, lhs)
     return out
 
 
@@ -456,7 +476,7 @@ def bxor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_xor(func, lhs, rhs)
 
 
-@operator(-3, "Bor")
+@operator(-3, "Bor", cls=BitwiseOr)
 def bor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_or(func, lhs, rhs)
 

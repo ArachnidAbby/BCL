@@ -103,7 +103,6 @@ def error(text: str, line: MultiPosition = invalid_pos,
     col = -1
 
     template_additions = ""
-
     for template in templating_stack:
         temp_col = template[1]
         temp_line = template[0]

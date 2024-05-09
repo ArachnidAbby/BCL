@@ -56,6 +56,8 @@ class ParenthBlock(ContainerNode):
 
         if len(self.children) == 1:
             self.ret_type = self.children[0].ret_type
+        elif len(self.children) == 0:
+            self.ret_type = Ast_Types.Void()
         else:
             members = [child.ret_type for child in self.children]
             self.ret_type = Ast_Types.TupleType(members)
@@ -93,11 +95,14 @@ class ParenthBlock(ContainerNode):
 
     def eval_impl(self, func, expected_args=[]):
         self.evaled_children = []
+        if len(self.children) == 0:
+            return ir.Undefined
+
         self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:
             return self.evaled_children[0]
-        # Makes a tuple value
-        elif not self.in_func_call:
+        # vv Makes a tuple value vv
+        if not self.in_func_call:
             if self.ptr is None:
                 self.ptr = create_const_var(func, self.ret_type)
                 for c, child in enumerate(self.evaled_children):
@@ -131,7 +136,7 @@ class ParenthBlock(ContainerNode):
         return self
 
     def get_lifetime(self, func) -> Lifetimes:
-        if len(self.children) > 1:
+        if len(self.children) != 1:
             return Lifetimes.FUNCTION
         return self.children[0].get_lifetime(func)
 

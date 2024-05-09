@@ -21,6 +21,10 @@ class UntypedPointer(Type):
     generate_bounds_check = False
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if self.roughly_equals(func, typ):
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
 

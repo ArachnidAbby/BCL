@@ -60,6 +60,11 @@ class Array(Type_Base.Type):
         if typ != self:
             error(f"Cannot convert {self}' " +
                   f"to type '{typ.__str__()}'", line=orig.position)
+
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         return orig.eval(func)
 
     def get_op_return(self, func, op, lhs, rhs):

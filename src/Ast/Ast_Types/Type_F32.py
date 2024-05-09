@@ -25,13 +25,17 @@ class Float_32(Type_Base.Type):
             return func.builder.uitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'f64':
             return func.builder.fptrunc(previous.eval(), Float_32.ir_type)
-        elif typ.name == 'f32' and self.name=="f32":
+        elif typ.name == 'f32' and self.name == "f32":
             return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to type 'float'",
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match (typ.name, self.name):
             case ('f32', 'f32'):
                 return orig.eval(func)

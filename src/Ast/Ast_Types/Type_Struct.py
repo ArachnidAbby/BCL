@@ -225,6 +225,11 @@ class Struct(Ast_Types.Type):
     def convert_to(self, func, orig, typ) -> ir.Instruction:
         if typ == orig.ret_type:
             return orig.eval(func)
+
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         error(f"{self.struct_name} has no conversions",  line=orig.position)
 
     def __eq__(self, other):
