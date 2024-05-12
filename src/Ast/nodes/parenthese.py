@@ -156,6 +156,17 @@ class ParenthBlock(ContainerNode):
         return self.children[0].store(func, ptr, value, typ,
                                       first_assignment=first_assignment)
 
+    def get_const_value(self) -> int | float:
+        if len(self.children) == 1:
+            return self.children[0].get_const_value()
+        return 0
+
+    @property
+    def is_constant_expr(self) -> bool:
+        if len(self.children) == 1:
+            return self.children[0].is_constant_expr
+        return False
+
     @property
     def is_empty(self) -> bool:
         return len(self.children) == 0

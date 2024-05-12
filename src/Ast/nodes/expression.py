@@ -89,6 +89,13 @@ class ExpressionNode(ASTNode):
         '''Get this expresion as the reference to a type'''
         error(f"invalid type: {str(self)}", line=self.position)
 
+    def get_const_value(self) -> int | float:
+        return 0
+
+    @property
+    def is_constant_expr(self) -> bool:
+        return False
+
     @property
     def ir_type(self):
         return self.ret_type.ir_type

@@ -91,6 +91,7 @@ class Type:
     visibility = Modifiers.VISIBILITY_PUBLIC
     generate_bounds_check = True
     index_returns_ptr = True
+    can_fold_constants = False
 
     def __init__(self):
         pass

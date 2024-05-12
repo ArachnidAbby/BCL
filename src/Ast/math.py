@@ -29,6 +29,7 @@ class Operation(NamedTuple):
     function: Callable[[ASTNode, ASTNode, Any, Any], ir.Instruction | None]
     cls: Callable
     pre_eval_right: bool = True
+    constant_func: Callable = None
 
     def __call__(self, pos, lhs, rhs, shunted=False):
         return self.cls(pos, self, lhs, rhs, shunted)
@@ -147,7 +148,9 @@ class OperationNode(ExpressionNode):
             return RPN_to_node(shunt(self)).eval(func)
         else:
             self.pre_eval(func)
-            return self.eval_math(func, self.lhs, self.rhs)
+            if not self.is_constant_expr:
+                return self.eval_math(func, self.lhs, self.rhs)
+            return ir.Constant(self.ret_type.ir_type, self.get_const_value())
 
     def __str__(self) -> str:
         return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
@@ -178,9 +181,29 @@ class OperationNode(ExpressionNode):
         return self.create_tree("Math Expression",
                                 lhs=self.lhs,
                                 rhs=self.rhs,
+                                constant_expression=self.is_constant_expr,
                                 operation=self.op.name,
                                 return_type=self.ret_type)
 
+    def get_const_value(self) -> int | float:
+        if not self.shunted:
+            return RPN_to_node(shunt(self))\
+                    .get_const_value()
+        else:
+            value = self.op.constant_func(None, self.lhs, self.rhs)
+            return value
+
+    @property
+    def is_constant_expr(self) -> bool:
+        if not self.shunted:
+            return RPN_to_node(shunt(self))\
+                    .is_constant_expr
+        else:
+            if not self.lhs.ret_type.can_fold_constants:
+                return False
+            if self.rhs is not None:
+                return self.lhs.is_constant_expr and self.rhs.is_constant_expr and self.op.constant_func is not None
+            return self.lhs.is_constant_expr and self.op.constant_func is not None
 
 # To any future programmers:
 #   I am sorry for this shunt() function.
@@ -250,11 +273,12 @@ def RPN_to_node(shunted_data: deque) -> OperationNode:
 
 
 def operator(precedence: int, name: str, right=False,
-             pre_eval_right=True, cls=OperationNode):
+             pre_eval_right=True, cls=OperationNode,
+             constant_func=lambda lhs, rhs: 0):
     def wrapper(func):
         global ops
         op = Operation(precedence, name.lower(), right, func, cls,
-                       pre_eval_right)
+                       pre_eval_right, constant_func)
         ops[name.upper()] = op
         ops[name.lower()] = op
 
@@ -446,111 +470,111 @@ def _is(self, func, lhs, rhs):
 
 
 # TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
-@operator(9, "Pow")
+@operator(9, "Pow", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_pow(func, lhs, rhs))
 def pow(self, func, lhs, rhs):
     return (lhs.ret_type).pow(func, lhs, rhs)
 
 
-@operator(8, "bitnot")
+@operator(8, "bitnot", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_not(func, lhs, rhs))
 def bnot(self, func, lhs, rhs):
     return (lhs.ret_type).bit_not(func, lhs)
 
 
-@operator(0, "Lshift")
+@operator(0, "Lshift", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_lshift(func, lhs, rhs))
 def lshift(self, func, lhs, rhs):
     return (lhs.ret_type).lshift(func, lhs, rhs)
 
 
-@operator(0, "Rshift")
+@operator(0, "Rshift", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_rshift(func, lhs, rhs))
 def rshift(self, func, lhs, rhs):
     return (lhs.ret_type).rshift(func, lhs, rhs)
 
 
-@operator(-1, "Band")
+@operator(-1, "Band", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_and(func, lhs, rhs))
 def band(self, func, lhs, rhs):
     return (lhs.ret_type).bit_and(func, lhs, rhs)
 
 
-@operator(-2, "Bxor")
+@operator(-2, "Bxor", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_xor(func, lhs, rhs))
 def bxor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_xor(func, lhs, rhs)
 
 
-@operator(-3, "Bor", cls=BitwiseOr)
+@operator(-3, "Bor", cls=BitwiseOr, constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_or(func, lhs, rhs))
 def bor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_or(func, lhs, rhs)
 
 
-@operator(1, "Sum")
+@operator(1, "Sum", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_sum(func, lhs, rhs))
 def sum(self, func, lhs, rhs):
     return (lhs.ret_type).sum(func, lhs, rhs)
 
 
-@operator(1, "Sub")
+@operator(1, "Sub", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_sub(func, lhs, rhs))
 def sub(self, func, lhs, rhs):
     return (lhs.ret_type).sub(func, lhs, rhs)
 
 
-@operator(2, "Mul")
+@operator(2, "Mul", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_mul(func, lhs, rhs))
 def mul(self, func, lhs, rhs):
     return (lhs.ret_type).mul(func, lhs, rhs)
 
 
-@operator(2, "Div")
+@operator(2, "Div", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_div(func, lhs, rhs))
 def div(self, func, lhs, rhs):
     return (lhs.ret_type).div(func, lhs, rhs)
 
 
-@operator(2, "Mod")
+@operator(2, "Mod", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_mod(func, lhs, rhs))
 def mod(self, func, lhs, rhs):
     return (lhs.ret_type).mod(func, lhs, rhs)
 
 # * comparators
 
 
-@operator(-4, "eq")
+@operator(-4, "eq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_eq(func, lhs, rhs))
 def eq(self, func, lhs, rhs):
     return (lhs.ret_type).eq(func, lhs, rhs)
 
 
-@operator(-4, "neq")
+@operator(-4, "neq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_neq(func, lhs, rhs))
 def neq(self, func, lhs, rhs):
     return (lhs.ret_type).neq(func, lhs, rhs)
 
 
-@operator(-4, "le")
+@operator(-4, "le", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_le(func, lhs, rhs))
 def le(self, func, lhs, rhs):
     return (lhs.ret_type).le(func, lhs, rhs)
 
 
-@operator(-4, "leq")
+@operator(-4, "leq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_leq(func, lhs, rhs))
 def leq(self, func, lhs, rhs):
     return (lhs.ret_type).leq(func, lhs, rhs)
 
 
-@operator(-4, "gr")
+@operator(-4, "gr", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_ge(func, lhs, rhs))
 def gr(self, func, lhs, rhs):
     return (lhs.ret_type).gr(func, lhs, rhs)
 
 
-@operator(-4, "geq")
+@operator(-4, "geq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_geq(func, lhs, rhs))
 def geq(self, func, lhs, rhs):
     return (lhs.ret_type).geq(func, lhs, rhs)
 
 # * boolean ops
 
 
-@operator(-7, "or")
+@operator(-7, "or", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) or rhs.ret_type.const_truthy(func, rhs))
 def _or(self, func, lhs, rhs):
     return (lhs.ret_type)._or(func, lhs, rhs)
 
 
-@operator(-6, "and")
+@operator(-6, "and", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) and rhs.ret_type.const_truthy(func, rhs))
 def _and(self, func, lhs, rhs):
     return (lhs.ret_type)._and(func, lhs, rhs)
 
 
-@operator(-5, "not")
+@operator(-5, "not", constant_func=lambda func, lhs, rhs: not lhs.ret_type.const_truthy(func, lhs))
 def _not(self, func, lhs, rhs):
     return (lhs.ret_type)._not(func, lhs)
 

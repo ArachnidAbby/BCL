@@ -240,8 +240,9 @@ class Array(Type_Base.Type):
     def generate_runtime_check(self, func, lhs, rhs):
         '''generates the runtime bounds checking
         depending on the node type of the index operand'''
-        if rhs.isconstant:  # don't generate checks for constants
-            if rhs.value in range(0, self.size):
+        if rhs.is_constant_expr:  # don't generate checks for constants
+            x = rhs.get_const_value()
+            if x in range(0, self.size) and isinstance(x, int):
                 return
             error("Literal index out of range.\n" +
                   f"Index must be between 0 and {self.size-1}",
