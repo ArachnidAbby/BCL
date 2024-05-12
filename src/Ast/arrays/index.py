@@ -58,7 +58,8 @@ class VariableIndexRef(ExpressionNode):
         if op_return is not None:
             self.ret_type = op_return
         else:
-            error("Type is not indexable")
+            error(f"Type {self.varref.ret_type.__str__()} is not indexable",
+                  line=self.varref.position)
             self.ret_type = self.varref.ret_type
 
     def check_valid_literal(self, lhs, rhs):
