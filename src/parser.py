@@ -48,6 +48,8 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("expr _ expr", 0))
         ParserBase.CREATED_RULES.append(("expr $and expr", 0))
         ParserBase.CREATED_RULES.append(("expr $or expr", 0))
+        ParserBase.CREATED_RULES.append(("expr LOGICAL_AND expr", 0))
+        ParserBase.CREATED_RULES.append(("expr LOGICAL_OR expr", 0))
         ParserBase.CREATED_RULES.append(("expr $as expr", 0))
         ParserBase.CREATED_RULES.append(("expr $is expr", 0))
         ParserBase.CREATED_RULES.append(("$define", 0))
@@ -70,7 +72,8 @@ class Parser(ParserBase):
                                      "NAMEINDEX", "OPEN_TYPEPARAM")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
-                              "BXOR", "BOR", "BNOT", "AMP")
+                              "BXOR", "BOR", "BNOT", "AMP", "LOGICAL_AND",
+                              "LOGICAL_OR")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
@@ -814,11 +817,21 @@ class Parser(ParserBase):
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $and expr'):
-            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
+            op = Ast.math.ops['short_and'](self.peek(0).pos, self.peek(0).value,
                                      self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $or expr'):
+            op = Ast.math.ops['short_or'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr LOGICAL_AND expr'):
+            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
+                                     self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr LOGICAL_OR expr'):
             op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)

@@ -92,7 +92,7 @@ class OperationNode(ExpressionNode):
         # TODO: Allow an override_get_return Callable
         if self.op.name == "as":
             self.ret_type = self.rhs.as_type_reference(func)
-        elif self.op.name in ('not', 'and', 'or', 'is'):
+        elif self.op.name in ('not', 'and', 'or', 'is', 'short_or', 'short_and'):
             self.ret_type = Ast_Types.Integer_1()
         else:
             self.ret_type = (self.lhs.ret_type).get_op_return(func,
@@ -563,6 +563,15 @@ def geq(self, func, lhs, rhs):
 
 # * boolean ops
 
+
+@operator(-7, "short_or", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) or rhs.ret_type.const_truthy(func, rhs))
+def _sor(self, func, lhs, rhs):
+    return (lhs.ret_type)._sor(func, lhs, rhs)
+
+
+@operator(-6, "short_and", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) and rhs.ret_type.const_truthy(func, rhs))
+def _sand(self, func, lhs, rhs):
+    return (lhs.ret_type)._sand(func, lhs, rhs)
 
 @operator(-7, "or", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) or rhs.ret_type.const_truthy(func, rhs))
 def _or(self, func, lhs, rhs):

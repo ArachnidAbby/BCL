@@ -32,6 +32,8 @@ class Lexer():
         self.lexer.add('DOUBLE_DOT', r'\.\.')
         self.lexer.add('DOT', r'\.')
         # Operators
+        self.lexer.add('LOGICAL_AND', r'\&\&')
+        self.lexer.add('LOGICAL_OR', r'\|\|')
         self.lexer.add('ISUM', r'\+\=')
         self.lexer.add('IMUL', r'\*\=')
         self.lexer.add('IDIV', r'/{1,}\=')

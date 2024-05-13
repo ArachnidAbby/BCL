@@ -654,14 +654,14 @@ class Module(ASTNode):
         # pass_manager.opt_level = 1
         module_pass.add_memcpy_optimization_pass()
         module_pass.add_reassociate_expressions_pass()
-        # module_pass.add_refprune_pass()
+        module_pass.add_aggressive_instruction_combining_pass()
         module_pass.add_dead_code_elimination_pass()
         # module_pass.add_instruction_combining_pass()
         module_pass.add_arg_promotion_pass()
         # module_pass.add_sink_pass()
         module_pass.add_constant_merge_pass()
-        # module_pass.add_dead_store_elimination_pass()
-        module_pass.add_cfg_simplification_pass()
+        module_pass.add_dead_store_elimination_pass()
+        # module_pass.add_cfg_simplification_pass() # completely breaks shit (94% memory usage type beat)
         # module_pass.add_merge_returns_pass()
         # pass_manager.populate(module_pass)
 
@@ -681,12 +681,7 @@ class Module(ASTNode):
 
         llir = str(self.module)
         # mod = llir
-        try:
-            mod = binding.parse_assembly(llir)
-        except Exception as e:
-            print(e)
-            print('\n'.join (llir.split('\n')[630:640]))
-            exit()
+        mod = binding.parse_assembly(llir)
         module_pass.run(mod)
         create_target_dirs(loc)
 

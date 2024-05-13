@@ -235,6 +235,38 @@ class Type:
         return func.builder.or_(lhs.ret_type.truthy(func, lhs),
                                 rhs.ret_type.truthy(func, rhs))
 
+    # short circuiting
+    def _sand(self, func, lhs, rhs):
+        start_block = func.builder.block
+        true_block = func.builder.append_basic_block(start_block.name + ".logical_and.true")
+        after_block = func.builder.append_basic_block(start_block.name + ".logical_and.end")
+        func.builder.cbranch(lhs.ret_type.truthy(func, lhs), true_block, after_block)
+        start_block = func.builder.block
+        func.builder.position_at_end(true_block)
+        rhs_truthy = rhs.ret_type.truthy(func, rhs)
+        func.builder.branch(after_block)
+        func.builder.position_at_end(after_block)
+        output = func.builder.phi(ir.IntType(1))
+        output.add_incoming(ir.Constant(ir.IntType(1), 0), start_block)
+        output.add_incoming(rhs_truthy, true_block)
+        return output
+
+    # short circuiting
+    def _sor(self, func, lhs, rhs):
+        start_block = func.builder.block
+        false_block = func.builder.append_basic_block(start_block.name + ".logical_or.false")
+        after_block = func.builder.append_basic_block(start_block.name + ".logical_or.end")
+        func.builder.cbranch(lhs.ret_type.truthy(func, lhs), after_block, false_block)
+        start_block = func.builder.block
+        func.builder.position_at_end(false_block)
+        rhs_truthy = rhs.ret_type.truthy(func, rhs)
+        func.builder.branch(after_block)
+        func.builder.position_at_end(after_block)
+        output = func.builder.phi(ir.IntType(1))
+        output.add_incoming(ir.Constant(ir.IntType(1), 1), start_block)
+        output.add_incoming(rhs_truthy, false_block)
+        return output
+
     def _not(self, func, rhs):
         return func.builder.not_(rhs.ret_type.truthy(func, rhs))
 
