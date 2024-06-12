@@ -18,7 +18,6 @@ from .Type_UntypedPointer import UntypedPointer
 from .Type_Void import Void
 
 types_dict = {
-    'void': Void(),
     'bool': Integer_1(),
     'char': Char(),
 
