@@ -10,6 +10,7 @@ from parserbase import ParserBase, ParserToken, rule
 
 IN_FROZEN_EXE = path.dirname(__file__).endswith('library.zip')
 
+
 class Parser(ParserBase):
     ''' The actual BCL parser implementation.
     =========================================
@@ -283,24 +284,6 @@ class Parser(ParserBase):
             using_namespace = mod.star_idx
         self.module.add_import(mod, using_namespace, is_public, relative_import=False)
         self.consume(-offset, 4+offset)
-
-    # @rule(0, "$import expr SEMI_COLON")
-    # def parse_import_statment(self):
-    #     mod = self.peek(1).value
-    #     if not (isinstance(mod, Ast.variables.reference.VariableRef)
-    #             or isinstance(mod, Ast.namespace.NamespaceIndex)):
-    #         errors.error("Import must use a module name",
-    #                      line=self.peek(1).pos)
-
-    #     is_public = False
-    #     if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
-    #         is_public = True
-
-    #     using_namespace = False
-    #     if isinstance(mod, Ast.namespace.NamespaceIndex):
-    #         using_namespace = mod.star_idx
-    #     self.module.add_import(mod, using_namespace, is_public)
-    #     self.consume(0, 3)
 
     # ^ is EOF
     @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|^|COMMA|CLOSE_PAREN")
@@ -616,23 +599,6 @@ class Parser(ParserBase):
         func = Ast.functions.call.FunctionCall(self.peek(0).pos, func_name,
                                                 args)
         self.replace(2, "expr", func)
-
-    # @rule(0, "expr|paren DOT expr expr|paren")
-    # def parse_func_call_dot(self):
-    #     if not isinstance(self.peek(2).value, Ast.variables.VariableRef):
-    #         return
-    #     func_name = self.peek(2).value.var_name
-    #     args1 = self.peek(0).value
-    #     args2 = self.peek(3).value
-    #     args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) \
-    #         else [args1]  # wrap in a list if not already done
-    #     args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) \
-    #         else [args2]  # wrap in a list if not already done
-    #     args = Ast.nodes.ParenthBlock(self.peek(0).pos)
-    #     args.children = args1+args2
-    #     func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name,
-    #                                            args)
-    #     self.replace(4, "expr", func)
 
     @rule(0, 'expr COLON expr COMMA|SEMI_COLON|CLOSE_PAREN|' +
              'CLOSE_CURLY|SET_VALUE')

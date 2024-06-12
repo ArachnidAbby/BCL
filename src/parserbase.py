@@ -171,16 +171,18 @@ class ParserBase:
                 if 'i' in tok.value:
                     lhs, rhs = tok.value.split('i')
                     num_val = int(lhs)
-                    typ = definedtypes.types_dict[f'i{rhs}']
+                    typ = definedtypes.types_dict.get(f'i{rhs}')
                 elif 'u' in tok.value:
                     lhs, rhs = tok.value.split('u')
                     num_val = int(lhs)
-                    typ = definedtypes.types_dict[f'u{rhs}']
+                    typ = definedtypes.types_dict.get(f'u{rhs}')
                 else:
                     lhs, rhs = tok.value.split('f')
                     num_val = float(lhs)
-                    typ = definedtypes.types_dict[f'f{rhs}']
+                    typ = definedtypes.types_dict.get(f'f{rhs}')
 
+                if typ is None:
+                    errors.error("invalid number type", line=pos)
                 val = Literal(pos, num_val, typ)
                 fintok = ParserToken("expr", val, pos, True)
             elif tok.name == "CHAR":
