@@ -1,0 +1,207 @@
+/*
+ * a{1,2}           matches 'a' or 'aa'
+ * a{1,}            matches 'a', 'aa', 'aaa', etc.
+ * a+               same as a{1,}
+ * a?               same as a{0,1}
+ * a*               same as a{0,}
+ * 'a'              matches character 'a'
+ * "abc"            matches string "abc"
+ * a | b            a or b
+ * [abc]            same as 'a' | 'b' | 'c'
+ * [^ab]            not 'a' and not 'b'
+ * [ab] [12]        concatenation, matches "a1", "a2", "b1", "b2"
+ * (a | b)          grouping, i.e. (a | b)? and a | b? are not the same        
+ * .                any single character except '\n'
+ * \,               the escaped character ','
+ */
+
+OPEN_PAREN 
+    = '('
+    ;
+
+CLOSE_PAREN
+    = ')'
+    ;
+
+OPEN_CURLY
+    = '{'
+    ;
+
+CLOSE_CURLY
+    = '}'
+    ;
+
+OPEN_SQUARE
+    = '['
+    ;
+
+CLOSE_SQUARE
+    = ']'
+    ;
+
+NUMBER_W_TYPE
+    = ( DIGIT+ ( '.' DIGIT+ )? ) [fiu] DIGIT+
+    ;
+
+NUMBER_F
+    = DIGIT+ ( ( '.' DIGIT+ 'f' ) | ( '.' DIGIT+ ) | 'f' )
+    ;
+
+NUMBER
+    = DIGIT+
+    ;
+
+SEMI_COLON
+    = ';'
+    ;
+
+OPEN_TYPEPARAM
+    = 
+
+NAMEINDEX
+    = "::"
+    ;
+
+COLON
+    = ';'
+    ;
+
+RIGHT_ARROW
+    = "->"
+    ;
+
+COMMA
+    = ','
+    ;
+
+ELLIPSIS
+    = "..."
+    ;
+
+DOUBLE_DOT
+    = ".."
+    ;
+
+DOT
+    = '.'
+    ;
+
+ISUM
+    = "+="
+    ;
+
+IMUL
+    = "*="
+    ;
+
+IDIV
+    = "/="
+    ;
+
+ISUB
+    = "-="
+    ;
+
+SUM
+    = '+'
+    ;
+
+POW
+    = "**"
+    ;
+
+MUL
+    = '*'
+    ;
+
+DIV
+    = '/'
+    ;
+
+SUB
+    = '-'
+    ;
+
+MOD
+    = '%'
+    ;
+
+EQ
+    = "=="
+    ;
+
+NEQ
+    = "!="
+    ;
+
+GEQ
+    = ">="
+    ;
+
+LEQ
+    = "<="
+    ;
+
+LSHIFT
+    = "<<"
+    ;
+
+RSHIFT
+    = ">>"
+    ;
+
+BXOR
+    = '^'
+    ;
+
+BOR
+    = '|'
+    ;
+
+BNOT
+    = '~'
+    ;
+
+GR
+    = '>'
+    ;
+
+LE
+    = '<'
+    ;
+
+AMP
+    = '&'
+    ;
+
+SET_VALUE
+    = '='
+    ;
+
+// exactly one character that isn't ' or \\ between two single quotes
+CHAR
+    = \' ( . | [^'\\] ) \'
+
+// zero or more characters except " or \ between two double quotes
+STRING
+    = \" ( . | [^"\\] )* \"
+
+KEYWORD
+    = ALPHA+
+
+DIGIT
+    = [0123456789]
+    ;
+
+ALPHA
+    = [abcefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]
+    ;
+
+/*
+ * the following are ignored:
+ *      - one or more whitespace (\t, \n, \r, \f, \v and " ")
+ *      - lines beginning with '#!'
+ *      - all patterns unspecified here
+ */
+ 
+
