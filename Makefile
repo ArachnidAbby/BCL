@@ -1,27 +1,27 @@
 override FILE = current.bcl
 
 env/bin/activate: requirements.txt
-	python3.11 -m venv env
-	./env/bin/pip3.11 install -r requirements.txt
+	python3.12 -m venv env
+	./env/bin/pip install -r requirements.txt
 
 run: env/bin/activate
-	./env/bin/python3.11 src/main.py compile tests/$(FILE)
+	./env/bin/python3.12 src/main.py compile tests/$(FILE)
 
 run-dev: env/bin/activate
-	./env/bin/python3.11 src/main.py compile tests/$(FILE) --dev
+	./env/bin/python3.12 src/main.py compile tests/$(FILE) --dev
 
 unittest: env/bin/activate
-	./env/bin/python3.11 tests/Basic_Test.py
+	./env/bin/python3.12 tests/Basic_Test.py
 
 compile: env/bin/activate
-	./env/bin/python3.11 -m nuitka --follow-imports --experimental=python3.11 src/main.py --include-data-dir=src/libbcl=src/libbcl
+	./env/bin/python3.12 -m nuitka --follow-imports src/main.py --include-data-dir=src/libbcl=src/libbcl
 
 vs-build: syntax_highlighting/package.json
 	cd syntax_highlighting/; \
 	  vsce package
 
 profile_cpu: env/bin/activate
-	./env/bin/python3.11 -m cProfile -o tests/random/program.prof src/main.py hmmmm
+	./env/bin/python3.12 -m cProfile -o tests/random/program.prof src/main.py hmmmm
 	./env/bin/snakeviz tests/random/program.prof
 
 # build sphinx html docs

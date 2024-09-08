@@ -33,7 +33,7 @@ This is for all platforms.
 ## linux gcc stuff, I couldn't get it to compile without this
 conda install -c conda-forge libstdcxx-ng=12
 ## llvm14 install (change 14 to 11 if needed)
-conda install -y -q -c numba/label/dev llvmdev="14.*" libxml2
+conda install -y -q -c numba llvmdev="15.*" libxml2
 ## llvm uses cmake
 conda install cmake
 ```
