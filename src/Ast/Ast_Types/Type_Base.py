@@ -220,11 +220,11 @@ class Type:
               line=lhs.position)
 
     def le(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+        error(f"Operator '<' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def gr(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+        error(f"Operator '<' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def _and(self, func, lhs, rhs):

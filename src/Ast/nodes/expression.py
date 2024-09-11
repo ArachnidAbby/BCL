@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.block import create_const_var, get_current_block
@@ -74,7 +72,8 @@ class ExpressionNode(ASTNode):
     def store(self, func, ptr, value,
               typ, first_assignment=False):
         '''Store data at some address '''
-        self.ret_type.assign(func, ptr, value, typ, first_assignment=first_assignment)
+        self.ret_type.assign(func, ptr, value, typ,
+                             first_assignment=first_assignment)
 
     def reset(self):
         super().reset()
