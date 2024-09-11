@@ -39,7 +39,7 @@ jobs:
         sudo apt install gcc-multilib
         # setup virtual environment
         python -m pip install --upgrade pip
-        python3.11 -m venv env
+        python3.12 -m venv env
         # install simple dependencies
         env/bin/pip install flake8 pytest rply
         # install llvmlite and it's dependencies
