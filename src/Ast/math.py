@@ -90,6 +90,7 @@ class OperationNode(ExpressionNode):
             self.deref(func)
 
         # TODO: Allow an override_get_return Callable
+        # ? ^^ what does this mean
         if self.op.name == "as":
             self.ret_type = self.rhs.as_type_reference(func)
         elif self.op.name in ('not', 'and', 'or', 'is', 'short_or', 'short_and'):
@@ -99,6 +100,16 @@ class OperationNode(ExpressionNode):
                                                               self.op_type,
                                                               self.lhs,
                                                               self.rhs)
+        if self.ret_type is None and self.op.name != "access_member" and self.op.operator_precendence > -100:
+            self.op.function(self, func, self.lhs, self.rhs)
+            # fallback error if a mistake is made in the type system code.
+            #   for example, a type doesn't give a return for an op,
+            #   but the op IS supported. Thats how you get this error.
+            errors.error("Unsupported operation (UNCAUGHT BY TYPE SYSTEM" +
+                         " // **FALLBACK ERROR MESSAGE**)\n" +
+                         "This could be caused by a possible compiler error." +
+                         " Report if necessary.",
+                         line=self.lhs.position)
 
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -204,6 +215,11 @@ class OperationNode(ExpressionNode):
             if self.rhs is not None:
                 return self.lhs.is_constant_expr and self.rhs.is_constant_expr and self.op.constant_func is not None
             return self.lhs.is_constant_expr and self.op.constant_func is not None
+
+    @property
+    def position(self) -> SrcPosition:
+        return self.merge_pos((self.lhs.position, self.rhs.position))
+
 
 # To any future programmers:
 #   I am sorry for this shunt() function.

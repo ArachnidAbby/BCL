@@ -290,7 +290,6 @@ class Array(Type_Base.Type):
         array_size = ir.Constant(ir.IntType(32), self.size)
         if start is None:
             pos = array.get_ptr(func)
-            pos = func.builder.bitcast(pos, self.typ.ir_type.as_pointer())
         elif start.ret_type.name == "i32":
             pos = self.index(func, array, start)
             array_size = func.builder.sub(array_size, start._instruction)
@@ -341,6 +340,7 @@ class Array(Type_Base.Type):
             error("Slice operator's 'step' argument must be an i32",
                   line=end.position)
 
+        pos = func.builder.bitcast(pos, self.typ.ir_type.as_pointer())
         func.builder.store(array_size, size_ptr)
         func.builder.store(pos, array_ptr_ptr)
 
