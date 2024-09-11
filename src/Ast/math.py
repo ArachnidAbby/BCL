@@ -469,7 +469,6 @@ def _is(self, func, lhs, rhs):
     return out
 
 
-# TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
 @operator(9, "Pow", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_pow(func, lhs, rhs))
 def pow(self, func, lhs, rhs):
     return (lhs.ret_type).pow(func, lhs, rhs)

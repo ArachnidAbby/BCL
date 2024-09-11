@@ -657,7 +657,7 @@ class Module(ASTNode):
         module_pass.add_aggressive_instruction_combining_pass()
         module_pass.add_dead_code_elimination_pass()
         # module_pass.add_instruction_combining_pass()
-        module_pass.add_arg_promotion_pass()
+        # module_pass.add_arg_promotion_pass() # not available in LLVM>14
         # module_pass.add_sink_pass()
         module_pass.add_constant_merge_pass()
         module_pass.add_dead_store_elimination_pass()
