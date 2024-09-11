@@ -70,7 +70,7 @@ def no_next_item(func, name):
                       [ir.Constant(ir.IntType(32), 2)])
 
 
-def slice_size_exception(func, name, slice_size, array_size, pos):
+def slice_size_exception(func, name, slice_size, array_size: int, pos):
     from Ast.Ast_Types import definedtypes
     from Ast.module import base_package
     strlit_ty = definedtypes.types_dict["strlit"]
@@ -78,8 +78,8 @@ def slice_size_exception(func, name, slice_size, array_size, pos):
     location = Path(pos[3]).relative_to(base_package.location)
 
     error_fmt = (f"{errors.RED}Slice too small: '%i' size must be " +
-                f">= {array_size} '{str(name)}'\n" +
-                f"    File: {location}:{pos[0]}:{pos[1]}{errors.RESET}\n")
+                 f">= {array_size} '{str(name)}'\n" +
+                 f"    File: {location}:{pos[0]}:{pos[1]}{errors.RESET}\n")
 
     fmt_bitcast = stringliteral.StrLiteral(pos, error_fmt)
 

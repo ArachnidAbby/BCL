@@ -1,7 +1,7 @@
 from llvmlite import ir
 
-from Ast import exception  # type: ignore
 from Ast.Ast_Types import Type_Bool, Type_I32
+from Ast.Ast_Types.Type_Slice import SliceType
 from Ast.literals.numberliteral import Literal
 from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
@@ -57,19 +57,25 @@ class Array(Type_Base.Type):
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
-        if typ != self:
-            error(f"Cannot convert {self}' " +
-                  f"to type '{typ.__str__()}'", line=orig.position)
-
         from Ast.Ast_Types.Type_Union import Union
         if isinstance(typ, Union):
             return typ.convert_from(func, self, orig)
+        if isinstance(typ, SliceType):
+            start = Literal(orig.position, 0, Type_I32.Integer_32())
+            end = Literal(orig.position, self.size-1,
+                          Type_I32.Integer_32())
+            step = Literal(orig.position, -1, Type_I32.Integer_32())
+            return self.make_slice(func, orig, start, end, step)
+
+        if typ != self:
+            error(f"Cannot convert '{self}' " +
+                  f"to type '{typ.__str__()}'", line=orig.position)
 
         return orig.eval(func)
 
     def get_op_return(self, func, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
-        if op == "ind":
+        if op == "ind":  # TODO: make this account for slicing
             return self.typ
 
         if op == 'eq' or op == 'neq':
@@ -220,7 +226,10 @@ class Array(Type_Base.Type):
         return hash(f"{self.name}--|{self.size}|")
 
     def index(self, func, lhs, rhs):
-        self.generate_runtime_check(func, lhs, rhs)
+        check_val = self.generate_runtime_check(func, lhs, rhs)
+        if check_val is not None:
+            return check_val
+
         return func.builder.gep(lhs.get_ptr(func),
                                 [ZERO_CONST, rhs.eval(func)])
 
@@ -232,6 +241,7 @@ class Array(Type_Base.Type):
         cond = rhs.ret_type.le(func, size, rhs)
         cond2 = rhs.ret_type.gr(func, zero, rhs)
         condcomb = func.builder.or_(cond, cond2)
+        from Ast import exception  # type: ignore
         with func.builder.if_then(condcomb) as _:
             exception.over_index_exception(func, lhs,
                                            val, lhs.position)
@@ -252,9 +262,8 @@ class Array(Type_Base.Type):
         array_rang = range(0, self.size)
 
         if ind_rang is not None and check_in_range(ind_rang, array_rang):
-            return
-            # return func.builder.gep(lhs.get_ptr(func),
-            #                         [ZERO_CONST, rhs.eval(func)])
+            return func.builder.gep(lhs.get_ptr(func),
+                                    [ZERO_CONST, rhs.eval(func)])
 
         ptr = func.builder.gep(lhs.get_ptr(func),
                                [ZERO_CONST, rhs.eval(func)])
@@ -265,8 +274,77 @@ class Array(Type_Base.Type):
     def put(self, func, lhs, value):
         return self.typ.assign(func, lhs, value, self.typ)
 
-    def make_slice(self, func, start, end, step):
-        pass  # ! TODO
+    def make_slice(self, func, array, start, end, step):
+        ONE_CONST = ir.Constant(ir.IntType(32), 1)
+        slice_typ = SliceType(self.typ)
+        slice_ptr = func.create_const_var(slice_typ)
+        array_ptr_ptr = slice_typ._get_array_ptr_ptr(func, slice_ptr)
+        step_ptr = slice_typ._get_step_ptr(func, slice_ptr)
+        size_ptr = slice_typ._get_size_ptr(func, slice_ptr)
+        negation_ptr = slice_typ._get_reversed_ptr(func, slice_ptr)
+
+        if step is not None and step.ret_type.name != "i32":
+            error("Slice operator's step argument must be an i32",
+                  line=step.position)
+
+        array_size = ir.Constant(ir.IntType(32), self.size)
+        if start is None:
+            pos = array.get_ptr(func)
+            pos = func.builder.bitcast(pos, self.typ.ir_type.as_pointer())
+        elif start.ret_type.name == "i32":
+            pos = self.index(func, array, start)
+            array_size = func.builder.sub(array_size, start._instruction)
+        else:
+            error("Slice operator's 'start' argument must be an i32",
+                  line=end.position)
+
+        if end is not None and end.ret_type.name == "i32":
+            self.generate_runtime_check(func, array, end)
+            end_diff = func.builder.sub(ir.Constant(ir.IntType(32),
+                                                    self.size - 1),
+                                        end.eval(func))
+            array_size = func.builder.sub(array_size, end_diff)
+        elif end is not None:
+            error("Slice operator's 'end' argument must be an i32",
+                  line=array.position)
+
+        if step is None:
+            func.builder.store(ir.Constant(ir.IntType(32), 1), step_ptr)
+            func.builder.store(ir.Constant(ir.IntType(8), 1), negation_ptr)
+        elif step.ret_type.name == "i32":
+            step_val = step.eval(func)
+            negation_flag = func.builder.icmp_signed("<", step_val,
+                                                     ir.Constant(ir.IntType(32), 0))
+            negation_mul = func.builder.mul(ir.Constant(ir.IntType(8), -2),
+                                            func.builder.zext(negation_flag,
+                                                              ir.IntType(8)))
+            negation_value = func.builder.add(ir.Constant(ir.IntType(8), 1),
+                                              negation_mul)
+
+            # do a ceil div! (only works with positive numbers)
+            array_size_sub = func.builder.sub(array_size, ONE_CONST)
+            step_val = func.builder.mul(func.builder.sext(negation_value,
+                                                          ir.IntType(32)),
+                                        step_val)
+            array_size = func.builder.sdiv(array_size_sub, step_val)
+            array_size = func.builder.add(array_size, ONE_CONST)
+
+            # offset start
+            pos_offset = func.builder.mul(array_size_sub,
+                                          func.builder.zext(negation_flag,
+                                                            ir.IntType(32)))
+            pos = func.builder.gep(pos, [pos_offset])
+
+            func.builder.store(step_val, step_ptr)
+            func.builder.store(negation_value, negation_ptr)
+        else:
+            error("Slice operator's 'step' argument must be an i32",
+                  line=end.position)
+
+        func.builder.store(array_size, size_ptr)
+        func.builder.store(pos, array_ptr_ptr)
+
+        return func.builder.load(slice_ptr)
 
     def __repr__(self) -> str:
         return f"{self.typ}[{self.size}]"

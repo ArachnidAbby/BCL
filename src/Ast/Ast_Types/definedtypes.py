@@ -15,7 +15,6 @@ from .Type_I32 import (I8_RANGE, I16_RANGE, I64_RANGE, U8_RANGE, U16_RANGE,
 from .Type_Range import RangeType
 from .Type_StrLit import StringLiteral
 from .Type_UntypedPointer import UntypedPointer
-from .Type_Void import Void
 
 types_dict = {
     'bool': Integer_1(),
