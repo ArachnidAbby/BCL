@@ -1,5 +1,3 @@
-from typing import Self
-
 from llvmlite import ir
 
 from Ast.Ast_Types import Type_Bool, Type_Char, Type_I32

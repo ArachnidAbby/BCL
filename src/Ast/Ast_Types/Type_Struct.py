@@ -332,6 +332,8 @@ class Struct(Ast_Types.Type):
         # self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
             return
+        if op.lower() == "ind":  # TODO ALLOW THIS
+            return
         if op_name == "__bitnot__":
             return self.get_func(func, op_name, lhs, None).func_ret
         if op_name == "__call__":
