@@ -93,6 +93,14 @@ class ArrayLiteral(ExpressionNode):
 
         return ir.Constant.literal_array([x.eval(func) for x in self.value])
 
+    def as_type_reference(self, func, allow_generics=False):
+        from Ast.Ast_Types.Type_Slice import SliceType
+        if len(self.value) != 1:
+            errors.error("Invalid Type signature", line=self.position)
+
+        inner_type = self.value[0].as_type_reference(func, allow_generics)
+        return SliceType(inner_type)
+
     def get_lifetime(self, func):
         return Lifetimes.FUNCTION
 

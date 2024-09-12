@@ -446,7 +446,7 @@ class Parser(ParserBase):
             return
 
         if self.peek(1).name == "expr":
-            exprs = self.peek(1).value
+            exprs = [self.peek(1).value]
         else:
             exprs = self.peek(1).value.children
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
