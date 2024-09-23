@@ -93,8 +93,7 @@ class StructLiteral(ExpressionNode):
         return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
-        return self.merge_pos((self._position,
-                               *[x.position for x in self.members.children]))
+        return self.merge_pos((self._position, self.members.position))
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Struct Literal",

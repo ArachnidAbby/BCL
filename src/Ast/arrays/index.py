@@ -26,7 +26,7 @@ def check_valid_literal_range(lhs, rhs):
 
 # TODO: RENAME & MAKE INTO MATH EXPRESSION
 class VariableIndexRef(ExpressionNode):
-    '''The index to an array'''
+    '''The index operation on an array'''
     __slots__ = ('ind', 'varref')
     assignable = True
 

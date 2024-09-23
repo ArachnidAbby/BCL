@@ -13,7 +13,7 @@ from Ast.nodes.passthrough import PassNode  # type: ignore
 
 
 class ArrayLiteral(ExpressionNode):
-    __slots__ = ('value', 'literal', 'repeat')
+    __slots__ = ('value', 'literal', 'repeat', 'end_pos')
     isconstant = False
 
     def __init__(self, pos: SrcPosition, value: list[Any], repeat=None):
@@ -23,6 +23,7 @@ class ArrayLiteral(ExpressionNode):
         self.repeat = repeat
         # whether or not this array is only full of literals
         self.literal = True
+        self.end_pos = pos
 
     def copy(self):
         out = ArrayLiteral(self._position, [val.copy() for val in self.value], self.repeat)
@@ -105,8 +106,9 @@ class ArrayLiteral(ExpressionNode):
         return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
-        x = self.merge_pos([x.position for x in self.value])  # type: ignore
-        return SrcPosition(x.line, x.col, x.length+1, x.source_name)
+        # x = self.merge_pos([x.position for x in self.value])  # type: ignore
+        # return SrcPosition(x.line, x.col, x.length+1, x.source_name)
+        return self.merge_pos([self._position, self.end_pos])
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Array Literal",

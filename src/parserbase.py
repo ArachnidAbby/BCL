@@ -22,7 +22,7 @@ class ParserToken(NamedTuple):
 
     name: str
     value: Any
-    source_pos: tuple[int, int, int, str]  # TODO: Make into named tuple
+    source_pos: SrcPosition
     completed: bool
 
     @property

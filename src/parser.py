@@ -325,6 +325,7 @@ class Parser(ParserBase):
         block = self.blocks.pop()
         if self.blocks[-1][0] is not None:
             block[0].parent = self.blocks[-1][0]
+        block[0].set_end_pos(self.peek(2).pos)
         self.start = self.blocks[-1][1]
 
         self.replace(3, "statement", block[0])
@@ -365,6 +366,7 @@ class Parser(ParserBase):
         if self.blocks[-1][0] is not None:
             block[0].parent = self.blocks[-1][0]
 
+        block[0].set_end_pos(self.peek(2).pos)
         values = self.peek(1).value
         if self.peek(1).name == "kv_pair":
             block[0].append_child(self.peek(1).value)
@@ -450,6 +452,7 @@ class Parser(ParserBase):
         else:
             exprs = self.peek(1).value.children
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+        literal.end_pos = self.peek(2).pos
         self.replace(3, "expr", literal)
 
     @rule(-1, "!DIRECTIVE_START OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE")
@@ -462,6 +465,7 @@ class Parser(ParserBase):
 
         exprs = [self.peek(1).value]
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs, repeat=self.peek(3).value)
+        literal.end_pos = self.peek(4).pos
         self.replace(5, "expr", literal)
 
     @rule(0, "expr OPEN_SQUARE expr CLOSE_SQUARE")
@@ -716,8 +720,8 @@ class Parser(ParserBase):
         '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
         if isinstance(self.peek(1).value, Ast.Literal) and \
-                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32(),
-                                                Ast.Ast_Types.Integer_32()):
+                (isinstance(self.peek(1).value.ret_type, Ast.Ast_Types.Integer_32) or \
+                 isinstance(self.peek(1).value.ret_type, Ast.Ast_Types.Float_32)):
             if self.check(0, "SUB"):
                 self.peek(1).value.value *= -1
                 self.replace(2, "expr", self.peek(1).value)
