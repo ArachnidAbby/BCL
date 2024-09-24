@@ -82,6 +82,18 @@ class Parser(ParserBase):
                                 self.parse_struct_literal),
             "expr": (self.parse_var_decl,
                      self.parse_array_index,
+                     # parse slicing
+                     self.parse_array_slice_empty,
+                     self.parse_array_slice_step_only,
+                     self.parse_array_slice_start_only,
+                     self.parse_array_slice_end_only,
+                     self.parse_array_slice_start_end_kv,
+                     self.parse_array_slice_start_end,
+                     self.parse_array_slice_start_step,
+                     self.parse_array_slice_end_step,
+                     self.parse_array_slice_all_kv,
+                     self.parse_array_slice_all,
+
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
                      self.parse_expr_list, self.parse_rangelit,
@@ -204,6 +216,105 @@ class Parser(ParserBase):
             self.replace(3, "expr", node)
         else:
             self.replace(4, "expr", node)
+
+    @rule(0, "expr OPEN_SQUARE COLON|SEMI_COLON CLOSE_SQUARE")
+    def parse_array_slice_empty(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             None, None)
+        self.replace(4, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON CLOSE_SQUARE")
+    def parse_array_slice_start_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             None, None)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE COLON expr CLOSE_SQUARE")
+    def parse_array_slice_end_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        end = self.peek(3).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             end, None)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_step_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        step = self.peek(3).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             None, step)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE kv_pair CLOSE_SQUARE")
+    def parse_array_slice_start_end_kv(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        pair = self.peek(2).value
+        start = pair.key
+        end = pair.value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, None)
+        self.replace(4, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON expr CLOSE_SQUARE")
+    def parse_array_slice_start_end(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        end = self.peek(4).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, None)
+        self.replace(6, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_start_step(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        step = self.peek(5).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             None, step)
+        self.replace(7, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE COLON expr SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_end_step(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        end = self.peek(3).value
+        step = self.peek(5).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             end, step)
+        self.replace(7, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE kv_pair SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_all_kv(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        pair = self.peek(2).value
+        start = pair.key
+        end = pair.value
+        step = self.peek(4).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, step)
+        self.replace(6, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON expr SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_all(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        end = self.peek(4).value
+        step = self.peek(6).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, step)
+        self.replace(8, "expr", fin)
 
     @rule(0, "expr|DOUBLE_DOT NAMEINDEX expr|MUL|DOUBLE_DOT")
     def namespace_index(self):

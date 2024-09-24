@@ -519,3 +519,9 @@ class Type:
 
     def deref(self, func, node):
         error(f"Cannot dereference type, {self}", line=node.position)
+
+    def get_slice_return(self, func, varref, start, end, step):
+        error(f"Type \"{self.__str__()}\" cannot be sliced")
+
+    def make_slice(self, func, array, start, end, step):
+        error(f"Type \"{self.__str__()}\" cannot be sliced")

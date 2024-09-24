@@ -61,11 +61,11 @@ class Array(Type_Base.Type):
         if isinstance(typ, Union):
             return typ.convert_from(func, self, orig)
         if isinstance(typ, SliceType):
-            start = Literal(orig.position, 0, Type_I32.Integer_32())
-            end = Literal(orig.position, self.size-1,
-                          Type_I32.Integer_32())
-            step = Literal(orig.position, -1, Type_I32.Integer_32())
-            return self.make_slice(func, orig, start, end, step)
+            # start = Literal(orig.position, 0, Type_I32.Integer_32())
+            # end = Literal(orig.position, self.size-1,
+            #               Type_I32.Integer_32())
+            # step = Literal(orig.position, -1, Type_I32.Integer_32())
+            return self.make_slice(func, orig, None, None, None)
 
         if typ != self:
             error(f"Cannot convert '{self}' " +
@@ -75,7 +75,7 @@ class Array(Type_Base.Type):
 
     def get_op_return(self, func, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
-        if op == "ind":  # TODO: make this account for slicing
+        if op == "ind":
             return self.typ
 
         if op == 'eq' or op == 'neq':
@@ -83,6 +83,9 @@ class Array(Type_Base.Type):
                 error(f"{self} can only be compared to {self}",
                       line=rhs.position)
             return Type_Bool.Integer_1()
+
+    def get_slice_return(self, func, varref, start, end, step):
+        return SliceType(self.typ)
 
     def eq(self, func, lhs, rhs):
         lhs_ptr = lhs.get_ptr(func)
@@ -226,6 +229,10 @@ class Array(Type_Base.Type):
         return hash(f"{self.name}--|{self.size}|")
 
     def index(self, func, lhs, rhs):
+        if not isinstance(rhs.ret_type, Type_I32.Integer_32):
+            error("Invalid Index type for array: " +
+                  f"\"{rhs.ret_type.__str__()}\"",
+                  line=rhs.position)
         check_val = self.generate_runtime_check(func, lhs, rhs)
         if check_val is not None:
             return check_val
@@ -289,7 +296,7 @@ class Array(Type_Base.Type):
 
         array_size = ir.Constant(ir.IntType(32), self.size)
         if start is None:
-            pos = array.get_ptr(func)
+            pos = func.builder.gep(array.get_ptr(func), [ZERO_CONST, ZERO_CONST])
         elif start.ret_type.name == "i32":
             pos = self.index(func, array, start)
             array_size = func.builder.sub(array_size, start._instruction)

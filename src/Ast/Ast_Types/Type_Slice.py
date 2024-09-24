@@ -102,7 +102,7 @@ class SliceType(Type):
 
     def get_op_return(self, func, op, lhs, rhs):
         self._simple_call_op_error_check(op, lhs, rhs)
-        if op == "ind":  # TODO: make this account for slicing
+        if op == "ind":
             return self.inner_typ
 
         # if op == 'eq' or op == 'neq':
@@ -110,6 +110,10 @@ class SliceType(Type):
         #         error(f"{self} can only be compared to {self}",
         #               line=rhs.position)
         #     return Type_Bool.Integer_1()
+
+    # TODO: make slicing slices work
+    def get_slice_return(self, func, varref, start, end, step):
+        return self
 
     def _get_size_ptr(self, func, objptr) -> ir.Instruction:
         '''Gets the size ptr at runtime, this is NOT known at compile-time'''
