@@ -105,6 +105,7 @@ class SliceType(Type):
         if op == "ind":
             return self.inner_typ
 
+        # TODO: Support equivalence checks
         # if op == 'eq' or op == 'neq':
         #     if lhs.ret_type != rhs.ret_type:
         #         error(f"{self} can only be compared to {self}",
@@ -220,3 +221,5 @@ class SliceType(Type):
 
     def index(self, func, lhs, rhs) -> ir.Instruction:
         return self.generate_runtime_check(func, lhs, rhs)
+
+    # TODO: create an iterator type for slices

@@ -17,7 +17,8 @@ DEFAULT_ARGS: dict[str, bool | str | list] = {
     "--libs": [],
     "--run": False,
     "--debug": False,
-    "--quiet": False  # suppress all compiler output
+    "--quiet": False,  # suppress all compiler output
+    "--packages-path": []
 }
 
 

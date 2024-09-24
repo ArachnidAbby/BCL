@@ -15,7 +15,6 @@ from Ast import Ast_Types, package
 from Ast.nodes import ASTNode, Modifiers, SrcPosition
 from Ast.package import Package
 from Ast.variables.reference import VariableRef
-from lexer import Lexer
 
 modules: dict[str, "Module"] = {}
 base_package: Package | None = None
@@ -27,6 +26,7 @@ STDLIB_PATH = Path(os.path.dirname(__file__)) / "../libbcl"
 def make_base_package(path: Path, cmd_args: dict,
                       alt_search_paths=[STDLIB_PATH]):
     global base_package, alt_packages
+    alt_search_paths += cmd_args["--packages-path"]
     base_package = package.get_all_packages(path, cmd_args)
     for loc in alt_search_paths:
         pkg = package.get_all_packages(loc, cmd_args)
