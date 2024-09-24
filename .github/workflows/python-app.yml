@@ -50,4 +50,4 @@ jobs:
         env/bin/pip install -r requirements.txt
     - name: Run Tests
       run: |
-        env/bin/python setup.py test
+        env/bin/python3.12 setup.py test
