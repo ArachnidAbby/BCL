@@ -8,11 +8,14 @@ import compile
 import errors
 
 PATH = os.path.dirname(os.path.realpath(__file__))
+BCL_VERSION = "v0.7.0--alpha preview 1"
 
 if platform.system() == "Windows":
     os.system("")
 
-HELP = """Commands:
+HELP = """BCL VERSION: {BCL_VERSION}
+
+Commands:
 
 compile <src> [..args]
     compile a file
