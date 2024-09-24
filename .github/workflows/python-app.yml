@@ -45,9 +45,9 @@ jobs:
         env/bin/pip install flake8 pytest rply
         # install llvmlite and it's dependencies
         conda install -c conda-forge libstdcxx-ng=12
-        conda install -y -q -c numba/label/dev llvmdev="15.*" libxml2
+        conda install -y -q -c numba llvmdev="15.*" libxml2
         conda install cmake
-        env/bin/pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
+        env/bin/pip install -r requirements.txt
     - name: Run Tests
       run: |
         env/bin/python setup.py test

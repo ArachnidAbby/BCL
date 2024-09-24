@@ -13,7 +13,7 @@ BCL_VERSION = "v0.7.0--alpha preview 1"
 if platform.system() == "Windows":
     os.system("")
 
-HELP = """BCL VERSION: {BCL_VERSION}
+HELP = f"""BCL VERSION: '{BCL_VERSION}'
 
 Commands:
 
