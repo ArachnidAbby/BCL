@@ -94,15 +94,18 @@ class NamespaceIndex(ExpressionNode):
 
         if isinstance(self.left, NamespaceIndex):
             lhs = self.left.resolve_import(base_pkg)
-        elif self.back_dirs == 0:
-            lhs = base_pkg.get_namespace_name(None, self.left.var_name,
-                                              SrcPosition.invalid())
+        # elif self.back_dirs == 0:
+        #     lhs = base_pkg.get_namespace_name(None, self.left.var_name,
+        #                                       SrcPosition.invalid())
         else:
-            lhs = base_pkg.get_namespace_name(None, self.right.var_name,
+            lhs = base_pkg.get_namespace_name(None, self.left.var_name,
                                               SrcPosition.invalid())
 
         if self.right == "*" or self.back_dirs != 0:
             return lhs
+        if lhs is None:
+            errors.error("This error likely represents a bug in the compiler :(",
+                         line=self.left.position)
         value = lhs.get_namespace_name(None, self.right.var_name,
                                        SrcPosition.invalid())
         if value is None:

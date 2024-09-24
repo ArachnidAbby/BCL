@@ -110,9 +110,6 @@ def compile(src_str: str, output_loc: Path, args, file=""):
         # import lexer as lex
         import Ast
         from Ast import Ast_Types
-        # Add temporary type
-        from Ast.Ast_Types.Type_Slice import SliceType
-        Ast_Types.definedtypes.types_dict["TestSlice"] = SliceType(Ast_Types.definedtypes.types_dict["i32"])
 
 
     with timingContext('parsing finished', args):

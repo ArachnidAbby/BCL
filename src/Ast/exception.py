@@ -16,7 +16,8 @@ EXIT_ARGS = (Integer_32(),)
 def _get_function(func, name: str, args: tuple, pos):
     function = func.module.get_global(name)
     if function is None:
-        errors.error(f"Could not get function {name}, hint: import stdlib",
+        errors.error(f"Could not get function {name}, necessary for errors",
+                     note="hint, try: \n\n" + errors.highlight_code(f"import stdlib::{name};"),
                      line=pos)
     function = function.obj
     args_fixed = ParenthBlock(pos)

@@ -7,7 +7,7 @@ from Ast import exception
 from Ast.Ast_Types import Type_I32
 from Ast.Ast_Types.Type_Base import Type
 from Ast.literals.numberliteral import Literal
-from Ast.nodes.commontypes import SrcPosition
+from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
 
 ZERO_CONST = ir.Constant(ir.IntType(64), 0)
@@ -110,6 +110,26 @@ class SliceType(Type):
         #         error(f"{self} can only be compared to {self}",
         #               line=rhs.position)
         #     return Type_Bool.Integer_1()
+
+    def get_member_info(self, lhs, rhs):
+        match rhs.var_name:
+            case "length" | "step":
+                return MemberInfo(False, False, Type_I32.Integer_32())
+            case "direction":
+                return MemberInfo(False, False, Type_I32.Integer_32(size=8, name='i8', rang=Type_I32.I8_RANGE))
+            case _:
+                return super().get_member_info(lhs, rhs)
+
+    def get_member(self, func, lhs, rhs):
+        match rhs.var_name:
+            case "length":
+                return self._get_size(func, lhs.get_ptr(func))
+            case "step":
+                return self._get_step(func, lhs.get_ptr(func))
+            case "direction":
+                return self._get_reversed(func, lhs.get_ptr(func))
+            case _:
+                return super().get_member(func, lhs, rhs)
 
     # TODO: make slicing slices work
     def get_slice_return(self, func, varref, start, end, step):
