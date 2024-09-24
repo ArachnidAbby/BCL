@@ -94,20 +94,23 @@ class NamespaceIndex(ExpressionNode):
 
         if isinstance(self.left, NamespaceIndex):
             lhs = self.left.resolve_import(base_pkg)
-        # elif self.back_dirs == 0:
-        #     lhs = base_pkg.get_namespace_name(None, self.left.var_name,
-        #                                       SrcPosition.invalid())
-        else:
+        elif self.back_dirs == 0:
+            pos = SrcPosition.invalid() if isinstance(self.left, str) else self.left.position
             lhs = base_pkg.get_namespace_name(None, self.left.var_name,
-                                              SrcPosition.invalid())
+                                              pos)
+        else:
+            pos = SrcPosition.invalid() if isinstance(self.left, str) else self.left.position
+            lhs = base_pkg.get_namespace_name(None, self.right.var_name,
+                                              pos)
 
         if self.right == "*" or self.back_dirs != 0:
             return lhs
         if lhs is None:
-            errors.error("This error likely represents a bug in the compiler :(",
+            errors.error("Unable to find package or module",
                          line=self.left.position)
+
         value = lhs.get_namespace_name(None, self.right.var_name,
-                                       SrcPosition.invalid())
+                                       self.right.position)
         if value is None:
             errors.error("Could not resolve name during import",
                          line=self.left.position)

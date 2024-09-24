@@ -353,19 +353,23 @@ class Module(ASTNode):
             private_imports = True
             stack.append(self)
 
-        note = None
+        note = "Note:\n" + \
+               f"{errors.CODE81}Import statements currently cannot import " + \
+               f"types or\n{errors.CODE81}function names declared in a module." + \
+               f"\n{errors.CODE81}Those names are not intitialized at this stage"
 
         base_imports = self._get_base_imports()
         for imp, mod in zip(base_imports.keys(), base_imports.values()):
             if not mod.is_public and not private_imports:
-                note="Note: It is a private import!"
+                note = "Note: It is a private import!"
                 continue
             elif imp == name:
                 return mod
             elif mod.obj in stack:
                 continue
             elif mod.using_namespace:
-                return mod.obj.get_namespace_name(func, name, pos, stack, override_star)
+                return mod.obj.get_namespace_name(func, name, pos, stack,
+                                                  override_star)
 
         errors.error(f"Name \"{name}\" cannot be " +
                      f"found in module \"{stack[0].mod_name}\"",

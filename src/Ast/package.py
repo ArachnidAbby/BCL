@@ -49,11 +49,17 @@ class Package(ASTNode):
         self.packages: dict[str, Package] = {}
 
     def get_namespace_name(self, func, name, pos, stack=None, override_star=False):
-        from Ast.module import NamespaceInfo
+        from Ast.module import NamespaceInfo, alt_packages
         if name in self.packages.keys():
             return NamespaceInfo(self.packages[name], {})
         if name in self.modules.keys():
             return NamespaceInfo(self.modules[name], {})
+
+        for pkg in alt_packages:
+            out = pkg.get_namespace_name(func, name, pos, stack,
+                                         override_star)
+            if out is not None:
+                return out
 
     def get_type_by_name(self, name, position, stack=None,
                          override_private=False) -> Optional[Ast_Types.Type]:
