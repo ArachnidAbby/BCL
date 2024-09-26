@@ -867,6 +867,9 @@ class Parser(ParserBase):
         if self.peek_safe(3).name in self.standard_expr_checks:
             return
 
+        if self.peek_safe(3).name in ("OPEN_CURLY", "OPEN_CURLY_USED"):
+            return
+
         # * Parse expressions
         if self.check_group(0, "expr ISUM expr SEMI_COLON"):
             op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,

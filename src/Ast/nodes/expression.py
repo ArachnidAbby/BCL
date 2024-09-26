@@ -86,7 +86,7 @@ class ExpressionNode(ASTNode):
 
     def as_type_reference(self, func, allow_generics=False):
         '''Get this expresion as the reference to a type'''
-        error(f"invalid type: {str(self)}", line=self.position)
+        error("invalid type name:", line=self.position)
 
     def get_const_value(self) -> int | float:
         return 0
