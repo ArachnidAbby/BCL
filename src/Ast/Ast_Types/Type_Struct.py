@@ -1,17 +1,18 @@
-from copy import copy
-from typing import Self
+from typing import Any
 
 from llvmlite import ir
 
 import Ast.math
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
+from Ast.Ast_Types.Type_Base import struct_op_overloads
 from Ast.Ast_Types.Type_Bool import Integer_1
+from Ast.Ast_Types.Type_Function import FunctionGroup
 from Ast.Ast_Types.Type_Void import Void
-from Ast.functions.definition import FunctionDef
 from Ast.math import MemberAccess
 from Ast.nodes import Block, KeyValuePair, ParenthBlock
-from Ast.nodes.commontypes import MemberInfo, Modifiers, SrcPosition
+from Ast.nodes.block import create_const_var
+from Ast.nodes.commontypes import Lifetimes, MemberInfo, Modifiers, SrcPosition
 from Ast.nodes.container import ContainerNode
 from Ast.nodes.passthrough import PassNode
 from Ast.reference import Ref
@@ -20,32 +21,30 @@ from errors import error
 
 member_access_op = Ast.math.ops["access_member"]
 
-struct_op_overloads = {
-    "sum": "__add__",
-    "sub": "__sub__",
-    "mul": "__mul__",
-    "div": "__div__",
-    "mod": "__mod__",
-    "pow": "__pow__",
-    "eq": "__eq__",
-    "neq": "__neq__",
-    "le": "__lt__",
-    "gr": "__gt__",
-    "geq": "__geq__",
-    "leq": "__leq__",
-    "_imul": "__imul__",
-    "_idiv": "__idiv__",
-    "_isub": "__isub__",
-    "_isum": "__iadd__",
-    "ind": "__index__",
 
-    "bor": "__bitor__",
-    "band": "__bitand__",
-    "bxor": "__bitxor__",
-    "bitnot": "__bitnot__",
-    "lshift": "__lshift__",
-    "rshift": "__rshift__"
-}
+# TODO: FINISH THIS DAMN THING!
+class QualifiedStruct(Ast_Types.Type):
+    __slots__ = ("struct_type", "member_lifetimes")
+
+    def __init__(self, struct_type):
+        self.struct_type = struct_type
+        self.member_lifetimes: dict[str, Lifetimes] = {}
+
+    def get_member_info(self, lhs, rhs, avoid_recursion=False):
+        # if len(self.member_lifetimes) == 0:
+        #     for name in self.struct_type.members.keys():
+        #         self.member_lifetimes[name] = Lifetimes.UNKNOWN
+
+        member_info = self.struct_type.get_member_info(lhs, rhs,
+                                                       avoid_recursion=avoid_recursion)
+
+        # member_info.lifetime = self.member_lifetimes[rhs.var_name]
+        return member_info
+
+    def __getattribute__(self, attr_name: str) -> Any:
+        if attr_name in ("member_lifetimes", "get_member_info", "struct_type"):
+            return object.__getattribute__(self, attr_name)
+        return object.__getattribute__(self.struct_type, attr_name)
 
 
 class Struct(Ast_Types.Type):
@@ -57,7 +56,7 @@ class Struct(Ast_Types.Type):
                  'rang', 'member_index_search', 'returnable', 'raw_members',
                  'ir_type', 'module', 'visibility', 'can_create_literal',
                  'is_generic', 'versions', 'definition', 'needs_dispose',
-                 'ref_counted')
+                 'ref_counted', 'is_wrapper')
     name = "STRUCT"
     pass_as_ptr = True
     no_load = False
@@ -69,10 +68,12 @@ class Struct(Ast_Types.Type):
                  is_generic, definition):
         self.struct_name = name
         self.raw_members = members
-        self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}  # bool "is_public"
+        # bool "is_public"
+        self.members: dict[str, tuple[Ast_Types.Type, bool]] = {}
         self.member_indexs = []
         self.member_index_search = {}
         self.returnable = True
+        self.is_wrapper = False
         self.needs_dispose = False
         self.ref_counted = False
         self.can_create_literal = True
@@ -85,14 +86,18 @@ class Struct(Ast_Types.Type):
             self.member_indexs.append(member_name)
             self.member_index_search[member_name] = c
 
+        self.ir_type: ir.Type | None = None
         if not self.is_generic:
-            self.ir_type = ir.global_context.get_identified_type(f"{module.mod_name}.struct.{name}")
-        else:
-            self.ir_type = None
+            name = f"{module.mod_name}.struct.{name}"
+            self.ir_type = ir.global_context.get_identified_type(name)
+
         self.size = len(self.member_indexs)-1
         self.module = module
         self.rang = None
         self.visibility = super().visibility
+
+    def __call__(self):
+        return QualifiedStruct(self)
 
     def pass_type_params(self, func, params, pos):
 
@@ -113,7 +118,8 @@ class Struct(Ast_Types.Type):
         if params in self.versions.keys():
             return self.versions[params][0]
 
-        new_name = f"{self.struct_name}::<{', '.join([str(x) for x in params])}>"
+        str_params = ', '.join([x.__str__() for x in params])
+        new_name = f"{self.struct_name}::<{str_params}>"
 
         generic_args = {**self.definition.generic_args}
 
@@ -131,6 +137,7 @@ class Struct(Ast_Types.Type):
             members = [def_copy.block.children[0]]
         new_ty = Struct(new_name, members, self.module,
                         False, def_copy)
+        new_ty.is_wrapper = self.is_wrapper
         def_copy.struct_type = new_ty
 
         self.versions[params] = (new_ty, generic_args, def_copy, pos)
@@ -140,6 +147,7 @@ class Struct(Ast_Types.Type):
         return new_ty
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if self.is_generic:
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
                   line=pos)
@@ -156,7 +164,7 @@ class Struct(Ast_Types.Type):
                 error("Member is private", line=pos)
 
             if isinstance(val, Ast_Types.FunctionGroup) and not val.is_method:
-                return val
+                return NamespaceInfo(val, {})
 
         error(f"Name \"{name}\" cannot be " +
               f"found in Type \"{self.struct_name}\"",
@@ -217,6 +225,11 @@ class Struct(Ast_Types.Type):
     def convert_to(self, func, orig, typ) -> ir.Instruction:
         if typ == orig.ret_type:
             return orig.eval(func)
+
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         error(f"{self.struct_name} has no conversions",  line=orig.position)
 
     def __eq__(self, other):
@@ -226,8 +239,8 @@ class Struct(Ast_Types.Type):
                and self.module.location == other.dealias().module.location
 
         return super().__eq__(other) \
-               and other.struct_name == self.struct_name \
-               and self.module.location == other.module.location
+            and other.struct_name == self.struct_name \
+            and self.module.location == other.module.location
 
     def __neq__(self, other):
         if isinstance(other.ret_type, Alias):
@@ -240,6 +253,39 @@ class Struct(Ast_Types.Type):
                or self.module.location != other.module.location
 
     def get_func(self, func, name, lhs, rhs, ret_none=False):
+        if rhs is not None:
+            rhs_pos = rhs.position
+        else:
+            rhs_pos = SrcPosition.invalid()
+        args = ParenthBlock(rhs_pos)
+        name_var = VariableRef(lhs.position, name, None)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        if rhs is not None:
+            args.children = [rhs]
+        args.in_func_call = True
+        if self.get_member_info(lhs, name_var) is None:
+            if ret_none:
+                return None
+            error(f"No function \"{name}\" Found", line=lhs.position)
+        fetched_func = self.get_member_info(lhs, name_var).typ
+
+        if name not in self.members.keys():
+            unwrap_func = self._get_unwrap_function(lhs, rhs)
+            if unwrap_func is None:
+                return None
+
+            unwrap_node = PassNode(lhs.position, None,
+                                   unwrap_func.func_ret)
+
+            args.children[0] = unwrap_node
+
+        if isinstance(fetched_func, FunctionGroup):
+            return fetched_func.get_function(self, mem_access, args)
+        else:
+            return fetched_func
+
+    def get_func_scoped(self, func, name, lhs, rhs, ret_none=False):
+        '''Limit search to this specific type, ignore wrapping'''
         if rhs is not None:
             rhs_pos = rhs.position
         else:
@@ -267,16 +313,41 @@ class Struct(Ast_Types.Type):
         if rhs is not None:
             args.children = [rhs]
         args.in_func_call = True
+        if name not in self.members:
+            unwrap_res = self.call_func(func, "__unwrap__", lhs, None)
+            unwrap_func = self._get_unwrap_function(lhs, rhs)
+            if unwrap_func is None:
+                return None
+
+            unwrap_node = PassNode(lhs.position, unwrap_res,
+                                   unwrap_func.func_ret)
+
+            args.children[0] = unwrap_node
         args.pre_eval(func)
-        return self.members[name][0].call(func, mem_access, args)
+
+        return self.get_member(func, lhs, name_var).call(func, mem_access, args)
 
     def get_op_return(self, func, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
-        self._simple_call_op_error_check(op, lhs, rhs)
+        # self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
+            return
+        if op.lower() == "ind":  # TODO ALLOW THIS
             return
         if op_name == "__bitnot__":
             return self.get_func(func, op_name, lhs, None).func_ret
+        if op_name == "__call__":
+            args = ParenthBlock(rhs.position)
+            name_var = VariableRef(lhs.position, "__call__", None)
+            mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+            if isinstance(rhs, ParenthBlock):
+                args.children = rhs.children
+            else:
+                args.children = [rhs]
+            args.in_func_call = True
+            if "__call__" not in self.members.keys():
+                error("No function \"__call__\" Found", line=lhs.position)
+            return self.members["__call__"][0].get_function(func, mem_access, args).func_ret
         return self.get_func(func, op_name, lhs, rhs).func_ret
 
     def sum(self, func, lhs, rhs):
@@ -330,7 +401,7 @@ class Struct(Ast_Types.Type):
     def rshift(self, func, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__rshift__", lhs, rhs)
 
-    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_not(self, func, lhs) -> ir.Instruction:
         return self.call_func(func, "__bitnot__", lhs, None)
 
     def bit_xor(self, func, lhs, rhs) -> ir.Instruction:
@@ -342,17 +413,76 @@ class Struct(Ast_Types.Type):
     def bit_and(self, func, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__bitand__", lhs, rhs)
 
-    def get_member_info(self, lhs, rhs):
-        if rhs.var_name not in self.members.keys():
+    def _get_unwrap_function(self, lhs, rhs, mut=False):
+        if not self.is_wrapper:
             return None
-            error("member not found!", line=rhs.position)
+        if mut:
+            func_name = "__unwrap_mut__"
+        else:
+            func_name = "__unwrap__"
+        return self.get_func_scoped(None, func_name, lhs, None, True)
+
+    def _get_wrapped_member_info(self, lhs, rhs):
+        unwrap_func = self._get_unwrap_function(lhs, rhs)
+        if unwrap_func is None:
+            return None
+
+        typ = unwrap_func.func_ret
+        unwrap_node = PassNode(lhs.position, None, typ)
+        if isinstance(typ, QualifiedStruct) or isinstance(typ, Struct):
+            return typ.get_member_info(unwrap_node, rhs, avoid_recursion=True)
+        else:
+            return typ.get_member_info(unwrap_node, rhs)
+
+    # def _get_wrapped_member(self, func, lhs, rhs):
+    #     unwrap_func = self._get_unwrap_function(lhs, rhs)
+    #     if unwrap_func is None:
+    #         return None
+
+    #     typ = unwrap_func.func_ret
+    #     unwrap_node = PassNode(lhs.position, None, typ)
+    #     return typ.get_member(func, lhs, rhs)
+
+    def get_member_info(self, lhs, rhs, avoid_recursion=False):
+        if rhs.var_name not in self.members.keys() and not avoid_recursion:
+            info = self._get_wrapped_member_info(lhs, rhs)
+            if info is not None:
+                info.causes_unwrap = True
+            return info
+        elif rhs.var_name not in self.members.keys():
+            return None
         typ = self.members[rhs.var_name][0]
         is_ptr = not isinstance(typ, Ast_Types.FunctionGroup)
         return MemberInfo(not typ.read_only, is_ptr, typ)
 
+    def unwrap(self, func, lhs) -> tuple[PassNode, "Function"]:
+        unwrap_res = self.call_func(func, "__unwrap__", lhs, None)
+        unwrap_func = self._get_unwrap_function(lhs, None)
+        if unwrap_func is None:
+            return None
+
+        return PassNode(lhs.position, unwrap_res,
+                        unwrap_func.func_ret), unwrap_func
+
+    def unwrap_mut(self, func, lhs) -> tuple[PassNode, "Function"]:
+        unwrap_res = self.call_func(func, "__unwrap_mut__", lhs, None)
+        unwrap_func = self._get_unwrap_function(lhs, None, mut=True)
+        if unwrap_func is None:
+            return None
+
+        return PassNode(lhs.position, None,
+                        unwrap_func.func_ret, unwrap_res), unwrap_func
+
     def get_member(self, func, lhs,
                    member_name_in: "Ast.variable.VariableRef"):
         member_name = member_name_in.var_name
+
+        if member_name not in self.members.keys():
+            unwrap_node, unwrap_func = self.unwrap(func, lhs)
+
+            return unwrap_func.func_ret.get_member(func, unwrap_node,
+                                                   member_name_in)
+
         if isinstance(self.members[member_name][0], Ast_Types.FunctionGroup):
             return self.members[member_name][0]
         member_index = self.member_index_search[member_name]
@@ -369,6 +499,17 @@ class Struct(Ast_Types.Type):
     # def put(self, func, lhs, value):
     #     return self.call_func(func, "__put_at__", Ref(lhs.position, lhs), value)
 
+    def get_iter_return(self, func, node):
+        function = self.get_func(func, "__iter__", node, None)
+        return function.func_ret
+
+    def create_iterator(self, func, val, loc):
+        actual_value = self.call_func(func, "__iter__", val, None)
+        var = create_const_var(func, self.get_iter_return(func, val))
+        func.builder.store(actual_value, var)
+
+        return var
+
     def deref(self, func, node):
         return self.call_func(func, "__deref__", node, None)
 
@@ -382,6 +523,19 @@ class Struct(Ast_Types.Type):
     def get_deref_return(self, func, node):
         function = self.get_func(func, "__deref__", node, None)
         return function.func_ret
+
+    def call(self, func, lhs, args) -> ir.Instruction:
+        real_args = ParenthBlock(args.position)
+        name_var = VariableRef(lhs.position, "__call__", None)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        if isinstance(args, ParenthBlock):
+            real_args.children = args.children
+        else:
+            real_args.children = [args]
+        real_args.in_func_call = True
+        if "__call__" not in self.members.keys():
+            error("No function \"__call__\" Found", line=lhs.position)
+        return self.members["__call__"][0].call(func, mem_access, real_args)
 
     def add_ref_count(self, func, ptr):
         if func.func_name in ("__increase_ref_count__", "__dispose__") and func.parent is self.definition:

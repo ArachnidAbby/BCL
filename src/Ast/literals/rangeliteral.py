@@ -3,9 +3,10 @@ from typing import Any
 from llvmlite import ir
 
 import Ast.Ast_Types.Type_Range
-from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import Lifetimes, SrcPosition
 import errors
+from Ast.nodes import ExpressionNode
+from Ast.nodes.block import create_const_var
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
 
 
 class RangeLiteral(ExpressionNode):
@@ -21,6 +22,7 @@ class RangeLiteral(ExpressionNode):
 
     def copy(self):
         out = RangeLiteral(self._position, self.start.copy(), self.end.copy())
+        return out
 
     def fullfill_templates(self, func):
         self.start.fullfill_templates(func)
@@ -56,7 +58,7 @@ class RangeLiteral(ExpressionNode):
 
     def get_ptr(self, func):
         if self.ptr is None:
-            self.ptr = func.create_const_var(self.ret_type)
+            self.ptr = create_const_var(func, self.ret_type)
         return self.ptr
 
     def get_lifetime(self, func):

@@ -1,10 +1,9 @@
 '''This module is used to print errors, warning etc.
 It does all the proper formatting.'''
 
-import collections
 import sys
 from inspect import currentframe, getframeinfo
-from typing import Sequence
+from typing import TYPE_CHECKING, NoReturn, Sequence
 
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
@@ -24,18 +23,28 @@ CODE202 = "\u001b[38;5;202m"
 CODE214 = "\u001b[38;5;214m"
 CODE177 = "\u001b[38;5;177m"
 
+CODE69 = "\u001b[38;5;69m"
+CODE81 = "\u001b[38;5;81m"
+
 SILENT_MODE = False
 SUPRESSED_WARNINGS = False
 PROFILING = False
 
 USES_FEATURE: dict[str, bool] = {}  # give warning about used features
 
-SrcPosition = collections.namedtuple('SrcPosition',
-                                     ['line', 'col', 'length', 'source_name'])
-invalid_pos = SrcPosition(-1, -1, -1, '')
 
-# added to when fullfilling templates
-# allows more error info.
+# Silly python hack. My favorite 😋
+if TYPE_CHECKING:
+    from Ast.nodes.commontypes import SrcPosition
+    invalid_pos = SrcPosition.invalid()
+else:
+    import collections
+    SrcPosition = collections.namedtuple('SrcPosition',
+                                         ['line', 'col', 'length',
+                                          'source_name'])
+    invalid_pos = SrcPosition(-1, -1, -1, '')
+
+MultiPosition = SrcPosition | list[SrcPosition]
 templating_stack: list[SrcPosition] = []
 
 
@@ -48,10 +57,15 @@ class BCLLexer(RegexLexer):
             (r'[\s\n]+', Whitespace),
             (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)|(typedef)|(as)',
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|' +
+             r'(yield)|(return)|(for)|(public)|(enum)|(typedef)|(as)|' +
+             r'(break)|(continue)',
              Keyword.Reserved),
-            (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
+            (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|' +
+             r'(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
+            (r'(Self)', Name.Builtin.Pseudo),
+            (r'\#\[.*\]', Comment.Preproc),
             (r'\s+((or)|(and)|(not)|(in)|(as))\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&\^\~\|(\<\<)(\>\>)]', Operator),
             (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
@@ -62,13 +76,13 @@ class BCLLexer(RegexLexer):
     }
 
 
-def _print_text(text):
+def _print_text(text, color=GREEN):
     '''print text with preceeding '|' regardless of line count'''
     if SILENT_MODE:
         return
 
     for line in text.split('\n'):
-        print(f'| {line}')
+        print(f'{color}| {line}')
 
 
 def _print_raw(text):
@@ -79,7 +93,8 @@ def _print_raw(text):
     print(text)
 
 
-def error(text: str, line=invalid_pos, full_line=False):
+def error(text: str, line: MultiPosition = invalid_pos,
+          full_line=False, note=None) -> NoReturn:
     '''prints an error with a line # if provided'''
     if SILENT_MODE:
         sys.exit(1)
@@ -89,7 +104,6 @@ def error(text: str, line=invalid_pos, full_line=False):
     col = -1
 
     template_additions = ""
-
     for template in templating_stack:
         temp_col = template[1]
         temp_line = template[0]
@@ -97,17 +111,17 @@ def error(text: str, line=invalid_pos, full_line=False):
         code_line = show_error_spot(template, False)
         template_additions += "| Error constructing templated type:\n" + \
                               f"|    Line: {temp_line}\n" + \
-                              f"|    File: {temp_file}:{temp_line}:{temp_col}" + \
+                              f"|    File: {temp_file}:{temp_line}" + \
+                              f":{temp_col}" + \
                               f'\n#{"-"*(35)}\n' + \
                               f"{code_line}{RED}\n#---\n| Cause:"
-    # print(templating_stack)
 
-    if not isinstance(line, list) and line[0] != -1 and line[2]!='':
+    if not isinstance(line, list) and line[0] != -1 and line[2] != '':
         code_line = show_error_spot(line, full_line)
         file_name = line.source_name
         line_no = line[0]
         col = line[1]
-    elif isinstance(line, list) and line[0][0] != -1 and line[0][2]!='':
+    elif isinstance(line, list) and line[0][0] != -1 and line[0][2] != '':
         code_line = show_error_spot(line, full_line)
         file_name = line[0].source_name
         line_no = line[0][0]
@@ -123,15 +137,18 @@ def error(text: str, line=invalid_pos, full_line=False):
     print(f'{RED}#{"-"*(largest//4)}')
     if len(template_additions) != 0:
         print(template_additions)
-    _print_text(text)
+    _print_text(text, color=RED)
     if line[0] != -1:
         print(f'|    Line: {line_no}')
         print(f'|    File: {file_name}:{line_no}:{col}')
+        if note is not None:
+            print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
+            _print_text(f"{CODE81}{note}{RED}", color=RED)
         print("#"+"-"*min(len(code_line.split('\n')[0]), 45))
         print(f"{RESET}{code_line}")
     print(f'{RED}\\{"-"*(largest-1)}/{RESET}')
     print("\n\n\n\n")
-    sys.exit(1)
+    exit(1)
 
 
 def inline_warning(text: str, line=invalid_pos):
@@ -140,8 +157,8 @@ def inline_warning(text: str, line=invalid_pos):
         return
 
     print(ORANGE, end='')
-    _print_text(text)
-    if line[0] != -1 and line[2]!='':
+    _print_text(text, color=ORANGE)
+    if line[0] != -1 and line[2] != '':
         print(f'|    Line: {line.line}')
         print(f'|    File: {line.source_name}')
     print(RESET, end='')
@@ -152,7 +169,7 @@ def warning(text: str, line=invalid_pos, full_line=False):
     if SILENT_MODE or SUPRESSED_WARNINGS:
         return
 
-    if line[0] != -1 and line[2]!='':
+    if line[0] != -1 and line[2] != '':
         code_line = show_error_spot(line, full_line, color=CODE214)
     else:
         code_line = ""
@@ -164,7 +181,7 @@ def warning(text: str, line=invalid_pos, full_line=False):
     ), 45)
     print(f'{CODE214}#{"-"*(largest//4)}')
 
-    _print_text(text)
+    _print_text(text, color=CODE214)
     if line[0] != -1:
         print(f'|    Line: {line[0]}')
         print(f'|    File: {line.source_name}')
@@ -183,7 +200,8 @@ def developer_warning(text: str):
 
     if (frame := currentframe()) is not None:
         frameinfo = getframeinfo(frame)
-        _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}")
+        _print_text(f"{text}\n\t at: {frameinfo.filename}, {frameinfo.lineno}",
+                    color=CODE125)
 
     print(RESET, end='')
 
@@ -209,12 +227,16 @@ def experimental_warning(text: str, possible_bugs: Sequence[str]):
     print(f'#{"-"*(line_size)}')
     bugs = '\n'.join(('\t- '+bug for bug in possible_bugs))
     _print_text(f"EXPERIMENTAL FEATURE WARNING::\n  {text}\n\n  \
-                POSSIBLE BUGS INCLUDE:\n{bugs}")
+                POSSIBLE BUGS INCLUDE:\n{bugs}", color=CODE202)
     print(f'#{"-"*(line_size)}')
     print(RESET, end='')
 
 
-def show_error_spot(position: SrcPosition,
+def highlight_code(code: str) -> str:
+    return highlight(code, BCLLexer(), TerminalFormatter())[:-3]
+
+
+def show_error_spot(position: MultiPosition,
                     use_full_line: bool, color=RED) -> str:
     if not isinstance(position, list) and position[0] == -1:
         return ""
@@ -251,7 +273,7 @@ def show_error_spot(position: SrcPosition,
     full_line = full_line.strip()
     underline = underline[full_line_len-len(full_line):]
 
-    highlighted = highlight(full_line, BCLLexer(), TerminalFormatter())
+    highlighted = highlight_code(full_line)
 
-    return f"{color}|    {RESET}{highlighted}{color}|    {CODE177}{underline}\
-            {RESET}"
+    return f"{color}|    {RESET}{highlighted}{color}" + \
+           f"\n|    {CODE177}{underline}            {RESET}"

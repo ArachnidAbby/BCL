@@ -16,6 +16,7 @@ class Lexer():
         # curly braces
         self.lexer.add('OPEN_SQUARE', r'\[')
         self.lexer.add('CLOSE_SQUARE', r'\]')
+        self.lexer.add('DIRECTIVE_START', r'\#')
         # Number
         self.lexer.add('NUMBER_W_TYPE', r'(\d+(\.\d+)?)[fiu]\d+')
         self.lexer.add('NUMBER_F', r'\d+((\.\d+f)|(\.\d+)|f)')
@@ -31,6 +32,8 @@ class Lexer():
         self.lexer.add('DOUBLE_DOT', r'\.\.')
         self.lexer.add('DOT', r'\.')
         # Operators
+        self.lexer.add('LOGICAL_AND', r'\&\&')
+        self.lexer.add('LOGICAL_OR', r'\|\|')
         self.lexer.add('ISUM', r'\+\=')
         self.lexer.add('IMUL', r'\*\=')
         self.lexer.add('IDIV', r'/{1,}\=')

@@ -21,7 +21,11 @@ class UntypedPointer(Type):
     generate_bounds_check = False
 
     def convert_to(self, func, orig, typ):
-        if self.roughly_equals(typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
+        if self.roughly_equals(func, typ):
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
 
         errors.error("Cannot convert UntypedPointer to non-pointer type",
@@ -55,7 +59,7 @@ class UntypedPointer(Type):
         elif member_name == "retake":
             return retake_func
 
-    def roughly_equals(self, other):
+    def roughly_equals(self, func, other):
         return isinstance(other, Reference) or self == other
 
     def index(self, func, lhs, rhs):
@@ -81,7 +85,7 @@ class StoreFunction(Function):
         self.is_method = True
         self.args = (UntypedPointer(), )
 
-    def match_args(self, lhs, args):
+    def match_args(self, func, lhs, args):
         from Ast.Ast_Types.Type_Reference import Reference
         args_used = args.children
         if len(args_used) != 1:

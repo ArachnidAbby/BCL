@@ -10,6 +10,7 @@ from parserbase import ParserBase, ParserToken, rule
 
 IN_FROZEN_EXE = path.dirname(__file__).endswith('library.zip')
 
+
 class Parser(ParserBase):
     ''' The actual BCL parser implementation.
     =========================================
@@ -48,20 +49,22 @@ class Parser(ParserBase):
         ParserBase.CREATED_RULES.append(("expr _ expr", 0))
         ParserBase.CREATED_RULES.append(("expr $and expr", 0))
         ParserBase.CREATED_RULES.append(("expr $or expr", 0))
+        ParserBase.CREATED_RULES.append(("expr LOGICAL_AND expr", 0))
+        ParserBase.CREATED_RULES.append(("expr LOGICAL_OR expr", 0))
         ParserBase.CREATED_RULES.append(("expr $as expr", 0))
+        ParserBase.CREATED_RULES.append(("expr $is expr", 0))
         ParserBase.CREATED_RULES.append(("$define", 0))
         ParserBase.CREATED_RULES.append(("!CLOSE_CURLY", 2))
         ParserBase.CREATED_RULES.append(("SUB", 0))
         ParserBase.CREATED_RULES.append(("SUM", 0))
         ParserBase.CREATED_RULES.append(("statement_list|expr_list", 1))
-        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef", 2))
-
+        ParserBase.CREATED_RULES.append(("OPEN_CURLY|SEMI_COLON|statement", 2))
 
         super().__init__(*args, **kwargs)
         self.keywords = (
             "define", 'and', 'or', 'not', 'return',
             'if', 'while', 'else', 'break', 'continue',
-            'as', 'for', 'in', 'struct', 'import', 'yield',
+            'as', 'is', 'for', 'in', 'struct', 'import', 'yield',
             'enum', 'public', 'typedef'
         )  # ? would it make sense to put these in a language file?
 
@@ -70,7 +73,8 @@ class Parser(ParserBase):
                                      "NAMEINDEX", "OPEN_TYPEPARAM")
         self.op_node_names = ("SUM", "SUB", "MUL", "DIV", "MOD",
                               "COLON", "DOUBLE_DOT", "LSHIFT", "RSHIFT",
-                              "BXOR", "BOR", "BNOT", "AMP")
+                              "BXOR", "BOR", "BNOT", "AMP", "LOGICAL_AND",
+                              "LOGICAL_OR")
 
         self.parsing_functions = {
             "OPEN_CURLY": (self.parse_block_empty, self.parse_block_open),
@@ -78,6 +82,18 @@ class Parser(ParserBase):
                                 self.parse_struct_literal),
             "expr": (self.parse_var_decl,
                      self.parse_array_index,
+                     # parse slicing
+                     self.parse_array_slice_empty,
+                     self.parse_array_slice_step_only,
+                     self.parse_array_slice_start_only,
+                     self.parse_array_slice_end_only,
+                     self.parse_array_slice_start_end_kv,
+                     self.parse_array_slice_start_end,
+                     self.parse_array_slice_start_step,
+                     self.parse_array_slice_end_step,
+                     self.parse_array_slice_all_kv,
+                     self.parse_array_slice_all,
+
                      self.parse_KV_pairs, self.parse_statement,
                      self.parse_math, self.parse_func_call,
                      self.parse_expr_list, self.parse_rangelit,
@@ -94,6 +110,7 @@ class Parser(ParserBase):
                         self.parse_return_statement_empty,
                         self.parse_math,
                         self.parse_import_statment,
+                        self.parse_import_statment_fixed,
                         self.parse_yield_stmt,
                         self.parse_keyword_literals,
                         self.parse_if_statement,
@@ -118,7 +135,9 @@ class Parser(ParserBase):
             "OPEN_SQUARE": (self.parse_array_literal_multi_element,
                             self.parse_array_literal,),
             "AMP": (self.parse_varref, ),
-            "BNOT": (self.parse_math, )
+            "BNOT": (self.parse_math, ),
+            "DIRECTIVE_START": (self.parse_directive_list,),
+            "DOUBLE_DOT": (self.namespace_index, )
         }
 
         self.blocks = deque(((None, 0),))
@@ -198,24 +217,138 @@ class Parser(ParserBase):
         else:
             self.replace(4, "expr", node)
 
-    @rule(0, "expr NAMEINDEX expr|MUL")
+    @rule(0, "expr OPEN_SQUARE COLON|SEMI_COLON CLOSE_SQUARE")
+    def parse_array_slice_empty(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             None, None)
+        self.replace(4, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON CLOSE_SQUARE")
+    def parse_array_slice_start_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             None, None)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE COLON expr CLOSE_SQUARE")
+    def parse_array_slice_end_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        end = self.peek(3).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             end, None)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_step_only(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        step = self.peek(3).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             None, step)
+        self.replace(5, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE kv_pair CLOSE_SQUARE")
+    def parse_array_slice_start_end_kv(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        pair = self.peek(2).value
+        start = pair.key
+        end = pair.value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, None)
+        self.replace(4, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON expr CLOSE_SQUARE")
+    def parse_array_slice_start_end(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        end = self.peek(4).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, None)
+        self.replace(6, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_start_step(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        step = self.peek(5).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             None, step)
+        self.replace(7, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE COLON expr SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_end_step(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        end = self.peek(3).value
+        step = self.peek(5).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, None,
+                                             end, step)
+        self.replace(7, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE kv_pair SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_all_kv(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        pair = self.peek(2).value
+        start = pair.key
+        end = pair.value
+        step = self.peek(4).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, step)
+        self.replace(6, "expr", fin)
+
+    @rule(0, "expr OPEN_SQUARE expr COLON expr SEMI_COLON expr CLOSE_SQUARE")
+    def parse_array_slice_all(self):
+        '''parse slicing of ararys'''
+        ref = self.peek(0).value
+        start = self.peek(2).value
+        end = self.peek(4).value
+        step = self.peek(6).value
+        fin = Ast.arrays.slice.SliceOperator(self.peek(0).pos, ref, start,
+                                             end, step)
+        self.replace(8, "expr", fin)
+
+    @rule(0, "expr|DOUBLE_DOT NAMEINDEX expr|MUL|DOUBLE_DOT")
     def namespace_index(self):
         left = self.peek(0).value
         right = self.peek(2).value
         if not (isinstance(left, Ast.variables.reference.VariableRef)
                 or isinstance(left, Ast.namespace.NamespaceIndex)
-                or isinstance(left, Ast.generics.GenericSpecify)):
+                or isinstance(left, Ast.generics.GenericSpecify)
+                or (isinstance(left, str) and left in ('*', ".."))):
             errors.error("Namespace index must be indexing a name or another namespace index",
                          line=self.peek(0).pos)
 
         if not (isinstance(right, Ast.variables.reference.VariableRef)
-                or (isinstance(right, str) and right=='*')):
+                or (isinstance(right, str) and right in ('*', ".."))):
             errors.error("Index in a namespace index must be a name (or '*')",
                          line=self.peek(2).pos)
 
         pos = self.peek(0).pos
 
         node = Ast.namespace.NamespaceIndex(pos, left, right)
+        if left == "..":
+            node.back_dirs += 1
+
+        if right == "..":
+            p_backdirs = 0
+            if isinstance(left, Ast.namespace.NamespaceIndex):
+                p_backdirs = left.back_dirs
+            if (node.back_dirs + p_backdirs) == 0:
+                errors.error("For the right side of a namespace index to" +
+                             " go back a directory,\nthe left side must " +
+                             "also go back a directory",
+                             line=self.peek(2).pos,
+                             note="Hint: Change left side to '..'")
+            node.back_dirs += 1
         if right == '*':
             node.star_idx = True
         self.replace(3, "expr", node)
@@ -228,37 +361,43 @@ class Parser(ParserBase):
             errors.error("Import must use a module name",
                          line=self.peek(1).pos)
 
+        offset = 0
+
         is_public = False
         if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
             is_public = True
+            offset += 1
 
-        directories = self.module.location.split("/")[:-1]
-        directory_path = '/'.join(directories)
         using_namespace = False
         if isinstance(mod, Ast.namespace.NamespaceIndex):
             using_namespace = mod.star_idx
-            name = mod.as_file_path()
-        else:
-            name = self.peek(1).value.var_name
+        self.module.add_import(mod, using_namespace, is_public)
+        self.consume(-offset, 3+offset)
 
-        filedir = f"{directory_path}/{name}.bcl"
-        if not path.exists(filedir):
-            libbcl_dir = path.dirname(__file__) + "/libbcl"
-            if IN_FROZEN_EXE:
-                libbcl_dir = '/'.join(path.dirname(__file__).split("/")[0:-1]) + "/libbcl"
-            filedir = f"{libbcl_dir}/{name}.bcl"
-            if not path.exists(filedir):
-                errors.error(f"Could not find module '{name}'",
-                             line=self.peek(1).pos)
+    @rule(0, "$import NAMEINDEX expr SEMI_COLON")
+    def parse_import_statment_fixed(self):
+        mod = self.peek(2).value
+        if not (isinstance(mod, Ast.variables.reference.VariableRef)
+                or isinstance(mod, Ast.namespace.NamespaceIndex)):
+            errors.error("Import must use a module name",
+                         line=self.peek(2).pos)
 
-        self.module.add_import(filedir, name, using_namespace, is_public)
-        # errors.inline_warning("Notice: import statements may be buggy")
-        self.consume(0, 3)
-        # self._cursor = max(self.start, self.start_min)
-        # self.do_move = False
+        is_public = False
 
-    # ? is `^` supposed to be there!?!
-    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|structdef|enumdef|^|COMMA|CLOSE_PAREN")
+        offset = 0
+
+        if self.peek_safe(-1).name == "KEYWORD" and self.peek_safe(-1).value == "public":
+            is_public = True
+            offset += 1
+
+        using_namespace = False
+        if isinstance(mod, Ast.namespace.NamespaceIndex):
+            using_namespace = mod.star_idx
+        self.module.add_import(mod, using_namespace, is_public, relative_import=False)
+        self.consume(-offset, 4+offset)
+
+    # ^ is EOF
+    @rule(0, "$public __ OPEN_CURLY|SEMI_COLON|statement|^|COMMA|CLOSE_PAREN")
     def parse_visibility_modifiers(self):
         '''parsing finished sets of curly braces into blocks'''
         val = self.peek(1).value
@@ -267,6 +406,19 @@ class Parser(ParserBase):
         name = self.peek(1).name
 
         self.replace(2, name, val)
+
+    @rule(0, "DIRECTIVE_START OPEN_SQUARE expr|expr_list CLOSE_SQUARE statement")
+    def parse_directive_list(self):
+        '''parsing finished sets of curly braces into blocks'''
+        directives_raw = self.peek(2)
+        if directives_raw.name == "expr":
+            directives = [directives_raw.value]
+        else:
+            directives = directives_raw.value.children
+
+        node = Ast.DirectiveList(self.peek(0).pos, self.module, self.peek(4).value, directives)
+
+        self.replace(5, "statement", node)
 
     @rule(0, "OPEN_CURLY_USED statement_list|statement CLOSE_CURLY")
     def parse_finished_blocks(self):
@@ -284,13 +436,14 @@ class Parser(ParserBase):
         block = self.blocks.pop()
         if self.blocks[-1][0] is not None:
             block[0].parent = self.blocks[-1][0]
+        block[0].set_end_pos(self.peek(2).pos)
         self.start = self.blocks[-1][1]
 
         self.replace(3, "statement", block[0])
 
     @rule(0, "OPEN_CURLY CLOSE_CURLY")
     def parse_block_empty(self):
-        output = Ast.Block(self.peek(0).pos)
+        output = Ast.Block(self.peek(0).pos, module=self.module)
         if self.parens[-1][0] is not None:
             tok = self._tokens[self.parens[-1][1]]
             errors.developer_info(f'{self._tokens}')
@@ -307,7 +460,7 @@ class Parser(ParserBase):
 
     @rule(0, "OPEN_CURLY")
     def parse_block_open(self):
-        output = Ast.Block(self.peek(0).pos)
+        output = Ast.Block(self.peek(0).pos, module=self.module)
 
         # * main implementation
         self.blocks.append((output, self._cursor))
@@ -324,6 +477,7 @@ class Parser(ParserBase):
         if self.blocks[-1][0] is not None:
             block[0].parent = self.blocks[-1][0]
 
+        block[0].set_end_pos(self.peek(2).pos)
         values = self.peek(1).value
         if self.peek(1).name == "kv_pair":
             block[0].append_child(self.peek(1).value)
@@ -335,9 +489,11 @@ class Parser(ParserBase):
                                            block[0])
         self.replace(4, "expr", struct_literal, i=-1)
 
-    @rule(-1, "__|OPEN_CURLY_USED expr|kv_pair|expr_list|statement SEMI_COLON")
+    @rule(-1, "__|OPEN_CURLY_USED|CLOSE_SQUARE expr|kv_pair|expr_list|statement SEMI_COLON")
     def parse_statement(self):
         '''Parsing statements and statement lists'''
+        if self.peek_safe(-1).name == "CLOSE_SQUARE" and self.peek_safe(-4).name != "DIRECTIVE_START":
+            return
         self.replace(2, "statement", self.peek(0).value)
 
     @rule(0, "statement statement !SEMI_COLON")
@@ -364,7 +520,7 @@ class Parser(ParserBase):
     def parse_structs(self):
         struct = Ast.structs.StructDef(self.peek(0).pos, self.peek(1).value,
                                        self.peek(2).value, self.module)
-        self.replace(3, "structdef", struct)
+        self.replace(3, "statement", struct)
 
     @rule(0, "$enum expr statement")
     def parse_enums(self):
@@ -383,7 +539,7 @@ class Parser(ParserBase):
         struct = Ast.enumdef.Definition(self.peek(0).pos, self.peek(1).value,
                                         members, self.module)
 
-        self.replace(3, "enumdef", struct)
+        self.replace(3, "statement", struct)
 
     @rule(0, "expr DOT expr !NAMEINDEX")
     def parse_member_access(self):
@@ -393,7 +549,7 @@ class Parser(ParserBase):
         self.replace(3, "expr", op)
 
     # * arrays
-    @rule(0, "OPEN_SQUARE expr_list|expr CLOSE_SQUARE")
+    @rule(-1, "!DIRECTIVE_START OPEN_SQUARE expr_list|expr CLOSE_SQUARE")
     def parse_array_literal_multi_element(self):
         '''check for all nodes dealing with arrays'''
         if self.check(-1, "CLOSE_SQUARE|expr"):
@@ -403,13 +559,14 @@ class Parser(ParserBase):
             return
 
         if self.peek(1).name == "expr":
-            exprs = self.peek(1).value
+            exprs = [self.peek(1).value]
         else:
             exprs = self.peek(1).value.children
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs)
+        literal.end_pos = self.peek(2).pos
         self.replace(3, "expr", literal)
 
-    @rule(0, "OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE")
+    @rule(-1, "!DIRECTIVE_START OPEN_SQUARE expr SEMI_COLON expr CLOSE_SQUARE")
     def parse_array_literal(self):
         if self.check(-1, "CLOSE_SQUARE|expr"):
             return
@@ -419,6 +576,7 @@ class Parser(ParserBase):
 
         exprs = [self.peek(1).value]
         literal = Ast.ArrayLiteral(self.peek(0).pos, exprs, repeat=self.peek(3).value)
+        literal.end_pos = self.peek(4).pos
         self.replace(5, "expr", literal)
 
     @rule(0, "expr OPEN_SQUARE expr CLOSE_SQUARE")
@@ -557,23 +715,6 @@ class Parser(ParserBase):
                                                 args)
         self.replace(2, "expr", func)
 
-    # @rule(0, "expr|paren DOT expr expr|paren")
-    # def parse_func_call_dot(self):
-    #     if not isinstance(self.peek(2).value, Ast.variables.VariableRef):
-    #         return
-    #     func_name = self.peek(2).value.var_name
-    #     args1 = self.peek(0).value
-    #     args2 = self.peek(3).value
-    #     args1 = args1.children if isinstance(args1, Ast.nodes.ParenthBlock) \
-    #         else [args1]  # wrap in a list if not already done
-    #     args2 = args2.children if isinstance(args2, Ast.nodes.ParenthBlock) \
-    #         else [args2]  # wrap in a list if not already done
-    #     args = Ast.nodes.ParenthBlock(self.peek(0).pos)
-    #     args.children = args1+args2
-    #     func = Ast.functions.call.FunctionCall(self.peek(2).pos, func_name,
-    #                                            args)
-    #     self.replace(4, "expr", func)
-
     @rule(0, 'expr COLON expr COMMA|SEMI_COLON|CLOSE_PAREN|' +
              'CLOSE_CURLY|SET_VALUE')
     def parse_KV_pairs(self):
@@ -690,8 +831,8 @@ class Parser(ParserBase):
         '''Parse raw numbers into `expr` token.'''
         # * allow leading `+` or `-`.
         if isinstance(self.peek(1).value, Ast.Literal) and \
-                self.peek(1).value.ret_type in (Ast.Ast_Types.Float_32(),
-                                                Ast.Ast_Types.Integer_32()):
+                (isinstance(self.peek(1).value.ret_type, Ast.Ast_Types.Integer_32) or \
+                 isinstance(self.peek(1).value.ret_type, Ast.Ast_Types.Float_32)):
             if self.check(0, "SUB"):
                 self.peek(1).value.value *= -1
                 self.replace(2, "expr", self.peek(1).value)
@@ -726,6 +867,9 @@ class Parser(ParserBase):
         if self.peek_safe(3).name in self.standard_expr_checks:
             return
 
+        if self.peek_safe(3).name in ("OPEN_CURLY", "OPEN_CURLY_USED"):
+            return
+
         # * Parse expressions
         if self.check_group(0, "expr ISUM expr SEMI_COLON"):
             op = Ast.math.ops["_ISUM"](self.peek(0).pos, self.peek(0).value,
@@ -757,17 +901,32 @@ class Parser(ParserBase):
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $and expr'):
-            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
+            op = Ast.math.ops['short_and'](self.peek(0).pos, self.peek(0).value,
                                      self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $or expr'):
+            op = Ast.math.ops['short_or'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr LOGICAL_AND expr'):
+            op = Ast.math.ops['and'](self.peek(0).pos, self.peek(0).value,
+                                     self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr LOGICAL_OR expr'):
             op = Ast.math.ops['or'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)
 
         elif self.check_group(0, 'expr $as expr'):
             op = Ast.math.ops['as'](self.peek(0).pos, self.peek(0).value,
+                                    self.peek(2).value)
+            self.replace(3, "expr", op)
+
+        elif self.check_group(0, 'expr $is expr'):
+            op = Ast.math.ops['is'](self.peek(0).pos, self.peek(0).value,
                                     self.peek(2).value)
             self.replace(3, "expr", op)
 

@@ -1,6 +1,7 @@
 from llvmlite import ir
 
 import errors
+from Ast.Ast_Types.Type_Void import Void
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.block import Block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
@@ -44,7 +45,11 @@ class ReturnStatement(ASTNode):
             errors.error("Return value of function is \"Void\", " +
                          "use \"return;\" instead",
                          line=self.position)
-        if self.expr.ret_type != func.ret_type:
+        if self.expr is None and not func.ret_type.roughly_equals(func, Void()):
+            errors.error("Return value of function is NOT \"Void\",\n" +
+                         "please provide a return value",
+                         line=self.position)
+        if self.expr is not None and not func.ret_type.roughly_equals(func, self.expr.ret_type):
             errors.error(f"Function, \"{func.func_name}\", has a return type" +
                          f" of '{func.ret_type}'. Return statement returned" +
                          f" '{self.expr.ret_type}'", line=self.position)
@@ -61,19 +66,29 @@ class ReturnStatement(ASTNode):
 
         ret_val = None
         if not func.ret_type.is_void():
-            node = PassNode(self.expr.position, self.expr.eval(func), self.expr.ret_type)
-            self.expr.ret_type.add_ref_count(func, node)
-            ret_val = self.expr._instruction
-            if self.expr.get_lifetime(func) != Lifetimes.LONG and not self.expr.ret_type.returnable:
-                errors.error(f"{str(self.expr.ret_type)} is not returnable",
-                             line=self.expr.position)
+            if self.expr is None:
+                node = PassNode(self.position,
+                                Void().convert_to(func,
+                                                  PassNode(self.position, ir.Undefined, Void()),
+                                                  func.ret_type),
+                                func.ret_type)
+                ret_val = node.eval(func)
+            else:
+                node = PassNode(self.expr.position,
+                                self.expr.ret_type.convert_to(func, self.expr, func.ret_type),
+                                func.ret_type)
+                self.expr.ret_type.add_ref_count(func, node)
+                ret_val = node.eval(func)
+                if self.expr.get_lifetime(func) != Lifetimes.LONG and not (self.expr.ret_type.returnable and func.ret_type.returnable):
+                    errors.error(f"{str(self.expr.ret_type)} is not returnable",
+                                 line=self.expr.position)
 
         func.dispose_stack()
 
         if func.ret_type.is_void():
             func.builder.ret_void()
         else:
-            if not self.expr.ret_type.returnable:
+            if self.expr is not None and not (self.expr.ret_type.returnable and func.ret_type.returnable):
                 lifetimes = self.expr.get_coupled_lifetimes(func)
                 for life in lifetimes:
                     func.function_ty.return_coupling.append(life)

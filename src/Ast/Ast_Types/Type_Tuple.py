@@ -32,6 +32,13 @@ class TupleType(Type):
             # assumes rhs is a Literal
             return self.member_types[rhs.value]
 
+    def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
+        return super().convert_to(func, orig, typ)
+
     def __eq__(self, other):
         return (other is not None) and self.name == other.name and \
             self.member_types == other.member_types

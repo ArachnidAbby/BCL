@@ -1,0 +1,17 @@
+enum Buckly {
+    UNO: 8,
+    DOS,
+    TRES,
+    CUATRO;
+}
+
+enum Buckly {
+    UNO: 69,
+    DOS,
+    TRES,
+    CUATRO;
+}
+
+define main() {
+    //
+}

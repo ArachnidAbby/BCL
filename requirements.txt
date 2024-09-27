@@ -8,6 +8,7 @@ rply
 # git+https://github.com/spidertyler2005/llvmlite.git
 git+https://github.com/Hassium-Software/llvmlite-lld.git
 psutil
+numpy
 
 ## profiling
 memory_profiler

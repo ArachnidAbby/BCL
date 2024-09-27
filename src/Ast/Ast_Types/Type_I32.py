@@ -1,4 +1,5 @@
-from llvmlite import ir  # type: ignore
+import numpy  # type: ignore
+from llvmlite import ir
 
 from Ast import Ast_Types
 from Ast.Ast_Types import definedtypes
@@ -29,6 +30,7 @@ class Integer_32(Type_Base.Type):
     pass_as_ptr = False
     no_load = False
     needs_dispose = False
+    can_fold_constants = True
 
     def __init__(self, size=32, name='i32', rang=I32_RANGE, signed=True):
         self.name = name
@@ -41,15 +43,18 @@ class Integer_32(Type_Base.Type):
         return self
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x
 
         from Ast.literals.numberliteral import Literal
         if name == "MAX":
-            return Literal(pos, self.rang[1], self)
+            val = Literal(pos, self.rang[1], self)
+            return NamespaceInfo(val, {})
 
         if name == "MIN":
-            return Literal(pos, self.rang[0], self)
+            val = Literal(pos, self.rang[0], self)
+            return NamespaceInfo(val, {})
 
         error(f"Name \"{name}\" cannot be " +
               f"found in Type \"{str(self)}\"",
@@ -79,6 +84,10 @@ class Integer_32(Type_Base.Type):
         if typ == self:
             return orig.eval(func)
 
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if isinstance(typ, Integer_32):
             if typ.size == self.size:
                 return orig.eval(func)
@@ -105,9 +114,9 @@ class Integer_32(Type_Base.Type):
                     return func.builder.uitofp(orig.eval(func), ir.DoubleType())
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
 
-        error(f"Cannot convert 'i32' to type '{typ}'", line=orig.position)
+        error(f"Cannot convert 'i32' to type '{typ.__str__()}'", line=orig.position)
 
-    def roughly_equals(self, other):
+    def roughly_equals(self, func, other):
         return (isinstance(other, Integer_32) or
                 (isinstance(other, Alias) and isinstance(other.aliased_typ, Integer_32))) and \
                self.size == other.size and self.signed == other.signed
@@ -127,6 +136,33 @@ class Integer_32(Type_Base.Type):
         typ = definedtypes.get_std_ret_type(lhs, rhs)
         lhs = (lhs.ret_type).convert_to(func, lhs, typ)
         rhs = (rhs.ret_type).convert_to(func, rhs, typ)
+        return (lhs, rhs)
+
+    def convert_args_const(self, func, lhs, rhs) -> tuple:
+        if self.name == 'i64':
+            lhs = numpy.int64(lhs.get_const_value())
+            rhs = numpy.int64(rhs.get_const_value())
+        elif self.name == 'i32':
+            lhs = numpy.int32(lhs.get_const_value())
+            rhs = numpy.int32(rhs.get_const_value())
+        elif self.name == 'i16':
+            lhs = numpy.int16(lhs.get_const_value())
+            rhs = numpy.int16(rhs.get_const_value())
+        elif self.name == 'i8':
+            lhs = numpy.int8(lhs.get_const_value())
+            rhs = numpy.int8(rhs.get_const_value())
+        elif self.name == 'u64':
+            lhs = numpy.uint64(lhs.get_const_value())
+            rhs = numpy.uint64(rhs.get_const_value())
+        elif self.name == 'u32':
+            lhs = numpy.uint32(lhs.get_const_value())
+            rhs = numpy.uint32(rhs.get_const_value())
+        elif self.name == 'u16':
+            lhs = numpy.uint16(lhs.get_const_value())
+            rhs = numpy.uint16(rhs.get_const_value())
+        elif self.name == 'u8':
+            lhs = numpy.uint8(lhs.get_const_value())
+            rhs = numpy.uint8(rhs.get_const_value())
         return (lhs, rhs)
 
     def sum(self, func, lhs, rhs):
@@ -182,7 +218,7 @@ class Integer_32(Type_Base.Type):
         lhs_eval = lhs.eval(func)
         return func.builder.and_(lhs_eval, rhs_eval)
 
-    def bit_not(self, func, lhs, rhs):
+    def bit_not(self, func, lhs):
         lhs_eval = lhs.eval(func)
         return func.builder.not_(lhs_eval)
 
@@ -245,6 +281,7 @@ class Integer_32(Type_Base.Type):
             error("Cannot find 'pow' function in the global namespace.\n" +
                   "Try `import math::*;`",
                   line=lhs.position)
+        pow_func = pow_func.obj
         i64 = Integer_32(name="i64", size=64)
         i32 = Integer_32(name="i32", size=32)
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, i64), i64)
@@ -259,3 +296,125 @@ class Integer_32(Type_Base.Type):
     def truthy(self, func, val):
         return func.builder.icmp_signed('!=', val.eval(func),
                                         ir.Constant(self.ir_type, 0))
+
+    # Const stuff
+    def const_sum(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_sum(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs + rhs)
+
+    def const_sub(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_sub(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs - rhs)
+
+    def const_mul(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_mul(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs * rhs)
+
+    def const_div(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_div(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs // rhs)
+
+    def const_lshift(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_lshift(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs << rhs)
+
+    def const_rshift(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_rshift(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs >> rhs)
+
+    def const_bit_or(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_bit_or(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs | rhs)
+
+    def const_bit_xor(self, func, lhs, rhs):
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs ^ rhs)
+
+    def const_bit_and(self, func, lhs, rhs):
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs & rhs)
+
+    def const_bit_not(self, func, lhs):
+        lhs, rhs = self.convert_args_const(func, lhs, 0)
+        return int(~lhs)
+
+    def const_mod(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_mod(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs % rhs)
+
+    def const_eq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_eq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs == rhs)
+
+    def const_neq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_neq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs != rhs)
+
+    def const_geq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_geq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs >= rhs)
+
+    def const_leq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_leq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs <= rhs)
+
+    def const_le(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_le(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs < rhs)
+
+    def const_gr(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_gr(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs > rhs)
+
+    def const_pow(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_pow(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs ** rhs)
+
+    def const_truthy(self, func, val):
+        val, _ = self.convert_args_const(func, val, 0)
+        return int(val != 0)

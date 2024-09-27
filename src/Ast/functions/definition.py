@@ -6,8 +6,8 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Struct import Struct
 from Ast.Ast_Types.Type_Void import Void
-from Ast.functions.yieldstatement import YieldStatement
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
 from Ast.nodes.commontypes import Modifiers, SrcPosition
@@ -47,7 +47,7 @@ class FunctionDef(ASTNode):
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start", "dispose_queue", "parent", "ret_raw",
-                 "function_ty", "lifetime_checked_nodes")
+                 "function_ty", "lifetime_checked_nodes", "use_literal_name")
 
     can_have_modifiers = True
 
@@ -100,6 +100,8 @@ class FunctionDef(ASTNode):
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
         self.lifetime_checked_nodes = []
+
+        self.use_literal_name = False
 
     def copy(self):
         if self.block is not None:
@@ -228,7 +230,8 @@ class FunctionDef(ASTNode):
         #                    "You will not be able to free this memory!\n" +
         #                    "Please keep this in mind",
         #                    line=ret_line)
-        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE:
+        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE and \
+            (not isinstance(self.ret_type, Struct) or self.ret_type.module == self.module):
             errors.error("Function is public while the return type is private. \n" +
                          "This makes it impossible for external callers to handle the return.",
                          line=ret_line)
@@ -236,7 +239,7 @@ class FunctionDef(ASTNode):
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and
         is NOT named "main"'''
-        if parent == self.module and self.block is None:
+        if parent == self.module and (self.use_literal_name or self.block is None):
             if name in self.module.globals.keys():
                 errors.error(f"Bound function with the name \"{name}\" already exists",
                              line=self.position, full_line=True)
@@ -248,7 +251,6 @@ class FunctionDef(ASTNode):
         args = self.function_ir.args
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
-            # print(orig[1])
             var = VariableObj(orig[0], orig[1], True, orig[3])
             self.block.variables[x] = var
             self.block.variables[x].ptr = args[c]
@@ -273,7 +275,10 @@ class FunctionDef(ASTNode):
         elif self.parent is not None:
             return self.parent.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def fullfill_templates(self, func):
         if self.block is not None:
@@ -315,8 +320,6 @@ class FunctionDef(ASTNode):
         function_object = Ast_Types.Function(self.func_name, self.args_types,
                                              self.function_ir, self.module,
                                              self)
-        if self.block is None and platform.system() == "windows":
-            self.function_ir.linkage += "dllimport"
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \
@@ -338,11 +341,17 @@ class FunctionDef(ASTNode):
         self.block.pre_eval(self)
 
     def create_const_var(self, typ):
+        if self.builder is None or self.builder.block is None:
+            errors.developer_warning("A call exists to `create_const_var` " +
+                                     "when the function has no block.")
+            return
+
         current_block = self.builder.block
         self.builder.position_at_start(self.ir_entry)
         if self.yields:
             self.yield_consts.append(typ)
-            self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
+            self.yield_gen_type.add_members(self.yield_consts,
+                                            [x[0].type for x in self.variables])
             ptr = self.builder.gep(self.yield_struct_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 3),

@@ -2,11 +2,9 @@ from typing import Final
 
 from llvmlite import ir  # type: ignore
 
-from Ast import Ast_Types, exception
-from Ast.literals.numberliteral import Literal
-from Ast.math import OperationNode
+from Ast import Ast_Types
 from Ast.nodes import ExpressionNode
-from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.commontypes import SrcPosition
 from Ast.reference import Ref
 from Ast.variables.reference import VariableRef
 from errors import error
@@ -28,8 +26,8 @@ def check_valid_literal_range(lhs, rhs):
 
 # TODO: RENAME & MAKE INTO MATH EXPRESSION
 class VariableIndexRef(ExpressionNode):
-    '''The index to an array'''
-    __slots__ = ('ind', 'varref', 'var_name', 'size')
+    '''The index operation on an array'''
+    __slots__ = ('ind', 'varref')
     assignable = True
 
     def __init__(self, pos: SrcPosition, varref: VariableRef,
@@ -37,10 +35,10 @@ class VariableIndexRef(ExpressionNode):
         super().__init__(pos)
         self.varref = varref
         self.ind = ind
-        self.size = 0
 
     def copy(self):
-        return VariableIndexRef(self._position, self.varref.copy(), self.ind.copy())
+        return VariableIndexRef(self._position, self.varref.copy(),
+                                self.ind.copy())
 
     def fullfill_templates(self, func):
         self.varref.fullfill_templates(func)
@@ -54,12 +52,13 @@ class VariableIndexRef(ExpressionNode):
             error(f"Type \"{str(self.varref.ret_type)}\" can only have " +
                   "literal indexes", line=self.ind.position)
 
-        op_return = self.varref.ret_type.get_op_return(func, 'ind', None, self.ind)
+        op_return = self.varref.ret_type.get_op_return(func, 'ind', None,
+                                                       self.ind)
         if op_return is not None:
             self.ret_type = op_return
         else:
-            error("Type is not indexable")
-            self.ret_type = self.varref.ret_type
+            error(f"Type {self.varref.ret_type.__str__()} is not indexable",
+                  line=self.varref.position)
 
     def check_valid_literal(self, lhs, rhs):
         if rhs.isconstant and check_valid_literal_range(lhs, rhs):
@@ -96,7 +95,9 @@ class VariableIndexRef(ExpressionNode):
             self.ind = self.ind.get_value(func)
         if self.varref.ret_type.index_returns_ptr:
             self.ptr = self.varref.ret_type.index(func, self.varref, self.ind)
-            if self.ret_type.name == "UntypedPointer":  # ? Why did I put this here?
+
+            # ? VV Why did I put this here VV?
+            if self.ret_type.name == "UntypedPointer":
                 return self.ptr
 
             return func.builder.load(self.ptr)
@@ -110,7 +111,9 @@ class VariableIndexRef(ExpressionNode):
         return f"<index of `{self.varref}`>"
 
     def as_type_reference(self, func, allow_generics=False):
-        return Ast_Types.Array(self.ind, self.varref.as_type_reference(func, allow_generics=allow_generics))
+        typ = self.varref.as_type_reference(func,
+                                            allow_generics=allow_generics)
+        return Ast_Types.Array(self.ind, typ)
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Array Index",

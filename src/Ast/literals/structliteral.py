@@ -1,11 +1,12 @@
 from llvmlite import ir
-from Ast.Ast_Types import Type_Function
-from Ast.nodes.passthrough import PassNode# type: ignore
 
 import errors
-from Ast.nodes import Block, ExpressionNode, KeyValuePair
-from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.Ast_Types import Type_Function
 from Ast.Ast_Types.Type_Struct import Struct
+from Ast.nodes import Block, ExpressionNode, KeyValuePair
+from Ast.nodes.block import create_const_var
+from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.passthrough import PassNode  # type: ignore
 
 
 class StructLiteral(ExpressionNode):
@@ -69,7 +70,7 @@ class StructLiteral(ExpressionNode):
                          line=self.position)
 
     def eval_impl(self, func):
-        ptr = func.create_const_var(self.ret_type)
+        ptr = create_const_var(func, self.ret_type)
         zero_const = ir.Constant(ir.IntType(64), 0)
         idx_lookup = {name: idx for idx, name in
                       enumerate(self.ret_type.member_indexs)}
@@ -92,8 +93,7 @@ class StructLiteral(ExpressionNode):
         return Lifetimes.FUNCTION
 
     def get_position(self) -> SrcPosition:
-        return self.merge_pos((self._position,
-                               *[x.position for x in self.members.children]))
+        return self.merge_pos((self._position, self.members.position))
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Struct Literal",

@@ -1,8 +1,10 @@
 import Ast.Ast_Types as Ast_Types
 import errors
 from Ast.Ast_Types.Type_Void import Void
+from Ast.directives.directivenode import DirectiveList
 from Ast.functions.definition import FunctionDef
 from Ast.generics import GenericSpecify
+from Ast.module import NamespaceInfo
 from Ast.nodes import ASTNode, KeyValuePair
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.container import ContainerNode
@@ -12,7 +14,7 @@ from Ast.variables.varobject import VariableObj
 
 class StructDef(ASTNode):
     __slots__ = ("struct_name", "block", "struct_type", "block", "module",
-                 "is_generic", "generic_args", "raw_name")
+                 "is_generic", "generic_args", "raw_name", "is_wrapper")
 
     can_have_modifiers = True
 
@@ -54,6 +56,7 @@ class StructDef(ASTNode):
             module.types[self.struct_name] = self.struct_type
         module.add_struct_to_schedule(self)
         self.module = module
+        self.is_wrapper = False
         # if self.is_generic:
         #     module.add_template_to_schedule(self)
 
@@ -62,6 +65,7 @@ class StructDef(ASTNode):
                         self.block.copy(), self.module, register=False)
         out.modifiers = self.modifiers
         out.block.parent = out
+        out.is_wrapper = self.is_wrapper
         return out
 
     @property
@@ -73,18 +77,14 @@ class StructDef(ASTNode):
 
     def get_type_by_name(self, var_name, pos):
         if var_name in self.generic_args.keys():
-            return self.generic_args[var_name][0]
+            return NamespaceInfo(self.generic_args[var_name][0], {})
         elif var_name == "Self":
-            return self.struct_type
+            return NamespaceInfo(self.struct_type(), {})
 
         return self.module.get_type_by_name(var_name, pos)
 
     def get_unique_name(self, name: str) -> str:
-        types = []
-        for typ in self.generic_args.values():
-            types.append(str(typ))
-
-        return self.module.get_unique_name(f"__meth.{self.struct_name}.{name}.<{', '.join(types)}>")
+        return self.module.get_unique_name(f"__meth.{self.struct_name}.{name}")
 
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.generic_args.keys():
@@ -92,7 +92,10 @@ class StructDef(ASTNode):
         elif var_name == "Self":
             return self.struct_type
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def get_variable(self, var_name, module=None):
         '''Methods use this to get the names of types
@@ -103,31 +106,56 @@ class StructDef(ASTNode):
         elif var_name == "Self":
             return self.struct_type
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def _yield_functions(self):
         # skip first element
         for statement in self.block.children[1:]:
+            statement = self._unwrap_directive(statement)
+
+            if statement is None:
+                continue
+
             if isinstance(statement, FunctionDef):
                 yield statement
             else:
                 errors.error("Struct bodies can only contain function " +
                              "declarations or member declarations",
-                             line=statement.pos)
+                             line=statement.position)
 
     def create_function(self, name: str, func_obj):
         self.struct_type.create_function(name, func_obj)
 
     def scheduled(self, mod):
         self.struct_type.set_visibility(self.visibility)
+        self.struct_type.is_wrapper = self.is_wrapper
         self.fullfill_templates(mod)
 
     def reset(self):
         self.block.reset()
 
+    def _unwrap_directive(self, directive):
+        '''if something is a directive, keep going thru it until reaching original node'''
+        if not isinstance(directive, DirectiveList):
+            return directive
+
+        if isinstance(directive.statement, DirectiveList) and directive.should_compile:
+            return self._unwrap_directive(directive.statement)
+
+        if directive.should_compile:
+            return directive.statement
+
     def fullfill_templates(self, func):
         if not self.is_generic:
             for stmt in self.block:
+                stmt = self._unwrap_directive(stmt)
+
+                if stmt is None:
+                    continue
+
                 if isinstance(stmt, FunctionDef):
                     stmt.parent = self
                 stmt.fullfill_templates(self)

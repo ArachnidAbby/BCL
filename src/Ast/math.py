@@ -6,12 +6,14 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types  # type: ignore
 from Ast.Ast_Types.Type_Reference import Reference
+from Ast.Ast_Types.Type_Union import Union
 from Ast.Ast_Types.Type_Void import Void
 # from Ast import exception
 # from Ast.literals import Literal
 from Ast.nodes import ASTNode, ExpressionNode
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from Ast.nodes.passthrough import PassNode
+from Ast.reference import Ref
 
 # from Ast.variable import VariableRef
 
@@ -27,6 +29,7 @@ class Operation(NamedTuple):
     function: Callable[[ASTNode, ASTNode, Any, Any], ir.Instruction | None]
     cls: Callable
     pre_eval_right: bool = True
+    constant_func: Callable = None
 
     def __call__(self, pos, lhs, rhs, shunted=False):
         return self.cls(pos, self, lhs, rhs, shunted)
@@ -45,7 +48,8 @@ class OperationNode(ExpressionNode):
         self.op = op
 
     def copy(self):
-        return OperationNode(self._position, self.op, self.lhs.copy(), self.rhs.copy(), self.shunted)
+        return OperationNode(self._position, self.op, self.lhs.copy(),
+                             self.rhs.copy(), self.shunted)
 
     def reset(self):
         super().reset()
@@ -71,9 +75,7 @@ class OperationNode(ExpressionNode):
                 return
 
         if isinstance(self.rhs.ret_type, Reference):
-
             ptr = self.rhs.eval(func)
-
             self.rhs = PassNode(self.rhs.position,
                                 func.builder.load(ptr),
                                 self.rhs.ret_type.typ,
@@ -88,15 +90,26 @@ class OperationNode(ExpressionNode):
             self.deref(func)
 
         # TODO: Allow an override_get_return Callable
+        # ? ^^ what does this mean
         if self.op.name == "as":
             self.ret_type = self.rhs.as_type_reference(func)
-        elif self.op.name in ('not', 'and', 'or'):
+        elif self.op.name in ('not', 'and', 'or', 'is', 'short_or', 'short_and'):
             self.ret_type = Ast_Types.Integer_1()
         else:
             self.ret_type = (self.lhs.ret_type).get_op_return(func,
                                                               self.op_type,
                                                               self.lhs,
                                                               self.rhs)
+        if self.ret_type is None and self.op.name != "access_member" and self.op.operator_precendence > -100:
+            self.op.function(self, func, self.lhs, self.rhs)
+            # fallback error if a mistake is made in the type system code.
+            #   for example, a type doesn't give a return for an op,
+            #   but the op IS supported. Thats how you get this error.
+            errors.error("Unsupported operation (UNCAUGHT BY TYPE SYSTEM" +
+                         " // **FALLBACK ERROR MESSAGE**)\n" +
+                         "This could be caused by a possible compiler error." +
+                         " Report if necessary.",
+                         line=self.lhs.position)
 
     def eval_math(self, func, lhs, rhs):
         return self.op.function(self, func, lhs, rhs)
@@ -146,14 +159,17 @@ class OperationNode(ExpressionNode):
             return RPN_to_node(shunt(self)).eval(func)
         else:
             self.pre_eval(func)
-            return self.eval_math(func, self.lhs, self.rhs)
+            if not self.is_constant_expr:
+                return self.eval_math(func, self.lhs, self.rhs)
+            return ir.Constant(self.ret_type.ir_type, self.get_const_value())
 
     def __str__(self) -> str:
         return f"<{str(self.lhs)} |{self.op.name}| {str(self.rhs)}>"
 
     def as_type_reference(self, func, allow_generics=False):
         if not self.shunted:
-            return RPN_to_node(shunt(self)).as_type_reference_defer(func, allow_generics)
+            return RPN_to_node(shunt(self))\
+                    .as_type_reference_defer(func, allow_generics)
         else:
             return self.as_type_reference_defer(func, allow_generics)
 
@@ -176,8 +192,33 @@ class OperationNode(ExpressionNode):
         return self.create_tree("Math Expression",
                                 lhs=self.lhs,
                                 rhs=self.rhs,
+                                constant_expression=self.is_constant_expr,
                                 operation=self.op.name,
                                 return_type=self.ret_type)
+
+    def get_const_value(self) -> int | float:
+        if not self.shunted:
+            return RPN_to_node(shunt(self))\
+                    .get_const_value()
+        else:
+            value = self.op.constant_func(None, self.lhs, self.rhs)
+            return value
+
+    @property
+    def is_constant_expr(self) -> bool:
+        if not self.shunted:
+            return RPN_to_node(shunt(self))\
+                    .is_constant_expr
+        else:
+            if not self.lhs.ret_type.can_fold_constants:
+                return False
+            if self.rhs is not None:
+                return self.lhs.is_constant_expr and self.rhs.is_constant_expr and self.op.constant_func is not None
+            return self.lhs.is_constant_expr and self.op.constant_func is not None
+
+    @property
+    def position(self) -> SrcPosition:
+        return self.merge_pos((self.lhs.position, self.rhs.position))
 
 
 # To any future programmers:
@@ -248,11 +289,12 @@ def RPN_to_node(shunted_data: deque) -> OperationNode:
 
 
 def operator(precedence: int, name: str, right=False,
-             pre_eval_right=True, cls=OperationNode):
+             pre_eval_right=True, cls=OperationNode,
+             constant_func=lambda lhs, rhs: 0):
     def wrapper(func):
         global ops
         op = Operation(precedence, name.lower(), right, func, cls,
-                       pre_eval_right)
+                       pre_eval_right, constant_func)
         ops[name.upper()] = op
         ops[name.lower()] = op
 
@@ -265,8 +307,22 @@ def operator(precedence: int, name: str, right=False,
     return wrapper
 
 
+class BitwiseOr(OperationNode):
+    def _get_types(self, func, allow_generics=False):
+        rhs_typ = self.rhs.as_type_reference(func, allow_generics)
+        if isinstance(self.lhs, BitwiseOr):
+            return [*self.lhs._get_types(func), rhs_typ]
+
+        lhs_typ = self.lhs.as_type_reference(func, allow_generics)
+        return [lhs_typ, rhs_typ]
+
+    def as_type_reference(self, func, allow_generics=False):
+        types = self._get_types(func, allow_generics)
+        return Union(func.module, types)
+
+
 class MemberAccess(OperationNode):
-    __slots__ = ("assignable", "is_pointer")
+    __slots__ = ("assignable", "is_pointer", "needs_unwrap")
     # do_register_dispose = False
 
     def __init__(self, pos: SrcPosition, op, lhs, rhs, shunted=False):
@@ -276,6 +332,7 @@ class MemberAccess(OperationNode):
         super().__init__(pos, op, lhs, rhs, shunted)
         self.assignable = True
         self.is_pointer = False
+        self.needs_unwrap = False
         if not isinstance(rhs, ContainerNode) and not isinstance(rhs, VariableRef) and not isinstance(rhs, NamespaceIndex):
             errors.error("Member access operator can only get members that " +
                          "are in parenthesis or are valid keywords",
@@ -329,9 +386,13 @@ class MemberAccess(OperationNode):
             self.assignable = member_info.mutable
             self.is_pointer = member_info.is_pointer
             self.ret_type = member_info.typ
+            self.needs_unwrap = member_info.causes_unwrap
 
     def _get_global_func(self, module, name: str):
-        return module.get_global(name)
+        value = module.get_global(name)
+        if value is None:
+            return None
+        return value.obj
 
     def get_coupled_lifetimes(self, func) -> list:
         return self.lhs.get_coupled_lifetimes(func)
@@ -362,6 +423,18 @@ class MemberAccess(OperationNode):
 
     def get_lifetime(self, func):
         return self.lhs.get_lifetime(func)
+
+    def get_left(self, func):
+        '''requires self.lhs to be a struct type'''
+        if self.needs_unwrap and func is not None:
+            return self.lhs.ret_type.unwrap(func, self.lhs)[0]
+        return self.lhs
+
+    def get_left_mut(self, func):
+        '''requires self.lhs to be a struct type'''
+        if self.needs_unwrap and func is not None:
+            return self.lhs.ret_type.unwrap_mut(func, self.lhs)[0]
+        return Ref(self.lhs.position, self.lhs)
 
     def using_global(self, func) -> bool:
         from Ast.nodes.container import ContainerNode
@@ -402,112 +475,130 @@ def _as(self, func, lhs, rhs):
     return out
 
 
-# TODO: get this working (it seems llvm doesn't have a basic `pow` operation)
-@operator(9, "Pow")
+@operator(10, "is", pre_eval_right=False)
+def _is(self, func, lhs, rhs):
+    typ = rhs.as_type_reference(func)
+    if isinstance(lhs.ret_type, Union) and not isinstance(typ, Union):
+        return lhs.ret_type.runtime_roughly_equals_rev(func, lhs, typ)
+
+    out = typ.runtime_roughly_equals(func, lhs)
+    return out
+
+
+@operator(9, "Pow", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_pow(func, lhs, rhs))
 def pow(self, func, lhs, rhs):
     return (lhs.ret_type).pow(func, lhs, rhs)
 
 
-@operator(8, "bitnot")
+@operator(8, "bitnot", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_not(func, lhs, rhs))
 def bnot(self, func, lhs, rhs):
-    return (lhs.ret_type).bit_not(func, lhs, rhs)
+    return (lhs.ret_type).bit_not(func, lhs)
 
 
-@operator(0, "Lshift")
+@operator(0, "Lshift", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_lshift(func, lhs, rhs))
 def lshift(self, func, lhs, rhs):
     return (lhs.ret_type).lshift(func, lhs, rhs)
 
 
-@operator(0, "Rshift")
+@operator(0, "Rshift", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_rshift(func, lhs, rhs))
 def rshift(self, func, lhs, rhs):
     return (lhs.ret_type).rshift(func, lhs, rhs)
 
 
-@operator(-1, "Band")
+@operator(-1, "Band", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_and(func, lhs, rhs))
 def band(self, func, lhs, rhs):
     return (lhs.ret_type).bit_and(func, lhs, rhs)
 
 
-@operator(-2, "Bxor")
+@operator(-2, "Bxor", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_xor(func, lhs, rhs))
 def bxor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_xor(func, lhs, rhs)
 
 
-@operator(-3, "Bor")
+@operator(-3, "Bor", cls=BitwiseOr, constant_func=lambda func, lhs, rhs: lhs.ret_type.const_bit_or(func, lhs, rhs))
 def bor(self, func, lhs, rhs):
     return (lhs.ret_type).bit_or(func, lhs, rhs)
 
 
-@operator(1, "Sum")
+@operator(1, "Sum", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_sum(func, lhs, rhs))
 def sum(self, func, lhs, rhs):
     return (lhs.ret_type).sum(func, lhs, rhs)
 
 
-@operator(1, "Sub")
+@operator(1, "Sub", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_sub(func, lhs, rhs))
 def sub(self, func, lhs, rhs):
     return (lhs.ret_type).sub(func, lhs, rhs)
 
 
-@operator(2, "Mul")
+@operator(2, "Mul", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_mul(func, lhs, rhs))
 def mul(self, func, lhs, rhs):
     return (lhs.ret_type).mul(func, lhs, rhs)
 
 
-@operator(2, "Div")
+@operator(2, "Div", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_div(func, lhs, rhs))
 def div(self, func, lhs, rhs):
     return (lhs.ret_type).div(func, lhs, rhs)
 
 
-@operator(2, "Mod")
+@operator(2, "Mod", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_mod(func, lhs, rhs))
 def mod(self, func, lhs, rhs):
     return (lhs.ret_type).mod(func, lhs, rhs)
 
 # * comparators
 
 
-@operator(-4, "eq")
+@operator(-4, "eq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_eq(func, lhs, rhs))
 def eq(self, func, lhs, rhs):
     return (lhs.ret_type).eq(func, lhs, rhs)
 
 
-@operator(-4, "neq")
+@operator(-4, "neq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_neq(func, lhs, rhs))
 def neq(self, func, lhs, rhs):
     return (lhs.ret_type).neq(func, lhs, rhs)
 
 
-@operator(-4, "le")
+@operator(-4, "le", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_le(func, lhs, rhs))
 def le(self, func, lhs, rhs):
     return (lhs.ret_type).le(func, lhs, rhs)
 
 
-@operator(-4, "leq")
+@operator(-4, "leq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_leq(func, lhs, rhs))
 def leq(self, func, lhs, rhs):
     return (lhs.ret_type).leq(func, lhs, rhs)
 
 
-@operator(-4, "gr")
+@operator(-4, "gr", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_ge(func, lhs, rhs))
 def gr(self, func, lhs, rhs):
     return (lhs.ret_type).gr(func, lhs, rhs)
 
 
-@operator(-4, "geq")
+@operator(-4, "geq", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_geq(func, lhs, rhs))
 def geq(self, func, lhs, rhs):
     return (lhs.ret_type).geq(func, lhs, rhs)
 
 # * boolean ops
 
 
-@operator(-7, "or")
+@operator(-7, "short_or", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) or rhs.ret_type.const_truthy(func, rhs))
+def _sor(self, func, lhs, rhs):
+    return (lhs.ret_type)._sor(func, lhs, rhs)
+
+
+@operator(-6, "short_and", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) and rhs.ret_type.const_truthy(func, rhs))
+def _sand(self, func, lhs, rhs):
+    return (lhs.ret_type)._sand(func, lhs, rhs)
+
+@operator(-7, "or", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) or rhs.ret_type.const_truthy(func, rhs))
 def _or(self, func, lhs, rhs):
     return (lhs.ret_type)._or(func, lhs, rhs)
 
 
-@operator(-6, "and")
+@operator(-6, "and", constant_func=lambda func, lhs, rhs: lhs.ret_type.const_truthy(func, lhs) and rhs.ret_type.const_truthy(func, rhs))
 def _and(self, func, lhs, rhs):
     return (lhs.ret_type)._and(func, lhs, rhs)
 
 
-@operator(-5, "not")
+@operator(-5, "not", constant_func=lambda func, lhs, rhs: not lhs.ret_type.const_truthy(func, lhs))
 def _not(self, func, lhs, rhs):
     return (lhs.ret_type)._not(func, lhs)
 

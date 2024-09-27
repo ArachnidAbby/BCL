@@ -1,0 +1,39 @@
+import stdlib::*;
+
+define main() {
+    some_array = [1, 2, 3, 4, 5, 6, 7, 20];
+
+    a = some_array[;-1];
+    b = some_array[0:;-1];
+    c = some_array[:5;-1];
+    d = some_array[0:5;-1];
+    e = some_array[0:];
+    f = some_array[:5];
+    g = some_array[0:5];
+    h = some_array[:];
+    i = some_array[;];
+    j = some_array as [i32];
+
+    a as i32[8];
+    b as i32[8];
+    c as i32[8];
+    d as i32[8];
+    e as i32[8];
+    f as i32[8];
+    g as i32[8];
+    h as i32[8];
+    i as i32[8];
+    j as i32[8];
+
+    start = 0;
+    end = 5;
+
+    b = some_array[start:;-1];
+    c = some_array[:end;-1];
+    d = some_array[start:end;-1];
+    e = some_array[start:];
+    f = some_array[:end];
+    g = some_array[start:end];
+
+    // add for loop stuffs
+}

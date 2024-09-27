@@ -2,18 +2,20 @@ import os
 import platform
 import shutil
 import sys
-from pathlib import Path
 from typing import List
 
 import compile
 import errors
 
 PATH = os.path.dirname(os.path.realpath(__file__))
+BCL_VERSION = "v0.8.0--alpha preview 1"
 
 if platform.system() == "Windows":
     os.system("")
 
-HELP = """Commands:
+HELP = f"""BCL VERSION: '{BCL_VERSION}'
+
+Commands:
 
 compile <src> [..args]
     compile a file
@@ -50,7 +52,7 @@ def make_project(args: List[str]):
     os.mkdir(f"{args[2]}/lib")
 
     shutil.copyfile(f"{PATH}/templates/{template}/project.toml", f"{args[2]}/project.toml")
-    with open(f"{args[2]}/project.toml",'r+', encoding='UTF-8') as f:
+    with open(f"{args[2]}/project.toml", 'r+', encoding='UTF-8') as f:
         contents = f.read()
         f.seek(0, 0)
         f.write(contents.format(AUTHOR=os.getlogin(), PROJECT_NAME=args[2]))

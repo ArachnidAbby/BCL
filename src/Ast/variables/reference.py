@@ -77,7 +77,7 @@ class VariableRef(ExpressionNode):
 
     def get_coupled_lifetimes(self, func) -> list:
         var = self.block.get_variable(self.var_name, func.module)
-        if var.is_arg:
+        if isinstance(var, VariableObj) and var.is_arg:
             return [var.arg_idx]
 
         return []
@@ -96,9 +96,15 @@ class VariableRef(ExpressionNode):
         '''
         typ = None
         if self.block is not None:
-            typ = self.block.get_type_by_name(self.var_name, self.position)()
-        elif typ is None:
-            typ = func.get_type_by_name(self.var_name, self.position)()
+            typ = self.block.get_type_by_name(self.var_name, self.position)
+        else:
+            typ = func.get_type_by_name(self.var_name, self.position)
+
+        if typ is None:
+            error("Failed to find type of the specified name",
+                    line=self.position)
+        typ = typ.obj()
+
         if typ.is_generic and not allow_generics:
             error(f"Type is generic. Add type params. {typ}",
                   line=self.position)

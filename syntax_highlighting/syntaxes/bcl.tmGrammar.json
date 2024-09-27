@@ -9,6 +9,7 @@
             { "include": "#comment" },
             { "include": "#constants" },
             { "include": "#function_declaration" },
+            { "include": "#directives" },
             { "include": "#enums" },
             { "include": "#structs"},
             { "include": "#types"},
@@ -17,6 +18,31 @@
             { "include": "#string" }
         ]
       },
+      "directives": {
+        "begin": "(\\#)(\\[)",
+        "beginCaptures": {
+            "1": {"name": "punctuation.definition.attribute.bcl"},
+            "2": {"name": "punctuation.brackets.attribute.bcl"}
+        },
+        "end": "\\]",
+        "endCaptures": {
+            "0": {"name": "punctuation.brackets.attribute.bcl"}
+
+        },
+        "patterns": [
+            {
+              "match": "([a-zA-Z0-9_]+)\\s*",
+              "captures": {
+                "1": {"name": "meta.function-call.generic.bcl"}
+              }
+            },
+            {"include": "#keywords"},
+            {"include": "#constants"},
+            {"include": "#string"},
+            {"include": "#punctuation"}
+        ]
+      },
+
 
       "function_declaration": {
         "begin": "(define)\\s+([a-zA-Z0-9_]+)\\s*(\\()",

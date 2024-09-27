@@ -1,7 +1,6 @@
-from abc import abstractmethod
-
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
+from Ast.nodes.block import create_const_var, get_current_block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from errors import error
 
@@ -26,7 +25,7 @@ class ExpressionNode(ASTNode):
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
         if self.ptr is None:
-            self.ptr = func.create_const_var(self.ret_type)
+            self.ptr = create_const_var(func, self.ret_type)
             val = self.eval(func)
             # self._instruction = val
             func.builder.store(val, self.ptr)
@@ -36,12 +35,15 @@ class ExpressionNode(ASTNode):
         return super().fullfill_templates(func)
 
     def eval(self, func, *args, **kwargs):
-        if self.do_register_dispose and self.ret_type is not None and self.ret_type.needs_dispose and not self.__evaled and not self.overwrite_eval:
+        if self.do_register_dispose and self.ret_type is not None and \
+                self.ret_type.needs_dispose and \
+                not self.__evaled and not self.overwrite_eval:
             self.__evaled = True
             self.get_ptr(func)
             self.__evaled = False
 
-            func.register_dispose(self)
+            block = get_current_block()
+            block.register_dispose(func, self)
             if self._instruction is None:
                 self._instruction = self.eval_impl(func, *args, **kwargs)
         else:
@@ -70,7 +72,8 @@ class ExpressionNode(ASTNode):
     def store(self, func, ptr, value,
               typ, first_assignment=False):
         '''Store data at some address '''
-        self.ret_type.assign(func, ptr, value, typ, first_assignment=first_assignment)
+        self.ret_type.assign(func, ptr, value, typ,
+                             first_assignment=first_assignment)
 
     def reset(self):
         super().reset()
@@ -83,7 +86,14 @@ class ExpressionNode(ASTNode):
 
     def as_type_reference(self, func, allow_generics=False):
         '''Get this expresion as the reference to a type'''
-        error(f"invalid type: {str(self)}", line=self.position)
+        error("invalid type name:", line=self.position)
+
+    def get_const_value(self) -> int | float:
+        return 0
+
+    @property
+    def is_constant_expr(self) -> bool:
+        return False
 
     @property
     def ir_type(self):

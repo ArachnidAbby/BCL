@@ -1,5 +1,3 @@
-from typing import Self
-
 from llvmlite import ir
 
 from Ast.Ast_Types import Type_Bool, Type_Char, Type_I32
@@ -115,11 +113,12 @@ class StringLiteral(Type_Base.Type):
             self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
 
     def get_namespace_name(self, func, name, pos):
+        from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x
 
         if name == "new":
-            return InitEmptyFuction()
+            return NamespaceInfo(InitEmptyFuction(), {})
 
     def declare(self, module):
         eq_typ = self.equal_func.ftype
@@ -134,9 +133,13 @@ class StringLiteral(Type_Base.Type):
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if typ != self:
             error(f"Cannot convert '{self}' " +
-                  f"to type '{typ}'", line=orig.position)
+                  f"to type '{typ.__str__()}'", line=orig.position)
         return orig.eval(func)
 
     def get_op_return(self, func, op, lhs, rhs):
@@ -154,8 +157,7 @@ class StringLiteral(Type_Base.Type):
             case "length":
                 return MemberInfo(False, False, u64_ty)
             case _:
-                return None
-                error("member not found!", line=rhs.position)
+                return super().get_member_info(lhs, rhs)
 
     def get_size(self, func, ptr):
         char_ptr = func.builder.load(func.builder.gep(ptr, (ZERO_CONST, ZERO_CONST)))
@@ -171,8 +173,7 @@ class StringLiteral(Type_Base.Type):
                 ptr = lhs.get_ptr(func)
                 return self.get_size(func, ptr)
             case _:
-                return None
-                error("member not found!", line=rhs.position)
+                return super().get_member(func, lhs, rhs)
 
     def index(self, func, lhs, rhs):
         lhs_ptr = lhs.get_ptr(func)

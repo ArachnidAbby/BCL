@@ -114,7 +114,7 @@ class VariableAssign(ASTNode):
         if not self.is_declaration and typ.needs_dispose:
             typ.dispose(func, ptr)
         if typ.needs_dispose and self.is_declaration:
-            func.register_dispose(ptr)
+            block.get_current_block().register_dispose(func, ptr)
 
         if ptr.get_lifetime(func).value > self.value.get_lifetime(func).value and not self.value.ret_type.returnable:
             error("Cannot store short-lived data in a long-lived variable",

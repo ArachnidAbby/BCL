@@ -52,10 +52,9 @@ class FunctionCall(ExpressionNode):
                 self.func_name.using_global(func) and not \
                 self.combined_args:
             self.combined_args = True
-            data = self.func_name.lhs
+            data = self.func_name.get_left(func)
             data = data.children if isinstance(data, ParenthBlock) else [data]
             self.paren.children = data + self.paren.children
-
         self.ret_type = self.func_name.ret_type.get_op_return(func,
                                                               "call",
                                                               self.func_name,
@@ -76,7 +75,7 @@ class FunctionCall(ExpressionNode):
 
         childs = self.paren.children
         if isinstance(self.func_name, MemberAccess) and coupling_func.is_method:
-            childs = [self.func_name.lhs] + childs
+            childs = [self.func_name.get_left(func)] + childs
 
         for idx, child in enumerate(childs):
             lifetimes = child.get_coupled_lifetimes(func)
@@ -103,7 +102,7 @@ class FunctionCall(ExpressionNode):
 
         childs = self.paren.children
         if isinstance(self.func_name, MemberAccess) and coupling_func.is_method:
-            childs = [self.func_name.lhs] + childs
+            childs = [self.func_name.get_left(func)] + childs
 
         return childs[coupling_func.return_coupling[0]].get_lifetime(func)
 

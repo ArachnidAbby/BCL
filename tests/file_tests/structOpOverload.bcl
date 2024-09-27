@@ -97,6 +97,16 @@ struct MyStruct {
     define __truthy__(self) -> bool {
         return self.x != 0;
     }
+
+    define __iter__(self) -> bool {
+        yield true;
+        yield false;
+        yield true;
+    }
+
+    define __call__(self, x: i32) -> bool {
+        return true;
+    }
 }
 
 define main() {
@@ -128,4 +138,10 @@ define main() {
     else if val {}
 
     println(*val);
+
+    for x in val {
+        println(x);
+    }
+
+    println(val(22));
 }

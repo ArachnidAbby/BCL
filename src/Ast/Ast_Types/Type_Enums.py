@@ -5,6 +5,7 @@ from Ast import Ast_Types
 from Ast.Ast_Types.Type_Base import Type
 from Ast.Ast_Types.Type_I32 import Integer_32
 from Ast.literals.numberliteral import Literal
+from Ast.module import NamespaceInfo
 
 # Found using https://mathiasbynens.be/demo/integer-range
 # because I'm lazy
@@ -98,6 +99,10 @@ class EnumType(Type):
         if typ == self:
             return orig.eval(func)
 
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if isinstance(typ, Integer_32):
             if typ.size == self.bitsize:
                 return orig.eval(func)
@@ -108,7 +113,7 @@ class EnumType(Type):
             if typ.size < self.bitsize:
                 return func.builder.trunc(orig.eval(func), typ.ir_type)
 
-        errors.error(f"Cannot convert {str(self)} to {str(typ)}",
+        errors.error(f"Cannot convert {str(self)} to {typ.__str__()}",
                      line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):
@@ -161,7 +166,7 @@ class EnumType(Type):
         lhs_eval = lhs.eval(func)
         return func.builder.and_(lhs_eval, rhs_eval)
 
-    def bit_not(self, func, lhs, rhs):
+    def bit_not(self, func, lhs):
         lhs_eval = lhs.eval(func)
         return func.builder.not_(lhs_eval)
 
@@ -187,7 +192,8 @@ class EnumType(Type):
             if self.members[name] is None:
                 errors.error("Variant has yet to be initialized",
                              line=pos)
-            return Literal(pos, self.members[name], self)
+            val = Literal(pos, self.members[name], self)
+            return NamespaceInfo(val, {})
 
         errors.error(f"Name \"{name}\" cannot be " +
                      f"found in Type \"{str(self)}\"",

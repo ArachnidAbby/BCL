@@ -1,11 +1,51 @@
-
 from typing import Self
 
 from llvmlite import ir
 
-from Ast.nodes.commontypes import Modifiers
+from Ast.nodes.commontypes import MemberInfo, Modifiers
 from Ast.nodes.passthrough import PassNode  # type: ignore
 from errors import error
+
+struct_op_overloads = {
+    "sum": "__add__",
+    "sub": "__sub__",
+    "mul": "__mul__",
+    "div": "__div__",
+    "mod": "__mod__",
+    "pow": "__pow__",
+    "eq": "__eq__",
+    "neq": "__neq__",
+    "le": "__lt__",
+    "gr": "__gt__",
+    "geq": "__geq__",
+    "leq": "__leq__",
+    "_imul": "__imul__",
+    "_idiv": "__idiv__",
+    "_isub": "__isub__",
+    "_isum": "__iadd__",
+    "ind": "__index__",
+    "call": "__call__",
+
+    "bor": "__bitor__",
+    "band": "__bitand__",
+    "bxor": "__bitxor__",
+    "bitnot": "__bitnot__",
+    "lshift": "__lshift__",
+    "rshift": "__rshift__"
+}
+
+op_overloads_reversed = {value: key for key, value in struct_op_overloads.items()}
+
+
+def create_op_method(op_name, func_name, typ, callback):
+    from Ast.Ast_Types.Type_Function import FakeOpFunction
+
+    arg_count = 2
+    if op_name in ("bitnot", "__truthy__", "__deref__"):
+        arg_count = 1
+
+    return FakeOpFunction(func_name, op_name,
+                          typ, callback, arg_count)
 
 
 class Type:
@@ -23,12 +63,13 @@ class Type:
     no_load = False
     # useful for things like function types.
     read_only = False
-    has_members = False
+    has_members = True
     # is this type allowed to be the return type of a function
     returnable = True
     checks_lifetime = False
     # Dynamic types change function definitions and the
     # matching of function args when calling
+    # ? this does nothing I think?
     is_dynamic = False
     # ? should this be here still?
     functions: dict = {"NONSTATIC": []}
@@ -50,19 +91,27 @@ class Type:
     visibility = Modifiers.VISIBILITY_PUBLIC
     generate_bounds_check = True
     index_returns_ptr = True
+    can_fold_constants = False
 
     def __init__(self):
         pass
 
+    def __call__(self) -> Self:
+        return self
+
     def global_namespace_names(self, func, name, pos):
         from Ast.Ast_Types.Type_I32 import Integer_32
         from Ast.literals.numberliteral import Literal
+        from Ast.module import NamespaceInfo
         if name == "SIZEOF":
-            target_data = func.module.target_machine.target_data
-            size = self.ir_type.get_abi_size(target_data)
+            size = self.get_abi_size(func.module)
             ty = Integer_32(name="u64", size=64, signed=False)
             val = Literal(pos, size, ty)
-            return val
+            return NamespaceInfo(val, {})
+
+    def get_abi_size(self, mod) -> int:
+        target_data = mod.target_machine.target_data
+        return self.ir_type.get_abi_size(target_data)
 
     def get_namespace_name(self, func, name, pos):
         '''Getting a name from the namespace'''
@@ -86,10 +135,6 @@ class Type:
 
     def is_void(self) -> bool:
         return False
-
-    def get_member(self, func, lhs,
-                   name) -> tuple[ir.Instruction, Self] | None:
-        return None
 
     def __eq__(self, other):
         return (other is not None) and self.name == other.name
@@ -138,7 +183,7 @@ class Type:
         error(f"Operator '^' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
-    def bit_not(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_not(self, func, lhs) -> ir.Instruction:
         error(f"Operator '~' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
@@ -175,11 +220,11 @@ class Type:
               line=lhs.position)
 
     def le(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+        error(f"Operator '<' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def gr(self, func, lhs, rhs) -> ir.Instruction:
-        error(f"Operator '<=' is not supported for type '{lhs.ret_type}'",
+        error(f"Operator '<' is not supported for type '{lhs.ret_type}'",
               line=lhs.position)
 
     def _and(self, func, lhs, rhs):
@@ -189,6 +234,38 @@ class Type:
     def _or(self, func, lhs, rhs):
         return func.builder.or_(lhs.ret_type.truthy(func, lhs),
                                 rhs.ret_type.truthy(func, rhs))
+
+    # short circuiting
+    def _sand(self, func, lhs, rhs):
+        start_block = func.builder.block
+        true_block = func.builder.append_basic_block(start_block.name + ".logical_and.true")
+        after_block = func.builder.append_basic_block(start_block.name + ".logical_and.end")
+        func.builder.cbranch(lhs.ret_type.truthy(func, lhs), true_block, after_block)
+        start_block = func.builder.block
+        func.builder.position_at_end(true_block)
+        rhs_truthy = rhs.ret_type.truthy(func, rhs)
+        func.builder.branch(after_block)
+        func.builder.position_at_end(after_block)
+        output = func.builder.phi(ir.IntType(1))
+        output.add_incoming(ir.Constant(ir.IntType(1), 0), start_block)
+        output.add_incoming(rhs_truthy, true_block)
+        return output
+
+    # short circuiting
+    def _sor(self, func, lhs, rhs):
+        start_block = func.builder.block
+        false_block = func.builder.append_basic_block(start_block.name + ".logical_or.false")
+        after_block = func.builder.append_basic_block(start_block.name + ".logical_or.end")
+        func.builder.cbranch(lhs.ret_type.truthy(func, lhs), after_block, false_block)
+        start_block = func.builder.block
+        func.builder.position_at_end(false_block)
+        rhs_truthy = rhs.ret_type.truthy(func, rhs)
+        func.builder.branch(after_block)
+        func.builder.position_at_end(after_block)
+        output = func.builder.phi(ir.IntType(1))
+        output.add_incoming(ir.Constant(ir.IntType(1), 1), start_block)
+        output.add_incoming(rhs_truthy, false_block)
+        return output
 
     def _not(self, func, rhs):
         return func.builder.not_(rhs.ret_type.truthy(func, rhs))
@@ -277,9 +354,6 @@ class Type:
     def __str__(self) -> str:
         return self.name
 
-    def __call__(self) -> Self:
-        return self
-
     def eval_impl(self, foo):  # ? Why is this here
         '''Does nothing'''
         pass
@@ -290,10 +364,72 @@ class Type:
     def as_type_reference(self, func, allow_generics=False):
         return self
 
+    # provide a standard type interface this way.
+    def _create_op_func(self, lhs, rhs):
+        special_ops = ("__deref__", "__truthy__")
+        from Ast.variables.reference import VariableRef
+
+        if not isinstance(rhs, VariableRef):
+            return
+
+        if rhs.var_name not in special_ops and \
+                rhs.var_name not in op_overloads_reversed.keys():
+            return
+
+        if rhs.var_name in special_ops:
+            op_name = rhs.var_name
+        else:
+            op_name = op_overloads_reversed[rhs.var_name]
+
+        callback = None
+
+        match rhs.var_name:
+            case "__add__": callback = self.sum
+            case "__sub__": callback = self.sub
+            case "__mul__": callback = self.mul
+            case "__div__": callback = self.div
+            case "__pow__": callback = self.pow
+            case "__eq__": callback = self.eq
+            case "__neq__": callback = self.neq
+            case "__lt__": callback = self.le
+            case "__gr__": callback = self.gr
+            case "__leq__": callback = self.leq
+            case "__geq__": callback = self.geq
+            case "__imul__": callback = self.imul
+            case "__idiv__": callback = self.idiv
+            case "__iadd__": callback = self.isum
+            case "__isub__": callback = self.isub
+            case "__call__": callback = self.call
+            case "__index__": callback = self.index
+            case "__deref__": callback = self.deref
+            case "__truthy__": callback = self.truthy
+            case "__bitor__": callback = self.bit_or
+            case "__bitand__": callback = self.bit_and
+            case "__bitxor__": callback = self.bit_xor
+            case "__bitnot__": callback = self.bit_not
+            case "__lshift__": callback = self.lshift
+            case "__rshift__": callback = self.rshift
+
+        func = create_op_method(op_name,
+                                rhs.var_name,
+                                lhs.ret_type,
+                                callback)
+        return func
+
     def get_member_info(self, lhs, rhs):
         '''Used to get information about members
         ex: ret_type, mutability, etc
         '''
+        func = self._create_op_func(lhs, rhs)
+        if func is None:
+            return None
+
+        return MemberInfo(False, False, func)
+
+    def get_member(self, func, lhs,
+                   name) -> Self | ir.Instruction | None:
+        func = self._create_op_func(lhs, name)
+        return func
 
     def get_members(self):
         '''Gets all the member names.
@@ -301,7 +437,7 @@ class Type:
         '''
         return self.members.keys()  # members should always be a dict!
 
-    def roughly_equals(self, other):
+    def roughly_equals(self, func, other):
         '''check if two types are equivalent.
         This is helpful when you have compound types such as "Any"
         or a Protocol type.
@@ -309,6 +445,15 @@ class Type:
         defaults to `__eq__` behavior
         '''
         return self == other
+
+    def runtime_roughly_equals(self, func, obj):
+        '''check if two types are equivalent (at runtime).
+        This is helpful when you have compound types such as "Any"
+        or a Protocol type.
+
+        defaults to `self.roughly_equals` behavior
+        '''
+        return ir.Constant(ir.IntType(1), self.roughly_equals(func, obj.ret_type))
 
     # ? should this error instead?
     def truthy(self, func, val):
@@ -323,10 +468,10 @@ class Type:
     def ret_type(self):
         return self
 
-    def get_iter_return(self, loc):
-        error(f"{self.name} is not Iterable", line=loc)
+    def get_iter_return(self, func, node):
+        error(f"{self.name} is not Iterable", line=node.position)
 
-    def create_iterator(self, func, loc):
+    def create_iterator(self, func, val, loc):
         '''should return a ptr'''
         if not self.is_iterator:
             error(f"{self.name} is not Iterable", line=loc)  # default
@@ -360,7 +505,6 @@ class Type:
         item[0].ptr = ptr
 
     def add_ref_count(self, func, ptr):
-        # print(f"add_ref_count {func.func_name} {self}")
         pass
 
     def pop_ref_count(self, func, ptr):
@@ -369,10 +513,15 @@ class Type:
     def dispose(self, func, ptr):
         '''code to run on the closing of a function'''
         self.pop_ref_count(func, ptr)
-        # print(f"dispose {func.func_name} {self}")
 
     def get_deref_return(self, func, node):
         error(f"Cannot dereference type, {self}", line=node.position)
 
     def deref(self, func, node):
         error(f"Cannot dereference type, {self}", line=node.position)
+
+    def get_slice_return(self, func, varref, start, end, step):
+        error(f"Type \"{self.__str__()}\" cannot be sliced")
+
+    def make_slice(self, func, array, start, end, step):
+        error(f"Type \"{self.__str__()}\" cannot be sliced")

@@ -59,17 +59,24 @@ class TypeDefinition(ASTNode):
             var = self.params[var_name][0]
             return var
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.params.keys():
             return self.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def get_type_by_name(self, var_name, pos):
+        from Ast.module import NamespaceInfo
         if var_name in self.params.keys():
-            return self.params[var_name][0]
+            return NamespaceInfo(self.params[var_name][0], {})
 
         return self.module.get_type_by_name(var_name, pos)
 

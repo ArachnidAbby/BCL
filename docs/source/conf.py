@@ -19,6 +19,8 @@ from pygments.token import (Comment, Keyword, Name, Number, Operator,
 
 sys.path.insert(0, os.path.abspath('.'))
 
+# import bcldomain
+
 
 # -- Project information -----------------------------------------------------
 
@@ -73,12 +75,14 @@ class BCLLexer(RegexLexer):
     tokens = {
         'root': [
             (r'[\s\n]+', Whitespace),
-            (r'\"(\\.|[^"\\])*\"', String.Double),
+            (r'(["\'])(?:(?=(\\?))\2.)*?\1', String.Double),
             (r'\d+', Number),
-            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)|(while)',
+            (r'(if)|(elif)|(else)|(define)|(struct)|(for)|(import)|(yield)|(return)|(for)|(public)|(enum)|(typedef)|(as)',
              Keyword.Reserved),
             (r'(i8)|(i16)|(i32)|(i64)|(u8)|(u16)|(u32)|(u64)|(f64)|(f128)|(bool)|(char)|(strlit)' +
              r'(char)|(str)|(strlit)', Keyword.Type),
+            (r'(Self)', Name.Builtin.Pseudo),
+            (r'\#\[.*\]', Comment.Preproc),
             (r'\s+((or)|(and)|(not)|(in)|(as))\s+', Operator.Word),
             (r'[\=\+\-\*\\\%\%\<\>\&\^\~\|(\<\<)(\>\>)]', Operator),
             (r'[\{\};\(\)\:\[\]\,(\-\>)\.]', Punctuation),
