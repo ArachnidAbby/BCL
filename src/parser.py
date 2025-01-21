@@ -867,7 +867,7 @@ class Parser(ParserBase):
         if self.peek_safe(3).name in self.standard_expr_checks:
             return
 
-        if self.peek_safe(3).name in ("OPEN_CURLY", "OPEN_CURLY_USED"):
+        if (isinstance(self.peek(2).value, Ast.VariableRef) or isinstance(self.peek(2).value, Ast.NamespaceIndex)) and self.peek_safe(3).name in ("OPEN_CURLY", "OPEN_CURLY_USED"):
             return
 
         # * Parse expressions

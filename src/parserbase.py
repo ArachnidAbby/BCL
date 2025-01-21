@@ -79,7 +79,7 @@ class ParserBase:
         elif '|' in wanting:  # `or` operation
             code = [self.single_compile(y, pos) for y in wanting.split('|')]
             return "("+(' or '.join(code))+")"
-        elif '^' in wanting:  # `or` operation
+        elif '^' in wanting:  # EOF check
             return f'input[{pos}].name=="EOF"'
         else:
             return f'input[{pos}].name=="{wanting}"'
