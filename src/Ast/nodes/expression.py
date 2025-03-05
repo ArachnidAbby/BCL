@@ -98,3 +98,21 @@ class ExpressionNode(ASTNode):
     @property
     def ir_type(self):
         return self.ret_type.ir_type
+
+    # implementating Namespace protocol
+    def get_namespace_name(self, func, name, pos,
+                           stack=None,
+                           override_star=False):
+        error("Expression is not a namespace",
+              line=self.position)
+
+    def get_type_by_name(self, name, position, stack=None,
+                         override_star=False):
+        error("Expression is not a namespace",
+              line=self.position)
+
+    def get_global(self, name: str, pos=SrcPosition.invalid(),
+                   stack=None,
+                   override_star=False):
+        error("Expression is not a namespace",
+              line=self.position)

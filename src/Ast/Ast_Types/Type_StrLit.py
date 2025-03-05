@@ -112,7 +112,8 @@ class StringLiteral(Type_Base.Type):
             self.equal_func = create_compare_method(self, module, 'eq', 0, 1)
             self.nequal_func = create_compare_method(self, module, 'neq', 1, 0)
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x

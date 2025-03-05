@@ -2,7 +2,7 @@ import os
 import parser  # type: ignore
 from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple, Optional, Self, Union
+from typing import Optional, Self
 
 from llvmlite import binding, ir  # type: ignore
 from rply import LexingError
@@ -12,6 +12,9 @@ import Ast
 import errors
 import linker
 from Ast import Ast_Types, package
+from Ast import typing as ast_typing
+from Ast.Ast_Types import Type_Base
+from Ast.literals import numberliteral
 from Ast.nodes import ASTNode, Modifiers, SrcPosition
 from Ast.package import Package
 from Ast.variables.reference import VariableRef
@@ -20,7 +23,7 @@ modules: dict[str, "Module"] = {}
 base_package: Package | None = None
 alt_packages = []  # alternative search paths available everywhere
 
-STDLIB_PATH = Path(os.path.dirname(__file__)) / "../libbcl"
+STDLIB_PATH = (Path(os.path.dirname(__file__)) / "../libbcl").resolve()
 
 
 def make_base_package(path: Path, cmd_args: dict,
@@ -58,7 +61,8 @@ class Namespace(Protocol):
         pass
 
     def get_global(self, name: str, pos=SrcPosition.invalid(),
-                   stack=None, override_star=False) -> Optional["NamespaceInfo"]:
+                   stack=None,
+                   override_star=False) -> Optional["NamespaceInfo"]:
         pass
 
 
@@ -76,7 +80,8 @@ class NamespaceInfo():
             stack = []
 
         override_star = override_star | self.using_namespace | True
-        first_try = self.obj.get_namespace_name(func, name, pos, stack=stack,
+        first_try = self.obj.get_namespace_name(func, name, pos,
+                                                stack=stack,
                                                 override_star=override_star)
         if first_try is not None:
             return first_try
@@ -149,7 +154,8 @@ class NamespaceInfo():
         return value
 
     @classmethod
-    def make_from_namespace(cls, base: Package, namespace_index, is_public=False) -> Self:
+    def make_from_namespace(cls, base: Package, namespace_index,
+                            is_public=False) -> Self:
         '''namespace_index essentially is a linked list.
         We return a reversed version.
         so `a::b::c` => (c->b->a)
@@ -239,11 +245,11 @@ class Module(ASTNode):
         super().__init__(pos)
         self.mod_name = name
         self.location = location
-        self.package = None # the package this module is included in
+        self.package = None  # the package this module is included in
         self.globals: dict[str, object] = {}
         self.imports: dict[str, NamespaceInfo] = {}
-        self.imported_modules: list["Module"] = [] # any modules we import.
-        self.types: dict[str, "Type"] = {}   # type: ignore
+        self.imported_modules: list["Module"] = []  # any modules we import.
+        self.types: dict[str, ast_typing.Type] = {}   # type: ignore
         self.module = ir.Module(name=self.mod_name)
         self.module.triple = binding.get_default_triple()
         self.cmd_args = cmd_args
@@ -267,8 +273,9 @@ class Module(ASTNode):
             #     is_distinct=True
             # )
         self.target = binding.Target.from_triple(self.module.triple)
-        self.target_machine = self.target.create_target_machine(force_elf=True,
-                                                        codemodel="default")
+        self.target_machine = \
+            self.target.create_target_machine(force_elf=True,
+                                              codemodel="default")
         self.children = tokens
         self.parsed = False
         self.pre_evaled = False
@@ -708,8 +715,8 @@ class Module(ASTNode):
 
         # using global list of modules
         for mod in self.imported_modules:
-            if isinstance(mod, NamespaceInfo):
-                mod = mod.obj
+            # if isinstance(mod, NamespaceInfo):
+            #     mod = mod.obj
             mod.declare_builtins()
             other_objs = mod.save_ir(f"{loc}", other_args)
             for obj in other_objs:

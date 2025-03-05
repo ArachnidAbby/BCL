@@ -1,5 +1,6 @@
 import Ast.Ast_Types as Ast_Types
 import errors
+from Ast import typing as ast_typing
 from Ast.Ast_Types.Type_Void import Void
 from Ast.directives.directivenode import DirectiveList
 from Ast.functions.definition import FunctionDef
@@ -49,10 +50,12 @@ class StructDef(ASTNode):
             members = [self.block.children[0]]
         else:
             errors.error("The first statement in a struct definition MUST " +
-                         "be a list of members", line=self.block.children[0].pos)
+                         "be a list of members",
+                         line=self.block.children[0].pos)
 
         if register:
-            self.struct_type = Ast_Types.Struct(self.struct_name, members, module, self.is_generic, self)
+            self.struct_type = Ast_Types.Struct(self.struct_name, members,
+                                                module, self.is_generic, self)
             module.types[self.struct_name] = self.struct_type
         module.add_struct_to_schedule(self)
         self.module = module
@@ -165,7 +168,7 @@ class StructDef(ASTNode):
             version[2].fullfill_templates(version[2])
             del errors.templating_stack[-1]
 
-    def post_parse(self, module):
+    def post_parse(self, module: ast_typing.Module):
         if not self.is_generic:
             self.struct_type.define(self)
 
@@ -181,7 +184,7 @@ class StructDef(ASTNode):
             stmt.parent = self
             stmt.post_parse(self)
 
-    def pre_eval(self, module):
+    def pre_eval(self, module: ast_typing.Module):
         for version in self.struct_type.versions.values():
             errors.templating_stack.append(version[3])
             version[2].pre_eval(version[2])
@@ -192,7 +195,7 @@ class StructDef(ASTNode):
         for stmt in self._yield_functions():
             stmt.pre_eval(self)
 
-    def eval_impl(self, module):
+    def eval_impl(self, module: ast_typing.Module):
         for version in self.struct_type.versions.values():
             errors.templating_stack.append(version[3])
             version[2].eval(version[2])

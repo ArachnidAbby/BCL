@@ -1,9 +1,8 @@
+from abc import ABC, abstractmethod
 from typing import Tuple
 
-from Ast.nodes.commontypes import SrcPosition, Modifiers
 import errors
-
-from abc import ABC, abstractmethod
+from Ast.nodes.commontypes import Modifiers, SrcPosition
 
 
 class ASTNode(ABC):
@@ -141,7 +140,8 @@ class ASTNode(ABC):
     #     This is for intermediary nodes like a Namespace Index'''
     #     return self
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         '''Getting a name from the namespace'''
         errors.error(f"Cannot get from namespace {self}")
 

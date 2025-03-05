@@ -29,7 +29,7 @@ class Parent(Protocol):
         ...
 
     @property
-    def ir_type(self):
+    def ir_type(self) -> ir.Type:
         # * optional
         ...
 
@@ -39,7 +39,7 @@ class Parent(Protocol):
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir',
+    __slots__ = ('_builder', 'block', 'function_ir', 'args', 'args_ir',
                  'module', 'is_ret_set', 'args_types', 'ret_type',
                  "has_return", "inside_loop", "func_name", "variables",
                  "ir_entry", "contains_dynamic", "contains_ellipsis",
@@ -57,7 +57,7 @@ class FunctionDef(ASTNode):
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
         self.ret_raw = Ast_Types.Void()
-        self.builder = None   # llvmlite.ir.IRBuilder object once created
+        self._builder = None   # llvmlite.ir.IRBuilder object once created
         self.block = block  # body of the function Ast.Block
         self.module = module  # Module the object is contained in
         self.parent = None
@@ -103,6 +103,12 @@ class FunctionDef(ASTNode):
 
         self.use_literal_name = False
 
+    @property
+    def builder(self) -> ir.IRBuilder:
+        if self._builder is None:
+            raise Exception("IR Builder is not initialized")
+        return self._builder
+
     def copy(self):
         if self.block is not None:
             val = FunctionDef(self._position,
@@ -130,7 +136,7 @@ class FunctionDef(ASTNode):
         self.yield_function = None
         self.yield_block = None
         self.yield_start = None
-        self.builder = None
+        self._builder = None
         self.parent = None
         self.yield_after_blocks = []
         self.yield_consts = []
@@ -337,49 +343,49 @@ class FunctionDef(ASTNode):
             return
 
         block = self.function_ir.append_basic_block("entry")
-        self.builder = ir.IRBuilder(block)
+        self._builder = ir.IRBuilder(block)
         self.ir_entry = block
         self._append_args()
         self.block.pre_eval(self)
 
     def create_const_var(self, typ):
-        if self.builder is None or self.builder.block is None:
+        if self._builder is None or self._builder.block is None:
             errors.developer_warning("A call exists to `create_const_var` " +
                                      "when the function has no block.")
             return
 
-        current_block = self.builder.block
-        self.builder.position_at_start(self.ir_entry)
+        current_block = self._builder.block
+        self._builder.position_at_start(self.ir_entry)
         if self.yields:
             self.yield_consts.append(typ)
             self.yield_gen_type.add_members(self.yield_consts,
                                             [x[0].type for x in self.variables])
-            ptr = self.builder.gep(self.yield_struct_ptr,
+            ptr = self._builder.gep(self.yield_struct_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 3),
                                     ir.Constant(ir.IntType(32),
                                                 len(self.yield_consts)-1)],
                                    name="CONST")
-            self.builder.position_at_end(current_block)
+            self._builder.position_at_end(current_block)
 
             return ptr
-        ptr = self.builder.alloca(typ.ir_type, name="CONST")
-        self.builder.position_at_end(current_block)
+        ptr = self._builder.alloca(typ.ir_type, name="CONST")
+        self._builder.position_at_end(current_block)
         return ptr
 
     def alloc_stack_gen_create(self):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 if x[0].type.pass_as_ptr:
-                    val = self.builder.load(x[0].ptr)
+                    val = self._builder.load(x[0].ptr)
                 else:
                     val = x[0].ptr
                 if not x[0].type.no_load:
-                    ptr = self.builder.gep(self.yield_struct_ptr,
+                    ptr = self._builder.gep(self.yield_struct_ptr,
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
-                    self.builder.store(val, ptr)
+                    self._builder.store(val, ptr)
                     x[0].ptr = ptr
                 continue
 
@@ -387,7 +393,7 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 if not x[0].type.no_load:
-                    ptr = self.builder.gep(self.yield_struct_ptr,
+                    ptr = self._builder.gep(self.yield_struct_ptr,
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
@@ -402,12 +408,12 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 # if x[0].type.pass_as_ptr:
-                #     val = self.builder.load(x[0].ptr)
+                #     val = self._builder.load(x[0].ptr)
                 # else:
                 #     val = x[0].ptr
                 # if not x[0].type.no_load:
-                #     ptr = self.builder.alloca(x[0].type.ir_type)
-                #     self.builder.store(val, ptr)
+                #     ptr = self._builder.alloca(x[0].type.ir_type)
+                #     self._builder.store(val, ptr)
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
                 x[0].is_constant = False
@@ -423,19 +429,19 @@ class FunctionDef(ASTNode):
             self.alloc_stack()
             self.block.eval(self)
         else:
-            self.yield_struct_ptr = self.builder.alloca(self.ret_type.ir_type)
+            self.yield_struct_ptr = self._builder.alloca(self.ret_type.ir_type)
             self.yield_gen_type = self.ret_type
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             self.populate_yield_struct()
             self.alloc_stack_gen_create()
             self.yield_gen_type.create_next_method()
-            val = self.builder.load(self.yield_struct_ptr)
-            self.builder.ret(val)
+            val = self._builder.load(self.yield_struct_ptr)
+            self._builder.ret(val)
             self.eval_generator(parent)
 
         if self.ret_type.is_void() and not self.has_return:
             self.dispose_stack()
-            self.builder.ret_void()
+            self._builder.ret_void()
         elif not self.has_return:
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
                          "return!\nEnsure that at least 1 return statement is" +
@@ -452,46 +458,46 @@ class FunctionDef(ASTNode):
             return
 
         block = self.yield_block
-        self.builder = ir.IRBuilder(self.yield_block)
+        self._builder = ir.IRBuilder(self.yield_block)
         self.yield_struct_ptr = self.yield_function.args[0]
 
         self.alloc_stack_gen()
         self.ir_entry = block
-        state_ptr = self.builder.gep(self.yield_struct_ptr,
+        state_ptr = self._builder.gep(self.yield_struct_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
                                       ir.Constant(ir.IntType(32), 1)])
-        self.builder.position_at_start(self.yield_start)
+        self._builder.position_at_start(self.yield_start)
         self.block.eval(self)
-        after_block = self.builder.block
+        after_block = self._builder.block
 
-        self.builder.position_at_end(block)
+        self._builder.position_at_end(block)
 
         # Do branching on function entry
-        state = self.builder.load(state_ptr)
-        ibranch = self.builder.branch_indirect(state)
+        state = self._builder.load(state_ptr)
+        ibranch = self._builder.branch_indirect(state)
         ibranch.add_destination(self.yield_start)
         for branch in self.yield_after_blocks:
             ibranch.add_destination(branch)
 
-        self.builder.position_at_end(after_block)
-        if not self.builder.block.is_terminated:
-            continue_ptr = self.builder.gep(self.yield_struct_ptr,
+        self._builder.position_at_end(after_block)
+        if not self._builder.block.is_terminated:
+            continue_ptr = self._builder.gep(self.yield_struct_ptr,
                                             [ir.Constant(ir.IntType(32), 0),
                                                 ir.Constant(ir.IntType(32), 0)])
-            self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
+            self._builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
         self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
 
     def populate_yield_struct(self):
-        continue_ptr = self.builder.gep(self.yield_struct_ptr,
+        continue_ptr = self._builder.gep(self.yield_struct_ptr,
                                         [ir.Constant(ir.IntType(32), 0),
                                          ir.Constant(ir.IntType(32), 0)])
-        state_ptr = self.builder.gep(self.yield_struct_ptr,
+        state_ptr = self._builder.gep(self.yield_struct_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
                                       ir.Constant(ir.IntType(32), 1)])
-        self.builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
+        self._builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
         block_addr = ir.BlockAddress(self.yield_function, self.yield_start)
-        self.builder.store(block_addr, state_ptr)
+        self._builder.store(block_addr, state_ptr)
 
     def dispose_stack(self):
         self.block.BLOCK_STACK.append(self.block)

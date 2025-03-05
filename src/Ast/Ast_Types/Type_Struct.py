@@ -4,6 +4,7 @@ from llvmlite import ir
 
 import Ast.math
 from Ast import Ast_Types
+from Ast import typing as ast_typing
 from Ast.Ast_Types.Type_Alias import Alias  # type: ignore
 from Ast.Ast_Types.Type_Base import struct_op_overloads
 from Ast.Ast_Types.Type_Bool import Integer_1
@@ -86,7 +87,7 @@ class Struct(Ast_Types.Type):
             self.member_indexs.append(member_name)
             self.member_index_search[member_name] = c
 
-        self.ir_type: ir.Type | None = None
+        # self.ir_type: ir.Type | None = None
         if not self.is_generic:
             name = f"{module.mod_name}.struct.{name}"
             self.ir_type = ir.global_context.get_identified_type(name)
@@ -146,7 +147,8 @@ class Struct(Ast_Types.Type):
 
         return new_ty
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         from Ast.module import NamespaceInfo
         if self.is_generic:
             error(f"Must pass type parameters\n hint: `{self}::<T>`",
@@ -252,7 +254,7 @@ class Struct(Ast_Types.Type):
                or other.struct_name != self.struct_name \
                or self.module.location != other.module.location
 
-    def get_func(self, func, name, lhs, rhs, ret_none=False):
+    def get_func(self, func: ast_typing.FunctionDef, name, lhs, rhs, ret_none=False):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
@@ -284,7 +286,8 @@ class Struct(Ast_Types.Type):
         else:
             return fetched_func
 
-    def get_func_scoped(self, func, name, lhs, rhs, ret_none=False):
+    def get_func_scoped(self, func: ast_typing.FunctionDef | None, name, lhs,
+                        rhs, ret_none=False):
         '''Limit search to this specific type, ignore wrapping'''
         if rhs is not None:
             rhs_pos = rhs.position
@@ -292,7 +295,8 @@ class Struct(Ast_Types.Type):
             rhs_pos = SrcPosition.invalid()
         args = ParenthBlock(rhs_pos)
         name_var = VariableRef(lhs.position, name, None)
-        mem_access = MemberAccess(lhs.position, member_access_op, lhs, name_var)
+        mem_access = MemberAccess(lhs.position, member_access_op, lhs,
+                                  name_var)
         if rhs is not None:
             args.children = [rhs]
         args.in_func_call = True
@@ -302,7 +306,7 @@ class Struct(Ast_Types.Type):
             error(f"No function \"{name}\" Found", line=lhs.position)
         return self.members[name][0].get_function(self, mem_access, args)
 
-    def call_func(self, func, name, lhs, rhs):
+    def call_func(self, func: ast_typing.FunctionDef, name, lhs, rhs):
         if rhs is not None:
             rhs_pos = rhs.position
         else:
@@ -327,7 +331,7 @@ class Struct(Ast_Types.Type):
 
         return self.get_member(func, lhs, name_var).call(func, mem_access, args)
 
-    def get_op_return(self, func, op: str, lhs, rhs):
+    def get_op_return(self, func: ast_typing.FunctionDef, op: str, lhs, rhs):
         op_name = struct_op_overloads.get(op.lower())
         # self._simple_call_op_error_check(op, lhs, rhs)
         if op_name is None:
@@ -350,67 +354,67 @@ class Struct(Ast_Types.Type):
             return self.members["__call__"][0].get_function(func, mem_access, args).func_ret
         return self.get_func(func, op_name, lhs, rhs).func_ret
 
-    def sum(self, func, lhs, rhs):
+    def sum(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__add__", lhs, rhs)
 
-    def sub(self, func, lhs, rhs):
+    def sub(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__sub__", lhs, rhs)
 
-    def mul(self, func, lhs, rhs):
+    def mul(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__mul__", lhs, rhs)
 
-    def div(self, func, lhs, rhs):
+    def div(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__div__", lhs, rhs)
 
-    def pow(self, func, lhs, rhs):
+    def pow(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__pow__", lhs, rhs)
 
-    def eq(self, func, lhs, rhs):
+    def eq(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__eq__", lhs, rhs)
 
-    def neq(self, func, lhs, rhs):
+    def neq(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__neq__", lhs, rhs)
 
-    def le(self, func, lhs, rhs):
+    def le(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__lt__", lhs, rhs)
 
-    def gr(self, func, lhs, rhs):
+    def gr(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__gt__", lhs, rhs)
 
-    def leq(self, func, lhs, rhs):
+    def leq(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__leq__", lhs, rhs)
 
-    def geq(self, func, lhs, rhs):
+    def geq(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__geq__", lhs, rhs)
 
-    def isum(self, func, lhs, rhs):
+    def isum(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__iadd__", Ref(lhs.position, lhs), rhs)
 
-    def isub(self, func, lhs, rhs):
+    def isub(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__isub__", Ref(lhs.position, lhs), rhs)
 
-    def imul(self, func, lhs, rhs):
+    def imul(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__imul__", Ref(lhs.position, lhs), rhs)
 
-    def idiv(self, func, lhs, rhs):
+    def idiv(self, func: ast_typing.FunctionDef, lhs, rhs):
         return self.call_func(func, "__idiv__", Ref(lhs.position, lhs), rhs)
 
-    def lshift(self, func, lhs, rhs) -> ir.Instruction:
+    def lshift(self, func: ast_typing.FunctionDef, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__lshift__", lhs, rhs)
 
-    def rshift(self, func, lhs, rhs) -> ir.Instruction:
+    def rshift(self, func: ast_typing.FunctionDef, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__rshift__", lhs, rhs)
 
-    def bit_not(self, func, lhs) -> ir.Instruction:
+    def bit_not(self, func: ast_typing.FunctionDef, lhs) -> ir.Instruction:
         return self.call_func(func, "__bitnot__", lhs, None)
 
-    def bit_xor(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_xor(self, func: ast_typing.FunctionDef, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__bitxor__", lhs, rhs)
 
-    def bit_or(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_or(self, func: ast_typing.FunctionDef, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__bitor__", lhs, rhs)
 
-    def bit_and(self, func, lhs, rhs) -> ir.Instruction:
+    def bit_and(self, func: ast_typing.FunctionDef, lhs, rhs) -> ir.Instruction:
         return self.call_func(func, "__bitand__", lhs, rhs)
 
     def _get_unwrap_function(self, lhs, rhs, mut=False):

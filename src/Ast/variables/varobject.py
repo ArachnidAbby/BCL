@@ -53,7 +53,8 @@ class VariableObj:
             return func.builder.load(self.ptr)
         return self.ptr
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         return self.type.get_namespace_name(func, name, pos)
 
     def __repr__(self) -> str:

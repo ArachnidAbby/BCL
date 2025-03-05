@@ -184,7 +184,8 @@ class EnumType(Type):
     def __str__(self):
         return f"{self.enum_name}(u{self.bitsize})"
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         if x := self.global_namespace_names(func, name, pos):
             return x
 

@@ -42,7 +42,8 @@ class Integer_32(Type_Base.Type):
     def __call__(self):
         return self
 
-    def get_namespace_name(self, func, name, pos):
+    def get_namespace_name(self, func, name, pos,
+                           stack=None, override_star=False):
         from Ast.module import NamespaceInfo
         if x := self.global_namespace_names(func, name, pos):
             return x

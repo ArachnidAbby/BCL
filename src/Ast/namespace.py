@@ -1,5 +1,6 @@
 import errors
 from Ast import Ast_Types
+from Ast import typing as ast_typing
 from Ast.generics import GenericSpecify
 from Ast.nodes.commontypes import SrcPosition
 from Ast.nodes.expression import ExpressionNode
@@ -11,7 +12,7 @@ class NamespaceIndex(ExpressionNode):
     isconstant = True
     do_register_dispose = False
 
-    def __init__(self, pos, left, right, module):
+    def __init__(self, pos, left: "NamespaceIndex | ast_typing.VariableRef", right, module):
         super().__init__(pos)
         self.left = left
         self.right = right
