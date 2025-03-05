@@ -7,23 +7,24 @@ from Ast.nodes.expression import ExpressionNode
 
 class NamespaceIndex(ExpressionNode):
     '''Index a namespace like this: `namespace::function``'''
-    __slots__ = ("left", "right", "val", "star_idx", "back_dirs")
+    __slots__ = ("left", "right", "val", "star_idx", "back_dirs", "module")
     isconstant = True
     do_register_dispose = False
 
-    def __init__(self, pos, left, right):
+    def __init__(self, pos, left, right, module):
         super().__init__(pos)
         self.left = left
         self.right = right
         self.val = None
         self.star_idx = False
+        self.module = module
         self.back_dirs = 0  # the amount of `..`s in the namespace index
         if isinstance(left, NamespaceIndex) and left.star_idx:
             errors.error("Cannot get names from a `*` namespace index",
                          line=pos)
 
     def copy(self):
-        out = NamespaceIndex(self._position, self.left.copy(), self.right.copy())
+        out = NamespaceIndex(self._position, self.left.copy(), self.right.copy(), self.module)
         out.star_idx = self.star_idx
         return out
 
@@ -67,6 +68,18 @@ class NamespaceIndex(ExpressionNode):
 
         errors.error("Namespace cannot be evaluated like an expression",
                      line=self.left.position)
+
+    def get_const_value(self):
+        self.pre_eval(self.module)
+        if self.val is not None:
+            return self.val.get_const_value()
+
+    @property
+    def is_constant_expr(self) -> bool:
+        self.pre_eval(self.module)
+        if isinstance(self.val, ExpressionNode):
+            return self.val.is_constant_expr
+        return False
 
     def get_var(self, func):
         self.pre_eval(func)

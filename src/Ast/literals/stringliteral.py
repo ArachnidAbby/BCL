@@ -22,7 +22,7 @@ class StrLiteral(ExpressionNode):
 
     def pre_eval(self, func):
         array_size = Literal(SrcPosition.invalid(), len(self.value),
-                             Ast_Types.Integer_32())
+                             Ast_Types.Integer_32()) # ? what is this here for
         self.ret_type = Ast_Types.definedtypes.types_dict['strlit']
 
     def get_lifetime(self, func):

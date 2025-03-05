@@ -46,8 +46,8 @@ class ArrayLiteral(ExpressionNode):
             amount.pre_eval(func)
             if not self.repeat.isconstant or \
                     not isinstance(self.repeat.ret_type, Ast_Types.Integer_32):
-                errors.error("Array literal size must be an i32",
-                             line=self.position)
+                errors.error("Array literal size must be an int literal",
+                             line=self.repeat.position)
 
             if amount.value <= 0:
                 errors.error("Array literal size must be greater than '0'",

@@ -38,15 +38,15 @@ class Array(Type_Base.Type):
         self.needs_dispose = typ.needs_dispose
         self.ref_counted = typ.ref_counted
 
-        if not size.isconstant:
+        if not size.is_constant_expr:
             error("size of array type must be a int-literal",
                   line=size.position)
 
-        self.size = size.value
+        self.size = size.get_const_value()
 
         if self.size <= 0:
             error("Array size must be > 0", line=size.position)
-        elif not isinstance(size.ret_type, Type_I32.Integer_32):
+        elif not isinstance(self.size, int):
             error("Array size must be an integer", line=size.position)
 
         self.ir_type = ir.ArrayType(typ.ir_type, self.size)

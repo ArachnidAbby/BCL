@@ -4,6 +4,7 @@ from llvmlite import ir
 
 from Ast.nodes.commontypes import MemberInfo, Modifiers
 from Ast.nodes.passthrough import PassNode  # type: ignore
+from Ast.typing import FunctionDef, Module
 from errors import error
 
 struct_op_overloads = {
@@ -99,12 +100,15 @@ class Type:
     def __call__(self) -> Self:
         return self
 
-    def global_namespace_names(self, func, name, pos):
+    def global_namespace_names(self, func: Module | FunctionDef, name, pos):
         from Ast.Ast_Types.Type_I32 import Integer_32
         from Ast.literals.numberliteral import Literal
-        from Ast.module import NamespaceInfo
+        from Ast.module import Module, NamespaceInfo
         if name == "SIZEOF":
-            size = self.get_abi_size(func.module)
+            if isinstance(func, Module):
+                size = self.get_abi_size(func)
+            else:
+                size = self.get_abi_size(func.module)
             ty = Integer_32(name="u64", size=64, signed=False)
             val = Literal(pos, size, ty)
             return NamespaceInfo(val, {})

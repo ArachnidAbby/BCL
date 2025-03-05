@@ -334,7 +334,7 @@ class Parser(ParserBase):
 
         pos = self.peek(0).pos
 
-        node = Ast.namespace.NamespaceIndex(pos, left, right)
+        node = Ast.namespace.NamespaceIndex(pos, left, right, self.module)
         if left == "..":
             node.back_dirs += 1
 

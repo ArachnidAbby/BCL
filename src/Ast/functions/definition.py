@@ -1,4 +1,3 @@
-import platform
 from typing import Protocol
 
 from llvmlite import ir
@@ -13,6 +12,7 @@ from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
 from Ast.nodes.commontypes import Modifiers, SrcPosition
 from Ast.nodes.passthrough import PassNode  # type: ignore
 from Ast.reference import Ref
+from Ast.typing import Module
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
 
@@ -22,19 +22,19 @@ class Parent(Protocol):
     for something to be considered a function parent
     '''
 
-    def get_unique_name(self, name: str):
-        pass
+    def get_unique_name(self, name: str) -> str:
+        ...
 
     def create_function(self, name: str, function_obj):
-        pass
+        ...
 
     @property
     def ir_type(self):
-        #* optional
-        pass
+        # * optional
+        ...
 
-    def get_type_by_name(self):
-        pass
+    def get_type_by_name(self) -> Type:
+        ...
 
 
 class FunctionDef(ASTNode):
@@ -52,7 +52,7 @@ class FunctionDef(ASTNode):
     can_have_modifiers = True
 
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
-                 block: Block, module):
+                 block: Block | None, module: Module):
         super().__init__(pos)
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
@@ -145,7 +145,8 @@ class FunctionDef(ASTNode):
         self.args_ir: tuple[ir.Type, ...] = ()
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
-        self.block.reset()
+        if self.block is not None:
+            self.block.reset()
 
     def get_unique_name(self, name: str) -> str:
         return self.module.get_unique_name(f"{self.func_name}.local.{name}")
@@ -156,14 +157,15 @@ class FunctionDef(ASTNode):
 
         return self.module.get_type_by_name(var_name, pos)
 
-    def create_function(self, name, function_obj):
+    def create_function(self, name: str, function_obj):
+        '''Used to create nested functions'''
         if name not in self.block.variables.keys():
             self.block.variables[name] = Ast_Types.FunctionGroup(name, self)
         group = self.block.variables[name]
         group.add_function(function_obj)  # type: ignore
         return group
 
-    def add_method_arg(self, arg, parent) -> KeyValuePair:
+    def add_method_arg(self, arg, parent: Parent) -> KeyValuePair:
         if isinstance(arg, VariableRef):
             return KeyValuePair(arg._position, arg, parent.get_type(self))
 
@@ -179,7 +181,7 @@ class FunctionDef(ASTNode):
     def register_dispose(self, node):
         self.dispose_queue.append(node)
 
-    def _construct_args(self, args: ParenthBlock, parent):
+    def _construct_args(self, args: ParenthBlock, parent: Parent):
         '''Construct the lists of args required when building this function'''
         args_ir = []
         args_types = []
