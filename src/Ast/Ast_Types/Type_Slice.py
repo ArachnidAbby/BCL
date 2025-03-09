@@ -7,6 +7,7 @@ from Ast import exception
 from Ast.Ast_Types import Type_I32
 from Ast.Ast_Types.Type_Base import Type
 from Ast.literals.numberliteral import Literal
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import MemberInfo, SrcPosition
 from Ast.nodes.passthrough import PassNode
 
@@ -37,6 +38,10 @@ class SliceType(Type):
 
     def __str__(self) -> str:
         return f"[{str(self.inner_typ)}]"
+
+    @property
+    def name(self) -> str:
+        return self.__str__()
 
     # ! this has the posibility to emit a runtime error.
     # ! Maybe this should instead return an Optional::<T>
@@ -222,4 +227,124 @@ class SliceType(Type):
     def index(self, func, lhs, rhs) -> ir.Instruction:
         return self.generate_runtime_check(func, lhs, rhs)
 
-    # TODO: create an iterator type for slices
+    def get_iter_return(self, func, node):
+        return ItemIterator(self)
+
+    def create_iterator(self, func, val, loc):
+        iter_type = ItemIterator(self)
+        ptr = create_const_var(func, iter_type)
+
+        data_ptr_ptr = func.builder.gep(ptr,
+                                        [ir.Constant(ir.IntType(32), 0),
+                                         ir.Constant(ir.IntType(32), 0)])
+        current_ptr = func.builder.gep(ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)])
+
+        func.builder.store(val.get_ptr(func), data_ptr_ptr)
+        func.builder.store(ir.Constant(ir.IntType(32), 0), current_ptr)
+        return ptr
+
+
+class ItemIterator(Type):
+    __slots__ = ("iter_ret", "ir_type")
+    is_iterator = True
+    returnable = False
+
+    name = "ItemIter"
+
+    def __init__(self, collection_type):
+        self.iter_ret = collection_type.inner_typ
+        # {data_ptr: *T, current: i32}
+        collection_ptr_typ = collection_type.ir_type.as_pointer()
+        self.ir_type = ir.LiteralStructType((collection_ptr_typ,
+                                             ir.IntType(32)))
+
+    def get_iter_return(self, func, node):
+        return self.iter_ret
+
+    def iter_condition(self, func, self_ptr, loc):
+        value_ptr_ptr = func.builder.gep(self_ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), 0)])
+
+        val_ptr_val = func.builder.load(value_ptr_ptr)
+        length_ptr = func.builder.gep(val_ptr_val,
+                                      [ir.Constant(ir.IntType(32), 0),
+                                       ir.Constant(ir.IntType(32), 1)])
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)])
+        length_val = func.builder.load(length_ptr)
+        current_val = func.builder.load(current_ptr)
+        return func.builder.icmp_signed("<", current_val, length_val)
+
+    def iter(self, func, self_ptr, loc):
+        # * incrememnt 'i'
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)]) # "i"
+        current_val = func.builder.load(current_ptr)
+        addition = func.builder.add(current_val,
+                                    ir.Constant(ir.IntType(32), 1))
+        func.builder.store(addition, current_ptr)
+
+        # * get ptr to slice
+        slice_ptr_ptr = func.builder.gep(self_ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), 0)])
+
+        slice_ptr = func.builder.load(slice_ptr_ptr)
+        step_value = func.builder.load(func.builder.gep(
+            slice_ptr,
+            [ir.Constant(ir.IntType(32), 0),
+             ir.Constant(ir.IntType(32), 2)]
+        ))
+        # calculate offset to index at
+        offset = func.builder.mul(addition, step_value)
+        # get ptr to value
+        slice_array_ptr = func.builder.load(func.builder.gep(
+            slice_ptr,
+            [ir.Constant(ir.IntType(32), 0),
+             ir.Constant(ir.IntType(32), 0)]
+        ))
+        value_ptr = func.builder.gep(slice_array_ptr,
+                                     [func.builder.zext(offset,
+                                                        ir.IntType(64))])
+        value = func.builder.load(value_ptr)
+        return value
+
+    def iter_get_val(self, func, self_ptr, loc):
+        # Get value of 'i'
+        current_ptr = func.builder.gep(self_ptr,
+                                       [ir.Constant(ir.IntType(32), 0),
+                                        ir.Constant(ir.IntType(32), 1)]) # 'i'
+        current_val = func.builder.load(current_ptr)
+
+        # * get ptr to slice
+        slice_ptr_ptr = func.builder.gep(self_ptr,
+                                         [ir.Constant(ir.IntType(32), 0),
+                                          ir.Constant(ir.IntType(32), 0)])
+
+        slice_ptr = func.builder.load(slice_ptr_ptr)
+        # Get slice step value
+        step_value = func.builder.load(func.builder.gep(
+            slice_ptr,
+            [ir.Constant(ir.IntType(32), 0),
+             ir.Constant(ir.IntType(32), 2)]
+        ))
+        # calculate offset to index at
+        offset = func.builder.mul(current_val, step_value)
+
+        # get ptr to value
+        slice_array_ptr = func.builder.load(func.builder.gep(
+            slice_ptr,
+            [ir.Constant(ir.IntType(32), 0),
+             ir.Constant(ir.IntType(32), 0)]
+        ))
+        value_ptr = func.builder.gep(slice_array_ptr,
+                                     [func.builder.zext(offset,
+                                                        ir.IntType(64))])
+
+        value = func.builder.load(value_ptr)
+        return value

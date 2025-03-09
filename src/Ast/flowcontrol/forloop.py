@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import errors
+from Ast.Ast_Types import Type_Base
 from Ast.nodes import ASTNode, Block
 from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import SrcPosition
@@ -63,6 +65,8 @@ class ForLoop(ASTNode):
         return self.for_after
 
     def eval_impl(self, func):
+        if self.iter_type is None:
+            raise Exception("For-loop node evaluated too early")
         orig_block_name = func.builder.block._name
         iter_ret_typ = self.iter_type.get_iter_return(func, self.iterable)
         self.varptr = create_const_var(func, iter_ret_typ)
@@ -70,7 +74,11 @@ class ForLoop(ASTNode):
             node = PassNode(self.var.position, None, iter_ret_typ,
                             ptr=self.varptr)
             self.block.register_dispose(func, node)
-        self.block.variables[self.var.var_name].ptr = self.varptr
+        variable = self.block.variables[self.var.var_name]
+        if isinstance(variable, Type_Base.Type):  # This *should* be impossible
+            errors.error("Variable name is associated with a type, cannot be" +
+                         " used for iteration.", line=self.var.position)
+        variable.ptr = self.varptr
 
         # Handles calling of destructors on subsequent iterations
         self.for_pre_body = func.builder.append_basic_block(
@@ -128,6 +136,8 @@ class ForLoop(ASTNode):
 
     # ! Must be shared between both kinds of loop !
     def branch_logic(self, func):
+        if self.iter_type is None:
+            raise Exception("For-loop node evaluated too early")
         func.builder.store(self.iter_type.iter(func, self.iter_ptr,
                                                self.iterable.position),
                            self.varptr)

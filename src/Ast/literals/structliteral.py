@@ -23,7 +23,6 @@ class StructLiteral(ExpressionNode):
                              self.members.copy())
 
     def fullfill_templates(self, func):
-        print("fullfilling", self.struct_name)
         self.struct_name.fullfill_templates(func)
         self.members.fullfill_templates(func)
 
@@ -34,7 +33,6 @@ class StructLiteral(ExpressionNode):
     def pre_eval(self, func):
         self.struct_name.pre_eval(func)
         self.ret_type = self.struct_name.as_type_reference(func)
-        print(self.ret_type)
         if not isinstance(self.ret_type, Struct):
             errors.error("Type is not a structure",
                          line=self.position)
@@ -55,7 +53,6 @@ class StructLiteral(ExpressionNode):
             name = child.key.var_name
             used_names.append(name)
             if name not in self.ret_type.members.keys():
-                print(self.ret_type.members, self.ret_type)
                 errors.error(f"{self.ret_type} has no member " +
                              f"\"{child.key.var_name}\"",
                              line=child.key.position)
