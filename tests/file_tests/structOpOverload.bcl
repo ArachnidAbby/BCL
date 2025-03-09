@@ -109,7 +109,13 @@ struct MyStruct {
     }
 }
 
+struct ExampleGenericStruct::<T> {
+    inner: T;
+}
+
 define main() {
+    _something = ExampleGenericStruct::<i32> {inner: 0i32};
+
     val = MyStruct {x: 10};
 
     val = val + 10;
