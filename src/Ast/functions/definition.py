@@ -9,7 +9,7 @@ from Ast.Ast_Types.Type_Struct import Struct
 from Ast.Ast_Types.Type_Void import Void
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
-from Ast.nodes.commontypes import Modifiers, SrcPosition
+from Ast.nodes.commontypes import Lifetime, Modifiers, SrcPosition
 from Ast.nodes.passthrough import PassNode  # type: ignore
 from Ast.reference import Ref
 from Ast.typing import Module
@@ -47,7 +47,8 @@ class FunctionDef(ASTNode):
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start", "dispose_queue", "parent", "ret_raw",
-                 "function_ty", "lifetime_checked_nodes", "use_literal_name")
+                 "function_ty", "lifetime_checked_nodes", "use_literal_name",
+                 "lifetime_params", "_local_lifetime")
 
     can_have_modifiers = True
 
@@ -88,6 +89,10 @@ class FunctionDef(ASTNode):
         self.yield_after_blocks = []
         self.yield_consts = []
 
+        # All locals have the same lifetime
+        self._local_lifetime = Lifetime(None, True)
+        self.lifetime_params: list[Lifetime] = []
+
         self.dispose_queue = []
 
         self._validate_args(args)  # validate arguments
@@ -102,6 +107,16 @@ class FunctionDef(ASTNode):
         self.lifetime_checked_nodes = []
 
         self.use_literal_name = False
+
+    @property
+    def local_lifetime(self) -> Lifetime:
+        return self._local_lifetime
+
+    def get_lifetime_of(self, var) -> Lifetime:
+        for lifetime in self.lifetime_params:
+            if lifetime.maps_to is var:
+                return lifetime
+        return self.local_lifetime
 
     @property
     def builder(self) -> ir.IRBuilder:
@@ -260,9 +275,13 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
             var = VariableObj(orig[0], orig[1], True, orig[3])
+            var.ptr = args[c]
             self.block.variables[x] = var
-            self.block.variables[x].ptr = args[c]
             self.variables.append((self.block.variables[x], x))
+            if var.type.requires_lifetime_param:
+                lifetime = Lifetime(var, False)
+                var.type.lifetime = lifetime
+                self.lifetime_params.append(lifetime)
 
     def validate_variable_exists(self, var_name, module=None):
         if var_name in self.args.keys():
@@ -515,4 +534,5 @@ class FunctionDef(ASTNode):
         return self.create_tree("Function Definition",
                                 name=self.func_name,
                                 contents=self.block,
-                                return_type=self.ret_type)
+                                return_type=self.ret_type,
+                                lifetimes=[self.local_lifetime] + self.lifetime_params)

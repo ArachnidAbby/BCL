@@ -1,7 +1,7 @@
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.block import create_const_var, get_current_block
-from Ast.nodes.commontypes import Lifetimes, SrcPosition
+from Ast.nodes.commontypes import Lifetime, Lifetimes, SrcPosition
 from errors import error
 
 
@@ -59,6 +59,10 @@ class ExpressionNode(ASTNode):
         The default is to have something return itself.
         '''
         return self
+
+    # New lifetimes
+    def get_lifetime_new(self, func) -> Lifetime:
+        return func.local_lifetime
 
     # @abstractmethod
     def get_lifetime(self, func) -> Lifetimes:

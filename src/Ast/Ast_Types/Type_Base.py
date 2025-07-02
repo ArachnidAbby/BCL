@@ -95,6 +95,10 @@ class Type:
     index_returns_ptr = True
     can_fold_constants = False
 
+    # If lifetime parameters need to be created for this type
+    # when using it as a member or argument type.
+    requires_lifetime_param = False
+
     def __init__(self):
         pass
 

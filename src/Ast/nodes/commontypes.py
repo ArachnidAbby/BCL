@@ -27,6 +27,31 @@ class Modifiers:
     VISIBILITY_PRIVATE = 1
 
 
+class Lifetime():
+    _Lifetimeindex = 0
+    __slots__ = ("constraints", "maps_to", "is_local", 'name')
+
+    def __init__(self, maps_to, is_local: bool):
+        self.constraints = []
+
+        # this is mostly used for tracking *inside* of
+        # the container of this lifetime
+        self.maps_to = maps_to
+        self.is_local = is_local
+        if is_local:
+            self.name = "`local"
+        else:
+            self.name = "`lifetime" + hex(Lifetime._Lifetimeindex)[2:]
+
+        Lifetime._Lifetimeindex += 1
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return self.name
+
+
 class Lifetimes(Enum):
     UNKNOWN = 0
     LOCAL = 1

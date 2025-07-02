@@ -1,3 +1,5 @@
+from typing import Self
+
 from llvmlite import ir
 
 from Ast import Ast_Types
@@ -20,21 +22,29 @@ def try_deref(node, func):
 
 
 class Reference(Type_Base.Type):
-    __slots__ = ("typ", "ir_type", "has_members")
+    __slots__ = ("typ", "ir_type", "has_members", "lifetimes_captured")
 
     name = 'ref'
     pass_as_ptr = False
     no_load = False
     returnable = False
     checks_lifetime = True
+    requires_lifetime_param = True
 
     def __init__(self, typ):
         self.typ = typ
+
+        # represents a single lifetime parameter for the reference type.
+        self.lifetimes_captured = [] # all of these lifetimes are equal
+
         # self.needs_dispose = typ.needs_dispose
         # self.ref_counted = typ.ref_counted
 
         self.ir_type = typ.ir_type.as_pointer()
         self.has_members = self.typ.has_members
+
+    def lifetimes_match(self, other: Self) -> bool:
+        return any((other_lifetime in self.lifetimes_captured for other_lifetime in other.lifetimes_captured))
 
     def __eq__(self, other):
         return self.name == other.name and self.typ == other.typ

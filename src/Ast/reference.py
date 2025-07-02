@@ -28,7 +28,8 @@ class Ref(ExpressionNode):
         if isinstance(self.var.ret_type, Ast_Types.Reference):
             self.ret_type = self.var.ret_type
         else:
-            self.ret_type = Ast_Types.Reference(self.var.ret_type)
+            self.ret_type = Ast_Types.Reference(self.var.ret_type,
+                                                self.var.get_lifetime_new(func))
 
     def eval_impl(self, func):
         # self.var.ret_type.add_ref_count(func, self.var)
@@ -57,7 +58,7 @@ class Ref(ExpressionNode):
         return f"&{str(self.var)}"
 
     def as_type_reference(self, func, allow_generics=False):
-        return Ast_Types.Reference(self.var.as_type_reference(func, allow_generics=allow_generics))
+        return Ast_Types.Reference(self.var.as_type_reference(func, allow_generics=allow_generics), self.var.get_lifetime_new(func))
 
     def repr_as_tree(self) -> str:
         return self.create_tree("Reference",
