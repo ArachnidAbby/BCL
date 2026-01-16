@@ -1,0 +1,67 @@
+
+#[Platform("Linux")]
+import stdlib::*;
+
+#[Platform("Windows")]
+enum TestEnum {
+    UNO: 8,
+    DOS,
+    TRES,
+    CUATRO;
+}
+
+#[Platform("Linux")]
+enum TestEnum {
+    UNO: 69,
+    DOS,
+    TRES,
+    CUATRO;
+}
+
+#[Platform("Windows")]
+struct SillyMoment {
+    x: i32;
+}
+
+#[Platform("Linux")]
+struct SillyMoment {
+    x: i32;
+
+    #[Or(Not(Platform("windows")), Platform("Linux"))]
+    define test_method(self) {
+        println("Ballin' n' callin");
+    }
+
+    #[Platform("windows")]
+    define test_method(self) {
+        println("Crimin' n' limin'");
+    }
+}
+
+#[Platform("Linux")]
+define test_func() {
+    println("Ballin'");
+}
+
+#[Platform("Linux")]
+define test_func(_: i64) {
+    println("Ballin'");
+}
+
+define main() {
+    // windows_only_bastards(15)
+    test_func();
+
+    #[Platform("Windows")]
+    x = 12;
+
+    #[Platform("Linux")]
+    x = "69--420 for the homies";
+
+    #[LLComment("Crime: Imma commit it")]
+    println(x);
+
+    p = SillyMoment {x: 2222};
+    p.test_method();
+    TestEnum::UNO;
+}

@@ -1,5 +1,6 @@
 import errors
-from Ast.nodes import ASTNode, Block
+from Ast.nodes import ASTNode
+from Ast.nodes.block import get_current_block
 
 
 class ContinueStatement(ASTNode):
@@ -10,7 +11,7 @@ class ContinueStatement(ASTNode):
             errors.error("Cannot use 'continue' outside of loop scope",
                          line=self.position)
 
-        Block.BLOCK_STACK[-1].ended = True
+        get_current_block().ended = True
         func.inside_loop.branch_logic(func)
 
     def copy(self):

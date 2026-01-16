@@ -1,10 +1,10 @@
-from Ast.variables.reference import VariableRef
-from Ast.literals import Literal
+import errors
 from Ast.Ast_Types.Type_Enums import EnumType
 from Ast.Ast_Types.Type_I32 import Integer_32
+from Ast.literals import Literal
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.keyvaluepair import KeyValuePair
-import errors
+from Ast.variables.reference import VariableRef
 
 
 class Definition(ASTNode):
@@ -21,6 +21,11 @@ class Definition(ASTNode):
                          line=name.position)
         self.raw_name = name
         self.enum_name = name.var_name
+
+        if self.enum_name in module.types.keys():
+            errors.error("Type of that name is already defined",
+                         line=self.raw_name.position)
+
         self.module = module
 
         members_list = []

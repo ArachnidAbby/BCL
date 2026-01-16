@@ -98,8 +98,7 @@ class GeneratorType(Type):
 
     def get_member_info(self, lhs, rhs):
         if rhs.var_name != "next":
-            return None
-            error("member not found!", line=rhs.position)
+            return super().get_member_info(lhs, rhs)
         typ = self.next
         return MemberInfo(not typ.read_only, False, typ)
 
@@ -108,6 +107,7 @@ class GeneratorType(Type):
         member_name = member_name_in.var_name
         if member_name == "next":
             return self.next
+        return super().get_member(func, lhs, member_name_in)
 
     def __eq__(self, other):
         return other is not None and \
@@ -126,7 +126,7 @@ class GeneratorType(Type):
         return hash(f"Generator<{self.iter_function.func_name}, " +
                     f"{self.iter_function.args}>")
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return self.typ
 
     def iter_condition(self, func, self_ptr, loc):

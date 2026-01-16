@@ -45,7 +45,7 @@ public define prep_buffer_512(buffer: &char[520]) -> &strlit {
 /// Recounts the length of an strlit
 /// saves that into the original strlit
 ///! Beware that the strlit must be a valid *BCL* strlit.
-///! Than means the pointer is actually 8 bytes ahead of the allocated memory.
+///! That means the pointer is actually 8 bytes ahead of the allocated memory.
 ///! These bytes are what contain the size.
 ///! So, ensure that there is 8 bytes allocated behind the ptr.
 public define recount_strlit(data: strlit, max: i64) {

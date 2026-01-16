@@ -27,6 +27,13 @@ class Literal(ExpressionNode):
     def get_lifetime(self, func):
         return Lifetimes.FUNCTION
 
+    def get_const_value(self) -> int | float:
+        return self.value
+
+    @property
+    def is_constant_expr(self) -> bool:
+        return True
+
     def __str__(self) -> str:
         return str(self.value)
 

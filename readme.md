@@ -1,6 +1,6 @@
 ![BCL logo](docs/source/_static/experimental_BCL_LOGO.png)
 
-![Project Status](https://img.shields.io/badge/Project%20Status-In%20Development-orange?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/spidertyler2005/BCL?style=for-the-badge) ![Discord](https://img.shields.io/discord/875155614202994761?style=for-the-badge)
+![Project Status](https://img.shields.io/badge/Project%20Status-In%20Development-orange?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/spidertyler2005/BCL/dev?&style=for-the-badge) ![Discord](https://img.shields.io/discord/875155614202994761?style=for-the-badge)
 
 # What is BCL?
 
@@ -9,7 +9,7 @@ BCL (BCL Compiled Language) is a compiled programming language that is inspired 
 # Installing via source
 
 To do this you will need:
-- LLVM 14 (or LLVM11 if using alternative fork)
+- LLVM 15 (or LLVM11 if using alternative fork)
 - Conda
 - Python 3.11+
 - SetupTools (`pip install setuptools`)
@@ -33,7 +33,7 @@ This is for all platforms.
 ## linux gcc stuff, I couldn't get it to compile without this
 conda install -c conda-forge libstdcxx-ng=12
 ## llvm14 install (change 14 to 11 if needed)
-conda install -y -q -c numba/label/dev llvmdev="14.*" libxml2
+conda install -y -q -c numba llvmdev="15.*" libxml2
 ## llvm uses cmake
 conda install cmake
 ```
@@ -45,7 +45,7 @@ Installing llvm 11
 ```sh
 # when using a different version of visual studio, do:
 set CMAKE_GENERATOR=Visual Studio 17 2022 # an example version of visual studio.
-# Install LLVM11. I haven't found a way to use 14 on windows.
+# Install LLVM11. I haven't found a way to use 15 on windows.
 pip install git+https://github.com/spidertyler2005/llvmlite.git
 ```
 
@@ -54,7 +54,7 @@ pip install git+https://github.com/spidertyler2005/llvmlite.git
 Installing llvmlite 14 or 11
 
 ```sh
-# Installing custom llvmlite fork that has lld for linking (LLVM14)
+# Installing custom llvmlite fork that has lld for linking (LLVM15)
 pip install git+https://github.com/Hassium-Software/llvmlite-lld.git
 # Alternatively, if this doesn't work install (LLVM11)
 pip install git+https://github.com/spidertyler2005/llvmlite.git
@@ -151,6 +151,7 @@ The language is *not* fit for production use. It is missing a very large number 
 - [x] Option type (`Optional::<T>`)
 - [x] namespaces
 - [x] enums
+- [x] compiler directives (WIP: adding more directives) 
 
 
 # VSCode highlighting

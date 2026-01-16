@@ -1,6 +1,11 @@
 import stdlib::*;
 import exitcodes::*;
 
+// // This would be better
+// public typedef Optional::<T> = (T|(), );
+// public const None = ((),);
+
+
 public struct Optional::<T> {
     // private members
     _is_none: bool,
@@ -8,20 +13,20 @@ public struct Optional::<T> {
 
     // constructor for None
     /// Get a None value
-    public define none() -> Optional::<T> {
+    public define none() -> Self {
         return Optional::<T> {
             _is_none: true,
             // create a byte array initialized to all zeros,
             // cast that to an Unsafe/Untyped pointer then recast and deref
             // (TYPE)::SIZEOF should return a constant, so it is fine to use in
             // an array instantiation
-            data: &[0u8; T::SIZEOF] as UntypedPointer as &T as T
+            data: *(&[0u8; T::SIZEOF] as UntypedPointer as &T)
         };
     }
 
     /// Wrap a value in an Optional
-    public define wrap(val: T) -> Optional::<T>{
-        return Optional::<T> {
+    public define wrap(val: T) -> Self {
+        return Self {
             _is_none: false,
             data: val
         };

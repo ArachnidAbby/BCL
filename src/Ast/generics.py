@@ -47,7 +47,8 @@ class GenericSpecify(ExpressionNode):
 
     def as_type_reference(self, func, allow_generics=False):
         typ = self.left.as_type_reference(func, allow_generics=True)
-        return typ.pass_type_params(func, self.params.children, self.params.children[0].position)
+        return typ.pass_type_params(func, self.params.children,
+                                    self.params.children[0].position)
 
     def __str__(self) -> str:
         return f"{self.left}::<{self.params}>"

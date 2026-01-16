@@ -26,6 +26,10 @@ class Integer_1(Type_Base.Type):
                   line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match typ:
             case Integer_1():
                 return orig.eval(func)
@@ -38,7 +42,7 @@ class Integer_1(Type_Base.Type):
             case Type_F32.Float_32(name="f64"):
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
             case _:
-                error(f"Cannot convert 'bool' to type '{typ}'",
+                error(f"Cannot convert 'bool' to type '{typ.__str__()}'",
                       line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):

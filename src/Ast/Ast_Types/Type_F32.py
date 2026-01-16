@@ -1,4 +1,5 @@
-from llvmlite import ir  # type: ignore
+import numpy  # type: ignore
+from llvmlite import ir
 
 from Ast import Ast_Types
 from Ast.nodes.parenthese import ParenthBlock
@@ -13,6 +14,7 @@ class Float_32(Type_Base.Type):
 
     pass_as_ptr = False
     no_load = False
+    can_fold_constants = True
 
     def __init__(self, name='f32', typ=ir.FloatType()):
         self.ir_type = typ
@@ -25,13 +27,17 @@ class Float_32(Type_Base.Type):
             return func.builder.uitofp(previous.eval(), Float_32.ir_type)
         elif typ.name == 'f64':
             return func.builder.fptrunc(previous.eval(), Float_32.ir_type)
-        elif typ.name == 'f32' and self.name=="f32":
+        elif typ.name == 'f32' and self.name == "f32":
             return previous.eval(func)
 
         error(f"type '{typ}' cannot be converted to type 'float'",
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match (typ.name, self.name):
             case ('f32', 'f32'):
                 return orig.eval(func)
@@ -45,7 +51,7 @@ class Float_32(Type_Base.Type):
                 return func.builder.fpext(orig.eval(func), ir.DoubleType())
             case ('f64', 'f64'):
                 return orig.eval(func)
-            case _: error(f"Cannot convert 'f32' to type '{typ}'",
+            case _: error(f"Cannot convert 'f32' to type '{typ.__str__()}'",
                           line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):
@@ -60,6 +66,15 @@ class Float_32(Type_Base.Type):
         typ = definedtypes.get_std_ret_type(lhs, rhs)
         lhs = (lhs.ret_type).convert_to(func, lhs, typ)
         rhs = (rhs.ret_type).convert_to(func, rhs, typ)
+        return (lhs, rhs)
+
+    def convert_args_const(self, func, lhs, rhs) -> tuple:
+        if self.name == 'f64':
+            lhs = numpy.double(lhs.get_const_value())
+            rhs = numpy.double(rhs.get_const_value())
+        elif self.name == 'f32':
+            lhs = numpy.float32(lhs.get_const_value())
+            rhs = numpy.float32(rhs.get_const_value())
         return (lhs, rhs)
 
     def sum(self, func, lhs, rhs):
@@ -147,6 +162,7 @@ class Float_32(Type_Base.Type):
             error("Cannot find 'pow' function in the global namespace.\n" +
                   "Try `import math::*;`",
                   line=lhs.position)
+        pow_func = pow_func.obj
         f64 = Float_32(name="f64", typ=ir.DoubleType())
         arg1 = PassNode(lhs.position, (lhs.ret_type).convert_to(func, lhs, f64), f64)
         arg2 = PassNode(rhs.position, (rhs.ret_type).convert_to(func, rhs, f64), f64)
@@ -160,3 +176,93 @@ class Float_32(Type_Base.Type):
     def truthy(self, func, val):
         return func.builder.fcmp_ordered('!=', val.eval(func),
                                          ir.Constant(self.ir_type, float(0.0)))
+
+    # Const stuff
+    def const_sum(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_sum(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs + rhs)
+
+    def const_sub(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_sub(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs - rhs)
+
+    def const_mul(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_mul(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs * rhs)
+
+    def const_div(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_div(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs / rhs)
+
+
+    def const_mod(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_mod(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs % rhs)
+
+    def const_eq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_eq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs == rhs)
+
+    def const_neq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_neq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs != rhs)
+
+    def const_geq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_geq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs >= rhs)
+
+    def const_leq(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_leq(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs <= rhs)
+
+    def const_le(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_le(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs < rhs)
+
+    def const_gr(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_gr(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return int(lhs > rhs)
+
+    def const_pow(self, func, lhs, rhs):
+        typ = definedtypes.get_std_ret_type(lhs, rhs)
+        if typ != self:
+            return typ.const_pow(func, lhs, rhs)
+        lhs, rhs = self.convert_args_const(func, lhs, rhs)
+        return float(lhs ** rhs)
+
+    def const_truthy(self, func, val):
+        val, _ = self.convert_args_const(func, val, 0)
+        return int(val != 0)

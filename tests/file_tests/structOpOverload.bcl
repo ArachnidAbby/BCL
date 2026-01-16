@@ -97,9 +97,25 @@ struct MyStruct {
     define __truthy__(self) -> bool {
         return self.x != 0;
     }
+
+    define __iter__(self) -> bool {
+        yield true;
+        yield false;
+        yield true;
+    }
+
+    define __call__(self, x: i32) -> bool {
+        return true;
+    }
+}
+
+struct ExampleGenericStruct::<T> {
+    inner: T;
 }
 
 define main() {
+    _something = ExampleGenericStruct::<i32> {inner: 0i32};
+
     val = MyStruct {x: 10};
 
     val = val + 10;
@@ -128,4 +144,10 @@ define main() {
     else if val {}
 
     println(*val);
+
+    for x in val {
+        println(x);
+    }
+
+    println(val(22));
 }

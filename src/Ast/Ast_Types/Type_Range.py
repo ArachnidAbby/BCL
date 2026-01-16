@@ -25,6 +25,10 @@ class RangeType(Type):
             return previous.eval(func)
 
     def convert_to(self, func, orig, typ) -> ir.Instruction:
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if typ.name == "Range":
             return orig.eval(func)
 
@@ -35,8 +39,7 @@ class RangeType(Type):
             case "end":
                 return MemberInfo(False, False, Integer_32())
             case _:
-                return None
-                error("member not found!", line=rhs.position)
+                return super().get_member_info(lhs, rhs)
 
     def get_member(self, func, lhs,
                    rhs: "Ast.variable.VariableRef"):
@@ -52,9 +55,9 @@ class RangeType(Type):
                                     ir.Constant(ir.IntType(32), 1)])
                 return func.builder.load(end_ptr)
             case _:
-                error("member not found!", line=rhs.position)
+                return super().get_member(func, lhs, rhs)
 
-    def get_iter_return(self, loc):
+    def get_iter_return(self, func, node):
         return Integer_32()
 
     def iter_condition(self, func, self_ptr, loc):

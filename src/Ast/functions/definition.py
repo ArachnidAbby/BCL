@@ -1,4 +1,3 @@
-import platform
 from typing import Protocol
 
 from llvmlite import ir
@@ -6,13 +5,14 @@ from llvmlite import ir
 import errors
 from Ast import Ast_Types
 from Ast.Ast_Types.Type_Base import Type
+from Ast.Ast_Types.Type_Struct import Struct
 from Ast.Ast_Types.Type_Void import Void
-from Ast.functions.yieldstatement import YieldStatement
 from Ast.nodes import (ASTNode, Block, ExpressionNode, KeyValuePair,
                        ParenthBlock)
 from Ast.nodes.commontypes import Modifiers, SrcPosition
 from Ast.nodes.passthrough import PassNode  # type: ignore
 from Ast.reference import Ref
+from Ast.typing import Module
 from Ast.variables.reference import VariableRef
 from Ast.variables.varobject import VariableObj
 
@@ -22,24 +22,24 @@ class Parent(Protocol):
     for something to be considered a function parent
     '''
 
-    def get_unique_name(self, name: str):
-        pass
+    def get_unique_name(self, name: str) -> str:
+        ...
 
     def create_function(self, name: str, function_obj):
-        pass
+        ...
 
     @property
-    def ir_type(self):
-        #* optional
-        pass
+    def ir_type(self) -> ir.Type:
+        # * optional
+        ...
 
-    def get_type_by_name(self):
-        pass
+    def get_type_by_name(self) -> Type:
+        ...
 
 
 class FunctionDef(ASTNode):
     '''Defines a function in the IR'''
-    __slots__ = ('builder', 'block', 'function_ir', 'args', 'args_ir',
+    __slots__ = ('_builder', 'block', 'function_ir', 'args', 'args_ir',
                  'module', 'is_ret_set', 'args_types', 'ret_type',
                  "has_return", "inside_loop", "func_name", "variables",
                  "ir_entry", "contains_dynamic", "contains_ellipsis",
@@ -47,17 +47,17 @@ class FunctionDef(ASTNode):
                  "yield_struct_ptr", "yield_consts", "yield_function",
                  "yield_block", "yield_gen_type", "yield_after_blocks",
                  "yield_start", "dispose_queue", "parent", "ret_raw",
-                 "function_ty", "lifetime_checked_nodes")
+                 "function_ty", "lifetime_checked_nodes", "use_literal_name")
 
     can_have_modifiers = True
 
     def __init__(self, pos: SrcPosition, name: str, args: ParenthBlock,
-                 block: Block, module):
+                 block: Block | None, module: Module):
         super().__init__(pos)
         self.func_name = name
         self.ret_type: Ast_Types.Type = Ast_Types.Void()
         self.ret_raw = Ast_Types.Void()
-        self.builder = None   # llvmlite.ir.IRBuilder object once created
+        self._builder = None   # llvmlite.ir.IRBuilder object once created
         self.block = block  # body of the function Ast.Block
         self.module = module  # Module the object is contained in
         self.parent = None
@@ -101,6 +101,14 @@ class FunctionDef(ASTNode):
         self.args_types: tuple[Ast_Types.Type, ...] = ()
         self.lifetime_checked_nodes = []
 
+        self.use_literal_name = False
+
+    @property
+    def builder(self) -> ir.IRBuilder:
+        if self._builder is None:
+            raise Exception("IR Builder is not initialized")
+        return self._builder
+
     def copy(self):
         if self.block is not None:
             val = FunctionDef(self._position,
@@ -128,7 +136,7 @@ class FunctionDef(ASTNode):
         self.yield_function = None
         self.yield_block = None
         self.yield_start = None
-        self.builder = None
+        self._builder = None
         self.parent = None
         self.yield_after_blocks = []
         self.yield_consts = []
@@ -143,7 +151,8 @@ class FunctionDef(ASTNode):
         self.args_ir: tuple[ir.Type, ...] = ()
         # list of all the args' Ast_Types.Type return types
         self.args_types: tuple[Ast_Types.Type, ...] = ()
-        self.block.reset()
+        if self.block is not None:
+            self.block.reset()
 
     def get_unique_name(self, name: str) -> str:
         return self.module.get_unique_name(f"{self.func_name}.local.{name}")
@@ -154,14 +163,15 @@ class FunctionDef(ASTNode):
 
         return self.module.get_type_by_name(var_name, pos)
 
-    def create_function(self, name, function_obj):
+    def create_function(self, name: str, function_obj):
+        '''Used to create nested functions'''
         if name not in self.block.variables.keys():
             self.block.variables[name] = Ast_Types.FunctionGroup(name, self)
         group = self.block.variables[name]
         group.add_function(function_obj)  # type: ignore
         return group
 
-    def add_method_arg(self, arg, parent) -> KeyValuePair:
+    def add_method_arg(self, arg, parent: Parent) -> KeyValuePair:
         if isinstance(arg, VariableRef):
             return KeyValuePair(arg._position, arg, parent.get_type(self))
 
@@ -177,7 +187,7 @@ class FunctionDef(ASTNode):
     def register_dispose(self, node):
         self.dispose_queue.append(node)
 
-    def _construct_args(self, args: ParenthBlock, parent):
+    def _construct_args(self, args: ParenthBlock, parent: Parent):
         '''Construct the lists of args required when building this function'''
         args_ir = []
         args_types = []
@@ -228,7 +238,8 @@ class FunctionDef(ASTNode):
         #                    "You will not be able to free this memory!\n" +
         #                    "Please keep this in mind",
         #                    line=ret_line)
-        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE:
+        if self.visibility == Modifiers.VISIBILITY_PUBLIC and self.ret_type.visibility == Modifiers.VISIBILITY_PRIVATE and \
+            (not isinstance(self.ret_type, Struct) or self.ret_type.module == self.module):
             errors.error("Function is public while the return type is private. \n" +
                          "This makes it impossible for external callers to handle the return.",
                          line=ret_line)
@@ -236,7 +247,7 @@ class FunctionDef(ASTNode):
     def _mangle_name(self, name, parent: Parent) -> str:
         '''add an ID to the end of a name if the function has a body and
         is NOT named "main"'''
-        if parent == self.module and self.block is None:
+        if parent == self.module and (self.use_literal_name or self.block is None):
             if name in self.module.globals.keys():
                 errors.error(f"Bound function with the name \"{name}\" already exists",
                              line=self.position, full_line=True)
@@ -248,7 +259,6 @@ class FunctionDef(ASTNode):
         args = self.function_ir.args
         for c, x in enumerate(self.args.keys()):
             orig = self.args[x]
-            # print(orig[1])
             var = VariableObj(orig[0], orig[1], True, orig[3])
             self.block.variables[x] = var
             self.block.variables[x].ptr = args[c]
@@ -273,7 +283,10 @@ class FunctionDef(ASTNode):
         elif self.parent is not None:
             return self.parent.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def fullfill_templates(self, func):
         if self.block is not None:
@@ -315,8 +328,6 @@ class FunctionDef(ASTNode):
         function_object = Ast_Types.Function(self.func_name, self.args_types,
                                              self.function_ir, self.module,
                                              self)
-        if self.block is None and platform.system() == "windows":
-            self.function_ir.linkage += "dllimport"
         function_object.add_return(self.ret_type) \
                        .set_ellipses(self.contains_ellipsis) \
                        .set_method(self.is_method, parent) \
@@ -332,43 +343,49 @@ class FunctionDef(ASTNode):
             return
 
         block = self.function_ir.append_basic_block("entry")
-        self.builder = ir.IRBuilder(block)
+        self._builder = ir.IRBuilder(block)
         self.ir_entry = block
         self._append_args()
         self.block.pre_eval(self)
 
     def create_const_var(self, typ):
-        current_block = self.builder.block
-        self.builder.position_at_start(self.ir_entry)
+        if self._builder is None or self._builder.block is None:
+            errors.developer_warning("A call exists to `create_const_var` " +
+                                     "when the function has no block.")
+            return
+
+        current_block = self._builder.block
+        self._builder.position_at_start(self.ir_entry)
         if self.yields:
             self.yield_consts.append(typ)
-            self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
-            ptr = self.builder.gep(self.yield_struct_ptr,
+            self.yield_gen_type.add_members(self.yield_consts,
+                                            [x[0].type for x in self.variables])
+            ptr = self._builder.gep(self.yield_struct_ptr,
                                    [ir.Constant(ir.IntType(32), 0),
                                     ir.Constant(ir.IntType(32), 3),
                                     ir.Constant(ir.IntType(32),
                                                 len(self.yield_consts)-1)],
                                    name="CONST")
-            self.builder.position_at_end(current_block)
+            self._builder.position_at_end(current_block)
 
             return ptr
-        ptr = self.builder.alloca(typ.ir_type, name="CONST")
-        self.builder.position_at_end(current_block)
+        ptr = self._builder.alloca(typ.ir_type, name="CONST")
+        self._builder.position_at_end(current_block)
         return ptr
 
     def alloc_stack_gen_create(self):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 if x[0].type.pass_as_ptr:
-                    val = self.builder.load(x[0].ptr)
+                    val = self._builder.load(x[0].ptr)
                 else:
                     val = x[0].ptr
                 if not x[0].type.no_load:
-                    ptr = self.builder.gep(self.yield_struct_ptr,
+                    ptr = self._builder.gep(self.yield_struct_ptr,
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
-                    self.builder.store(val, ptr)
+                    self._builder.store(val, ptr)
                     x[0].ptr = ptr
                 continue
 
@@ -376,7 +393,7 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 if not x[0].type.no_load:
-                    ptr = self.builder.gep(self.yield_struct_ptr,
+                    ptr = self._builder.gep(self.yield_struct_ptr,
                                            [ir.Constant(ir.IntType(32), 0),
                                             ir.Constant(ir.IntType(32), 4),
                                             ir.Constant(ir.IntType(32), c)])
@@ -391,12 +408,12 @@ class FunctionDef(ASTNode):
         for c, x in enumerate(self.variables):
             if x[0].is_constant:
                 # if x[0].type.pass_as_ptr:
-                #     val = self.builder.load(x[0].ptr)
+                #     val = self._builder.load(x[0].ptr)
                 # else:
                 #     val = x[0].ptr
                 # if not x[0].type.no_load:
-                #     ptr = self.builder.alloca(x[0].type.ir_type)
-                #     self.builder.store(val, ptr)
+                #     ptr = self._builder.alloca(x[0].type.ir_type)
+                #     self._builder.store(val, ptr)
                 #     x[0].ptr = ptr
                 x[0].type.recieve(self, x)
                 x[0].is_constant = False
@@ -412,19 +429,19 @@ class FunctionDef(ASTNode):
             self.alloc_stack()
             self.block.eval(self)
         else:
-            self.yield_struct_ptr = self.builder.alloca(self.ret_type.ir_type)
+            self.yield_struct_ptr = self._builder.alloca(self.ret_type.ir_type)
             self.yield_gen_type = self.ret_type
             self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
             self.populate_yield_struct()
             self.alloc_stack_gen_create()
             self.yield_gen_type.create_next_method()
-            val = self.builder.load(self.yield_struct_ptr)
-            self.builder.ret(val)
+            val = self._builder.load(self.yield_struct_ptr)
+            self._builder.ret(val)
             self.eval_generator(parent)
 
         if self.ret_type.is_void() and not self.has_return:
             self.dispose_stack()
-            self.builder.ret_void()
+            self._builder.ret_void()
         elif not self.has_return:
             errors.error(f"Function '{self.func_name}' has no guaranteed " +
                          "return!\nEnsure that at least 1 return statement is" +
@@ -441,46 +458,46 @@ class FunctionDef(ASTNode):
             return
 
         block = self.yield_block
-        self.builder = ir.IRBuilder(self.yield_block)
+        self._builder = ir.IRBuilder(self.yield_block)
         self.yield_struct_ptr = self.yield_function.args[0]
 
         self.alloc_stack_gen()
         self.ir_entry = block
-        state_ptr = self.builder.gep(self.yield_struct_ptr,
+        state_ptr = self._builder.gep(self.yield_struct_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
                                       ir.Constant(ir.IntType(32), 1)])
-        self.builder.position_at_start(self.yield_start)
+        self._builder.position_at_start(self.yield_start)
         self.block.eval(self)
-        after_block = self.builder.block
+        after_block = self._builder.block
 
-        self.builder.position_at_end(block)
+        self._builder.position_at_end(block)
 
         # Do branching on function entry
-        state = self.builder.load(state_ptr)
-        ibranch = self.builder.branch_indirect(state)
+        state = self._builder.load(state_ptr)
+        ibranch = self._builder.branch_indirect(state)
         ibranch.add_destination(self.yield_start)
         for branch in self.yield_after_blocks:
             ibranch.add_destination(branch)
 
-        self.builder.position_at_end(after_block)
-        if not self.builder.block.is_terminated:
-            continue_ptr = self.builder.gep(self.yield_struct_ptr,
+        self._builder.position_at_end(after_block)
+        if not self._builder.block.is_terminated:
+            continue_ptr = self._builder.gep(self.yield_struct_ptr,
                                             [ir.Constant(ir.IntType(32), 0),
                                                 ir.Constant(ir.IntType(32), 0)])
-            self.builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
+            self._builder.store(ir.Constant(ir.IntType(1), 0), continue_ptr)
 
         self.yield_gen_type.add_members(self.yield_consts, [x[0].type for x in self.variables])
 
     def populate_yield_struct(self):
-        continue_ptr = self.builder.gep(self.yield_struct_ptr,
+        continue_ptr = self._builder.gep(self.yield_struct_ptr,
                                         [ir.Constant(ir.IntType(32), 0),
                                          ir.Constant(ir.IntType(32), 0)])
-        state_ptr = self.builder.gep(self.yield_struct_ptr,
+        state_ptr = self._builder.gep(self.yield_struct_ptr,
                                      [ir.Constant(ir.IntType(32), 0),
                                       ir.Constant(ir.IntType(32), 1)])
-        self.builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
+        self._builder.store(ir.Constant(ir.IntType(1), 1), continue_ptr)
         block_addr = ir.BlockAddress(self.yield_function, self.yield_start)
-        self.builder.store(block_addr, state_ptr)
+        self._builder.store(block_addr, state_ptr)
 
     def dispose_stack(self):
         self.block.BLOCK_STACK.append(self.block)

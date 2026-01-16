@@ -9,7 +9,7 @@ public struct Vector::<T> {
 
 
     /// Instantiate a new Vector with size elements allocated
-    public define new(size: i64) -> Vector::<T> {
+    public define new(size: i64) -> Self {
         array_ptr = stdlib::malloc((T::SIZEOF * size) as size_t);
         array_ptr_ptr = stdlib::malloc(UntypedPointer::SIZEOF);
 
@@ -28,7 +28,7 @@ public struct Vector::<T> {
 
         *array_ptr_ptr_typed = array_ptr;
 
-        return Vector::<T> {
+        return Self {
             array_ptr: array_ptr_ptr,
             allocated_size: allocated_size_ptr,
             actual_size: actual_size_ptr,
@@ -37,7 +37,7 @@ public struct Vector::<T> {
     }
 
     /// Initialize an array with a default size of 16 elements allocated
-    public define new() -> Vector::<T> {
+    public define new() -> Self {
         return Vector::<T>::new(16i64);
     }
 

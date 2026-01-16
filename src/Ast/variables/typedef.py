@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import errors
 from Ast.Ast_Types.Type_Alias import Alias
 from Ast.generics import GenericSpecify
 from Ast.nodes.astnode import ASTNode
 from Ast.nodes.block import Block
 from Ast.nodes.commontypes import SrcPosition
+from Ast.typing import Module
 from Ast.variables.reference import VariableRef
 
 
@@ -14,8 +17,8 @@ class TypeDefinition(ASTNode):
 
     can_have_modifiers = True
 
-    def __init__(self, pos: SrcPosition, name, aliased, module,
-                 register=True):
+    def __init__(self, pos: SrcPosition, name, aliased, module: Module,
+                 register=True):  # TODO: Document this
         super().__init__(pos)
 
         self.original_name = name
@@ -52,24 +55,31 @@ class TypeDefinition(ASTNode):
             module.create_type(self.typ_name, self.typ)
             module.add_alias_to_schedule(self)
 
-    def get_variable(self, var_name, module=None):
+    def get_variable(self, var_name, module: Module | None = None):
         '''Methods use this to get the names of types
         '''
         if var_name in self.params.keys():
             var = self.params[var_name][0]
             return var
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
-    def validate_variable_exists(self, var_name, module=None):
+    def validate_variable_exists(self, var_name, module: Module | None = None):
         if var_name in self.params.keys():
             return self.get_variable(var_name, module)
         elif module is not None:
-            return module.get_global(var_name)
+            value = module.get_global(var_name)
+            if value is None:
+                return None
+            return value.obj
 
     def get_type_by_name(self, var_name, pos):
+        from Ast.module import NamespaceInfo
         if var_name in self.params.keys():
-            return self.params[var_name][0]
+            return NamespaceInfo(self.params[var_name][0], {})
 
         return self.module.get_type_by_name(var_name, pos)
 

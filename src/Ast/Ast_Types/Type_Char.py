@@ -30,6 +30,10 @@ class Char(Type_Base.Type):
               line=previous.position)
 
     def convert_to(self, func, orig, typ):
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         match typ.name:
             case 'char':
                 return orig.eval(func)
@@ -43,7 +47,7 @@ class Char(Type_Base.Type):
                 return func.builder.sitofp(orig.eval(func), ir.FloatType())
             case 'f64':
                 return func.builder.sitofp(orig.eval(func), ir.DoubleType())
-        error(f"Cannot convert 'char' to '{typ}'",
+        error(f"Cannot convert 'char' to '{typ.__str__()}'",
               line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):

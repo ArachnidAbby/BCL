@@ -15,10 +15,8 @@ from .Type_I32 import (I8_RANGE, I16_RANGE, I64_RANGE, U8_RANGE, U16_RANGE,
 from .Type_Range import RangeType
 from .Type_StrLit import StringLiteral
 from .Type_UntypedPointer import UntypedPointer
-from .Type_Void import Void
 
 types_dict = {
-    'void': Void(),
     'bool': Integer_1(),
     'char': Char(),
 
@@ -99,7 +97,7 @@ def get_std_ret_type(self: ExpressionNode, other: ExpressionNode):
                      line=other.position)
 
     if l_ret_type not in conversion_priority.keys():
-        errors.error("Cannot perform operation with a right " +
+        errors.error("Cannot perform operation with a left " +
                      f"operand of type \"{str(l_ret_type)}\"",
                      line=self.position)
 

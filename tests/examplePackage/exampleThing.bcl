@@ -1,0 +1,7 @@
+public import stdlib::*;
+public import ..::current;
+public import nested::example;
+
+public define gorgo_gorgo(x: i32) {
+    stdlib::println(x);
+}

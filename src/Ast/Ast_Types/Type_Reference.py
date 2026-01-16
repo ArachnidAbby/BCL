@@ -55,11 +55,19 @@ class Reference(Type_Base.Type):
     #     return self.typ.convert_from(func, typ, previous)
 
     def convert_to(self, func, orig, typ):
+        if typ == self:
+            return orig.eval(func)
+
+        from Ast.Ast_Types.Type_Union import Union
+        if isinstance(typ, Union):
+            return typ.convert_from(func, self, orig)
+
         if typ.name == "UntypedPointer":
             return func.builder.bitcast(orig.eval(func), typ.ir_type)
-        if typ == self.typ: # deref is secondary to casting to UntypedPointer.
+        if typ == self.typ:  # deref is secondary to casting to UntypedPointer.
             return func.builder.load(orig.get_ptr(func))
-        error("Pointer conversions are not supported due to unsafe behavior",
+        error("Pointer conversions are not directly supported due " +
+              "to unsafe behavior",
               line=orig.position)
 
     def get_op_return(self, func, op: str, lhs, rhs):
@@ -117,14 +125,14 @@ class Reference(Type_Base.Type):
         return self.typ.idiv(func, try_deref(lhs, func), rhs)
 
     def get_assign_type(self, func, value):
-        if value.ret_type.roughly_equals(self):
+        if value.ret_type.roughly_equals(func, self):
             return self
         else:
             return self.typ
 
     def assign(self, func, ptr, value, typ: "Ast_Types.Type",
                first_assignment=False):
-        if value.ret_type.roughly_equals(self):
+        if value.ret_type.roughly_equals(func, self):
             func.builder.store(value.eval(func), ptr.get_var(func).ptr)
             return
 
@@ -190,5 +198,5 @@ class Reference(Type_Base.Type):
     def bit_and(self, func, lhs, rhs):
         return self.typ.bit_and(func, try_deref(lhs, func), rhs)
 
-    def bit_not(self, func, lhs, rhs):
-        return self.typ.bit_not(func, try_deref(lhs, func), rhs)
+    def bit_not(self, func, lhs):
+        return self.typ.bit_not(func, try_deref(lhs, func))

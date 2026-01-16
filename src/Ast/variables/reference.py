@@ -1,6 +1,7 @@
 from Ast import Ast_Types
-from Ast.Ast_Types import Type_Base
-from Ast.nodes import ExpressionNode, block
+from Ast import typing as ast_typing
+from Ast.nodes import ExpressionNode
+from Ast.nodes.block import Block
 from Ast.nodes.commontypes import Lifetimes, SrcPosition
 from errors import error
 
@@ -19,15 +20,15 @@ class VariableRef(ExpressionNode):
     assignable = True
     do_register_dispose = False
 
-    def __init__(self, pos: SrcPosition, name: str, block):
+    def __init__(self, pos: SrcPosition, name: str, block: Block | None):
         super().__init__(pos)
         self.var_name = name
         self.block = block
 
     def copy(self):
         last_block = None
-        if len(block.Block.BLOCK_STACK) != 0:
-            last_block = block.Block.BLOCK_STACK[-1]
+        if len(Block.BLOCK_STACK) != 0:
+            last_block = Block.BLOCK_STACK[-1]
 
         out = VariableRef(self._position, self.var_name, last_block)
         return out
@@ -36,69 +37,90 @@ class VariableRef(ExpressionNode):
         super().reset()
         self.from_global = None
 
-    def fullfill_templates(self, func):
+    def fullfill_templates(self, func: ast_typing.FunctionDef):
         return super().fullfill_templates(func)
 
-    def pre_eval(self, func):
+    def pre_eval(self, func: ast_typing.FunctionDef):
+        if self.block is None:
+            return
+
         if not self.block.validate_variable_exists(self.var_name, func.module):
             error(f"Undefined variable '{self.var_name}'", line=self.position)
 
         var = self.block.get_variable(self.var_name, func.module)
-        self.ret_type = var.type
+        self.ret_type = var.type # TODO HUH????
         if self.ret_type.is_void():
             error(f"undefined variable '{self.var_name}'", line=self.position)
 
-    def eval_impl(self, func):
+    def eval_impl(self, func: ast_typing.FunctionDef):
+        if self.block is None:
+            return
         var = self.block.get_variable(self.var_name, func.module)
         if not isinstance(var, VariableObj):
             error("Types or Functions cannot be used as values",
                   line=self.position)
         return var.get_value(func)
 
-    def get_ptr(self, func):
+    def get_ptr(self, func: ast_typing.FunctionDef):
+        if self.block is None:
+            return
         var = self.block.get_variable(self.var_name, func.module)
         if isinstance(var.type, Ast_Types.Reference):
             return func.builder.load(var.ptr)
         return var.ptr
 
-    def get_var(self, func):
+    def get_var(self, func: ast_typing.FunctionDef):
+        from Ast.module import Module
         old_block = self.block
         if self.block is None:
             self.block = func
-        var = self.block.get_variable(self.var_name, func.module)
+        if isinstance(func, Module):
+            var = self.block.get_variable(self.var_name, func)
+        else:
+            var = self.block.get_variable(self.var_name, func.module)
         self.block = old_block
         return var
 
-    def get_lifetime(self, func):
+    def get_lifetime(self, func: ast_typing.FunctionDef):
         var = self.get_var(func)
         if var.is_arg and var.type.checks_lifetime:
             return Lifetimes.LONG
         return Lifetimes.FUNCTION
 
-    def get_coupled_lifetimes(self, func) -> list:
+    def get_coupled_lifetimes(self, func: ast_typing.FunctionDef) -> list:
+        if self.block is None:
+            return []
         var = self.block.get_variable(self.var_name, func.module)
-        if var.is_arg:
+        if isinstance(var, VariableObj) and var.is_arg:
             return [var.arg_idx]
 
         return []
 
-    def get_function(self, func):
+    def get_function(self, func: ast_typing.FunctionDef):
+        # TODO: HUH??
         return func.module.get_function(self.var_name, self.position)
 
-    def get_value(self, func):
+    def get_value(self, func: ast_typing.FunctionDef):
         '''only important in references'''
-        self.ret_type = self.ret_type.typ
+        self.ret_type = self.ret_type.typ # ! This looks concerning
         return self
 
-    def as_type_reference(self, func, allow_generics=False):
+    def as_type_reference(self, func: ast_typing.FunctionDef,
+                          allow_generics=False):
         '''Get this variable's name as a Type
         This is useful for static type declaration.
         '''
         typ = None
         if self.block is not None:
-            typ = self.block.get_type_by_name(self.var_name, self.position)()
-        elif typ is None:
-            typ = func.get_type_by_name(self.var_name, self.position)()
+            typ = self.block.get_type_by_name(self.var_name, self.position)
+        else:
+            typ = func.get_type_by_name(self.var_name, self.position)
+
+        if typ is None:
+            error("Failed to find type of the specified name",
+                  line=self.position)
+        typ = typ.obj()
+
         if typ.is_generic and not allow_generics:
             error(f"Type is generic. Add type params. {typ}",
                   line=self.position)

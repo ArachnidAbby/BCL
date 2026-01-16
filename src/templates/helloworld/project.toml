@@ -4,6 +4,4 @@ author = "{AUTHOR}"
 version = "1.0"
 
 [compile]
-
-GC = true
 include = [] # include paths, ex: ./resources/

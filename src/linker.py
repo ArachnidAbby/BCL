@@ -5,6 +5,7 @@ from llvmlite import binding  # type: ignore
 
 import errors
 
+
 # * Example of what the lld command *should* look like (linux)
 # * ===========================================================
 # binding.lld.lld_linux(f"{loc}",
@@ -21,9 +22,25 @@ import errors
 #         "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/", "-L/lib64/", "-lc"
 #     ]
 # )
+def link_windows(file: str, objects: list[str],
+                 additional_args: list[str] = []):
+    '''Linking for windows from a windows host machine'''
+    binding.lld.lld_windows(file,
+                            [
+                                *get_linuxcrt(),
+                                # *["tests/crt.o"],
+                                *[object.replace("/", "\\") for object in objects],
+                            ],
+                            [
+                                "-Bdynamic", "-no-pie", "--build-id",
+                                "--dynamic-linker", "-LC:\Windows\System32"
+                                # "-Iwin32u.dll"
+                            ] + additional_args
+                            )
 
 
-def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
+def link_linux(file: str, objects: list[str],
+               additional_args: list[str] = []):
     '''Linking for linux from a linux host machine'''
     gcc_dir = get_gcc_dir(["lib64", "lib", "bin"])
     binding.lld.lld_linux(file,
@@ -39,7 +56,7 @@ def link_linux(file: str, objects: list[str], additional_args: list[str] = []):
                               f"-L{gcc_dir}/",
                               "-L/usr/lib/", "-L/usr/lib64/", "-L/lib/",
                               "-L/lib64/", "-L/usr/lib/x86_64-linux-gnu",
-                              "-lc"
+                              "-lc", "-lm"
                           ] + additional_args
                           )
 
@@ -73,6 +90,24 @@ def get_gcc_dir(lib_dir: list | str = 'lib') -> str:
 
     gcc_version = gcc_versions[0]
     return f"{gcc_base}/{gcc_target}/{gcc_version}"
+
+
+def compile_runtime():
+    import Ast.module
+    old_mod_list = Ast.module.modules
+    Ast.module.modules = {}
+
+    libbcl_dir = os.path.dirname(__file__) + "/libbcl"
+
+    output_dir = os.getcwd() + "/target"
+
+    import compile
+
+    compile.compile_runtime(f"{libbcl_dir}/runtime.bcl", "runtime")
+
+    Ast.module.modules = old_mod_list
+
+    return f"{output_dir}/o/.runtime.o"
 
 
 def get_linuxcrt() -> list[str]:
@@ -111,7 +146,7 @@ def get_linuxcrt() -> list[str]:
     for file in output:
         errors.developer_info(f"found crt file: {file}")
 
-    return output
+    return output + [compile_runtime()]
 
 
 def link_all(file: str, objects: list[str],
@@ -123,6 +158,10 @@ def link_all(file: str, objects: list[str],
     if system == "Linux":
         link_linux(file, objects, additional_args)
         return file
+
+    if system == "Windows":
+        link_windows(file, objects, additional_args)
+        return file.replace("/", "\\")[1:]+'.exe'
 
     errors.error("Linking is currently unsupported on Non-Linux platforms.\n" +
                  "Even on linux platforms, linking may fail.\n" +

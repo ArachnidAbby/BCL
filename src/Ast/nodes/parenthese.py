@@ -4,6 +4,7 @@ from llvmlite import ir
 
 import Ast.Ast_Types as Ast_Types
 from Ast.nodes import ContainerNode
+from Ast.nodes.block import create_const_var
 from Ast.nodes.commontypes import GenericNode, Lifetimes, SrcPosition
 from Ast.nodes.keyvaluepair import KeyValuePair
 from errors import error
@@ -23,6 +24,10 @@ class ParenthBlock(ContainerNode):
         self.evaled_children = []
         self.contains_ellipsis = False
         self.do_register_dispose = False
+
+    @property
+    def assignable(self):
+        return len(self.children) == 1 and self.children[0].assignable
 
     def copy(self):
         out = ParenthBlock(self._position)
@@ -51,6 +56,8 @@ class ParenthBlock(ContainerNode):
 
         if len(self.children) == 1:
             self.ret_type = self.children[0].ret_type
+        elif len(self.children) == 0:
+            self.ret_type = Ast_Types.Void()
         else:
             members = [child.ret_type for child in self.children]
             self.ret_type = Ast_Types.TupleType(members)
@@ -80,6 +87,7 @@ class ParenthBlock(ContainerNode):
                 if c < len(expected_args):
                     expected = expected_args[c]
                     self.evaled_children.append(expected.pass_to(func, child))
+                # vvv Only runs in the case of variable args via the "..." notation
                 else:
                     self.evaled_children.append(child.ret_type.pass_to(func, child))
                 continue
@@ -87,13 +95,16 @@ class ParenthBlock(ContainerNode):
 
     def eval_impl(self, func, expected_args=[]):
         self.evaled_children = []
+        if len(self.children) == 0:
+            return ir.Undefined
+
         self._pass_as_pointer_changes(func, expected_args)
         if len(self.children) == 1:
             return self.evaled_children[0]
-        # Makes a tuple value
-        elif not self.in_func_call:
+        # vv Makes a tuple value vv
+        if not self.in_func_call:
             if self.ptr is None:
-                self.ptr = func.create_const_var(self.ret_type)
+                self.ptr = create_const_var(func, self.ret_type)
                 for c, child in enumerate(self.evaled_children):
                     child_ptr = \
                         func.builder.gep(self.ptr,
@@ -113,10 +124,6 @@ class ParenthBlock(ContainerNode):
 
     def get_ptr(self, func):
         '''allocate to stack and get a ptr'''
-        # if len(self.children) > 1:
-        #     error("Cannot get a ptr to a set of parentheses with more than " +
-        #           "one value", line=self.position)
-
         if self.ptr is None:
             if len(self.children) == 1:
                 self.ptr = self.children[0].get_ptr(func)
@@ -129,7 +136,7 @@ class ParenthBlock(ContainerNode):
         return self
 
     def get_lifetime(self, func) -> Lifetimes:
-        if len(self.children) > 1:
+        if len(self.children) != 1:
             return Lifetimes.FUNCTION
         return self.children[0].get_lifetime(func)
 
@@ -138,6 +145,27 @@ class ParenthBlock(ContainerNode):
 
     def get_value(self, func):
         return self.children[0].get_value(func)
+
+    def store(self, func, ptr, value,
+              typ, first_assignment=False):
+        '''Store data at some address '''
+        if len(self.children) > 1:
+            error("Tuple Literals are not assignable",
+                  line=self.position)
+
+        return self.children[0].store(func, ptr, value, typ,
+                                      first_assignment=first_assignment)
+
+    def get_const_value(self) -> int | float:
+        if len(self.children) == 1:
+            return self.children[0].get_const_value()
+        return 0
+
+    @property
+    def is_constant_expr(self) -> bool:
+        if len(self.children) == 1:
+            return self.children[0].is_constant_expr
+        return False
 
     @property
     def is_empty(self) -> bool:
